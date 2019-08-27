@@ -1,0 +1,5 @@
+*~
+*.autosave
+CMakeLists.txt.user
+cmake-build-debug
+.idea

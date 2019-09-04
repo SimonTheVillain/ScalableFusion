@@ -3,11 +3,12 @@
 #include "GarbageCollector.h"
 #include <iostream>
 #include <stdio.h>
+#include <cstring>
 #include <assert.h>
 
 #include <cuda.h>
 #include <cuda_gl_interop.h>
-#include <opencv2/cudaimgproc.hpp>
+//#include <opencv2/cudaimgproc.hpp>
 
 
 #include <chrono>
@@ -24,7 +25,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    }
 }
 
-void copy(cudaTextureObject_t texture,cv::cuda::GpuMat &to);
+//void copy(cudaTextureObject_t texture,cv::cuda::GpuMat &to);
 
 
 

@@ -1,25 +1,44 @@
-cmake_minimum_required (VERSION 3.8)
-set(CMAKE_CXX_STANDARD 11)
+################################################################################
+#
+# Project: Tool for loading datasets
+# Author:  Simon Schreiberhuber
+#
+################################################################################
+cmake_minimum_required(VERSION 3.8)
+project(datasetLoader
+	LANGUAGES CXX
+)
 
-project (datasetLoader)
-find_package(OpenCV 3.4.3 REQUIRED)
+
+# Required packages
+find_package(OpenCV 3.4.4 QUIET)
+if(NOT OpenCV_FOUND)
+	find_package(OpenCV 4 REQUIRED)
+endif()
 
 
-
-find_package(radical CONFIG REQUIRED)
-
-
+# Includes
 include_directories(${OpenCV_INCLUDE_DIRS})
 
+
+# Links
 link_directories(${OpenCV_LIBRARY_DIRS})
 
-#message("${CMAKE_CURRENT_SOURCE_DIR}")
-#set(datasetLoader_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)#gfx_SOURCE_DIR
-#message("${datasetLoader_SOURCE_DIR}")
 
-add_library(datasetLoader DatasetLoader.cpp DatasetLoader.h)
+# Source files
+file(GLOB CXX_SRCS 
+	*.cpp 
+)
 
-target_link_libraries(datasetLoader  boost_system boost_filesystem  ${OpenCV_LIBS} radical)
 
-#set(CMAKE_CXX_FLAGS                "-Wall -std=c++11")
-#set (CMAKE_CXX_STANDARD 11)
+# Build
+add_library(${PROJECT_NAME} 
+	${CXX_SRCS}
+)
+target_link_libraries(${PROJECT_NAME}
+	${OpenCV_LIBRARIES}
+)
+
+
+# Install
+install (TARGETS ${PROJECT_NAME} DESTINATION lib)

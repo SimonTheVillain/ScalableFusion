@@ -193,7 +193,7 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
 
         //upload the data to the gpu
         cv::Mat rgba;
-        cv::cvtColor(rgb,rgba,CV_BGR2RGBA);
+        cv::cvtColor(rgb,rgba,COLOR_BGR2RGBA);
 
         std::shared_ptr<gfx::GpuTex2D> rgbTexture =
                 std::make_shared<gfx::GpuTex2D>(

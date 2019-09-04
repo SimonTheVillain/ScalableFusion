@@ -60,7 +60,7 @@ void TumDataset::readNewSetOfImages()
         if(!depthUndistort1.empty()){
             //undistort the images
             cv::Mat currentDepthUndistorted;
-            cv::remap(currentDepth, currentDepthUndistorted, depthUndistort1, depthUndistort2, CV_INTER_NN);
+            cv::remap(currentDepth, currentDepthUndistorted, depthUndistort1, depthUndistort2, INTER_NEAREST);
             //currentDepth = currentDepthUndistorted;//DEBUG: deactivate this
         }
 
@@ -91,7 +91,7 @@ void TumDataset::readNewSetOfImages()
 
 
             cv::Mat currentRgbUndistorted;
-            cv::remap(currentRGB,currentRgbUndistorted,rgbUndistort1,rgbUndistort2,CV_INTER_LINEAR);
+            cv::remap(currentRGB,currentRgbUndistorted,rgbUndistort1,rgbUndistort2,INTER_LINEAR);
             currentRGB = currentRgbUndistorted; 
             if(scaleDepth!=1){
                 assert(0); //TODO: this scalefactor thingy really needs cleanup

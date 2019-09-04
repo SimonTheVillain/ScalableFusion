@@ -6,8 +6,8 @@
 #include <cublas.h>
 
 #include <opencv2/opencv.hpp>
-#include <opencv2/cudaimgproc.hpp>
-#include <opencv2/cudawarping.hpp>
+//#include <opencv2/cudaimgproc.hpp>
+//#include <opencv2/cudawarping.hpp>
 
 
 //TODO: small code example to copy (opengl) bindless texture to cv::cuda::GpuMat

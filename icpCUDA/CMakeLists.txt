@@ -13,6 +13,9 @@ project(icpCUDA
 # Definitions
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CUDA_STANDARD 11)
+if(NOT DEFINED CMAKE_CUDA_COMPILER)
+	set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/")
+endif()
 set(CMAKE_CUDA_FLAGS 
 	"${CMAKE_CUDA_FLAGS} \
 		--expt-relaxed-constexpr \

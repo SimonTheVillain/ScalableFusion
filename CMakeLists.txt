@@ -5,13 +5,16 @@
 #
 ################################################################################
 cmake_minimum_required (VERSION 3.8)
-project(scaleableFusion
+project(scalableFusion
 	LANGUAGES CXX CUDA
 )
 
 
 # Defintions
 set(CMAKE_CXX_STANDARD 11)
+if(NOT DEFINED CMAKE_CUDA_COMPILER)
+	set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/")
+endif()
 
 set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_BUILD_TYPE Release)

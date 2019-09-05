@@ -4,7 +4,13 @@
 # Author:  Simon Schreiberhuber
 #
 ################################################################################
+
+
+# Prerequisites
 cmake_minimum_required (VERSION 3.8)
+
+
+# Project
 project(segmentation
 	LANGUAGES CXX
 )

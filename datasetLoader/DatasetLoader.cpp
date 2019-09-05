@@ -10,8 +10,8 @@ using namespace std;
 using namespace cv;
 
 TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
-					   bool use_high_res,int skip_n_frames, float depth_scale,
-					   float trajectory_GT_scale,bool invert_GT_trajectory) 
+                       bool use_high_res,int skip_n_frames, float depth_scale,
+                       float trajectory_GT_scale,bool invert_GT_trajectory) 
 	: folder_path_(folder),
 	  frame_index_(skip_n_frames),
 	  frameshift_RGB_(0),

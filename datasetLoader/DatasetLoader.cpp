@@ -7,302 +7,188 @@
 
 using namespace Eigen;
 using namespace std;
-using namespace cv;
 
 TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
-                       bool use_high_res,int skip_n_frames, float depth_scale,
-                       float trajectory_GT_scale,bool invert_GT_trajectory) 
+                       bool use_high_res, int skip_n_frames, float depth_scale,
+                       float trajectory_GT_scale, bool invert_GT_trajectory) 
 	: folder_path_(folder),
 	  frame_index_(skip_n_frames),
-	  frameshift_RGB_(0),
 	  has_high_res_(false),
-	  has_poses_(false),
+	  has_poses_(use_pose),
 	  radiometric_response_(nullptr),
 	  read_depth_(false),
-	  read_RGB_(false),
+	  read_rgb_(false),
 	  replay_speed(0),
 	  running_(false),
 	  scale_depth_(depth_scale),
 	  skip_count(20),
-	  vignetting_response_(nullptr) {
+	  vignetting_response_(nullptr),
+	  white_fix_(cv::Vec3f(1, 1, 1)) {
 
-	//TODO: try to implement try catch pattern here, maybe it is useful
-
+	// Open frame association file
 	ifstream frame_list;
-	string file_name_2_open;
 	if(use_high_res) {
-		file_name_2_open = folder + "/associations_ids.txt";
-		frame_list.open(file_name_2_open);
+		frame_list.open(folder + "/associations_ids.txt");
 		if(frame_list.is_open()) {
 			has_high_res_ = true;
-		}
-	}
-	if(!has_high_res_) {
-		file_name_2_open = folder + "/associations.txt";
-		frame_list.open(file_name_2_open);
-		if(!frame_list.is_open()) {
-			cout << "Couldn't open dataset (no associations.txt file found)" << endl;
-			assert(0);//
+		} else {
+			frame_list.open(folder + "/associations.txt");
+			if(!frame_list.is_open()) {
+				cout << "Couldn't open dataset (no associations.txt file found)" << endl;
+				assert(0);
+			}
 		}
 	}
 
 
-	FileStorage fs_white_fix_;
-	if(has_high_res_) {
-		fs_white_fix_.open(folder + "/white_fix__ids.yml", cv::FileStorage::READ);
-	} else {
+	// TODO: White fix? What is this?
+	cv::FileStorage fs_white_fix_;
+	has_high_res_ ?
+		fs_white_fix_.open(folder + "/white_fix_ids.yml", cv::FileStorage::READ) :
 		fs_white_fix_.open(folder + "/white_fix_.yml", cv::FileStorage::READ);
-	}
+
 	if(fs_white_fix_.isOpened()) {
 		fs_white_fix_["r_gain"] >> white_fix_[2];
 		fs_white_fix_["g_gain"] >> white_fix_[1];
 		fs_white_fix_["b_gain"] >> white_fix_[0];
-	} else {
-		white_fix_ = cv::Vec3f(1, 1, 1);
 	}
 
 
-	string file_locations;
-	while(std::getline(frame_list, file_locations)) {
-		stringstream just_for_the_timestamp(file_locations);
-		double timestamp;
-		just_for_the_timestamp >> timestamp;
+	// Read rgb-depth-associations
+	string line;
+	while(std::getline(frame_list, line)) {
+		istringstream line_ss(line);
+		string word;
+
+		// Read first timestamp
+		getline(line_ss, word, ' ');
+		double timestamp = atof(word.c_str());
 		timestamps_.push_back(timestamp);
 
-		istringstream line(file_locations);
-		std::getline(line, file_locations, ' ');
+		// Read location of depth frame
+		getline(line_ss, word, ' ');
+		string depth_file = folder_path_ + "/" + word;
+		depth_files_.push_back(depth_file);
 
-		std::getline(line, file_locations, ' ');
-		std::string file = folder_path_ + "/" + file_locations;
-		depth_files_.push_back(file);
+		// Skip second timestamp
+		getline(line_ss, word, ' ');
 
-
-		std::getline(line,file_locations, ' ');
-		std::getline(line,file_locations, ' ');
-		file = folder_path_ + "/" + file_locations;
-		rgb_files_.push_back(file);
+		// Read location of rgb frame
+		getline(line_ss, word, ' ');
+		string rgb_file = folder_path_ + "/" + word;
+		rgb_files_.push_back(rgb_file);
 	}
 
-	if(rgb_files_.size() > 0) {
+	if(!rgb_files_.empty()){
 		running_ = true;
+	}	else {
+		cout << "Could not read frame associations" << endl;
+		assert(0);
 	}
 
-	if(frameshift_RGB_ > 0) {
-		rgb_files_.erase(rgb_files_.begin(), rgb_files_.begin() + frameshift_RGB_);
-		depth_files_.erase(depth_files_.end() - frameshift_RGB_, depth_files_.end());
-	}
-	if(frameshift_RGB_ < 0) {
-		depth_files_.erase(depth_files_.begin(), depth_files_.begin() - frameshift_RGB_);
-		rgb_files_.erase(rgb_files_.end() + frameshift_RGB_, rgb_files_.end());
-	}
 
-	if(isRunning()) {
-		//readNewSetOfImages();
-	} else {
-		cout << "could not open " << file_name_2_open << endl;
-	}
+	//Actually this is the only valid path
+	ifstream trajectory_file(folder + "/groundtruth.txt");
+	if(trajectory_file.is_open()) {
+		string line;
+		while(getline(trajectory_file, line)) {
+			if(line[0] != '#') {
 
-	//Load groundtruth
-	if(folder.find("georg") != string::npos) {
-		assert(0); //THIS NEVER WORKED
-		float scale = 1.0f * 0.580382; // scale the translation
+				TrajectoryPoint_ p;
+				float x, y, z;
+				float qx, qy, qz, qw;
+				sscanf(line.c_str(), "%lf %f %f %f %f %f %f %f", 
+				       &p.timestamp, &x, &y, &z, &qx, &qy, &qz, &qw);
 
-		string trajectory_filename = folder + "/poses.csv";
-		ifstream trajectory_file;
-		trajectory_file.open(trajectory_filename);
-		if(trajectory_file.is_open()) {
-			has_poses_ = use_pose;
-			string line;
-			while(getline(trajectory_file, line)) {
-				if(line[0] != '#') {
+				x *= trajectory_GT_scale;
+				y *= trajectory_GT_scale;
+				z *= trajectory_GT_scale;
 
-					std::replace(line.begin(), line.end(), ',', ' ');
-					TrajectoryPoint p;
-					stringstream stream(line);
-					stream >> p.timestamp;
-					float rx, ry, rz;
-					float x, y, z;
-					stream >> rx >> ry >> rz >> x >> y >> z;
-					/*
-					 * euler:
-					Eigen::AngleAxisf rollAngle(rx, Eigen::Vector3f::UnitX());
-					Eigen::AngleAxisf pitchAngle(ry, Eigen::Vector3f::UnitY());
-					Eigen::AngleAxisf yawAngle(rz, Eigen::Vector3f::UnitZ());
+				//read line to parameters and convert
+				Eigen::Affine3f transform(Translation3f(x, y, z));
+				Eigen::Matrix4f t = transform.matrix();
 
-					Eigen::Matrix3f r =
-							 (yawAngle * pitchAngle * rollAngle).toRotationMatrix();
-							 */
+				// Create homogenous rotation matrix
+				Quaternionf quaternion(qw, qx, qy, qz);
+				Matrix4f r = Matrix4f::Identity();
+				r.topLeftCorner<3, 3>() = quaternion.toRotationMatrix();
 
-					Eigen::Vector3f rot_vec(rx, ry, rz);
-					Eigen::AngleAxisf raar(rot_vec.norm(), rot_vec.normalized());
-					Eigen::Matrix3f r = raar.toRotationMatrix();
+				p.position = t * r;
 
-					Eigen::Matrix4f pose = Eigen::Matrix4f::Identity();
-					pose.block<3, 3>(0, 0) = r;//.inverse();
-					pose(0, 3) = x * scale;
-					pose(1, 3) = y * scale;
-					pose(2, 3) = z * scale;
-					//cout << pose << endl;
-					if(invert_GT_trajectory) {
-						pose.block<3, 1>(0, 3) = - pose.block<3, 3>(0, 0).inverse() * pose.block<3, 1>(0, 3);
-						pose.block<3, 1>(0, 3) = Vector3f(0, 0, 0);
-						p.position = pose;
-					} else {
-						p.position = pose.inverse();
-					}
-					trajectory_.push_back(p);
+				if(invert_GT_trajectory) {
+					Matrix4f mat = p.position;
+					p.position.block<3, 3>(0, 0) = mat.block<3, 3>(0, 0).inverse();
+					p.position.block<3, 1>(0, 3) = mat.block<3, 1>(0, 3);
 				}
-			}
-		}
 
-
-	} else {
-		//Actually this is the only valid path
-		string trajectory_filename = folder + "/groundtruth.txt";
-		ifstream trajectory_file;
-		trajectory_file.open(trajectory_filename);
-		if(trajectory_file.is_open()) {
-			has_poses_ = use_pose;
-
-			/*TrajectoryPoint tp;
-			tp.timesyamp=1;
-			tp.position = Eigen::Matrix4f::Identity();
-			trajectory_.push_back(tp);
-			*/
-			string line;
-			while(getline(trajectory_file, line)) {
-				if(line[0] != '#') {
-					//cout << line << endl;
-					TrajectoryPoint p;
-					float x, y, z;
-					float qx, qy, qz, qw;
-					sscanf(line.c_str(), "%lf %f %f %f %f %f %f %f", &p.timestamp, &x, &y, &z, &qx, &qy, &qz, &qw);
-
-					x *= trajectory_GT_scale;
-					y *= trajectory_GT_scale;
-					z *= trajectory_GT_scale;
-					//read line to parameters and convert
-					Eigen::Affine3f transform(Translation3f(x, y, z));
-					Matrix4f t = transform.matrix();
-
-
-					Quaternionf quaternion(qw, qx, qy, qz);
-					quaternion.toRotationMatrix();
-					Matrix4f r = Matrix4f::Identity();
-
-					r.topLeftCorner<3,3>() = quaternion.toRotationMatrix();
-
-					p.position = t * r;
-					if(invert_GT_trajectory) {
-						//original!
-						//Matrix4f mat = p.position.inverse();
-						//p.position = mat;
-						//new attempt!!
-
-
-						Matrix4f mat = p.position;
-						p.position.block<3, 3>(0, 0) = mat.block<3, 3>(0, 0).inverse();
-						p.position.block<3, 1>(0, 3) = mat.block<3, 1>(0, 3);
-
-					}
-
-					trajectory_.push_back(p);
-
-				}
+				trajectory_.push_back(p);
 			}
 		}
 	}
 	
-	//tum intrinsics:
-	rgb_intrinsics_ = Eigen::Vector4f(535.4, 539.2, 320.1, 247.6);
-	depth_intrinsics_ = rgb_intrinsics_;
-	depth_2_RGB_ = Eigen::Matrix4f::Identity();
-
 
 	if(folder.find("tumalike") != string::npos) {
-		rgb_intrinsics_ = Eigen::Vector4f(537.562, 537.278, 313.73, 243.601);
-		depth_intrinsics_ = Eigen::Vector4f(563.937, 587.847, 328.987, 225.661);
-		if(folder.find("6") != string::npos ||
-		   folder.find("7") != string::npos ||
-		   folder.find("8") != string::npos ||
-		   folder.find("9") != string::npos ||
-		   folder.find("8") != string::npos ||
+		if(folder.find("1") != string::npos ||
 		   folder.find("3") != string::npos ||
 		   folder.find("5") != string::npos ||
-		   folder.find("1") != string::npos) {//the printer corner
+		   folder.find("6") != string::npos ||
+		   folder.find("7") != string::npos ||
+		   folder.find("8") != string::npos ||
+		   folder.find("9") != string::npos) {
 
-			rgb_intrinsics_ = Eigen::Vector4f(565, 575, 315, 220);
+			rgb_intrinsics_   = Eigen::Vector4f(565, 575, 315, 220);
 			depth_intrinsics_ = Eigen::Vector4f(563.937, 587.847, 328.987, 225.661);
 
-			//create the deviation between
 			Matrix4f rel_depth_to_color = Matrix4f::Identity();
 			rel_depth_to_color(0,2) = -0.026f; //i think the color camera is 2.6cm left of the depth camera
 			Matrix3f rot = (AngleAxisf(-0.05 * 0.0, Vector3f::UnitX()) *
 			                AngleAxisf( 0.0 * M_PI, Vector3f::UnitY()) *
-			                AngleAxisf( 0.0 * M_PI, Vector3f::UnitZ())).normalized().toRotationMatrix();//somehow when doing this none
-						  
+			                AngleAxisf( 0.0 * M_PI, Vector3f::UnitZ())
+			                ).normalized().toRotationMatrix();
 			Matrix4f rot4 = Matrix4f::Identity();
 			rot4.block<3, 3>(0, 0) = rot;
-			cout << rot << endl;
-			depth_2_RGB_ = rot4 * rel_depth_to_color;
+			depth_2_rgb_ = rot4 * rel_depth_to_color;
 
-			//basicly whats in the elastic fusion initialization
-			rgb_intrinsics_ = Eigen::Vector4f(528, 528, 320, 240); //why is this wrong
+			// Basically whats in the elastic fusion initialization
+			rgb_intrinsics_   = Eigen::Vector4f(528, 528, 320, 240); // TODO: why is this wrong
 			depth_intrinsics_ = Eigen::Vector4f(528, 528, 320, 240);
-			depth_2_RGB_ = Matrix4f::Identity();
+			depth_2_rgb_      = Matrix4f::Identity(); // TODO: no.
+		} else {
+			rgb_intrinsics_   = Eigen::Vector4f(537.562, 537.278, 313.73, 243.601);
+			depth_intrinsics_ = Eigen::Vector4f(563.937, 587.847, 328.987, 225.661);
+			depth_2_rgb_      = Matrix4f::Identity(); // TODO: no.
 		}
-	}
-	/*
-	if(folder.find("virt") != string::npos){
-		rgb_intrinsics_ = Eigen::Vector4f(481.2,-480.0,308.258 , 243.525);
-		depth_intrinsics_ = rgb_intrinsics_;
-		scale_depth_=1;
-	}
-	if(folder.find("georg") != string::npos){
-		//setup the intrinsics according to georgs dataset.
-		scale_depth_=5;
-		rgb_intrinsics_=Eigen::Vector4f(528.658 , 528.225,313.73,243.601);
-		depth_intrinsics_ = Eigen::Vector4f(564.55 , 562.179,319.282 , 248.212);
-	}
-
-	if(folder.find("ir_test")){
-		rgb_intrinsics_=Eigen::Vector4f(528.658 , 528.225,313.73,243.601);
-		depth_intrinsics_=Eigen::Vector4f(528.658 , 528.225,313.73,243.601);
-		depth_2_RGB_ = Matrix4f::Identity();
-		//assert(0);
-
-	}*/
-	//check if the exposure file exists.
-	ifstream exposure_file;
-	if(has_high_res_) {
-		exposure_file.open(folder + "/rgb_ids_exposure.txt");
 	} else {
-		exposure_file.open(folder + "/rgb_exposure.txt");
+		// TUM intrinsics:
+		rgb_intrinsics_   = Eigen::Vector4f(535.4, 539.2, 320.1, 247.6);
+		depth_intrinsics_ = rgb_intrinsics_;
+		depth_2_rgb_      = Eigen::Matrix4f::Identity();
 	}
-	//(folder + "/rgb_ids_exposure.txt");
-	if(exposure_file.is_open()) {
 
+
+	// Check if the exposure file exists
+	ifstream exposure_file;
+	has_high_res_ ?
+		exposure_file.open(folder + "/rgb_ids_exposure.txt") :
+		exposure_file.open(folder + "/rgb_exposure.txt");
+
+	if(exposure_file.is_open()) {
 		std::string line;
-		while(getline(exposure_file, line)) {
-			std::string::size_type sz;     // alias of size_t
-			float time = std::stof(line, &sz);
-			exposure_times_.push_back(time);
-		}
+		while(getline(exposure_file, line))
+			exposure_times_.push_back(atof(line.c_str()));
 
 		cout << "these exposure times are all wrong and need to be assigned to the correct frame" << endl;
 
-		//assert(0);//this doesn't work this way the exposure times need to be attached to the frames
-//        assert(0);
-		//cout << "oh! seemingly we have exposure control and one of these new supwerdatasets" << endl;
 		cv::Size size;
 		cv::Mat M;
 		cv::Mat D;
 		cv::Mat Mnew;
 		if(has_high_res_) {
-			cv::FileStorage intrinsics_id_storage(folder + "/../calib_result_ids.yml", cv::FileStorage::READ);
-			if(!intrinsics_id_storage.isOpened()) {
+			cv::FileStorage intrinsics_id_storage(folder + "/../calib_result_ids.yml", 
+			                                      cv::FileStorage::READ);
+			if(!intrinsics_id_storage.isOpened())
 				assert(0);
-			}
+
 			intrinsics_id_storage["camera_matrix"] >> M;
 			intrinsics_id_storage["distortion_coefficients"] >> D;
 			intrinsics_id_storage["image_width"] >> size.width;
@@ -310,72 +196,26 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 
 			Mnew = cv::getOptimalNewCameraMatrix(M, D, size, 1, size);
 			Mnew = M;//DEBUG
-			rgb_intrinsics_ = Eigen::Vector4f(Mnew.at<double>(0,0), 
-			                                  Mnew.at<double>(1,1),
-			                                  Mnew.at<double>(0,2), 
-			                                  Mnew.at<double>(1,2));
+			rgb_intrinsics_ = Eigen::Vector4f(Mnew.at<double>(0, 0), 
+			                                  Mnew.at<double>(1, 1),
+			                                  Mnew.at<double>(0, 2), 
+			                                  Mnew.at<double>(1, 2));
 			cv::initUndistortRectifyMap(M, D, cv::Mat(), Mnew, size, CV_16SC2, 
 			                            rgb_undistort_1_, rgb_undistort_2_);
 
-			float focalScale = 1.0f;//25f;
+			float focalScale = 1.0f;
 			rgb_intrinsics_[0] *= focalScale;
 			rgb_intrinsics_[1] *= focalScale;
 
 		} else {
-			//do standard xtion stuff
+			// Do standard xtion stuff
 			rgb_intrinsics_ = Eigen::Vector4f(530, 530, 320, 240);
 		}
 
 
-		/*
-		cv::FileStorage intrinsicsIrStorage(folder + "/../newCalib/cam_params_ir.yml",cv::FileStorage::READ);
-		if(!intrinsicsIrStorage.isOpened()){
-			assert(0);
-		}
-		intrinsicsIrStorage["camera_matrix"] >> M;
-		intrinsicsIrStorage["distortion_coefficients"] >> D;
-		intrinsicsIrStorage["image_width"] >> size.width;
-		intrinsicsIrStorage["image_height"] >> size.height;
-
-		Mnew = cv::getOptimalNewCameraMatrix(M,D,size,1,size);
-
-
-		depth_intrinsics_ =
-				Eigen::Vector4f(Mnew.at<double>(0,0), Mnew.at<double>(1,1),
-						Mnew.at<double>(0,2), Mnew.at<double>(1,2));
-
-		cv::initUndistortRectifyMap(M,D,cv::Mat(),Mnew,size,CV_16SC2,depth_undistort_1_,depth_undistort_2_);
-		*/
-
-		//the standard values
-		depth_intrinsics_ = Eigen::Vector4f(568, 568, 320, 240);//the structure sensor
-		depth_intrinsics_ = Eigen::Vector4f(570, 570, 320, 240);//xtion
-
-
-
-
-
-
-		//lets try to create a rotation and translation matrix:
-		//create the deviation betweenx
-		/*
-		Matrix4f relDepthToColor = Matrix4f::Identity();
-		relDepthToColor(0,3) = -0.045f;
-		relDepthToColor(1,3) = -0.005f;
-		relDepthToColor(2,3) = 0.0196f;
-		//i think the color camera is 2.6cm left of the depth camera
-		Matrix3f rot=(AngleAxisf(0.005*M_PI,Vector3f::UnitX()) *
-					  AngleAxisf(0.0010*M_PI,  Vector3f::UnitY()) *
-					  AngleAxisf(0.0*M_PI,  Vector3f::UnitZ())//somehow when doing this none
-		).normalized().toRotationMatrix();//why normalized
-		Matrix4f rot4=Matrix4f::Identity();
-		rot4.block<3,3>(0,0) = rot;//actually transpose would work as well
-		cout<< rot << endl;
-		//depth_2_RGB_ = rot4*relDepthToColor;
-		cout << relDepthToColor << endl;
-		cout << depth_2_RGB_ << endl;
-		*/
-
+		// Default values
+		depth_intrinsics_ = Eigen::Vector4f(568, 568, 320, 240); // the structure sensor
+		//depth_intrinsics_ = Eigen::Vector4f(570, 570, 320, 240); // xtion
 
 
 		cv::Mat R, T, Rf, Tf;
@@ -383,15 +223,14 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 		if(has_high_res_) {
 			Matrix4f rot4 = Matrix4f::Identity();
 
-
-			//TRACK 16 - 19 should work with these settings:
-			//Tweaking of the calibration because the camera rack is not rigid
+			// TRACK 16 - 19 should work with these settings:
+			// Tweaking of the calibration because the camera rack is not rigid
 			Matrix3f rot=(AngleAxisf(0.010 * M_PI, Vector3f::UnitX()) *
 			              AngleAxisf(0.002 * M_PI, Vector3f::UnitY()) *
-			              AngleAxisf(  0.0 * M_PI, Vector3f::UnitZ())).normalized().toRotationMatrix();
+			              AngleAxisf(  0.0 * M_PI, Vector3f::UnitZ())
+			              ).normalized().toRotationMatrix();
 			Matrix4f rot41 = Matrix4f::Identity();
 			rot41.block<3, 3>(0, 0) = rot;
-
 
 			cv::FileStorage fs(folder + "/../extrinsics.yml", cv::FileStorage::READ);
 
@@ -401,21 +240,15 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 			T.convertTo(Tf, CV_32FC1);
 			Eigen::Matrix3f eR(reinterpret_cast<float*>(Rf.data));
 			Eigen::Vector3f eT(reinterpret_cast<float*>(Tf.data));
-			//cout << eR << endl;
-			//cout << eT << endl;
 
-
-			rot4.block<3, 3>(0, 0) = eR;//.inverse();
+			rot4.block<3, 3>(0, 0) = eR;
 			rot4.block<3, 1>(0, 3) = eT;
 
-
-			depth_2_RGB_ =  rot41 * rot4; //rot41*
-
-			//cout << depth_2_RGB_ << endl;
+			depth_2_rgb_ =  rot41 * rot4;
 
 		} else {
-			depth_2_RGB_ = Matrix4f::Identity();
-			depth_2_RGB_(0, 3) = 0.026f;//standard xtion baseline
+			depth_2_rgb_ = Matrix4f::Identity();
+			depth_2_rgb_(0, 3) = 0.026f; // Standard xtion baseline
 		}
 
 		if(has_high_res_) {
@@ -425,12 +258,7 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 			radiometric_response_ = new radical::RadiometricResponse(folder + "/../rgb.crf");
 			vignetting_response_ = new radical::VignettingResponse(folder + "/../rgb.vgn");
 		}
-
 	}
-	if(folder.find("icl") != string::npos) {
-		//scale_depth_=1.0f/5.0f;
-	}
-
 }
 
 TumDataset::~TumDataset() {
@@ -441,61 +269,29 @@ TumDataset::~TumDataset() {
 }
 
 void TumDataset::readNewSetOfImages() {
-	//cout << "reading new Images" << endl;
-	std::string file_locations;
-
-
-	//return;//debug
-	if(frame_index_ != 0) {
+	if(frame_index_ != 0)
 		frame_index_ += skip_count;
-	}
+
 	if(frame_index_ < rgb_files_.size()) {
-		//std::string fileName2Open=folder_path_ + "/" + fileLocations;
-		//cout << "reading file " << fileName2Open << endl;
-		current_depth_ = imread(depth_files_[frame_index_], cv::IMREAD_UNCHANGED);
-		if(exposure_times_.size() > 0) {
-			rgb_exposure_time_ = exposure_times_[frame_index_];
-		}
+		current_depth_ = cv::imread(depth_files_[frame_index_], 
+		                            cv::IMREAD_UNCHANGED) * scale_depth_;
+		current_rgb_   = cv::imread(rgb_files_[frame_index_]);
 		current_timestamp_ = timestamps_[frame_index_];
 
-		//cv::Mat flipped;
-		//cv::flip(current_depth_,flipped,1);
-		//cv::imwrite(fileName2Open,flipped);
-		current_depth_ = current_depth_ * scale_depth_;
-		//current_depth_ = current_depth_*0.1f;//DEBUG for the artificial dataset
-		//DEBUG:
-		 //because we colledted data in 100um mode
-
-
-
-
-
-		//fileName2Open=folder_path_ + "/" + fileLocations;
-		current_RGB_ = cv::imread(rgb_files_[frame_index_]);
-		/*if(current_RGB_.type() == CV_8UC1){
-			cv::Mat gray2RGB;
-			current_RGB_.convertTo(gray2RGB,CV_8UC3);
-			current_RGB_ = gray2RGB;
-			assert(0);
-		}*/
-
-		//cout << "DEBUG intrinsics:" << endl << rgb_intrinsics_ << endl << depth_intrinsics_ << endl;
-		//cout << "DEBUG matrix " << endl << depth_2_RGB_ << endl;
-
-
-		if(!depth_undistort_1_.empty()) {
-			//undistort the images
-			cv::Mat current_depth_undistorted;
-			cv::remap(current_depth_, current_depth_undistorted, depth_undistort_1_, depth_undistort_2_, INTER_NEAREST);
-			//current_depth_ = current_depth_Undistorted;//DEBUG: deactivate this
+		if(!exposure_times_.empty()) {
+			rgb_exposure_time_ = exposure_times_[frame_index_];
 		}
 
+		if(!depth_undistort_1_.empty()) {
+			// Undistort the images
+			cv::Mat current_depth_undistorted;
+			cv::remap(current_depth_, current_depth_undistorted,
+			          depth_undistort_1_, depth_undistort_2_, cv::INTER_NEAREST);
+		}
 
-
-		if(radiometric_response_ != nullptr && vignetting_response_!=nullptr) {
-			cv::Mat irradiance, radiance;  // temporary storage
-			//cv::Mat rgbVignettingCorrected;       // output image with vignette removed
-			radiometric_response_->inverseMap(current_RGB_, irradiance);
+		if(radiometric_response_ != nullptr && vignetting_response_ != nullptr) {
+			cv::Mat irradiance, radiance;
+			radiometric_response_->inverseMap(current_rgb_, irradiance);
 			vignetting_response_->remove(irradiance, radiance);
 			radiance = radiance * 0.9;
 			radiance = radiance * 1.2;
@@ -506,17 +302,15 @@ void TumDataset::readNewSetOfImages() {
 				v[2] *= white_fix_[2];
 				radiance.at<cv::Vec3f>(i) = v;
 			}
-			radiometric_response_->directMap(radiance, current_RGB_);
 
-
+			radiometric_response_->directMap(radiance, current_rgb_);
 		}
 
 		if(!rgb_undistort_1_.empty()) {
-
 			cv::Mat current_rgb_undistorted;
-			cv::remap(current_RGB_, current_rgb_undistorted, rgb_undistort_1_, 
-			          rgb_undistort_2_, INTER_LINEAR);
-			current_RGB_ = current_rgb_undistorted; 
+			cv::remap(current_rgb_, current_rgb_undistorted, 
+			          rgb_undistort_1_, rgb_undistort_2_, cv::INTER_LINEAR);
+			current_rgb_ = current_rgb_undistorted; 
 			if(scale_depth_ != 1) {
 				assert(0); //TODO: this scalefactor thingy really needs cleanup
 			}
@@ -537,38 +331,18 @@ void TumDataset::readNewSetOfImages() {
 	}
 
 
-
-	//when we are done before our time we wait....
+	// If we are done before our time we wait....
 	chrono::system_clock::time_point now = chrono::system_clock::now();
 
 	if(replay_speed != 0) {
 		chrono::system_clock::duration frame_time =
-		 chrono::microseconds((int)(33333.0f * (1.0f / replay_speed)));//1.0f/(30.0f*replaySpeed));
+			chrono::microseconds((int)(33333.0f * (1.0f / replay_speed)));
 		chrono::system_clock::duration duration = now - last_frame_readout_;
 
-		chrono::system_clock::duration zero = chrono::microseconds(0);
-
-		chrono::system_clock::duration remaining_time =
-			std::max(frame_time - duration, zero);
-
-
-		//chrono::system_clock::duration remainingTime_ = duration-frameTime;
-
-		/*
-		cout << "target time in ms" <<
-				std::chrono::duration_cast<std::chrono::milliseconds>(frameTime).count() << endl;
-		cout << "used time in ms" <<
-				std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << endl;
-		cout << "time to wait" <<
-				std::chrono::duration_cast<std::chrono::milliseconds>(remainingTime).count() << endl;
-		auto tick = std::chrono::system_clock::now();
-		*/
-		this_thread::sleep_for(remaining_time);//remainingTime);
-		/*auto delta = std::chrono::system_clock::now()- tick;
-		cout << "time waited" <<
-				std::chrono::duration_cast<std::chrono::milliseconds>(delta).count() << endl;
-		*/
+		if((frame_time - duration) > chrono::duration<int>(0))
+			this_thread::sleep_for(frame_time - duration);
 	}
+
 	last_frame_readout_ = chrono::system_clock::now();
 }
 
@@ -579,20 +353,20 @@ bool TumDataset::isRunning() {
 
 cv::Mat TumDataset::getDepthFrame() {
 	read_depth_ = true;
-	if(read_depth_ && read_RGB_) {
-		read_depth_ = read_RGB_ = false;
-		//readNewSetOfImages();
+	if(read_depth_ && read_rgb_) {
+		read_depth_ = false;
+		read_rgb_ = false;
 	}
 	return current_depth_;
 }
 
-cv::Mat TumDataset::getRGBFrame() {
-	read_RGB_ = true;
-	if(read_depth_ && read_RGB_) {
-		read_depth_ = read_RGB_ = false;
-		//readNewSetOfImages();
+cv::Mat TumDataset::getRgbFrame() {
+	read_rgb_ = true;
+	if(read_depth_ && read_rgb_) {
+		read_depth_ = false;
+		read_rgb_ = false;
 	}
-	return current_RGB_;
+	return current_rgb_;
 }
 
 Eigen::Vector4f TumDataset::getDepthIntrinsics() {
@@ -604,7 +378,7 @@ Eigen::Vector4f TumDataset::getRgbIntrinsics() {
 }
 
 Eigen::Matrix4f TumDataset::getDepth2RgbRegistration() {
-	return depth_2_RGB_;
+	return depth_2_rgb_;
 }
 
 bool TumDataset::hasGroundTruth() {
@@ -614,7 +388,7 @@ bool TumDataset::hasGroundTruth() {
 Eigen::Matrix4f TumDataset::getDepthPose() {
 	Matrix4f transform;//maybe not the right name
 	double delta_time_min = 1000;
-	for(const TumDataset::TrajectoryPoint& p : trajectory_) {
+	for(const TumDataset::TrajectoryPoint_& p : trajectory_) {
 		if(fabs(current_timestamp_ - p.timestamp) < delta_time_min) {
 			delta_time_min = fabs(current_timestamp_ - p.timestamp);
 			transform = p.position;
@@ -626,7 +400,7 @@ Eigen::Matrix4f TumDataset::getDepthPose() {
 Matrix4f TumDataset::getRgbPose() {
 	Matrix4f transform;//maybe not the right name
 	double delta_time_min = 1000;
-	for(const TumDataset::TrajectoryPoint& p : trajectory_) {
+	for(const TumDataset::TrajectoryPoint_& p : trajectory_) {
 		if(fabs(current_timestamp_ - p.timestamp) < delta_time_min) {
 			delta_time_min = fabs(current_timestamp_ - p.timestamp);
 			transform = p.position;
@@ -639,6 +413,6 @@ bool TumDataset::hasHighRes() {
 	return has_high_res_;
 }
 
-float TumDataset::getRGBExposure() {
+float TumDataset::getRgbExposure() {
 	return rgb_exposure_time_;
 }

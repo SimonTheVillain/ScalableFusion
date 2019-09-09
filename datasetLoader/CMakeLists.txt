@@ -21,6 +21,7 @@ find_package(OpenCV 3.4.4 QUIET)
 if(NOT OpenCV_FOUND)
 	find_package(OpenCV 4 REQUIRED)
 endif()
+find_package(radical CONFIG REQUIRED)
 
 
 # Includes
@@ -43,6 +44,7 @@ add_library(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME}
 	${OpenCV_LIBRARIES}
+	radical
 )
 
 

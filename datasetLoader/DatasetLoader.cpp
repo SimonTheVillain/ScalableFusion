@@ -1,12 +1,12 @@
 #include "DatasetLoader.h"
 
-#include <eigen3/Eigen/Geometry>
 #include <thread>
-
 #include <fstream>
 
-using namespace Eigen;
+#include <eigen3/Eigen/Geometry>
+
 using namespace std;
+using namespace Eigen;
 
 TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
                        bool use_high_res, int skip_n_frames, float depth_scale,
@@ -38,19 +38,6 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 				assert(0);
 			}
 		}
-	}
-
-
-	// TODO: White fix? What is this?
-	cv::FileStorage fs_white_fix_;
-	has_high_res_ ?
-		fs_white_fix_.open(folder + "/white_fix_ids.yml", cv::FileStorage::READ) :
-		fs_white_fix_.open(folder + "/white_fix_.yml", cv::FileStorage::READ);
-
-	if(fs_white_fix_.isOpened()) {
-		fs_white_fix_["r_gain"] >> white_fix_[2];
-		fs_white_fix_["g_gain"] >> white_fix_[1];
-		fs_white_fix_["b_gain"] >> white_fix_[0];
 	}
 
 
@@ -87,13 +74,25 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 	}
 
 
-	//Actually this is the only valid path
+	// TODO: White fix? What is this?
+	cv::FileStorage fs_white_fix_;
+	has_high_res_ ?
+		fs_white_fix_.open(folder + "/white_fix_ids.yml", cv::FileStorage::READ) :
+		fs_white_fix_.open(folder + "/white_fix_.yml", cv::FileStorage::READ);
+
+	if(fs_white_fix_.isOpened()) {
+		fs_white_fix_["r_gain"] >> white_fix_[2];
+		fs_white_fix_["g_gain"] >> white_fix_[1];
+		fs_white_fix_["b_gain"] >> white_fix_[0];
+	}
+
+
+	// Read groundtruth
 	ifstream trajectory_file(folder + "/groundtruth.txt");
 	if(trajectory_file.is_open()) {
 		string line;
 		while(getline(trajectory_file, line)) {
 			if(line[0] != '#') {
-
 				TrajectoryPoint_ p;
 				float x, y, z;
 				float qx, qy, qz, qw;
@@ -105,13 +104,13 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 				z *= trajectory_GT_scale;
 
 				//read line to parameters and convert
-				Eigen::Affine3f transform(Translation3f(x, y, z));
-				Eigen::Matrix4f t = transform.matrix();
+				Affine3f transform(Translation3f(x, y, z));
+				Matrix4f t = transform.matrix();
 
 				// Create homogenous rotation matrix
 				Quaternionf quaternion(qw, qx, qy, qz);
 				Matrix4f r = Matrix4f::Identity();
-				r.topLeftCorner<3, 3>() = quaternion.toRotationMatrix();
+				r.block<3, 3>(0, 0) = quaternion.toRotationMatrix();
 
 				p.position = t * r;
 
@@ -136,37 +135,37 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 		   folder.find("8") != string::npos ||
 		   folder.find("9") != string::npos) {
 
-			rgb_intrinsics_   = Eigen::Vector4f(565, 575, 315, 220);
-			depth_intrinsics_ = Eigen::Vector4f(563.937, 587.847, 328.987, 225.661);
+			rgb_intrinsics_   = Vector4f(565, 575, 315, 220);
+			depth_intrinsics_ = Vector4f(563.937, 587.847, 328.987, 225.661);
 
 			Matrix4f rel_depth_to_color = Matrix4f::Identity();
-			rel_depth_to_color(0,2) = -0.026f; //i think the color camera is 2.6cm left of the depth camera
-			Matrix3f rot = (AngleAxisf(-0.05 * 0.0, Vector3f::UnitX()) *
-			                AngleAxisf( 0.0 * M_PI, Vector3f::UnitY()) *
-			                AngleAxisf( 0.0 * M_PI, Vector3f::UnitZ())
+			rel_depth_to_color(0, 2) = -0.026f; //i think the color camera is 2.6cm left of the depth camera
+			Matrix3f rot = (AngleAxisf(-0.05 * 0.00, Vector3f::UnitX()) *
+			                AngleAxisf( 0.00 * M_PI, Vector3f::UnitY()) *
+			                AngleAxisf( 0.00 * M_PI, Vector3f::UnitZ())
 			                ).normalized().toRotationMatrix();
 			Matrix4f rot4 = Matrix4f::Identity();
 			rot4.block<3, 3>(0, 0) = rot;
 			depth_2_rgb_ = rot4 * rel_depth_to_color;
 
 			// Basically whats in the elastic fusion initialization
-			rgb_intrinsics_   = Eigen::Vector4f(528, 528, 320, 240); // TODO: why is this wrong
-			depth_intrinsics_ = Eigen::Vector4f(528, 528, 320, 240);
+			rgb_intrinsics_   = Vector4f(528, 528, 320, 240); // TODO: why is this wrong
+			depth_intrinsics_ = Vector4f(528, 528, 320, 240);
 			depth_2_rgb_      = Matrix4f::Identity(); // TODO: no.
 		} else {
-			rgb_intrinsics_   = Eigen::Vector4f(537.562, 537.278, 313.73, 243.601);
-			depth_intrinsics_ = Eigen::Vector4f(563.937, 587.847, 328.987, 225.661);
+			rgb_intrinsics_   = Vector4f(537.562, 537.278, 313.73,  243.601);
+			depth_intrinsics_ = Vector4f(563.937, 587.847, 328.987, 225.661);
 			depth_2_rgb_      = Matrix4f::Identity(); // TODO: no.
 		}
 	} else {
 		// TUM intrinsics:
-		rgb_intrinsics_   = Eigen::Vector4f(535.4, 539.2, 320.1, 247.6);
+		rgb_intrinsics_   = Vector4f(535.4, 539.2, 320.1, 247.6);
 		depth_intrinsics_ = rgb_intrinsics_;
-		depth_2_rgb_      = Eigen::Matrix4f::Identity();
+		depth_2_rgb_      = Matrix4f::Identity();
 	}
 
 
-	// Check if the exposure file exists
+	// Read exposure file if it exists
 	ifstream exposure_file;
 	has_high_res_ ?
 		exposure_file.open(folder + "/rgb_ids_exposure.txt") :
@@ -189,17 +188,17 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 			if(!intrinsics_id_storage.isOpened())
 				assert(0);
 
-			intrinsics_id_storage["camera_matrix"] >> M;
+			intrinsics_id_storage["camera_matrix"]           >> M;
 			intrinsics_id_storage["distortion_coefficients"] >> D;
-			intrinsics_id_storage["image_width"] >> size.width;
-			intrinsics_id_storage["image_height"] >> size.height;
+			intrinsics_id_storage["image_width"]             >> size.width;
+			intrinsics_id_storage["image_height"]            >> size.height;
 
 			Mnew = cv::getOptimalNewCameraMatrix(M, D, size, 1, size);
-			Mnew = M;//DEBUG
-			rgb_intrinsics_ = Eigen::Vector4f(Mnew.at<double>(0, 0), 
-			                                  Mnew.at<double>(1, 1),
-			                                  Mnew.at<double>(0, 2), 
-			                                  Mnew.at<double>(1, 2));
+			Mnew = M; // TODO What does this do?
+			rgb_intrinsics_ = Vector4f(Mnew.at<double>(0, 0), 
+			                           Mnew.at<double>(1, 1),
+			                           Mnew.at<double>(0, 2), 
+			                           Mnew.at<double>(1, 2));
 			cv::initUndistortRectifyMap(M, D, cv::Mat(), Mnew, size, CV_16SC2, 
 			                            rgb_undistort_1_, rgb_undistort_2_);
 
@@ -209,13 +208,13 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 
 		} else {
 			// Do standard xtion stuff
-			rgb_intrinsics_ = Eigen::Vector4f(530, 530, 320, 240);
+			rgb_intrinsics_ = Vector4f(530, 530, 320, 240);
 		}
 
 
 		// Default values
-		depth_intrinsics_ = Eigen::Vector4f(568, 568, 320, 240); // the structure sensor
-		//depth_intrinsics_ = Eigen::Vector4f(570, 570, 320, 240); // xtion
+		depth_intrinsics_ = Vector4f(568, 568, 320, 240); // the structure sensor
+		//depth_intrinsics_ = Vector4f(570, 570, 320, 240); // xtion
 
 
 		cv::Mat R, T, Rf, Tf;
@@ -225,10 +224,10 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 
 			// TRACK 16 - 19 should work with these settings:
 			// Tweaking of the calibration because the camera rack is not rigid
-			Matrix3f rot=(AngleAxisf(0.010 * M_PI, Vector3f::UnitX()) *
-			              AngleAxisf(0.002 * M_PI, Vector3f::UnitY()) *
-			              AngleAxisf(  0.0 * M_PI, Vector3f::UnitZ())
-			              ).normalized().toRotationMatrix();
+			Matrix3f rot = (AngleAxisf(0.010 * M_PI, Vector3f::UnitX()) *
+			                AngleAxisf(0.002 * M_PI, Vector3f::UnitY()) *
+			                AngleAxisf(0.000 * M_PI, Vector3f::UnitZ())
+			                ).normalized().toRotationMatrix();
 			Matrix4f rot41 = Matrix4f::Identity();
 			rot41.block<3, 3>(0, 0) = rot;
 
@@ -238,8 +237,8 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 			fs["T"] >> T;
 			R.convertTo(Rf, CV_32FC1);
 			T.convertTo(Tf, CV_32FC1);
-			Eigen::Matrix3f eR(reinterpret_cast<float*>(Rf.data));
-			Eigen::Vector3f eT(reinterpret_cast<float*>(Tf.data));
+			Matrix3f eR(reinterpret_cast<float*>(Rf.data));
+			Vector3f eT(reinterpret_cast<float*>(Tf.data));
 
 			rot4.block<3, 3>(0, 0) = eR;
 			rot4.block<3, 1>(0, 3) = eT;
@@ -252,11 +251,15 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 		}
 
 		if(has_high_res_) {
-			radiometric_response_ = new radical::RadiometricResponse(folder + "/../rgb_ids.crf");
-			vignetting_response_ = new radical::VignettingResponse(folder + "/../rgb_ids.vgn");
+			radiometric_response_ = new radical::RadiometricResponse(
+				folder + "/../rgb_ids.crf");
+			vignetting_response_  = new radical::VignettingResponse(
+				folder + "/../rgb_ids.vgn");
 		} else {
-			radiometric_response_ = new radical::RadiometricResponse(folder + "/../rgb.crf");
-			vignetting_response_ = new radical::VignettingResponse(folder + "/../rgb.vgn");
+			radiometric_response_ = new radical::RadiometricResponse(
+				folder + "/../rgb.crf");
+			vignetting_response_  = new radical::VignettingResponse(
+				folder + "/../rgb.vgn");
 		}
 	}
 }
@@ -293,8 +296,8 @@ void TumDataset::readNewSetOfImages() {
 			cv::Mat irradiance, radiance;
 			radiometric_response_->inverseMap(current_rgb_, irradiance);
 			vignetting_response_->remove(irradiance, radiance);
-			radiance = radiance * 0.9;
-			radiance = radiance * 1.2;
+			radiance *= 0.9;
+			radiance *= 1.2;
 			for (int i = 0; i < radiance.size().area(); i++) {
 				cv::Vec3f v = radiance.at<cv::Vec3f>(i);
 				v[0] *= white_fix_[0];
@@ -312,7 +315,7 @@ void TumDataset::readNewSetOfImages() {
 			          rgb_undistort_1_, rgb_undistort_2_, cv::INTER_LINEAR);
 			current_rgb_ = current_rgb_undistorted; 
 			if(scale_depth_ != 1) {
-				assert(0); //TODO: this scalefactor thingy really needs cleanup
+				assert(0); // TODO: this scalefactor thingy really needs cleanup
 			}
 		}
 		//as in the last datasets i collected
@@ -369,15 +372,15 @@ cv::Mat TumDataset::getRgbFrame() {
 	return current_rgb_;
 }
 
-Eigen::Vector4f TumDataset::getDepthIntrinsics() {
+Vector4f TumDataset::getDepthIntrinsics() {
 	return depth_intrinsics_;
 }
 
-Eigen::Vector4f TumDataset::getRgbIntrinsics() {
+Vector4f TumDataset::getRgbIntrinsics() {
 	return rgb_intrinsics_;
 }
 
-Eigen::Matrix4f TumDataset::getDepth2RgbRegistration() {
+Matrix4f TumDataset::getDepth2RgbRegistration() {
 	return depth_2_rgb_;
 }
 
@@ -385,28 +388,28 @@ bool TumDataset::hasGroundTruth() {
 	return has_poses_;
 }
 
-Eigen::Matrix4f TumDataset::getDepthPose() {
-	Matrix4f transform;//maybe not the right name
+Matrix4f TumDataset::getDepthPose() {
+	Matrix4f pose;
 	double delta_time_min = 1000;
-	for(const TumDataset::TrajectoryPoint_& p : trajectory_) {
+	for(auto p : trajectory_) {
 		if(fabs(current_timestamp_ - p.timestamp) < delta_time_min) {
 			delta_time_min = fabs(current_timestamp_ - p.timestamp);
-			transform = p.position;
+			pose = p.position;
 		}
 	}
-	return transform;
+	return pose;
 }
 
 Matrix4f TumDataset::getRgbPose() {
-	Matrix4f transform;//maybe not the right name
+	Matrix4f pose;
 	double delta_time_min = 1000;
-	for(const TumDataset::TrajectoryPoint_& p : trajectory_) {
+	for(auto p : trajectory_) {
 		if(fabs(current_timestamp_ - p.timestamp) < delta_time_min) {
 			delta_time_min = fabs(current_timestamp_ - p.timestamp);
-			transform = p.position;
+			pose = p.position;
 		}
 	}
-	return transform;
+	return pose;
 }
 
 bool TumDataset::hasHighRes() {

@@ -27,7 +27,7 @@ public:
 
 	virtual Eigen::Matrix4f getDepth2RgbRegistration() = 0;
 
-	//TODO: add pose as quaternion + translation
+	// TODO: add pose as quaternion + translation
 
 };
 

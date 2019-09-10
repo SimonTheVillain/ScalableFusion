@@ -21,7 +21,7 @@ public:
 	virtual Eigen::Vector4f getDepthIntrinsics() = 0;
 	virtual Eigen::Matrix4f getDepthPose() = 0;
 
-	virtual cv::Mat         getrgbFrame() = 0;
+	virtual cv::Mat         getRgbFrame() = 0;
 	virtual Eigen::Vector4f getRgbIntrinsics() = 0;
 	virtual Eigen::Matrix4f getRgbPose() = 0;
 

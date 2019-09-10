@@ -1,34 +1,24 @@
+#ifndef FILE_GL_UTILS_H
+#define FILE_GL_UTILS_H
 
-#ifndef FILE_GLV_GLUtils
-#define FILE_GLV_GLUtils
-
-
-
-
-
-#include <stdio.h>
 #include <string>
 
+#include <stdio.h>
 
 #include <GL/glew.h>
-//#include <GL/gl.h>
 
+using namespace std;
 
-namespace gfx
-{
-    namespace GLUtils{
-        int checkForOpenGLError(std::string msg);
+namespace gfx {
+namespace GLUtils{
 
-        int checkOpenGLFramebufferStatus(std::string msg,GLenum tgtFBO=GL_FRAMEBUFFER);
+int checkForOpenGLError(string msg);
 
-        void dumpGLInfo(bool dumpExtensions = false);
+int checkOpenGLFramebufferStatus(string msg, GLenum tgt_FBO = GL_FRAMEBUFFER);
 
+void dumpGLInfo(bool dump_extensions = false);
 
+} // namespace GLUtils
+} // namespace gfx
 
-        /*void debugOpenGLCallback( GLenum source, GLenum type, GLuint id,
-         GLenum severity, GLsizei length, const GLchar * msg, const void * param );
-         */
-    }
-}
-
-#endif /* defined(__GLV__GLUtils__) */
+#endif

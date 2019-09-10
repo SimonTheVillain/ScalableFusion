@@ -329,19 +329,16 @@ void TumDataset::readNewSetOfImages() {
 		frame_index_++;
 
 	} else {
-		//frameList.close();
 		running_ = false;
 	}
 
 
 	// If we are done before our time we wait....
 	chrono::system_clock::time_point now = chrono::system_clock::now();
-
 	if(replay_speed != 0) {
 		chrono::system_clock::duration frame_time =
 			chrono::microseconds((int)(33333.0f * (1.0f / replay_speed)));
 		chrono::system_clock::duration duration = now - last_frame_readout_;
-
 		if((frame_time - duration) > chrono::duration<int>(0))
 			this_thread::sleep_for(frame_time - duration);
 	}

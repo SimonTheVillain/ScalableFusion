@@ -1,9 +1,5 @@
-//
-// Created by simon on 3/25/19.
-//
-
-#ifndef SUPERMAPPING_GARBAGECOLLECTOR_H
-#define SUPERMAPPING_GARBAGECOLLECTOR_H
+#ifndef FILE_GARBAGECOLLECTOR_H
+#define FILE_GARBAGECOLLECTOR_H
 
 #include <map>
 #include <vector>
@@ -12,32 +8,29 @@
 #include <thread>
 #include <functional>
 
+using namespace std;
 
-
-//TODO: this garbage collector could also be used to handle FBOs
+// TODO: this garbage collector could also be used to handle FBOs
 class GarbageCollector {
-private:
-    std::mutex listMutex;
-    std::unordered_map<std::thread::id,std::vector<std::function<void()>>> cleanList;
-    std::unordered_map<std::thread::id,std::vector<std::function<void()>>> forceCleanList;
-
-
 public:
 
-    void Collect();
+	void collect();
 
-    //always call this at the end of a thread. this is to ensure that all opengl resources that exist on
-    //per thread basis are deleted properly
-    void ForceCollect();
+	// Always call this at the end of a thread. This is to ensure that all openGL 
+	// resources that exist on a per thread basis are deleted properly.
+	void forceCollect();
 
+	void addToClean(std::thread::id id,std::function<void()> func);
 
+	void addToForceCollect(std::function<void()> func);
 
-    void AddToClean(std::thread::id id,std::function<void()> func);
+private:
 
-    void AddToForceCollect(std::function<void()> func);
-
+	mutex list_mutex_;
+	unordered_map<thread::id, vector<function<void()>>> list_clean_;
+	unordered_map<thread::id, vector<function<void()>>> list_force_clean_;
 
 };
 
 
-#endif //SUPERMAPPING_GARBAGECOLLECTOR_H
+#endif

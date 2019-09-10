@@ -11,19 +11,19 @@ using namespace Eigen;
 TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
                        bool use_high_res, int skip_n_frames, float depth_scale,
                        float trajectory_GT_scale, bool invert_GT_trajectory) 
-	: folder_path_(folder),
-	  frame_index_(skip_n_frames),
-	  has_high_res_(false),
-	  has_poses_(use_pose),
-	  radiometric_response_(nullptr),
-	  read_depth_(false),
-	  read_rgb_(false),
-	  replay_speed(0),
-	  running_(false),
-	  scale_depth_(depth_scale),
-	  skip_count(20),
-	  vignetting_response_(nullptr),
-	  white_fix_(cv::Vec3f(1, 1, 1)) {
+		: folder_path_(folder),
+		  frame_index_(skip_n_frames),
+		  has_high_res_(false),
+		  has_poses_(use_pose),
+		  radiometric_response_(nullptr),
+		  read_depth_(false),
+		  read_rgb_(false),
+		  replay_speed(0),
+		  running_(false),
+		  scale_depth_(depth_scale),
+		  skip_count(20),
+		  vignetting_response_(nullptr),
+		  white_fix_(cv::Vec3f(1, 1, 1)) {
 
 	// Open frame association file
 	ifstream frame_list;

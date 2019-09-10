@@ -9,11 +9,12 @@ namespace gfx {
 
 class ViewController {
 public:
-    virtual bool isCursorResponder() {return true;}
-    virtual bool isOnlyCursorResponder() {return true;}//says if the cursor should get captured
-    virtual bool isKeyboardResponder() {return true;}
-    virtual bool isOnlyKeyboardResponder() {return true;}
-    //now stuff to capture all this keyboard events
+
+	virtual bool isCursorResponder() {return true;}
+	virtual bool isOnlyCursorResponder() {return true;}//says if the cursor should get captured
+	virtual bool isKeyboardResponder() {return true;}
+	virtual bool isOnlyKeyboardResponder() {return true;}
+	//now stuff to capture all this keyboard events
 };
 
 } // namespace gfx

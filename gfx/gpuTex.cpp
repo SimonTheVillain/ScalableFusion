@@ -1,489 +1,323 @@
 #include "gpuTex.h"
-#include "glUtils.h"
-#include "GarbageCollector.h"
+
 #include <iostream>
-#include <stdio.h>
 #include <cstring>
+#include <chrono>
+
+#include <stdio.h>
 #include <assert.h>
 
 #include <cuda.h>
 #include <cuda_gl_interop.h>
-//#include <opencv2/cudaimgproc.hpp>
 
-
-#include <chrono>
-
+#include "glUtils.h"
+#include "GarbageCollector.h"
 
 using namespace std;
-#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess)
-   {
-      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) assert(false);
-   }
+
+inline void gpuAssert(cudaError_t code, const char *file, int line, 
+                      bool abort = true) {
+	if (code != cudaSuccess) {
+		fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, 
+		        line);
+		if(abort) 
+			assert(0);
+	}
+}
+#define gpuErrchk(ans) gpuAssert((ans), __FILE__, __LINE__);
+
+int gfx::GpuTex2D::overall_tex_count_ = 0;
+int gfx::GpuTex2D::getTexCount() {
+	return overall_tex_count_;
 }
 
-//void copy(cudaTextureObject_t texture,cv::cuda::GpuMat &to);
+mutex gfx::GpuTex2D::overall_tex_list_mutex_;
+vector<gfx::GpuTex2D*> gfx::GpuTex2D::overall_tex_list_;
 
-
-
-int gfx::GpuTex2D::overallTexCount = 0;
-int gfx::GpuTex2D::getTexCount()
-{
-    return overallTexCount;
+vector<gfx::GpuTex2D*> gfx::GpuTex2D::getTexList() {
+	return overall_tex_list_;
 }
 
-std::mutex gfx::GpuTex2D::overallTexListMutex;
-std::vector<gfx::GpuTex2D*> gfx::GpuTex2D::overallTexList;
+gfx::GpuTex2D::GpuTex2D(GarbageCollector* garbage_collector,
+                        GLuint gl_internal_format, GLuint gl_format, 
+                        GLuint gl_type, int width, int height, 
+                        bool cuda_normalized_tex_coords, void *data, 
+                        GLint filter_type) 
+		: garbage_collector_(garbage_collector),
+		  gl_format_(gl_format),
+		  gl_internal_format_(gl_internal_format),
+		  gl_type_(gl_type),
+		  height_(height),
+		  width_(width) {
 
-std::vector<gfx::GpuTex2D*> gfx::GpuTex2D::getTexList() {
-    return overallTexList;
+	overall_tex_list_mutex_.lock();
+	overall_tex_count_++;
+	overall_tex_list_.push_back(this);
+	overall_tex_list_mutex_.unlock();
+
+	gfx::GLUtils::checkForOpenGLError("Error before generating glTexture");
+	glGenTextures(1, &gl_name_);
+	gfx::GLUtils::checkForOpenGLError("Error while generating glTexture");
+	glBindTexture(GL_TEXTURE_2D, gl_name_);
+	glTexImage2D(GL_TEXTURE_2D, 0, gl_internal_format_, width_, height_, 0, 
+	             gl_format_, gl_type_, data);
+	gfx::GLUtils::checkForOpenGLError("Error while creating glTexture");
+
+	cudaChannelFormatKind type;
+	int bit_depth = 0;
+	switch(gl_type_) {
+		case GL_UNSIGNED_BYTE:
+			type        = cudaChannelFormatKindUnsigned;
+			bit_depth   = 8;
+			byte_count_ = 1;
+			break;
+		case GL_BYTE:
+			type        = cudaChannelFormatKindSigned;
+			bit_depth   = 8;
+			byte_count_ = 1;
+			break;
+		case GL_UNSIGNED_SHORT:
+			type        = cudaChannelFormatKindUnsigned;
+			bit_depth   = 16;
+			byte_count_ = 2;
+			break;
+		case GL_SHORT:
+			type        = cudaChannelFormatKindSigned;
+			bit_depth   = 16;
+			byte_count_ = 2;
+			break;
+		case GL_UNSIGNED_INT:
+			type        = cudaChannelFormatKindUnsigned;
+			bit_depth   = 32;
+			byte_count_ = 4;
+			break;
+		case GL_INT:
+			type        = cudaChannelFormatKindSigned;
+			bit_depth   = 32;
+			byte_count_ = 4;
+			break;
+		case GL_FLOAT:
+			type = cudaChannelFormatKindFloat;
+			// TODO: distinguish between float16 and float32
+			if(gl_internal_format_ == GL_RGBA16F||
+			   gl_internal_format_ == GL_RGB16F ||
+			   gl_internal_format_ == GL_RG16F  ||
+			   gl_internal_format_ == GL_R16F) {
+				bit_depth   = 16;
+				byte_count_ = 2;
+			} else {
+				bit_depth   = 32;
+				byte_count_ = 4;
+			}
+			break;
+		default:
+			break;
+	}
+
+	switch(gl_format_) {
+		case GL_RED:
+			channel_count_ = 1;
+			break;
+		case GL_RG:
+			channel_count_ = 2;
+			break;
+		case GL_RGB:
+			channel_count_ = 3;
+			break;
+		case GL_RGBA:
+			channel_count_ = 4;
+			break;
+			//integer input
+		case GL_RED_INTEGER:
+			channel_count_ = 1;
+			break;
+		case GL_RG_INTEGER:
+			channel_count_ = 2;
+			break;
+		case GL_RGB_INTEGER:
+			channel_count_ = 3;
+			break;
+		case GL_RGBA_INTEGER:
+			channel_count_ = 4;
+			break;
+		default:
+			cout << "Invalid channel count!" << endl;
+			assert(0);
+			break;
+	}
+
+	// Register resource
+	cudaGraphicsGLRegisterImage(&cuda_texture_resource_, gl_name_, GL_TEXTURE_2D,
+	                            cudaGraphicsRegisterFlagsNone);
+	gpuErrchk(cudaPeekAtLastError());
+
+	// Map resource
+	cudaGraphicsMapResources(1, &cuda_texture_resource_, 0);
+	gpuErrchk(cudaPeekAtLastError());
+
+	// Get array from this mapped resource
+	cudaGraphicsSubResourceGetMappedArray(&cuda_array_reference_, 
+	                                      cuda_texture_resource_, 0, 0);
+	gpuErrchk(cudaPeekAtLastError());
+
+	// Create this cuda texture:
+	cudaResourceDesc res_desc;
+	memset(&res_desc, 0, sizeof(res_desc));
+	res_desc.resType = cudaResourceTypeArray;
+	res_desc.res.array.array = cuda_array_reference_;//this is the only one that is allowed for binding it to a texture or surface
+
+	cudaTextureDesc tex_desc;
+	memset(&tex_desc, 0, sizeof(tex_desc));
+	tex_desc.addressMode[0]   = cudaAddressModeBorder;
+	tex_desc.addressMode[1]   = cudaAddressModeBorder;
+	tex_desc.filterMode       = cudaFilterModeLinear;//cudaFilterModePoint //TODO: test filtering for unsigned char
+	tex_desc.normalizedCoords = cuda_normalized_tex_coords;
+	tex_desc.readMode         = cudaReadModeNormalizedFloat;//read the texture normalized.TODO: maybe as parameter
+	if(type == cudaChannelFormatKindFloat) {
+		tex_desc.filterMode = cudaFilterModeLinear;
+		tex_desc.readMode   = cudaReadModeElementType;//somehow this tends to crash when variable is a float
+	} else {
+		tex_desc.filterMode = cudaFilterModePoint;
+		if(bit_depth == 32){
+			tex_desc.readMode = cudaReadModeElementType;
+		}
+	}
+
+	// Create texture object
+	cudaCreateTextureObject(&cuda_texture_reference_, &res_desc, &tex_desc, NULL);
+	gpuErrchk(cudaPeekAtLastError());
+
+	//create surface object
+	///TODO: check if this really works
+	cudaCreateSurfaceObject(&cuda_surface_reference_, &res_desc);
+	gpuErrchk(cudaPeekAtLastError());
+
+	//this is the time where we change the texture settings(if we do this before binding the texture to cuda this binding fails.
+	//and if we dont set these settings we for some reasons can't have bindless)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter_type);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter_type);
+
+	//we want to show the problem to solve it //TODO!!!!!
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+	gfx::GLUtils::checkForOpenGLError("Error while obtaining the GL texture handle");
 }
 
-gfx::GpuTex2D::GpuTex2D(GarbageCollector* garbageCollector,GLuint glInternalFormat, GLuint glFormat, GLuint glType, int width, int height,
-        bool cudaNormalizedTexCoords, void *data,GLint filterType)
-{
-    this->garbageCollector = garbageCollector;
-    if(width == 640 && height == 480){
-       // cout << "we got one" << endl;
-    }
+gfx::GpuTex2D::~GpuTex2D() {
+	gfx::GLUtils::checkForOpenGLError("before destroying the gpu tex");
+	overall_tex_count_--;
 
-    overallTexListMutex.lock();
-    overallTexCount++;
-    overallTexList.push_back(this);
-    overallTexListMutex.unlock();
-    auto start = chrono::high_resolution_clock::now();
-    this->m_width=width;
-    this->m_height=height;
-    this->m_glInternalFormat=glInternalFormat;
-    this->m_glFormat=glFormat;
-    this->m_glType=glType;
+	//i think we should make sure that all the textures we want to use are mapped
+	//https://github.com/ugovaretto/cuda-opengl-interop/blob/master/texture3d-write/simpleGL3DSurfaceWrite.cpp
 
+	uint64_t handle = getGlHandle();
+	std::thread::id this_id = this_thread::get_id();
+	token_mutex_.lock();
+	for(auto token : resident_token_) {
+		thread::id id = token.first;
+		if(id != this_id){
+			shared_ptr<bool> sharedToken = token.second;
+			function<void()> cleanupTask = [sharedToken,handle](){
+				if(!(*sharedToken)) {//when the token is set to true then the handle has been cleared already
+					if(glIsTextureHandleResidentARB(handle)){
+						glMakeTextureHandleNonResidentARB(handle);
+					} else {
+						assert(0);//the token should already ensure that the object exists.
+					}
 
-    gfx::GLUtils::checkForOpenGLError("Error before generating glTexture");
-    glGenTextures(1,&glName);
+				}
+				assert(!gfx::GLUtils::checkForOpenGLError("cleaning up the gpu handle"));
+			};
+			garbage_collector_->addToClean(id, cleanupTask);
+		}
+	}
+	resident_token_.clear();//clear all token now
+	// (this prevents the last resort cleanup method from making the handle non-resident)
+	token_mutex_.unlock();
 
-    gfx::GLUtils::checkForOpenGLError("Error while generating glTexture");
-    glBindTexture(GL_TEXTURE_2D,glName);
-    glTexImage2D(GL_TEXTURE_2D, 0, glInternalFormat, width, height, 0, glFormat,
-                  glType, data);
+	gpuErrchk(cudaPeekAtLastError());
+	cudaDestroyTextureObject(cuda_texture_reference_);
+	gpuErrchk(cudaPeekAtLastError());
+	cudaDestroySurfaceObject(cuda_surface_reference_);
+	gpuErrchk(cudaPeekAtLastError());
+	cudaGraphicsUnmapResources(1, &cuda_texture_resource_, 0);
+	cudaGraphicsUnregisterResource(cuda_texture_resource_);//this throws an unknown error
+	gpuErrchk(cudaPeekAtLastError());
+	glDeleteTextures(1, &gl_name_);
+	gfx::GLUtils::checkForOpenGLError("destroying the gpuTex");
 
-    gfx::GLUtils::checkForOpenGLError("Error while creating glTexture");
+	// TODO: check if the cudaDestroy functions are really supposed to work this way
 
-    auto endGlTex =  chrono::high_resolution_clock::now();
-    cudaChannelFormatKind type;
-    int bitDepth = 0;
-    switch(glType){
-    case GL_UNSIGNED_BYTE:
-        type = cudaChannelFormatKindUnsigned;
-        bitDepth=8;
-        byteCount=1;
-        break;
+	//i hope this forces the driver to free the memory
+	glFinish();
+	auto end = chrono::high_resolution_clock::now();
 
-    case GL_BYTE:
-        type = cudaChannelFormatKindSigned;
-        bitDepth=8;
-        byteCount=1;
-        break;
-
-    case GL_UNSIGNED_SHORT:
-        type = cudaChannelFormatKindUnsigned;
-        bitDepth=16;
-        byteCount=2;
-        break;
-
-    case GL_SHORT:
-        type = cudaChannelFormatKindSigned;
-        bitDepth=16;
-        byteCount=2;
-        break;
-
-    case GL_UNSIGNED_INT:
-        type = cudaChannelFormatKindUnsigned;
-        bitDepth=32;
-        byteCount=4;
-        break;
-
-    case GL_INT:
-        type = cudaChannelFormatKindSigned;
-        bitDepth=32;
-        byteCount=4;
-        break;
-
-    case GL_FLOAT:
-        type = cudaChannelFormatKindFloat;
-        bitDepth=32;
-        byteCount=4;
-        //TODO: distinguish between float16 and float32
-        if(glInternalFormat == GL_RGBA16F||
-                glInternalFormat == GL_RGB16F||
-                glInternalFormat == GL_RG16F||
-                glInternalFormat == GL_R16F){
-            bitDepth=16;
-            byteCount=2;
-        }
-        break;
-    default:
-
-        break;
-    }
-
-    //i forgot, we don't need this
-    cudaChannelFormatDesc channelDesc;
-    switch(glFormat){ // i think i would be better of with if else statements
-    case GL_RED:
-        channelDesc=cudaCreateChannelDesc(bitDepth, 0, 0, 0,type);
-        channelCount=1;
-        break;
-    case GL_RG:
-        channelDesc=cudaCreateChannelDesc(bitDepth, bitDepth, 0, 0,type);
-        channelCount=2;
-        break;
-    case GL_RGB:
-        channelDesc=cudaCreateChannelDesc(bitDepth, bitDepth, bitDepth, 0,type);
-        channelCount=3;
-        break;
-    case GL_RGBA:
-        channelDesc=cudaCreateChannelDesc(bitDepth, bitDepth, bitDepth, bitDepth,type);
-        channelCount=4;
-        break;
-        //integer input
-    case GL_RED_INTEGER:
-        channelDesc=cudaCreateChannelDesc(bitDepth, bitDepth, bitDepth, bitDepth,type);
-        channelCount=1;
-        break;
-    case GL_RG_INTEGER:
-        channelDesc=cudaCreateChannelDesc(bitDepth, bitDepth, bitDepth, bitDepth,type);
-        channelCount=2;
-        break;
-    case GL_RGB_INTEGER:
-        channelDesc=cudaCreateChannelDesc(bitDepth, bitDepth, bitDepth, bitDepth,type);
-        channelCount=3;
-        break;
-    case GL_RGBA_INTEGER:
-        channelDesc=cudaCreateChannelDesc(bitDepth, bitDepth, bitDepth, bitDepth,type);
-        channelCount=4;
-        break;
-
-    default:
-        std::cout << "Invalid channel count!"<< std::endl;
-        assert(0);
-        break;
-    }
-
-
-    //register resource
-    cudaGraphicsGLRegisterImage( &cudaTextureResource,
-                                                    glName,
-                                                    GL_TEXTURE_2D,
-                                                    cudaGraphicsRegisterFlagsNone);
-
-    auto endCudaGLRegister = chrono::high_resolution_clock::now();
-    gpuErrchk( cudaPeekAtLastError() );
-
-    //map resource
-    cudaGraphicsMapResources(1 ,
-                             &cudaTextureResource,
-                             0);
-    gpuErrchk( cudaPeekAtLastError() );
-
-    //get array from this mapped resource
-    cudaGraphicsSubResourceGetMappedArray(&cudaArrayReference,
-                                          cudaTextureResource,
-                                          0,0);
-    gpuErrchk( cudaPeekAtLastError() );
-
-    //create this cuda texture:
-    cudaResourceDesc resDesc;
-    memset(&resDesc, 0, sizeof(resDesc));
-    resDesc.resType = cudaResourceTypeArray;
-    resDesc.res.array.array = cudaArrayReference;//this is the only one that is allowed for binding it to a texture or surface
-
-    cudaTextureDesc texDesc;
-    memset(&texDesc, 0, sizeof(texDesc));
-    texDesc.addressMode[0]   = cudaAddressModeBorder;
-    texDesc.addressMode[1]   = cudaAddressModeBorder;
-    texDesc.filterMode       = cudaFilterModeLinear;//cudaFilterModePoint //TODO: test filtering for unsigned char
-    //texDesc.filterMode     = cudaFilterModePoint;//debug against one of these stupid errors
-    texDesc.normalizedCoords = cudaNormalizedTexCoords;//cudaNormalizedTexCoords;
-    texDesc.readMode= cudaReadModeNormalizedFloat;//cudaReadModeNormalizedFloat;//read the texture normalized.TODO: maybe as parameter
-    if(type == cudaChannelFormatKindFloat){
-        texDesc.filterMode       = cudaFilterModeLinear;
-        texDesc.readMode = cudaReadModeElementType;//somehow this tends to crash when variable is a float
-    }else{
-        texDesc.filterMode       = cudaFilterModePoint;
-        if(bitDepth == 32){
-            texDesc.readMode = cudaReadModeElementType;
-        }
-
-    }
-
-    // Create texture object
-    cudaCreateTextureObject(&cudaTextureReference, &resDesc, &texDesc, NULL);
-    gpuErrchk( cudaPeekAtLastError() );
-
-
-
-    //create surface object
-    ///TODO: check if this really works
-    cudaCreateSurfaceObject(&cudaSurfaceReference,&resDesc);
-    gpuErrchk( cudaPeekAtLastError() );
-
-
-    auto endCudaConfig= chrono::high_resolution_clock::now();
-
-    //this is where this is supposed to be after
-    //auto endCuda = chrono::high_resolution_clock::now();
-
-    //this is the time where we change the texture settings(if we do this before binding the texture to cuda this binding fails.
-    //and if we dont set these settings we for some reasons can't have bindless)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterType);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterType);
-
-    //this in the best case only hides the problem
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    //we want to show the problem to solve it //TODO!!!!!
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-    //float color[] = { 1.0f, 0.0f, 0.0f, 1.0f };
-    //glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
-    //bindless texture magic:
-    //glMakeTextureHandleNonResidentARB to make it non resident
-    ///it seems that this call needs to be done after
-    /// cudaGraphicsGLRegisterImage
-    glHandle = glGetTextureHandleARB(glName);
-
-    gfx::GLUtils::checkForOpenGLError("Error while obtaining the GL texture handle");
-    //this seems to have to be called once for everytime it has to be rendered?
-    /*if(!glIsTextureHandleResidentARB(glHandle)){
-        glMakeTextureHandleResidentARB(glHandle);
-    }*/
-
-
-
-
-    auto endGlConfig= chrono::high_resolution_clock::now();
-
-
-    /*
-    std::cout << "[gfx::GpuTex2D::GpuTex2D] "
-                 "Creation of the GL texture took " <<
-                 chrono::duration_cast<chrono::nanoseconds>(endGlTex-start).count() <<
-                 "ns" << endl <<  "Cuda Register GL Tex " <<
-                  chrono::duration_cast<chrono::nanoseconds>(endCudaGLRegister-endGlTex).count() <<
-                 "ns" << endl << "Cuda config took " <<
-                 chrono::duration_cast<chrono::nanoseconds>(
-                     endCudaConfig -endCudaGLRegister).count() <<
-                 "ns" << endl << "GL config took " <<
-                 chrono::duration_cast<chrono::nanoseconds>(
-                     endGlConfig-endCudaConfig).count() <<
-                 "ns" << endl;
-    */
-
-
-    //glDeleteTextures(1,&glName);//DEBUG!!!!
-    //cout << "[gfx::GpuTex2D::GpuTex2D] deleting textures is shit" << endl;
-
-
-    //THIS is a giant debug effort to get rid of errors that are caused
-    //by the opengl cuda interoperability.
-    /*
-    glBindTexture(GL_TEXTURE_3D, 0);
-    //cudaGraphicsMapResources(1,&cudaTextureResource,0);
-    gpuErrchk( cudaPeekAtLastError() );
-    cudaGraphicsUnmapResources(1,&cudaTextureResource,0);
-    //cudaGraphicsUnregisterResource(cudaTextureResource);//this throws an unknown error
-    //gpuErrchk( cudaPeekAtLastError() );
-    glDeleteTextures(1,&glName);
-    gfx::GLUtils::checkForOpenGLError("e");
-
-    ///TODO: check if the cudaDestroy functions are really supposed to work this way
-    cudaDestroyTextureObject(cudaTextureReference);
-    cudaDestroySurfaceObject(cudaSurfaceReference);
-    cout << "[gfx::GpuTex2D::~GpuTex2D] destruction of our gpu references and objects for this texture" << endl;
-    gpuErrchk( cudaPeekAtLastError() );
-    //cout << "am i the only one throwing exceptions" << endl;
-    */
-
+	overall_tex_list_mutex_.lock();
+	for(size_t i = overall_tex_list_.size() - 1; i >= 0; i--) {
+		if(overall_tex_list_[i] == this) {
+			overall_tex_list_[i] = overall_tex_list_[overall_tex_list_.size() - 1];
+			overall_tex_list_.pop_back();
+			overall_tex_list_mutex_.unlock();
+			return;
+		}
+	}
+	overall_tex_list_mutex_.unlock();
 }
 
-gfx::GpuTex2D::~GpuTex2D()
-{
-    gfx::GLUtils::checkForOpenGLError("before destroying the gpu tex");
-    overallTexCount--;
-    /* helpful debug output
-    if(!name.empty()){
-        cout << "[gfx::GpuTex2D::~GpuTex2D] destruction of " << name << endl;
-    }else{
-        cout << "[gfx::GpuTex2D::~GpuTex2D] destruction of our gpu references and objects for this texture" << endl;
-    }
-    */
-
-    auto start= chrono::high_resolution_clock::now();
-
-    //i think we should make sure that all the textures we want to use are mapped
-    //https://github.com/ugovaretto/cuda-opengl-interop/blob/master/texture3d-write/simpleGL3DSurfaceWrite.cpp
-
-    /*
-    if(glIsTextureHandleResidentARB(glHandle)){
-        glMakeTextureHandleNonResidentARB(glHandle);
-    }*/
-    uint64_t handle = getGlHandle();
-    std::thread::id this_id = this_thread::get_id();
-    tokenMutex.lock();
-    for(auto token : residentToken){
-        thread::id id = token.first;
-        if(id != this_id){
-            //when deleting the texture in one thread, the
-            shared_ptr<bool> sharedToken = token.second;
-            function<void()> cleanupTask = [sharedToken,handle](){
-                if(!(*sharedToken)){//when the token is set to true then the handle has been cleared already
-                    if(glIsTextureHandleResidentARB(handle)){
-                        glMakeTextureHandleNonResidentARB(handle);
-                    }else{
-                        assert(0);//the token should already ensure that the object exists.
-                    }
-
-                }
-                assert(!gfx::GLUtils::checkForOpenGLError("cleaning up the gpu handle"));
-                //this sharedToken is a little unnecessary but it should show that the sharedToken is doing something here
-                //it is retained until this function finishes
-                //sharedToken.reset();
-            };
-            garbageCollector->AddToClean(id,cleanupTask);
-        }
-    }
-    residentToken.clear();//clear all token now
-    // (this prevents the last resort cleanup method from making the handle non-resident)
-    tokenMutex.unlock();
-
-
-    //cudaGraphicsMapResources(1,&cudaTextureResource,0);
-    //gpuErrchk( cudaPeekAtLastError() );
-    gpuErrchk( cudaPeekAtLastError() );
-    cudaDestroyTextureObject(cudaTextureReference);
-    gpuErrchk( cudaPeekAtLastError() );
-    cudaDestroySurfaceObject(cudaSurfaceReference);
-    gpuErrchk( cudaPeekAtLastError() );
-    cudaGraphicsUnmapResources(1,&cudaTextureResource,0);
-    cudaGraphicsUnregisterResource(cudaTextureResource);//this throws an unknown error
-    gpuErrchk( cudaPeekAtLastError() );
-    glDeleteTextures(1,&glName);
-    gfx::GLUtils::checkForOpenGLError("destroying the gpuTex");
-
-    ///TODO: check if the cudaDestroy functions are really supposed to work this way
-
-
-    //cout << "am i the only one throwing exceptions" << endl;
-
-    //i hope this forces the driver to free the memory
-    glFinish();
-    auto end= chrono::high_resolution_clock::now();
-    /*
-    std::cout << "[gfx::GpuTex2D::~GpuTex2D] "
-                 "deletion of the  texture took " <<
-                 chrono::duration_cast<chrono::nanoseconds>(end-start).count() <<
-                 "ns" << endl;*/
-
-    overallTexListMutex.lock();
-    for(size_t i=overallTexList.size()-1;i>=0;i--){
-        if(overallTexList[i] == this){
-            overallTexList[i] = overallTexList[overallTexList.size()-1];
-            overallTexList.pop_back();
-            overallTexListMutex.unlock();
-            return;
-        }
-    }
-    overallTexListMutex.unlock();
+void gfx::GpuTex2D::uploadData(void *data) {
+	cudaMemcpyToArray(cuda_array_reference_, 0, 0, data, 
+	                  width_ * height_ * byte_count_ * channel_count_,
+	                  cudaMemcpyHostToDevice);
 }
 
-void gfx::GpuTex2D::uploadData(void *data)
-{
-    cudaMemcpyToArray(cudaArrayReference,0,0,data,m_width*m_height*byteCount*channelCount,cudaMemcpyHostToDevice);
+void gfx::GpuTex2D::uploadData(void *data, int width, int height) {
+	uploadData(data, 0, 0, width, height);
 }
 
-void gfx::GpuTex2D::uploadData(void *data, int width, int height)
-{
-    //cout << "[GpuTex2D uploadData]this does not work, use the cuda function!!!!!!!" << endl;
-    /*glBindTexture(GL_TEXTURE_2D,glName);
-    glTexSubImage2DEXT(GL_TEXTURE_2D,
-                        0,//level
-                        0,
-                        0,
-                        width,
-                        height,
-                        m_glFormat,
-                        m_glType,
-                        data);
-                        */
-    uploadData(data,0,0,width,height);
-
+void gfx::GpuTex2D::uploadData(void *data, int x, int y, int width, int height) {
+	cudaMemcpy2DToArray(cuda_array_reference_, x * byte_count_ * channel_count_,
+	                    y, data, width * byte_count_ * channel_count_,
+	                    width * byte_count_ * channel_count_, height,
+	                    cudaMemcpyHostToDevice);
 }
 
-void gfx::GpuTex2D::uploadData(void *data, int x, int y, int width, int height)
-{
-    cudaMemcpy2DToArray(cudaArrayReference,
-                        x*byteCount*channelCount,y,//offset of the target
-                        data,
-                        width*byteCount*channelCount,
-                        width*byteCount*channelCount,
-                        height,
-                        cudaMemcpyHostToDevice);
+void gfx::GpuTex2D::downloadData(void *data) {
+	downloadData(data, 0, 0, width_, height_);
 }
 
-void gfx::GpuTex2D::downloadData(void *data)
-{
-    downloadData(data,0,0,m_width,m_height);
-
+void gfx::GpuTex2D::downloadData(void *data, int x, int y, int width, 
+                                 int height) {
+	#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
+	cout << "indeed it is not functional!!!!!!! shit!!!!!! << i think the dpitch is not right" << endl;
+	#endif
+	cudaMemcpy2DFromArray(data, byte_count_ * channel_count_ * width,//dpitch (not sure about that) //step
+	                      cuda_array_reference_, x * byte_count_ * channel_count_, 
+	                      y,//x in bytes?
+	                      width * byte_count_ * channel_count_, height_,
+	                      cudaMemcpyDeviceToHost);
+	gpuErrchk(cudaPeekAtLastError());
 }
-
-void gfx::GpuTex2D::downloadData(void *data, int x, int y, int width, int height)
-{
-#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
-    //cout << "[gfx::GpuTex2D::downloadData] THIS IS NOT TESTED YET" << endl;
-    cout << "indeed it is not functional!!!!!!! shit!!!!!! << i think the dpitch is not right" << endl;
-#endif
-    //cout << "channel count (DEBUG) " << channelCount << endl;
-    cudaMemcpy2DFromArray(data,
-                          byteCount*channelCount*width,//dpitch (not sure about that) //step
-                          cudaArrayReference,
-                          x*byteCount*channelCount,y,//x in bytes?
-                          width*byteCount*channelCount,//definitely in bytes
-                          height,
-                          cudaMemcpyDeviceToHost);
-    gpuErrchk( cudaPeekAtLastError() );
-}
-
-
 
 void gfx::GpuTex2D::makeResidentInThisThread() {
-    thread::id id= this_thread::get_id();
-    uint64_t handle = getGlHandle();
-    if(!glIsTextureHandleResidentARB(handle)){
-        glMakeTextureHandleResidentARB(handle);
-        shared_ptr<bool> token = make_shared<bool>(false);//create the token!!!
-        tokenMutex.lock();
-        residentToken[id] = token;
-        tokenMutex.unlock();
-        weak_ptr<bool> weakToken = token;
-        std::function<void()> lastResortDelete = [weakToken, handle](){
-            if(!weakToken.expired()){
-                *weakToken.lock() = true;
-                //make the handle non resident only if none of the token still exists for this thread
-                glMakeTextureHandleNonResidentARB(handle);
-                assert(!gfx::GLUtils::checkForOpenGLError("making a handle non resident in thread"));
-            }
-        };
-        garbageCollector->AddToForceCollect(lastResortDelete);
-
-    }
-
-    assert(!gfx::GLUtils::checkForOpenGLError("Error at making the texture resident"));
+	thread::id id = this_thread::get_id();
+	uint64_t handle = getGlHandle();
+	if(!glIsTextureHandleResidentARB(handle)) {
+		glMakeTextureHandleResidentARB(handle);
+		shared_ptr<bool> token = make_shared<bool>(false);//create the token!!!
+		token_mutex_.lock();
+		resident_token_[id] = token;
+		token_mutex_.unlock();
+		weak_ptr<bool> weak_token = token;
+		std::function<void()> last_resort_delete = [weak_token, handle]() {
+			if(!weak_token.expired()) {
+				*weak_token.lock() = true;
+				//make the handle non resident only if none of the token still exists for this thread
+				glMakeTextureHandleNonResidentARB(handle);
+				assert(!gfx::GLUtils::checkForOpenGLError("making a handle non resident in thread"));
+			}
+		};
+		garbage_collector_->addToForceCollect(last_resort_delete);
+	}
+	assert(!gfx::GLUtils::checkForOpenGLError("Error at making the texture resident"));
 }
-
-

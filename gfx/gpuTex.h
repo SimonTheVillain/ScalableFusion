@@ -1,93 +1,88 @@
 #ifndef FILE_GPUTEX_H
 #define FILE_GPUTEX_H
 
-#include <GL/glew.h>
-//#include <cublas.h>
-#include <cuda_gl_interop.h>
-
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <thread>
 #include <mutex>
 
+#include <GL/glew.h>
+#include <cuda_gl_interop.h>
 
+using namespace std;
 
 class GarbageCollector;
 
+// TODO: incorporate cuda streams into the whole mess!!!!
+// TODO: create a few constants for the constructor to
+//       easily initialize the most common texture types
+namespace gfx {
 
-
-//TODO: incorporate cuda streams into the whole mess!!!!
-//TODO: create a few constants for the constructor to
-//easily initialize the most common texture types
-namespace gfx{
-class GpuTex2D{
-private:
-    uint64_t glHandle;
-    GLuint glName;
-    GLuint m_glInternalFormat;
-    GLuint m_glType;
-    GLuint m_glFormat;
-    int channelCount;
-    int byteCount;
-    struct cudaGraphicsResource* cudaTextureResource;
-    cudaResourceDesc cudaResDesc;
-    cudaTextureObject_t cudaTextureReference;
-    cudaSurfaceObject_t cudaSurfaceReference;
-    cudaArray_t cudaArrayReference;
-    int m_width,m_height;
-
-    GarbageCollector* garbageCollector;
-    std::mutex tokenMutex;
-    std::unordered_map<std::thread::id,std::shared_ptr<bool>> residentToken;
-
-
-    static int overallTexCount;
-    static std::mutex overallTexListMutex;
-    static std::vector<GpuTex2D*> overallTexList;
+class GpuTex2D {
 public:
-    static int getTexCount();
-    static std::vector<GpuTex2D*> getTexList();
-    std::string name;
 
-    //GarbageCollector *garbageCollector,//TODO: make the garbage collector mandatory
-    GpuTex2D(GarbageCollector *garbageCollector,GLuint glInternalFormat,GLuint glFormat,GLuint glType,int width,int height,bool cudaNormalizedTexCoords,
-            void* data=NULL,GLint filterType = GL_LINEAR);
+	// TODO: make the garbage collector mandatory
+	GpuTex2D(GarbageCollector *garbage_collector, GLuint gl_internal_format,
+	         GLuint gl_format, GLuint gl_type, int width, int height,
+	         bool cuda_normalized_tex_coords, void* data = NULL,
+	         GLint filter_type = GL_LINEAR);
 
+	~GpuTex2D();
 
-    ~GpuTex2D();
+	cudaTextureObject_t      getCudaTextureObject() {return cuda_texture_reference_;}
+	cudaSurfaceObject_t      getCudaSurfaceObject() {return cuda_surface_reference_;}
+	GLuint                   getGlFormat() {return gl_format_;}
+	uint64_t                 getGlHandle() {return gl_handle_;}
+	GLuint                   getGlInternalFormat() {return gl_internal_format_;}
+	GLuint                   getGlName() {return gl_name_;}
+	GLuint                   getGlType() {return gl_type_;};
+	static int               getTexCount();
+	static vector<GpuTex2D*> getTexList();
+	int                      getWidth() {return width_;}
+	int                      getHeight() {return height_;}
 
+	void uploadData(void* data); //if size == 0 we only load
+	void uploadData(void* data, int width_, int height_);
+	void uploadData(void* data, int x, int y, int width, int height);
 
-    void uploadData(void* data); //if size==0 we only load
-    void uploadData(void* data,int m_width,int m_height);
-    void uploadData(void* data,int x,int y,int width,int height);
+	void downloadData(void* data);
+	void downloadData(void* data, int x, int y, int width, int height);
 
-    void downloadData(void* data);
-    void downloadData(void* data,int x, int y,int width, int height);
+	void makeResidentInThisThread();
 
-    GLuint getGlName(){return glName;}
+	string name;
 
-    void makeResidentInThisThread();
-    uint64_t getGlHandle(){return glHandle;}
+private:
 
-    cudaTextureObject_t getCudaTextureObject(){return cudaTextureReference;}
-    cudaSurfaceObject_t getCudaSurfaceObject(){return cudaSurfaceReference;}
+	GLuint   gl_format_;
+	uint64_t gl_handle_;
+	GLuint   gl_internal_format_;
+	GLuint   gl_name_;
+	GLuint   gl_type_;
 
-    int getWidth(){return m_width;}
+	struct cudaGraphicsResource* cuda_texture_resource_;
+	cudaResourceDesc             cuda_res_desc_;
+	cudaTextureObject_t          cuda_texture_reference_;
+	cudaSurfaceObject_t          cuda_surface_reference_;
+	cudaArray_t                  cuda_array_reference_;
 
-    int getHeight(){return m_height;}
+	int channel_count_;
+	int byte_count_;
 
-    GLuint getGlInternalFormat(){return m_glInternalFormat;};
-    GLuint getGlType(){return m_glType;};
-    GLuint getGlFormat(){return m_glFormat;};
+	int height_;
+	int width_;
 
+	GarbageCollector* garbage_collector_;
+	mutex             token_mutex_;
+	unordered_map<thread::id, shared_ptr<bool>> resident_token_;
 
-    //GLuint GetFbo();
-
-
-
+	static int               overall_tex_count_;
+	static vector<GpuTex2D*> overall_tex_list_;
+	static mutex             overall_tex_list_mutex_;
 
 };
-}
+
+} // namespace gfx
 
 #endif

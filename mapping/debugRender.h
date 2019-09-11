@@ -1,54 +1,52 @@
-#ifndef DEBUG_RENDER_H
-#define DEBUG_RENDER_H
+#ifndef FILE_DEBUG_RENDER_H
+#define FILE_DEBUG_RENDER_H
 
-#include "../gfx/shader.h"
 #include <mutex>
 #include <memory>
 
+#include "../gfx/shader.h"
 
 class MeshPatch;
 
-
-
-class RenderDebugInfo{
-private:
-    std::mutex mutex;
-    GLuint startIndex;
-
-    GLuint count=0;
-    std::shared_ptr<gfx::GLSLProgram> shader;
+class RenderDebugInfo {
 public:
-    struct ShowPatch{
-        float r,g,b,a;
-        MeshPatch* patch;
-    };
-    std::vector<ShowPatch> patches;
-    GLuint vertexBuffer;
-    GLuint triangleBuffer;
-    GLuint infoBuffer;
-    GLuint texPosBuffer;
 
-    bool forceDstGeom = false;
+	struct ShowPatch {
+		float r, g, b, a;
+		MeshPatch* patch;
+	};
 
-    MeshPatch* renderedPatch = nullptr;
+	RenderDebugInfo();
 
+	~RenderDebugInfo();
 
+	void render(Eigen::Matrix4f proj, Eigen::Matrix4f cam_pose);
+	void setIndexCount(int index, int count);
 
-    //also make the color configurable;
+	void addPatch(MeshPatch *patch, float r, float g, float b);
+	void setPatch(MeshPatch *patch);
 
+	std::vector<ShowPatch> patches;
 
-    RenderDebugInfo();
+	GLuint vertex_buffer;
+	GLuint triangle_buffer;
+	GLuint info_buffer;
+	GLuint tex_pos_buffer;
 
-    ~RenderDebugInfo();
+	bool force_dst_geom;
 
-    void render(Eigen::Matrix4f proj,
-                Eigen::Matrix4f _camPose);
-    void setIndexCount(int index,int count);
+	MeshPatch *rendered_patch;
 
-    void addPatch(MeshPatch* patch, float r,float g,float b);
-    void setPatch(MeshPatch* patch);
+	//also make the color configurable;
 
+private:
+	
+	std::mutex mutex_;
 
+	GLuint start_index_;
+	GLuint count_;
+
+	std::shared_ptr<gfx::GLSLProgram> shader_;
 
 };
 

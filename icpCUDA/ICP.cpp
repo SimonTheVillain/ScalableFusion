@@ -1,253 +1,258 @@
-#include "ICPOdometry.h"
-
 #include <iomanip>
 #include <fstream>
 #include <chrono>
+
 #include <pangolin/image/image_io.h>
 
-std::ifstream asFile;
-std::string directory;
+#include "ICPOdometry.h"
 
-void tokenize(const std::string & str, std::vector<std::string> & tokens, std::string delimiters = " ")
-{
-    tokens.clear();
+using namespace std;
 
-    std::string::size_type lastPos = str.find_first_not_of(delimiters, 0);
-    std::string::size_type pos = str.find_first_of(delimiters, lastPos);
+ifstream as_file;
+string directory;
 
-    while (std::string::npos != pos || std::string::npos != lastPos)
-    {
-        tokens.push_back(str.substr(lastPos, pos - lastPos));
-        lastPos = str.find_first_not_of(delimiters, pos);
-        pos = str.find_first_of(delimiters, lastPos);
-    }
+void tokenize(const string &str, vector<string> &tokens, 
+              string delimiters = " ") {
+	tokens.clear();
+
+	string::size_type last_pos = str.find_first_not_of(delimiters, 0);
+	string::size_type pos      = str.find_first_of(delimiters, last_pos);
+
+	while(string::npos != pos || string::npos != last_pos) {
+		tokens.push_back(str.substr(last_pos, pos - last_pos));
+		last_pos = str.find_first_not_of(delimiters, pos);
+		pos      = str.find_first_of(delimiters, last_pos);
+	}
 }
 
-uint64_t loadDepth(pangolin::Image<unsigned short> & depth)
-{
-    std::string currentLine;
-    std::vector<std::string> tokens;
-    std::vector<std::string> timeTokens;
+uint64_t loadDepth(pangolin::Image<unsigned short> &depth) {
+	string         current_line;
+	vector<string> tokens;
+	vector<string> time_tokens;
 
-    do
-    {
-        getline(asFile, currentLine);
-        tokenize(currentLine, tokens);
-    } while(tokens.size() > 2);
+	do {
+		getline(as_file, current_line);
+		tokenize(current_line, tokens);
+	} while(tokens.size() > 2);
 
-    if(tokens.size() == 0)
-        return 0;
+	if(tokens.size() == 0)
+		return 0;
 
-    std::string depthLoc = directory;
-    depthLoc.append(tokens[1]);
+	string depth_loc = directory;
+	depth_loc.append(tokens[1]);
 
-    pangolin::TypedImage depthRaw = pangolin::LoadImage(depthLoc, pangolin::ImageFileTypePng);
+	pangolin::TypedImage depth_raw = 
+		pangolin::LoadImage(depth_loc, pangolin::ImageFileTypePng);
 
-    pangolin::Image<unsigned short> depthRaw16((unsigned short*)depthRaw.ptr, depthRaw.w, depthRaw.h, depthRaw.w * sizeof(unsigned short));
+	pangolin::Image<unsigned short> depth_raw_16(
+		(unsigned short*)depth_raw.ptr, depth_raw.w,
+		depth_raw.h, depth_raw.w * sizeof(unsigned short));
 
-    tokenize(tokens[0], timeTokens, ".");
+	tokenize(tokens[0], time_tokens, ".");
 
-    std::string timeString = timeTokens[0];
-    timeString.append(timeTokens[1]);
+	string time_string = time_tokens[0];
+	time_string.append(time_tokens[1]);
 
-    uint64_t time;
-    std::istringstream(timeString) >> time;
+	uint64_t time;
+	istringstream(time_string) >> time;
 
-    for(unsigned int i = 0; i < 480; i++)
-    {
-        for(unsigned int j = 0; j < 640; j++)
-        {
-            depth.RowPtr(i)[j] = depthRaw16(j, i)  / 5;
-        }
-    }
+	for(unsigned int i = 0; i < 480; i++) {
+		for(unsigned int j = 0; j < 640; j++) {
+			depth.RowPtr(i)[j] = depth_raw_16(j, i) / 5;
+		}
+	}
 
-    depthRaw.Dealloc();
+	depth_raw.Dealloc();
 
-    return time;
+	return time;
 }
 
-void outputFreiburg(const std::string filename, const uint64_t & timestamp, const Eigen::Matrix4f & currentPose)
-{
-    std::ofstream file;
-    file.open(filename.c_str(), std::fstream::app);
+void outputFreiburg(const string filename, const uint64_t &timestamp, 
+                    const Eigen::Matrix4f &currentPose) {
+	ofstream file;
+	file.open(filename.c_str(), fstream::app);
 
-    std::stringstream strs;
+	stringstream strs;
 
-    strs << std::setprecision(6) << std::fixed << (double)timestamp / 1000000.0 << " ";
+	strs << setprecision(6) << fixed << (double)timestamp / 1000000.0 << " ";
 
-    Eigen::Vector3f trans = currentPose.topRightCorner(3, 1);
-    Eigen::Matrix3f rot = currentPose.topLeftCorner(3, 3);
+	Eigen::Vector3f trans = currentPose.topRightCorner(3, 1);
+	Eigen::Matrix3f rot   = currentPose.topLeftCorner(3, 3);
 
-    file << strs.str() << trans(0) << " " << trans(1) << " " << trans(2) << " ";
+	file << strs.str() << trans(0) << " " << trans(1) << " " << trans(2) << " ";
 
-    Eigen::Quaternionf currentCameraRotation(rot);
+	Eigen::Quaternionf current_cam_rot(rot);
 
-    file << currentCameraRotation.x() << " " << currentCameraRotation.y() << " " << currentCameraRotation.z() << " " << currentCameraRotation.w() << "\n";
+	file << current_cam_rot.x() << " " 
+	     << current_cam_rot.y() << " " 
+	     << current_cam_rot.z() << " " 
+	     << current_cam_rot.w() << "\n";
 
-    file.close();
+	file.close();
 }
 
-uint64_t getCurrTime()
-{
-    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+uint64_t getCurrTime() {
+	return 
+		chrono::duration_cast<chrono::microseconds>(
+			chrono::high_resolution_clock::now().time_since_epoch()
+		).count();
 }
 
-int main(int argc, char * argv[])
-{
-    assert((argc == 2 || argc == 3) && "Please supply the depth.txt dir as the first argument");
+int main(int argc, char *argv[]) {
+	assert((argc == 2 || argc == 3) && 
+	       "Please supply the depth.txt dir as the first argument");
 
-    directory.append(argv[1]);
+	directory.append(argv[1]);
 
-    if(directory.at(directory.size() - 1) != '/')
-    {
-        directory.append("/");
-    }
+	if(directory.at(directory.size() - 1) != '/') {
+		directory.append("/");
+	}
 
-    std::string associationFile = directory;
-    associationFile.append("depth.txt");
+	string association_file = directory;
+	association_file.append("depth.txt");
 
-    asFile.open(associationFile.c_str());
+	as_file.open(association_file.c_str());
 
-    pangolin::ManagedImage<unsigned short> firstData(640, 480);
-    pangolin::ManagedImage<unsigned short> secondData(640, 480);
+	pangolin::ManagedImage<unsigned short> first_data(640, 480);
+	pangolin::ManagedImage<unsigned short> second_data(640, 480);
 
-    pangolin::Image<unsigned short> firstRaw(firstData.w, firstData.h, firstData.pitch, (unsigned short*)firstData.ptr);
-    pangolin::Image<unsigned short> secondRaw(secondData.w, secondData.h, secondData.pitch, (unsigned short*)secondData.ptr);
+	pangolin::Image<unsigned short> first_raw(first_data.w, first_data.h, 
+	                                          first_data.pitch, 
+	                                          (unsigned short*)first_data.ptr);
+	pangolin::Image<unsigned short> second_raw(second_data.w, second_data.h, 
+	                                           second_data.pitch, 
+	                                           (unsigned short*)second_data.ptr);
 
-    ICPOdometry icpOdom(640, 480, 319.5, 239.5, 528, 528);
+	ICPOdometry icp_odom(640, 480, 319.5, 239.5, 528, 528);
 
-    assert(!asFile.eof() && asFile.is_open());
+	assert(!as_file.eof() && as_file.is_open());
 
-    loadDepth(firstRaw);
-    uint64_t timestamp = loadDepth(secondRaw);
+	loadDepth(first_raw);
+	uint64_t timestamp = loadDepth(second_raw);
 
-    Sophus::SE3d T_wc_prev;
-    Sophus::SE3d T_wc_curr;
+	Sophus::SE3d T_wc_prev;
+	Sophus::SE3d T_wc_curr;
 
-    std::ofstream file;
-    file.open("output.poses", std::fstream::out);
-    file.close();
+	ofstream file;
+	file.open("output.poses", fstream::out);
+	file.close();
 
-    cudaDeviceProp prop;
+	cudaDeviceProp prop;
 
-    cudaGetDeviceProperties(&prop, 0);
+	cudaGetDeviceProperties(&prop, 0);
 
-    std::string dev(prop.name);
+	string dev(prop.name);
 
-    std::cout << dev << std::endl;
+	cout << dev << endl;
 
-    float mean = std::numeric_limits<float>::max();
-    int count = 0;
+	float mean = numeric_limits<float>::max();
+	int count = 0;
 
-    int threads = 224;
-    int blocks = 96;
+	int threads = 224;
+	int blocks = 96;
 
-    int bestThreads = threads;
-    int bestBlocks = blocks;
-    float best = mean;
+	int best_threads = threads;
+	int best_blocks = blocks;
+	float best = mean;
 
-    if(argc == 3)
-    {
-        std::string searchArg(argv[2]);
+	if(argc == 3) {
+		string search_arg(argv[2]);
 
-        if(searchArg.compare("-v") == 0)
-        {
-            std::cout << "Searching for the best thread/block configuration for your GPU..." << std::endl;
-            std::cout << "Best: " << bestThreads << " threads, " << bestBlocks << " blocks (" << best << "ms)"; std::cout.flush();
+		if(search_arg.compare("-v") == 0) {
+			cout << "Searching for the best thread/block configuration "
+			        "for your GPU..." << endl;
+			cout << "Best: " << best_threads << " threads, " 
+			     << best_blocks << " blocks (" << best << "ms)";
+			cout.flush();
 
-            float counter = 0;
+			float counter = 0;
 
-            for(threads = 16; threads <= 512; threads += 16)
-            {
-                for(blocks = 16; blocks <= 512; blocks += 16)
-                {
-                    mean = 0.0f;
-                    count = 0;
+			for(threads = 16; threads <= 512; threads += 16) {
+				for(blocks = 16; blocks <= 512; blocks += 16) {
+					mean = 0.0f;
+					count = 0;
 
-                    for(int i = 0; i < 5; i++)
-                    {
-                        icpOdom.initICPModel(firstRaw.ptr);
-                        icpOdom.initICP(secondRaw.ptr);
+					for(int i = 0; i < 5; i++) {
+						icp_odom.initICPModel(first_raw.ptr);
+						icp_odom.initICP(second_raw.ptr);
 
-                        uint64_t tick = getCurrTime();
+						uint64_t tick = getCurrTime();
 
-                        T_wc_prev = T_wc_curr;
+						T_wc_prev = T_wc_curr;
 
-                        Sophus::SE3d T_prev_curr = T_wc_prev.inverse() * T_wc_curr;
+						Sophus::SE3d T_prev_curr = T_wc_prev.inverse() * T_wc_curr;
 
-                        icpOdom.getIncrementalTransformation(T_prev_curr, threads, blocks);
+						icp_odom.getIncrementalTransformation(T_prev_curr, threads, blocks);
 
-                        T_wc_curr = T_wc_prev * T_prev_curr;
+						T_wc_curr = T_wc_prev * T_prev_curr;
 
-                        uint64_t tock = getCurrTime();
+						uint64_t tock = getCurrTime();
 
-                        mean = (float(count) * mean + (tock - tick) / 1000.0f) / float(count + 1);
-                        count++;
-                    }
+						mean = (float(count) * mean + (tock - tick) / 1000.0f) / 
+						       float(count + 1);
+						count++;
+					}
 
-                    counter++;
+					counter++;
 
-                    if(mean < best)
-                    {
-                        best = mean;
-                        bestThreads = threads;
-                        bestBlocks = blocks;
-                    }
+					if(mean < best) {
+						best = mean;
+						best_threads = threads;
+						best_blocks = blocks;
+					}
 
-                    std::cout << "\rBest: " << bestThreads << " threads, " << bestBlocks << " blocks (" << best << "ms), " << int((counter / 1024.f) * 100.f) << "%    "; std::cout.flush();
-                }
-            }
+					cout << "\rBest: " << best_threads << " threads, " 
+					     << best_blocks << " blocks (" << best << "ms), " 
+					     << int((counter / 1024.f) * 100.f) << "%    ";
+					cout.flush();
+				}
+			}
+			cout << endl;
+		}
+	}
 
-            std::cout << std::endl;
-        }
-    }
+	threads = best_threads;
+	blocks = best_blocks;
+	cout << "best: threads " << threads << " blocks " << blocks << endl;
 
-    threads = bestThreads;
-    blocks = bestBlocks;
-    std::cout << "best: threads " << threads << " blocks " << blocks << std::endl;
+	mean = 0.0f;
+	count = 0;
 
-    mean = 0.0f;
-    count = 0;
+	T_wc_prev = Sophus::SE3d();
+	T_wc_curr = Sophus::SE3d();
 
-    T_wc_prev = Sophus::SE3d();
-    T_wc_curr = Sophus::SE3d();
+	while(!as_file.eof()) {
+		icp_odom.initICPModel(first_raw.ptr);
+		icp_odom.initICP(second_raw.ptr);
 
-    while(!asFile.eof())
-    {
-        icpOdom.initICPModel(firstRaw.ptr);
-        icpOdom.initICP(secondRaw.ptr);
+		uint64_t tick = getCurrTime();
 
-        uint64_t tick = getCurrTime();
+		T_wc_prev = T_wc_curr;
 
-        T_wc_prev = T_wc_curr;
+		Sophus::SE3d T_prev_curr = T_wc_prev.inverse() * T_wc_curr;
 
-        Sophus::SE3d T_prev_curr = T_wc_prev.inverse() * T_wc_curr;
+		icp_odom.getIncrementalTransformation(T_prev_curr, threads, blocks);
 
-        icpOdom.getIncrementalTransformation(T_prev_curr, threads, blocks);
+		T_wc_curr = T_wc_prev * T_prev_curr;
 
-        T_wc_curr = T_wc_prev * T_prev_curr;
+		uint64_t tock = getCurrTime();
 
-        uint64_t tock = getCurrTime();
+		mean = (float(count) * mean + (tock - tick) / 1000.0f) / float(count + 1);
+		count++;
 
-        mean = (float(count) * mean + (tock - tick) / 1000.0f) / float(count + 1);
-        count++;
+		cout << setprecision(4) << fixed << "\rICP: " << mean << "ms";
+		cout.flush();
 
-        std::cout << std::setprecision(4) << std::fixed
-                  << "\rICP: "
-                  << mean << "ms";
-                  std::cout.flush();
+		swap(first_raw, second_raw);
 
-        std::swap(firstRaw, secondRaw);
+		outputFreiburg("output.poses", timestamp, T_wc_curr.cast<float>().matrix());
 
-        outputFreiburg("output.poses", timestamp, T_wc_curr.cast<float>().matrix());
+		timestamp = loadDepth(second_raw);
+	}
 
-        timestamp = loadDepth(secondRaw);
-    }
+	cout << endl;
 
-    std::cout << std::endl;
+	cout << "ICP speed: " << int(1000.f / mean) << "Hz" << endl;
 
-    std::cout << "ICP speed: " << int(1000.f / mean) << "Hz" << std::endl;
-
-    return 0;
+	return 0;
 }
-

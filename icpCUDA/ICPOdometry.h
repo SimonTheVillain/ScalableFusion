@@ -1,66 +1,61 @@
-/*
- * ICPOdometry.h
- *
- *  Created on: 17 Sep 2012
- *      Author: thomas
- */
-
-#ifndef ICPODOMETRY_H_
-#define ICPODOMETRY_H_
-
-#include "Cuda/internal.h"
+#ifndef FILE_ICPODOMETRY_H_
+#define FILE_ICPODOMETRY_H_
 
 #include <vector>
-#include <sophus/se3.hpp>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <sophus/se3.hpp>
 
-class ICPOdometry
-{
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        ICPOdometry(int width,
-                     int height,
-                     float cx, float cy, float fx, float fy,
-                     float distThresh = 0.10f,
-                     float angleThresh = sinf(20.f * 3.14159254f / 180.f));
+#include "Cuda/internal.h"
 
-        virtual ~ICPOdometry();
+using namespace std;
 
-        void initICP(unsigned short * depth, const float depthCutoff = 20.0f);
+class ICPOdometry {
+public:
 
-        void initICPModel(unsigned short * depth, const float depthCutoff = 20.0f);
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        void getIncrementalTransformation(Sophus::SE3d & T_prev_curr, int threads, int blocks);
+	ICPOdometry(int width, int height, float cx, float cy, float fx, float fy,
+	            float distThresh = 0.10f, 
+	            float angleThresh = sinf(20.f * 3.14159254f / 180.f));
 
-        float lastError;
-        float lastInliers;
+	virtual ~ICPOdometry();
 
-    private:
-        std::vector<DeviceArray2D<unsigned short>> depth_tmp;
+	void initICP(unsigned short * depth, const float depthCutoff = 20.0f);
 
-        std::vector<DeviceArray2D<float>> vmaps_prev;
-        std::vector<DeviceArray2D<float>> nmaps_prev;
+	void initICPModel(unsigned short * depth, const float depthCutoff = 20.0f);
 
-        std::vector<DeviceArray2D<float>> vmaps_curr;
-        std::vector<DeviceArray2D<float>> nmaps_curr;
+	void getIncrementalTransformation(Sophus::SE3d & T_prev_curr, int threads, 
+	                                  int blocks);
 
-        Intr intr;
+	float last_error;
+	float last_inliers;
 
-        DeviceArray<Eigen::Matrix<float,29,1,Eigen::DontAlign>> sumData;
-        DeviceArray<Eigen::Matrix<float,29,1,Eigen::DontAlign>> outData;
+private:
 
-        static const int NUM_PYRS = 3;
+	static const int NUM_PYRS_ = 3;
 
-        std::vector<int> iterations;
+	vector<DeviceArray2D<unsigned short>> depth_tmp_;
 
-        float dist_thresh;
-        float angle_thresh;
+	vector<DeviceArray2D<float>> vmaps_prev_;
+	vector<DeviceArray2D<float>> nmaps_prev_;
+	vector<DeviceArray2D<float>> vmaps_curr_;
+	vector<DeviceArray2D<float>> nmaps_curr_;
 
-        const int width;
-        const int height;
-        const float cx, cy, fx, fy;
+	Intr intr_;
+
+	DeviceArray<Eigen::Matrix<float, 29, 1, Eigen::DontAlign>> sum_data_;
+	DeviceArray<Eigen::Matrix<float, 29, 1, Eigen::DontAlign>> out_data_;
+
+
+	vector<int> iterations_;
+
+	float dist_thresh_;
+	float angle_thresh_;
+
+	const int width_;
+	const int height_;
 };
 
-#endif /* ICPODOMETRY_H_ */
+#endif

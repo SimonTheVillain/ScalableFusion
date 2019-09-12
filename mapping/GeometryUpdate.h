@@ -1,50 +1,47 @@
-//
-// Created by simon on 8/2/19.
-//
+#ifndef FILE_GEOMETRYUPDATE_H
+#define FILE_GEOMETRYUPDATE_H
 
-#ifndef SUPERMAPPING_GEOMETRYUPDATE_H
-#define SUPERMAPPING_GEOMETRYUPDATE_H
+#include <memory>
 
 #include <Eigen/Eigen>
 #include <opencv2/core.hpp>
-#include <memory>
+
 #include "Meshing.h"
 #include "Stitching.h"
 
 class MeshReconstruction;
 class ActiveSet;
-namespace gfx{
-    class GpuTex2D;
-}
+
+namespace gfx {
+
+class GpuTex2D;
+
+} // namespace gfx
 
 class GeometryUpdate {
 public:
-    MeshReconstruction *meshReconstruction;
-    Meshing meshing;
-    Stitching stitching;
 
-    void Setup(MeshReconstruction* reconstruction){
-        meshReconstruction = reconstruction;
-        stitching.Setup(reconstruction);
-        meshing.Setup(reconstruction);
-    }
+	void setup(MeshReconstruction* reconstruction) {
+		mesh_reconstruction = reconstruction;
+		stitching.Setup(reconstruction);
+		meshing.Setup(reconstruction);
+	}
 
-    void Extend(std::shared_ptr<ActiveSet> activeSetOfFormerlyVisiblePatches,
-                std::shared_ptr<gfx::GpuTex2D> dStdTex,
-                cv::Mat& dStdMat,
-                Eigen::Matrix4f depthPoseIn,
-                std::shared_ptr<gfx::GpuTex2D> rgbTex,
-                Eigen::Matrix4f colorPoseIn);
+	void extend(std::shared_ptr<ActiveSet> active_set_of_formerly_visible_patches,
+	            std::shared_ptr<gfx::GpuTex2D> d_std_tex,
+	            cv::Mat &d_std_mat, Eigen::Matrix4f depth_pose_in,
+	            std::shared_ptr<gfx::GpuTex2D> rgb_tex,
+	            Eigen::Matrix4f color_pose_in);
 
-    //TODO: this!!!!
-    void Update(std::shared_ptr<gfx::GpuTex2D> dStdTex,
-                Eigen::Matrix4f depthPoseIn,
-                std::shared_ptr<ActiveSet> &activeSet);
-
-
-
+	//TODO: this!!!!
+	void update(std::shared_ptr<gfx::GpuTex2D> d_std_tex,
+	            Eigen::Matrix4f depth_pose_in,
+	            std::shared_ptr<ActiveSet> &active_set);
+	
+	MeshReconstruction *mesh_reconstruction;
+	Meshing meshing;
+	Stitching stitching;
 
 };
 
-
-#endif //SUPERMAPPING_GEOMETRYUPDATE_H
+#endif

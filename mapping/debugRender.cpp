@@ -22,12 +22,12 @@ RenderDebugInfo::RenderDebugInfo()
 		: count_(0),
 		  force_dst_geom(false),
 		  rendered_patch(nullptr) {
-	shader = make_shared<GLSLProgram>();
-	shader->compileShader(debug_frag, GLSLShader::GLSLShaderType::FRAGMENT,
-	                      "debugGeometry.frag");
-	shader->compileShader(debug_vert, GLSLShader::GLSLShaderType::VERTEX,
-	                      "debugGeometry.vert");
-	shader->link();
+	shader_ = make_shared<GLSLProgram>();
+	shader_->compileShader(debug_frag, GLSLShader::GLSLShaderType::FRAGMENT,
+	                       "debugGeometry.frag");
+	shader_->compileShader(debug_vert, GLSLShader::GLSLShaderType::VERTEX,
+	                       "debugGeometry.vert");
+	shader_->link();
 }
 
 RenderDebugInfo::~RenderDebugInfo() {
@@ -41,7 +41,7 @@ void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
 	if(patches.empty()) {
 		return;
 	}
-	shader->use();
+	shader_->use();
 
 	gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] Binding triangleBuffer");
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertex_buffer);
@@ -60,7 +60,7 @@ void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
 	glUniformMatrix4fv(0, 1, false, (GLfloat*) &cam_pose);
 	glUniformMatrix4fv(1, 1, false, (GLfloat*) &proj);
 
-	mutex.lock();
+	mutex_.lock();
 
 	for(int i = 0; i < patches.size(); i++) {
 		MeshPatch* p = patches[i].patch;
@@ -111,17 +111,17 @@ void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
 	}
 
 	gfx::GLUtils::checkForOpenGLError(
-		"[RenderMapPresentation::render] Binding texPosBuffer");
-	mutex.unlock();
+			"[RenderMapPresentation::render] Binding texPosBuffer");
+	mutex_.unlock();
 
 	glFinish();
 }
 
 void RenderDebugInfo::setIndexCount(int start_vertex, int vertex_count) {
-	mutex.lock();
+	mutex_.lock();
 	start_index_ = start_vertex;
 	count_ = vertex_count;
-	mutex.unlock();
+	mutex_.unlock();
 }
 
 void RenderDebugInfo::setPatch(MeshPatch *patch) {
@@ -129,6 +129,6 @@ void RenderDebugInfo::setPatch(MeshPatch *patch) {
 }
 
 void RenderDebugInfo::addPatch(MeshPatch *patch, float r, float g, float b) {
-	ShowPatch task = {r, g, b, a, patch};
+	ShowPatch task = {r, g, b, 0, patch};
 	patches.push_back(task);
 }

@@ -498,7 +498,7 @@ void Meshing::genTexIndices(vector<shared_ptr<MeshPatch> > &patches) {
 					// Only use this cast and modify the elements when
 					// you do not modify anything that influences the
 					// operators defined on the set
-					tex_conn->texInds.push_back(&(triangle.texIndices[i]));
+					tex_conn->tex_inds.push_back(&(triangle.texIndices[i]));
 				} else {
 					// Otherwise we create a new container and push back the
 					// right pointer to the texture index
@@ -556,8 +556,8 @@ void Meshing::genTexIndices(vector<shared_ptr<MeshPatch> > &patches) {
 		patch->geomTexPatch->texCoords.resize(vert_set.size());
 		size_t j = 0;
 		for(auto v : vert_set) {
-			for(size_t k = 0; k < v.texInds.size(); k++) {
-				*(v.texInds[k]) = j;
+			for(size_t k = 0; k < v.tex_inds.size(); k++) {
+				*(v.tex_inds[k]) = j;
 			}
 			j++;
 		}

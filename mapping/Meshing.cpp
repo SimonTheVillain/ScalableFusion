@@ -9,12 +9,12 @@ using namespace std;
 int debug_triangle_count = 0;
 
 TriangleReference Meshing::addTriangle(const VertexReference &pr1,
-                                              const VertexReference &pr2,
-                                              const VertexReference &pr3,
-                                              const Triangle::Neighbour &nr1,
-                                              const Triangle::Neighbour &nr2,
-                                              const Triangle::Neighbour &nr3,
-                                              int &rotated) {
+                                       const VertexReference &pr2,
+                                       const VertexReference &pr3,
+                                       const Triangle::Neighbour &nr1,
+                                       const Triangle::Neighbour &nr2,
+                                       const Triangle::Neighbour &nr3,
+                                       int &rotated) {
 
 	rotated = 0;
 	MeshPatch *patch_1 = pr1.getPatch();
@@ -29,8 +29,8 @@ TriangleReference Meshing::addTriangle(const VertexReference &pr1,
 	// First case is every vertex is from the same patch
 	if(patch_1 == patch_2 && patch_1 == patch_3) {
 		MeshPatch* patch = patch_1;
-		patch->workInProgress.lock();
-		patch->cpuTrianglesAhead = true;
+		patch->work_in_progress.lock();
+		patch->cpu_triangles_ahead = true;
 
 		//create a triangle:
 		Triangle triangle;
@@ -40,16 +40,16 @@ TriangleReference Meshing::addTriangle(const VertexReference &pr1,
 		triangle.neighbours[0] = nr1;
 		triangle.neighbours[1] = nr2;
 		triangle.neighbours[2] = nr3;
-		triangle.debugNr = debug_triangle_count++;
+		triangle.debug_nr = debug_triangle_count++;
 
-		patch->cpuTrianglesAhead=true;
+		patch->cpu_triangles_ahead=true;
 
 		TriangleReference triangle_reference;
 		triangle_reference.container = patch;
 		triangle_reference.index = patch->triangles.size();
 		patch->triangles.push_back(triangle);
 		Triangle::registerTriangle(triangle_reference, false); // TODO: check if registering the triangle worked
-		patch->workInProgress.unlock();
+		patch->work_in_progress.unlock();
 		return triangle_reference;
 	}
 
@@ -70,10 +70,10 @@ TriangleReference Meshing::addTriangle(const VertexReference &pr1,
 		// If not create one:
 		if(!stitch) {
 			stitch = make_shared<TripleStitch>();
-			stitch->weakSelf = stitch;
-			stitch->patches[0]=patch_1->weakSelf;
-			stitch->patches[1]=patch_2->weakSelf;
-			stitch->patches[2]=patch_3->weakSelf;
+			stitch->weak_self = stitch;
+			stitch->patches[0] = patch_1->weak_self;
+			stitch->patches[1] = patch_2->weak_self;
+			stitch->patches[2] = patch_3->weak_self;
 
 			patch_1->addStitchReference(stitch);
 			patch_2->addStitchReference(stitch);
@@ -117,7 +117,7 @@ TriangleReference Meshing::addTriangle(const VertexReference &pr1,
 		triangle.neighbours[0] = n1;
 		triangle.neighbours[1] = n2;
 		triangle.neighbours[2] = n3;
-		triangle.debugNr = debug_triangle_count++;
+		triangle.debug_nr = debug_triangle_count++;
 
 		TriangleReference triangle_reference;
 		triangle_reference.container = stitch.get();
@@ -125,7 +125,7 @@ TriangleReference Meshing::addTriangle(const VertexReference &pr1,
 		stitch->triangles.push_back(triangle);
 		Triangle::registerTriangle(triangle_reference, false);
 		// We later on want to reupload the triangles to the gpu
-		stitch->cpuTrianglesAhead=true;
+		stitch->cpu_triangles_ahead = true;
 
 		return triangle_reference;
 	}
@@ -162,12 +162,12 @@ TriangleReference Meshing::addTriangle(const VertexReference &pr1,
 
 		if(!stitch) {
 			stitch = make_shared<DoubleStitch>();
-			stitch->weakSelf   = stitch;
-			stitch->patches[0] = main_patch->weakSelf;
-			stitch->patches[1] = secondary_patch->weakSelf;
+			stitch->weak_self  = stitch;
+			stitch->patches[0] = main_patch->weak_self;
+			stitch->patches[1] = secondary_patch->weak_self;
 
-			patch_1->doubleStitches.push_back(stitch);
-			patch_2->doubleStitches.push_back(stitch);
+			patch_1->double_stitches.push_back(stitch);
+			patch_2->double_stitches.push_back(stitch);
 		} else {
 			// When a stitch was preexisting the order of points in the triangles has to be changed. to respect that
 			MeshPatch* primary_patch = stitch->patches[0].lock().get();
@@ -207,7 +207,7 @@ TriangleReference Meshing::addTriangle(const VertexReference &pr1,
 		triangle.neighbours[0] = n1;
 		triangle.neighbours[1] = n2;
 		triangle.neighbours[2] = n3;
-		triangle.debugNr = debug_triangle_count++;
+		triangle.debug_nr = debug_triangle_count++;
 
 		TriangleReference triangle_reference;
 		triangle_reference.container = stitch.get();
@@ -215,7 +215,7 @@ TriangleReference Meshing::addTriangle(const VertexReference &pr1,
 		stitch->triangles.push_back(triangle);
 		Triangle::registerTriangle(triangle_reference, false);
 
-		stitch->cpuTrianglesAhead = true;
+		stitch->cpu_triangles_ahead = true;
 		return triangle_reference;
 	}
 }
@@ -247,11 +247,11 @@ void Meshing::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 				int index = mesh->vertices.size();
 				vertex_indices.at<int>(i, j) = index;
 
-				mesh->workInProgress.lock();
+				mesh->work_in_progress.lock();
 				mesh->vertices.push_back(vertex);
-				mesh->workInProgress.unlock();
+				mesh->work_in_progress.unlock();
 
-				mesh->cpuVerticesAhead = true;
+				mesh->cpu_vertices_ahead = true;
 
 			} else {
 				if(!isnan(points.at<Vector4f>(i, j)[0])) {
@@ -498,18 +498,18 @@ void Meshing::genTexIndices(vector<shared_ptr<MeshPatch> > &patches) {
 					// Only use this cast and modify the elements when
 					// you do not modify anything that influences the
 					// operators defined on the set
-					tex_conn->tex_inds.push_back(&(triangle.texIndices[i]));
+					tex_conn->tex_inds.push_back(&(triangle.tex_indices[i]));
 				} else {
 					// Otherwise we create a new container and push back the
 					// right pointer to the texture index
-					vert.tex_inds.push_back(&(triangle.texIndices[i]));
+					vert.tex_inds.push_back(&(triangle.tex_indices[i]));
 					vert_set.insert(vert);
 				}
 			}
 		};
 
 		shared_ptr<MeshPatch> &patch = patches[i];
-		patch->geomTexPatch =
+		patch->geom_tex_patch =
 				mesh_reconstruction->genMeshTexture(MeshTexture::Type::standardDeviation);
 
 		// To really accomodate for every vertex (even if it may not be visible)
@@ -528,9 +528,9 @@ void Meshing::genTexIndices(vector<shared_ptr<MeshPatch> > &patches) {
 		}
 
 		// Check all the triangles that lie in double stitches
-		patch->doubleStitchMutex.lock();
-		for(size_t k = 0; k < patch->doubleStitches.size(); k++) {
-			shared_ptr<DoubleStitch> &stitch = patch->doubleStitches[k];
+		patch->double_stitch_mutex.lock();
+		for(size_t k = 0; k < patch->double_stitches.size(); k++) {
+			shared_ptr<DoubleStitch> &stitch = patch->double_stitches[k];
 			if(stitch->patches[0].lock() != patch) {
 				// The texture for this stitch is provided by another patch
 				continue;
@@ -539,11 +539,11 @@ void Meshing::genTexIndices(vector<shared_ptr<MeshPatch> > &patches) {
 				appendTexCoords(stitch->triangles[j]);
 			}
 		}
-		patch->doubleStitchMutex.unlock();
+		patch->double_stitch_mutex.unlock();
 		// And now check all the triangles that lie in triple stitches
-		patch->tripleStitchMutex.lock();
-		for(size_t k = 0; k < patch->tripleStitches.size(); k++) {
-			shared_ptr<TripleStitch> &stitch = patch->tripleStitches[k];
+		patch->triple_stitch_mutex.lock();
+		for(size_t k = 0; k < patch->triple_stitches.size(); k++) {
+			shared_ptr<TripleStitch> &stitch = patch->triple_stitches[k];
 			if(stitch->patches[0].lock() != patch) {
 				// Obviously this patch is not what we are searching for
 				continue;
@@ -552,8 +552,8 @@ void Meshing::genTexIndices(vector<shared_ptr<MeshPatch> > &patches) {
 				appendTexCoords(stitch->triangles[j]);
 			}
 		}
-		patch->tripleStitchMutex.unlock();
-		patch->geomTexPatch->texCoords.resize(vert_set.size());
+		patch->triple_stitch_mutex.unlock();
+		patch->geom_tex_patch->texCoords.resize(vert_set.size());
 		size_t j = 0;
 		for(auto v : vert_set) {
 			for(size_t k = 0; k < v.tex_inds.size(); k++) {
@@ -567,8 +567,8 @@ void Meshing::genTexIndices(vector<shared_ptr<MeshPatch> > &patches) {
 			// TODO: get better tex coordinates
 			for(size_t k = 0; k < 3; k++) {
 				if(patch->triangles[j].points[k].getPatch() == patch.get()) {
-					patch->triangles[j].points[k].get()->texIndInMainPatch =
-							patch->triangles[j].texIndices[k];
+					patch->triangles[j].points[k].get()->tex_ind_in_main_patch =
+							patch->triangles[j].tex_indices[k];
 				}
 			}
 		}

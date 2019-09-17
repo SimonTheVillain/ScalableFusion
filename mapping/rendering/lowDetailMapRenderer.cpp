@@ -162,13 +162,13 @@ void LowDetailRenderer::addPatches(std::vector<std::shared_ptr<MeshPatch> > &pat
             //assert(0);
         }*/
         //lets check triple stitches.... if they are consistent with the remaining data structure.
-        patch.tripleStitchMutex.lock();
-        for(size_t j=0;j<patch.tripleStitches.size();j++){
-            shared_ptr<TripleStitch> tripleStitch = patch.tripleStitches[j];
+        patch.triple_stitch_mutex.lock();
+        for(size_t j=0;j<patch.triple_stitches.size();j++){
+            shared_ptr<TripleStitch> tripleStitch = patch.triple_stitches[j];
             for(size_t k=0;k<3;k++){
                 bool found=false;
-                for(size_t l=0;l<tripleStitch->patches[k].lock()->tripleStitches.size();l++){
-                    if(tripleStitch->patches[k].lock()->tripleStitches[l] ==
+                for(size_t l=0;l<tripleStitch->patches[k].lock()->triple_stitches.size();l++){
+                    if(tripleStitch->patches[k].lock()->triple_stitches[l] ==
                             tripleStitch){
                         found=true;
                     }
@@ -179,7 +179,7 @@ void LowDetailRenderer::addPatches(std::vector<std::shared_ptr<MeshPatch> > &pat
                 }
             }
         }
-        patch.tripleStitchMutex.unlock();
+        patch.triple_stitch_mutex.unlock();
 
 
         //This is a dirty workaround for something that should be doable in the next loop
@@ -187,8 +187,8 @@ void LowDetailRenderer::addPatches(std::vector<std::shared_ptr<MeshPatch> > &pat
         //to preventing lock at triangle creation we do not lock here
         //(even if we should)
         //so, even tough we do this here, why isn't it working????????
-        for(size_t j=0;j<patch.tripleStitches.size();j++){
-            shared_ptr<TripleStitch> tripleStitch = patch.tripleStitches[j];
+        for(size_t j=0;j<patch.triple_stitches.size();j++){
+            shared_ptr<TripleStitch> tripleStitch = patch.triple_stitches[j];
             continue;
             std::shared_ptr<CoarseTriangle> triangle =
                     patch.getCoarseTriangleWith(tripleStitch->patches[0].lock(),
@@ -437,16 +437,16 @@ void LowDetailRenderer::addPatches(std::vector<std::shared_ptr<MeshPatch> > &pat
     vector<CalcMeanColorDescriptor> descriptors;//(patchesIn.size());
     for(size_t i=0;i<patchesIn.size();i++){
         MeshPatch &patch = *(patchesIn[i].get());
-        if(patch.texPatches.size() == 0){
+        if(patch.tex_patches.size() == 0){
             //if there is no color for the texture we don't update it.
             continue;
         }
-        MeshTexture &tex = *(patch.texPatches[0].get());
+        MeshTexture &tex = *(patch.tex_patches[0].get());
 
         shared_ptr<MeshTextureGpuHandle> texGpuHandle = tex.gpu.lock();
         CalcMeanColorDescriptor desc;//&desc = descriptors[i];
 
-        if(patch.texPatches.size()==0){
+        if(patch.tex_patches.size()==0){
             continue;
         }
         if(tex.gpu.lock() ==nullptr){
@@ -565,14 +565,14 @@ void LowDetailRenderer::updateColorForPatches(std::vector<std::shared_ptr<MeshPa
         MeshPatch &patch = *(patchesIn[i].get());
         CalcMeanColorDescriptor desc;//&desc = descriptors[i];
 
-        if(patch.texPatches.size()==0){
+        if(patch.tex_patches.size()==0){
             continue;
         }
         if(patch.indexWithinCoarse==-1){
             continue;//don't do anything if the patch is not part
             //of the coarse representation yet
         }
-        MeshTexture &tex = *(patch.texPatches[0].get());
+        MeshTexture &tex = *(patch.tex_patches[0].get());
         shared_ptr<MeshTextureGpuHandle> texGpuHandle = tex.gpu.lock();
         if(texGpuHandle->tex == nullptr){
             //continue;//actually this should not happen but in case it does we

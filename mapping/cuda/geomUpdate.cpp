@@ -25,7 +25,7 @@ void gpu::GeometryUpdate::calcCenterAndRadius(std::vector<std::shared_ptr<MeshPa
         if(gpuPatch == nullptr){
             assert(0);
         }
-        std::shared_ptr<VertexBufConnector> buffer = gpuPatch->verticesSource;
+        std::shared_ptr<VertexBufConnector> buffer = gpuPatch->vertices_source;
         task.vertices = buffer->getStartingPtr();
         task.count = buffer->getSize();
         tasks.push_back(task);

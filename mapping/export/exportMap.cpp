@@ -140,11 +140,11 @@ void Exporter::storeFine(MeshReconstruction* map,std::string filePath){
         startIndices[idPatch.first] = vertexCount;
         triangleCount += patch->triangles.size();
         vertexCount += patch->vertices.size();
-        for(size_t i = 0; i < patch->doubleStitches.size();i++){
-            doubleStitches.insert(patch->doubleStitches[i]);
+        for(size_t i = 0; i < patch->double_stitches.size();i++){
+            doubleStitches.insert(patch->double_stitches[i]);
         }
-        for(size_t i = 0; i < patch->tripleStitches.size();i++){
-            tripleStitches.insert(patch->tripleStitches[i]);
+        for(size_t i = 0; i < patch->triple_stitches.size();i++){
+            tripleStitches.insert(patch->triple_stitches[i]);
         }
 
 
@@ -364,8 +364,8 @@ void Exporter::storeGraph(MeshReconstruction *map, std::string filePath) {
         shared_ptr<MeshPatch> patch = idPatch.second;
         indexMap[patch.get()] = k;
         k++;
-        for(size_t i=0;i<patch->doubleStitches.size();i++){
-            uniqueStitches.insert(patch->doubleStitches[i]);
+        for(size_t i=0;i<patch->double_stitches.size();i++){
+            uniqueStitches.insert(patch->double_stitches[i]);
         }
 
     }
@@ -402,7 +402,7 @@ void Exporter::storeDeformationGraph(MeshReconstruction *map, std::string filePa
         indexMap[patch.get()] = k;
         k++;
         for(int i=0;i<4;i++){
-            for( pair<float,DeformationNode::WeakNodeDist> neighbour : patch->deformationNode->neighbours[i]){
+            for( pair<float,DeformationNode::WeakNodeDist> neighbour : patch->deformation_node->neighbours[i]){
                 MeshPatch* p1 = patch.get();
                 if(neighbour.second.node.lock()!=nullptr){
                     MeshPatch* p2 = neighbour.second.node.lock()->patch;

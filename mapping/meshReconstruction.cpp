@@ -191,17 +191,17 @@ void MeshReconstruction::cleanupGlStoragesThisThread()
 
 bool MeshReconstruction::removePatch(std::shared_ptr<MeshPatch> patch)
 {
-    patch->doubleStitchMutex.lock();
-    for(size_t i=0;i<patch->doubleStitches.size();i++){
-       patch->doubleStitches[i]->removeFromPatches(patch);
+    patch->double_stitch_mutex.lock();
+    for(size_t i=0;i<patch->double_stitches.size();i++){
+       patch->double_stitches[i]->removeFromPatches(patch);
     }
-    patch->doubleStitchMutex.unlock();
+    patch->double_stitch_mutex.unlock();
 
-    patch->tripleStitchMutex.lock();
-    for(size_t i=0;i<patch->tripleStitches.size();i++){
-        patch->tripleStitches[i]->removeFromPatches(patch);
+    patch->triple_stitch_mutex.lock();
+    for(size_t i=0;i<patch->triple_stitches.size();i++){
+        patch->triple_stitches[i]->removeFromPatches(patch);
     }
-    patch->tripleStitchMutex.unlock();
+    patch->triple_stitch_mutex.unlock();
 
     m_patchesMutex.lock();
     for(auto it=m_patches.begin();it!=m_patches.end();++it){
@@ -298,7 +298,7 @@ void MeshReconstruction::setActiveSetUpdate(std::shared_ptr<ActiveSet> set)
 MeshReconstruction::MeshReconstruction(GLFWwindow* context, GarbageCollector* garbageCollector,bool threaded,int depthWidth, int depthHeight,int rgbWidth,int rgbHeight)
 {
     //TODO: name these setup functions consistently
-    geometryUpdate.Setup(this);
+    geometryUpdate.setup(this);
     texturing.meshReconstruction = this;
     //meshing.Setup(this);
 
@@ -343,7 +343,7 @@ std::shared_ptr<MeshPatch> MeshReconstruction::genMeshPatch()
     std::shared_ptr<MeshPatch> meshPatch(new MeshPatch(&this->octree));
             //std::make_shared<MeshPatch>(&this->octree);
     meshPatch->id=m_currentMaxPatchID;
-    meshPatch->weakSelf=meshPatch;
+    meshPatch->weak_self=meshPatch;
     m_patches[m_currentMaxPatchID] = meshPatch;
     return meshPatch;
 }
@@ -424,7 +424,7 @@ void MeshReconstruction::erase()
         sharedPatches.push_back(patch.second);
         shared_ptr<MeshPatchGpuHandle> gpuPatch = patch.second->gpu.lock();
         if(gpuPatch != nullptr){
-            gpuTextures.push_back(gpuPatch->geomTex);
+            gpuTextures.push_back(gpuPatch->geom_tex);
         }
     }
     //m_patches.begin()->second.reset();
@@ -578,9 +578,9 @@ TriangleReference MeshReconstruction::addTriangle(VertexReference pr1,
     triangle.points[0]=pr1;
     triangle.points[1]=pr2;
     triangle.points[2]=pr3;
-    triangle.debugIsStitch = true;
-    triangle.debugNr = debugGlobalStitchTriangleCtr;
-    if(triangle.debugNr == 11757){
+    triangle.debug_is_stitch = true;
+    triangle.debug_nr = debugGlobalStitchTriangleCtr;
+    if(triangle.debug_nr == 11757){
         cout << "bad bad triangle! debug here!" << endl;
     }
     debugGlobalStitchTriangleCtr ++;
@@ -595,7 +595,7 @@ TriangleReference MeshReconstruction::addTriangle(VertexReference pr1,
         tr.container = triangle.points[0].getPatch();
         triangle.points[0].getPatch()->triangles.push_back(triangle);
         Triangle::registerTriangle(tr,true);
-        triangle.points[0].getPatch()->cpuTexPatchAhead=true;
+        triangle.points[0].getPatch()->cpu_tex_patch_ahead=true;
         return tr;
     }
 
@@ -637,9 +637,9 @@ TriangleReference MeshReconstruction::addTriangle(VertexReference pr1,
         //add triangle to the according stitch
         if(!stitch){
             stitch = make_shared<DoubleStitch>();
-            stitch->weakSelf = stitch;
-            stitch->patches[0]=pr1.getPatch()->weakSelf;
-            stitch->patches[1]=patch2->weakSelf;
+            stitch->weak_self = stitch;
+            stitch->patches[0]=pr1.getPatch()->weak_self;
+            stitch->patches[1]=patch2->weak_self;
 
             pr1.getPatch()->addStitchReference(stitch);
             patch2->addStitchReference(stitch);
@@ -659,12 +659,12 @@ TriangleReference MeshReconstruction::addTriangle(VertexReference pr1,
             }
         }
 
-        stitch->debugToDelete3=1;
+        stitch->debug_to_delete3=1;
         tr.index =stitch->triangles.size();
         tr.container = stitch.get();
         stitch->triangles.push_back(triangle);
         Triangle::registerTriangle(tr,true);
-        stitch->cpuTrianglesAhead = true;
+        stitch->cpu_triangles_ahead = true;
 
         return tr;
     }
@@ -677,10 +677,10 @@ TriangleReference MeshReconstruction::addTriangle(VertexReference pr1,
                 pr1.getPatch()->getTripleStitchWith(pr2.getPatch(),pr3.getPatch());
         if(!stitch){
             stitch = make_shared<TripleStitch>();
-            stitch->weakSelf=stitch;
-            stitch->patches[0]=pr1.getPatch()->weakSelf;
-            stitch->patches[1]=pr2.getPatch()->weakSelf;
-            stitch->patches[2]=pr3.getPatch()->weakSelf;
+            stitch->weak_self=stitch;
+            stitch->patches[0]=pr1.getPatch()->weak_self;
+            stitch->patches[1]=pr2.getPatch()->weak_self;
+            stitch->patches[2]=pr3.getPatch()->weak_self;
 
             pr1.getPatch()->addStitchReference(stitch);
             pr2.getPatch()->addStitchReference(stitch);
@@ -709,7 +709,7 @@ TriangleReference MeshReconstruction::addTriangle(VertexReference pr1,
         tr.container = stitch.get();
         stitch->triangles.push_back(triangle);
         Triangle::registerTriangle(tr,true);
-        stitch->cpuTrianglesAhead = true;
+        stitch->cpu_triangles_ahead = true;
 
         return tr;
 
@@ -847,14 +847,14 @@ void MeshReconstruction::debugCheckTriangleNeighbourConsistency(std::vector<std:
             Triangle &tri = patch->triangles[i];
             checkTriangle(tri);
         }
-        for(shared_ptr<DoubleStitch> stitch : patch->doubleStitches){
+        for(shared_ptr<DoubleStitch> stitch : patch->double_stitches){
             for(size_t i=0; i< stitch->triangles.size();i++){
                 Triangle &tri = stitch->triangles[i];
                 checkTriangle(tri);
             }
         }
 
-        for(shared_ptr<TripleStitch> stitch : patch->tripleStitches){
+        for(shared_ptr<TripleStitch> stitch : patch->triple_stitches){
             for(size_t i=0; i< stitch->triangles.size();i++){
                 Triangle &tri = stitch->triangles[i];
                 checkTriangle(tri);
@@ -873,7 +873,7 @@ void MeshReconstruction::debugCheckTriangleEdgesUnregistered(std::vector<std::sh
                 }
             }
         }
-        for(auto stitch : patch->doubleStitches){
+        for(auto stitch : patch->double_stitches){
 
             for(int i=0;i<stitch->triangles.size();i++){
                 for(auto & edge : stitch->triangles[i].edges){
@@ -884,7 +884,7 @@ void MeshReconstruction::debugCheckTriangleEdgesUnregistered(std::vector<std::sh
             }
         }
 
-        for(auto stitch : patch->tripleStitches){
+        for(auto stitch : patch->triple_stitches){
 
             for(auto & triangle : stitch->triangles){
                 for(auto & edge : triangle.edges){
@@ -928,7 +928,7 @@ std::vector<Rect2f> MeshReconstruction::genBoundsFromPatches( std::vector<std::s
 
 
         //now iterate all stitches for neighbours
-        for(shared_ptr<DoubleStitch> stitch : patch->doubleStitches){
+        for(shared_ptr<DoubleStitch> stitch : patch->double_stitches){
             if(stitch->patches[0].lock() != patch){
                 continue;
             }
@@ -942,7 +942,7 @@ std::vector<Rect2f> MeshReconstruction::genBoundsFromPatches( std::vector<std::s
                 valid=false;
                 break;
             }
-            shared_ptr<TriangleBufConnector> gpuStitch = stitch->trianglesGpu.lock();
+            shared_ptr<TriangleBufConnector> gpuStitch = stitch->triangles_gpu.lock();
             if(gpuStitch == nullptr){
                 assert(0);
                 valid = false;
@@ -957,7 +957,7 @@ std::vector<Rect2f> MeshReconstruction::genBoundsFromPatches( std::vector<std::s
         if(!valid){
             continue;
         }
-        for(shared_ptr<TripleStitch> stitch : patch->tripleStitches){
+        for(shared_ptr<TripleStitch> stitch : patch->triple_stitches){
             if(stitch->patches[0].lock() != patch){
                 continue;
             }
@@ -969,7 +969,7 @@ std::vector<Rect2f> MeshReconstruction::genBoundsFromPatches( std::vector<std::s
                 valid=false;
                 break;
             }
-            shared_ptr<TriangleBufConnector> gpuStitch = stitch->trianglesGpu.lock();
+            shared_ptr<TriangleBufConnector> gpuStitch = stitch->triangles_gpu.lock();
             if(gpuStitch == nullptr){
                 assert(0);
                 valid =false;
@@ -1060,9 +1060,9 @@ void MeshReconstruction::clearInvalidGeometry(std::shared_ptr<ActiveSet> set, Ma
         gpu::GeometryValidityChecks::VertexTask task;
 
 
-        task.startSource = gpuPatch->verticesSource->getStartingIndex();
-        task.startDest = gpuPatch->verticesDest->getStartingIndex();
-        task.size = gpuPatch->verticesSource->getSize();
+        task.startSource = gpuPatch->vertices_source->getStartingIndex();
+        task.startDest = gpuPatch->vertices_dest->getStartingIndex();
+        task.size = gpuPatch->vertices_source->getSize();
         tasks.push_back(task);
     }
     gpu::GeometryValidityChecks::checkVertexValidity(dStdMaxStdMap->getCudaSurfaceObject(),
@@ -1100,7 +1100,7 @@ std::shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(Matrix4f dep
             continue;
             //assert(0);
         }
-        if(patch->geomTexPatch->gpu.lock() ==nullptr){
+        if(patch->geom_tex_patch->gpu.lock() ==nullptr){
             //assert(0);//whyyyyy. the geometry textures should be secured at
             //this point
             cv::waitKey(1);
@@ -1110,7 +1110,7 @@ std::shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(Matrix4f dep
     set<shared_ptr<MeshPatch>> patchesIncludingNeighbours;
     for(shared_ptr<MeshPatch> patch : visibleSharedPatches){
         patchesIncludingNeighbours.insert(patch);
-        for(shared_ptr<DoubleStitch> stitch : patch->doubleStitches) {
+        for(shared_ptr<DoubleStitch> stitch : patch->double_stitches) {
             if (stitch->patches[0].lock() != patch) {
                 //continue;
             }
@@ -1120,7 +1120,7 @@ std::shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(Matrix4f dep
                 patchesIncludingNeighbours.insert(neighbour);
             }
         }
-        for(shared_ptr<TripleStitch> stitch : patch->tripleStitches){
+        for(shared_ptr<TripleStitch> stitch : patch->triple_stitches){
             if(stitch->patches[0].lock() != patch){
                 // continue;
             }
@@ -1152,7 +1152,7 @@ std::shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(Matrix4f dep
         if(patch->gpu.lock() == nullptr){
             assert(0);
         }
-        if(patch->geomTexPatch->gpu.lock() ==nullptr){
+        if(patch->geom_tex_patch->gpu.lock() ==nullptr){
             continue;
             setActiveSetUpdate(newActiveSet);
             cv::waitKey();

@@ -574,16 +574,16 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(ActiveSet *activeS
         //Add the dependency of this central patch
         MeshTextureGpuHandle::Dependency dependency;
         dependency.trianglePositionOnGpu = patchGpu->triangles->getStartingIndex();
-        dependency.trianglesVersion = patch->trianglesVersion;
+        dependency.trianglesVersion = patch->triangles_version;
         dependency.geometry = patch;
         gpuTex->refTexDependencies.push_back(dependency);
 
-        patch->doubleStitchMutex.lock();
-        for(size_t i=0;i<patch->doubleStitches.size();i++){
-            DoubleStitch &stitch = *patch->doubleStitches[i].get();
+        patch->double_stitch_mutex.lock();
+        for(size_t i=0;i<patch->double_stitches.size();i++){
+            DoubleStitch &stitch = *patch->double_stitches[i].get();
             if(stitch.patches[0].lock()==patch){
                 //only render when patch is main patch
-                std::shared_ptr<TriangleBufConnector> stitchGpu = stitch.trianglesGpu.lock();
+                std::shared_ptr<TriangleBufConnector> stitchGpu = stitch.triangles_gpu.lock();
                 if(stitchGpu==nullptr){
                     cout << "[MapInformationRenderer::renderTriangleReferencesForPatch]"
                             " This should not happen when this is invoked for a patch"
@@ -601,22 +601,22 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(ActiveSet *activeS
                 gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::renderTriangleReferencesForPatch]");
                 //Add the dependency of this stitch
                 dependency.trianglePositionOnGpu = stitchGpu->getStartingIndex();
-                dependency.trianglesVersion = stitch.trianglesVersion;
-                dependency.geometry = patch->doubleStitches[i];
+                dependency.trianglesVersion = stitch.triangles_version;
+                dependency.geometry = patch->double_stitches[i];
                 gpuTex->refTexDependencies.push_back(dependency);
             }
 
         }
-        patch->doubleStitchMutex.unlock();
+        patch->double_stitch_mutex.unlock();
 
-        patch->tripleStitchMutex.lock();
+        patch->triple_stitch_mutex.lock();
 
-        for(size_t i=0;i<patch->tripleStitches.size();i++) {
-            TripleStitch &stitch = *patch->tripleStitches[i].get();
+        for(size_t i=0;i<patch->triple_stitches.size();i++) {
+            TripleStitch &stitch = *patch->triple_stitches[i].get();
             if(stitch.patches[0].lock()!=patch){
                 continue;
             }
-            std::shared_ptr<TriangleBufConnector> stitchGpu = stitch.trianglesGpu.lock();
+            std::shared_ptr<TriangleBufConnector> stitchGpu = stitch.triangles_gpu.lock();
             if(stitchGpu==nullptr){
                 cout << "[MapInformationRenderer::renderTriangleReferencesForPatch]"
                         " This should not happen when this is invoked for a patch"
@@ -634,12 +634,12 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(ActiveSet *activeS
 
             //Add the dependency of this stitch
             dependency.trianglePositionOnGpu = stitchGpu->getStartingIndex();
-            dependency.trianglesVersion = stitch.trianglesVersion;
-            dependency.geometry = patch->tripleStitches[i];
+            dependency.trianglesVersion = stitch.triangles_version;
+            dependency.geometry = patch->triple_stitches[i];
             gpuTex->refTexDependencies.push_back(dependency);
         }
 
-        patch->tripleStitchMutex.unlock();
+        patch->triple_stitch_mutex.unlock();
 
 
     }else{

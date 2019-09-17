@@ -156,7 +156,7 @@ void GeometryUpdate::extend(
 	cv::Mat vertex_indices(height, width, CV_32SC1);
 	vertex_indices.setTo(cv::Scalar(-1)); // TODO: remove this line, should not be necessary
 
-	meshing.MeshIt(points, mesh_pointers, vertex_indices, d_std_mat,
+	meshing.meshIt(points, mesh_pointers, vertex_indices, d_std_mat,
 	               mesh->params.maxDepthStep, depth_pose_in);
 
 	for(size_t i = 0; i < new_shared_mesh_patches.size(); i++) {
@@ -209,26 +209,26 @@ void GeometryUpdate::extend(
 		if(patch->triangles.empty()) {
 			//if the patch does not have triangles we go over all stitches and their respective triangles and delete them
 			//remove
-			int debug_double_stitches_before = patch->doubleStitches.size();
-			for(size_t j = 0; j < patch->doubleStitches.size(); j++) {
-				shared_ptr<DoubleStitch> stitch = patch->doubleStitches[j];
-				int debug_count_before = patch->doubleStitches.size();
+			int debug_double_stitches_before = patch->double_stitches.size();
+			for(size_t j = 0; j < patch->double_stitches.size(); j++) {
+				shared_ptr<DoubleStitch> stitch = patch->double_stitches[j];
+				int debug_count_before = patch->double_stitches.size();
 				stitch->removeFromPatches(patch);//this should always remove one reference from this patch
-				if(debug_count_before != patch->doubleStitches.size()) {
+				if(debug_count_before != patch->double_stitches.size()) {
 					//assert(0);
 				}
 				stitch->deregisterTriangles();
 			}
-			if(!patch->doubleStitches.empty()) {
+			if(!patch->double_stitches.empty()) {
 				//assert(0);//this is weird!!!!!!! didn't we delete all double stitches?
 			}
 
-			for(size_t j = 0; j < patch->tripleStitches.size(); j++) {
-				shared_ptr<TripleStitch> stitch = patch->tripleStitches[j];
+			for(size_t j = 0; j < patch->triple_stitches.size(); j++) {
+				shared_ptr<TripleStitch> stitch = patch->triple_stitches[j];
 				stitch->removeFromPatches(patch);
 				stitch->deregisterTriangles();
 			}
-			if(!patch->doubleStitches.empty()) {
+			if(!patch->double_stitches.empty()) {
 				//assert(0);//this is weired!!!!!!! didn't we delete all double stitches?
 			}
 			set_of_patches_to_be_removed.push_back(patch);
@@ -257,7 +257,7 @@ void GeometryUpdate::extend(
 
 	time_start = time_end;
 
-	meshing.GenTexIndices(new_shared_mesh_patches);
+	meshing.genTexIndices(new_shared_mesh_patches);
 
 	//since the texture indices are set we can upload and create a new active set
 	//most of the code below this active set creation can be put into the active set
@@ -288,7 +288,7 @@ void GeometryUpdate::extend(
 		if(!patch->isPartOfActiveSetWithNeighbours(new_active_set.get())) {
 			assert(0);//all of the new ones should be loaded
 		}
-		if(patch->geomTexPatch->gpu.lock() == nullptr) {
+		if(patch->geom_tex_patch->gpu.lock() == nullptr) {
 			assert(0);//whyyyyy. the geometry textures should be secured at
 			//this point
 		}
@@ -380,7 +380,7 @@ void GeometryUpdate::extend(
 		if(!patch->isPartOfActiveSetWithNeighbours(new_active_set.get())) {
 			continue;
 		}
-		if(patch->geomTexPatch->gpu.lock() == nullptr) {
+		if(patch->geom_tex_patch->gpu.lock() == nullptr) {
 			cout << "DEBUG/TODO: reinsert the assert at this point" << endl;
 			//assert(0);//whyyyyy. the geometry textures should be secured at
 			//this point
@@ -408,7 +408,7 @@ void GeometryUpdate::extend(
 		Vector4f pos4(pos[0], pos[1], pos[2], 1.0f);
 		pos4 = proj_pose * pos4;
 		pos4 *= 1.0f / pos4[3];
-		nodes[i].node   = patch->deformationNode;
+		nodes[i].node   = patch->deformation_node;
 		nodes[i].pixPos = cv::Vec2f(pos4[0], pos4[1]);
 		nodes[i].pos    = pos;
 	}
@@ -480,10 +480,10 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		}
 
 		shared_ptr<MeshTextureGpuHandle> geom_tex_gpu_handle = 
-				patch->geomTexPatch->gpu.lock();
+				patch->geom_tex_patch->gpu.lock();
 		if(geom_tex_gpu_handle == nullptr) {
 			MeshTextureGpuHandle *debug_tex =
-					active_set->retainedMeshPatches[i]->geomTex.get();
+					active_set->retainedMeshPatches[i]->geom_tex.get();
 			cout << "how come this is not initialized yet?"<< endl;
 			assert(0);
 			continue;//actually this can happen in multithreaded mode
@@ -517,7 +517,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 				//this should not happen at any time!!!!!!!!!
 			}
 
-			if(dependence_geom->trianglesVersion != dependency.trianglesVersion) {
+			if(dependence_geom->triangles_version != dependency.trianglesVersion) {
 				expired = true;
 				assert(0);
 			}
@@ -546,7 +546,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 			continue;
 		}*/
 		//also not run this if the reference texture is not filled
-		if(!patch->geomTexPatch->refTexFilled) {
+		if(!patch->geom_tex_patch->refTexFilled) {
 			assert(0);
 			continue;
 		}
@@ -567,13 +567,13 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		                          float(rect.height) / height);
 		desc.sourceSize = cv::Size2i(width, height);
 
-		desc.patchInfoSlot = gpu->patchInfos->getStartingIndex();
+		desc.patchInfoSlot = gpu->patch_infos->getStartingIndex();
 
 		//set the references to the vertex data.
-		desc.vertexSourceStartInd = gpu->verticesSource->getStartingIndex();
+		desc.vertexSourceStartInd = gpu->vertices_source->getStartingIndex();
 
-		desc.vertexCount = gpu->verticesSource->getSize();
-		desc.vertexDestinationStartInd = gpu->verticesDest->getStartingIndex();
+		desc.vertexCount = gpu->vertices_source->getSize();
+		desc.vertexDestinationStartInd = gpu->vertices_dest->getStartingIndex();
 
 		desc.triangleSlot = gpu->triangles->getStartingIndex();
 		desc.triangleCount = gpu->triangles->getSize();
@@ -623,13 +623,13 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		if(gpuPatch == nullptr) {
 			assert(0);
 		}
-		if(gpuPatch->geomTex == nullptr) {
+		if(gpuPatch->geom_tex == nullptr) {
 			assert(0);
 		}
-		if(gpuPatch->geomTex->tex == nullptr) {
+		if(gpuPatch->geom_tex->tex == nullptr) {
 			assert(0);
 		}
-		if(gpuPatch->geomTex->refTex == nullptr) {
+		if(gpuPatch->geom_tex->refTex == nullptr) {
 			assert(0);
 		}
 	}
@@ -655,16 +655,16 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		shared_ptr<MeshPatch> patch = updated_patches[i];
 		shared_ptr<MeshPatchGpuHandle> gpu = patch->gpu.lock();
 		shared_ptr<MeshTextureGpuHandle> gpu_tex_patch =
-				patch->geomTexPatch->gpu.lock();
+				patch->geom_tex_patch->gpu.lock();
 
-		gpu->geomTex->tex = dest_tex_handles[i];//swap the std texture
+		gpu->geom_tex->tex = dest_tex_handles[i];//swap the std texture
 		gpu->swapSrcDst();//swap the vertices
 		//TODO: get this swap to gpu header
 
 		//TODO: get rid of all the rest!?
 
 		//we trigger the reupload(update) of the patch header on the gpu
-		patch->cpuTexPatchAhead = true;//maybe we want to do this update with a separate kernel call
+		patch->cpu_tex_patch_ahead = true;//maybe we want to do this update with a separate kernel call
 
 
 		//TODO: get this swap to gpu header
@@ -672,11 +672,11 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		//gpu->swapSrcDst();
 		//gpu->geomTex->swapSrcDst(); // forgot to swap the textures
 		//patch->swapVertexTargetSource();
-		patch->cpuInfoAhead = true;//maybe we want to do this update with a separate kernel call
+		patch->cpu_info_ahead = true;//maybe we want to do this update with a separate kernel call
 
 		//trigger download of geometry in this case.
-		gpu->gpuVerticesChanged = true;
-		gpu->downloadToWhenFinished = patch;
+		gpu->gpu_vertices_changed = true;
+		gpu->download_to_when_finished = patch;
 
 		//mask the newly updated geom texture as something that should be downloaded
 		//patch->geomTexPatch->gpuContentAhead = true;

@@ -1,5 +1,5 @@
-#ifndef FILE_SCALEABLE_MAP_H
-#define FILE_SCALEABLE_MAP_H
+#ifndef FILE_MESH_RECONSTRUCTION_H
+#define FILE_MESH_RECONSTRUCTION_H
 
 #include "base/meshStructure.h"
 #include "mapInformationRenderer.h"
@@ -16,7 +16,6 @@
 #include <eigen3/Eigen/Eigen>
 
 #include <opencv2/core.hpp>
-//#include <opencv2/cudaimgproc.hpp>
 
 #include <map>
 
@@ -36,10 +35,10 @@ class PreSegmentation;
 class GpuNormSeg;
 class TexAtlas;
 
-namespace gfx{
+namespace gfx {
 class GLSLProgram;
 class GpuTex2D;
-}
+} // namespace gfx
 
 class Worker;
 

@@ -6,7 +6,7 @@
 
 #include <glog/logging.h>
 
-#include <DatasetLoader.h>
+#include <datasetLoader.h>
 #include <camera.h>
 #include <memory>
 #include "meshReconstruction.h"
@@ -351,8 +351,8 @@ int main(int argc, const char * argv[])
 
     TumDataset dataset(datasetPath,true,useDatasetTrajectory,true,skipInitialFrames,
             depthScale,groundtruthTrajectoryScale,invertGroundTruthTrajectory);
-    dataset.skipCount=0;
-    dataset.replaySpeed = replaySpeed;
+    dataset.skip_count = 0;
+    dataset.replay_speed = replaySpeed;
 
     shared_ptr<IncrementalSegmentation>  incrementalSegmentation = make_shared<EdithSegmentation>();
 
@@ -502,12 +502,12 @@ int main(int argc, const char * argv[])
 
 
         //maybe deactive all the other stuff
-        thatOneDebugRenderingThingy->forceDstGeom = forceDestinationGeometry;
+        thatOneDebugRenderingThingy->force_dst_geom = forceDestinationGeometry;
         thatOneDebugRenderingThingy->render(proj,view);
 
         //display everything that got rendered
         glfwSwapBuffers(window);
-        garbageCollector.Collect();
+        garbageCollector.collect();
         //react to any user input
         glfwPollEvents();
 
@@ -544,7 +544,7 @@ int main(int argc, const char * argv[])
 
 
     cout << "[main] DEBUG everything should be deleted" << endl;
-    garbageCollector.ForceCollect();
+    garbageCollector.forceCollect();
     delete scheduler;
 
     //erase active sets and patches so really nothing should be on the gpu

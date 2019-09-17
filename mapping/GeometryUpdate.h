@@ -24,7 +24,7 @@ public:
 	void setup(MeshReconstruction* reconstruction) {
 		mesh_reconstruction = reconstruction;
 		stitching.Setup(reconstruction);
-		meshing.Setup(reconstruction);
+		meshing.setup(reconstruction);
 	}
 
 	void extend(std::shared_ptr<ActiveSet> active_set_of_formerly_visible_patches,

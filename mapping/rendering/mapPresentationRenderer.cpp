@@ -250,7 +250,7 @@ void MapPresentationRenderer::renderInWindow(Eigen::Matrix4f view, Eigen::Matrix
             };
             auto cleaner = [&](GLFWwindow** context){
                 m_map->fboStorage.forceGarbageCollect();
-                m_map->garbageCollector->ForceCollect();
+                m_map->garbageCollector->forceCollect();
                 glFinish();
                 glfwDestroyWindow(*context);
                 delete context;
@@ -279,7 +279,7 @@ void MapPresentationRenderer::renderInWindow(Eigen::Matrix4f view, Eigen::Matrix
 
             //cleanup VBO and VAOs that are deleted but only used within this thread
             m_map->cleanupGlStoragesThisThread();
-            m_map->garbageCollector->Collect();
+            m_map->garbageCollector->collect();
             glFinish();
             cudaDeviceSynchronize();
             gpuErrchk( cudaPeekAtLastError() );

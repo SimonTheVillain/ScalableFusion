@@ -129,18 +129,18 @@ void Stitching::genBorderList(std::vector<std::shared_ptr<MeshPatch>> &patches,
         //iterate over all triangles belonging to this patch and its stitches
         //in case of an empty unused edge we follow it in both directions
         baseSet.insert(patch.get());
-        patch->doubleStitchMutex.lock();
-        for(shared_ptr<DoubleStitch> &stitch : patch->doubleStitches){
+        patch->double_stitch_mutex.lock();
+        for(shared_ptr<DoubleStitch> &stitch : patch->double_stitches){
 
             if( patchSet.count(stitch->patches[0].lock()) &&
                 patchSet.count(stitch->patches[1].lock())){
                 baseSet.insert(stitch.get());
             }
         }
-        patch->doubleStitchMutex.unlock();
+        patch->double_stitch_mutex.unlock();
 
-        patch->tripleStitchMutex.lock();
-        for(shared_ptr<TripleStitch> stitch : patch->tripleStitches){
+        patch->triple_stitch_mutex.lock();
+        for(shared_ptr<TripleStitch> stitch : patch->triple_stitches){
             if( patchSet.count(stitch->patches[0].lock()) &&
                 patchSet.count(stitch->patches[1].lock()) &&
                 patchSet.count(stitch->patches[2].lock())) {
@@ -148,7 +148,7 @@ void Stitching::genBorderList(std::vector<std::shared_ptr<MeshPatch>> &patches,
             }
 
         }
-        patch->tripleStitchMutex.unlock();
+        patch->triple_stitch_mutex.unlock();
 
     }
 
@@ -202,7 +202,7 @@ void Stitching::genBorderList(std::vector<std::shared_ptr<MeshPatch>> &patches,
                 followingBorder = false;//if the new edge is attached to a patch outside we abort.
                 continue;
             }
-            if(currentEdge.isRegistered){
+            if(currentEdge.is_registered){
                 followingBorder=false; //we ran in circle
                 if(!currentEdge.equalTo(initialEdge)){
                     //one edge should never hit anoter edge within the same
@@ -243,7 +243,7 @@ void Stitching::genBorderList(std::vector<std::shared_ptr<MeshPatch>> &patches,
                     followingBorder = false;//if the new edge is attached to a patch outside we abort.
                     continue;
                 }
-                if(currentEdge.isRegistered){
+                if(currentEdge.is_registered){
 
                     if(!currentEdge.equalTo(initialEdge)){
                         for(int i=0;i<borderList.size();i++){
@@ -325,11 +325,11 @@ void Stitching::genBorderList(std::vector<std::shared_ptr<MeshPatch>> &patches,
                 //Edge* edge = new Edge(triangle->points[0],triangle->points[1],triangle,triangle->points[2]);
                 if(!triangle.edges[0].valid()){
                     //register the new edge:
-                    triangle.edges[0].borderInd = borderList.size();
+                    triangle.edges[0].border_ind = borderList.size();
                     borderList.emplace_back();//create a new list of edges (read border) at its end
                     triangle.edges[0].ind = borderList.back().size();//obviously
                     borderList.back().emplace_back(triRef,0 );//Edge edge(triRef,0);
-                    borderList.back().back().isRegistered=true;
+                    borderList.back().back().is_registered=true;
                     borderList.back().back().debug = -borderList.size() +1;
                     Edge &edge = borderList.back().back();
 
@@ -341,11 +341,11 @@ void Stitching::genBorderList(std::vector<std::shared_ptr<MeshPatch>> &patches,
             if(!triangle.neighbours[1].valid()){
                 if(!triangle.edges[1].valid()){
                     //register the new edge:
-                    triangle.edges[1].borderInd = borderList.size();
+                    triangle.edges[1].border_ind = borderList.size();
                     borderList.emplace_back();//create a new list of edges (read border) at its end
                     triangle.edges[1].ind = borderList.back().size();
                     borderList.back().emplace_back(triRef,1);//Edge edge(triRef,0);
-                    borderList.back().back().isRegistered=true;
+                    borderList.back().back().is_registered=true;
                     borderList.back().back().debug = -borderList.size() +1;
                     Edge &edge = borderList.back().back();
 
@@ -362,11 +362,11 @@ void Stitching::genBorderList(std::vector<std::shared_ptr<MeshPatch>> &patches,
             if(!triangle.neighbours[2].valid()){
                 if(!triangle.edges[2].valid()){
                     //register the new edge:
-                    triangle.edges[2].borderInd = borderList.size();
+                    triangle.edges[2].border_ind = borderList.size();
                     borderList.emplace_back();//create a new list of edges (read border) at its end
                     triangle.edges[2].ind = borderList.back().size();
                     borderList.back().emplace_back(triRef,2);//Edge edge(triRef,0);
-                    borderList.back().back().isRegistered=true;
+                    borderList.back().back().is_registered=true;
                     borderList.back().back().debug = -borderList.size() +1;
                     Edge &edge = borderList.back().back();
 
@@ -426,7 +426,7 @@ void Stitching::reloadBorderGeometry(std::vector<std::vector<Edge>> &borderList)
         }
         pts.push_back(p);
         int index =
-                gpu->verticesSource->getStartingIndex() +
+                gpu->vertices_source->getStartingIndex() +
                 p.getIndex();
         gpuVerts.push_back(&(gpuVertBuf[index]));
     }
@@ -500,9 +500,9 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
             for(int k=0;k<3;k++){
                 if(tri->points[k].isEqualTo(p2)){
                     //found a triangle lets calculate the index the potential edge
-                    int ind = std::min(k,v1->triangles[i].indInTriangle);
+                    int ind = std::min(k,v1->triangles[i].ind_in_triangle);
                     int inds[2] = {ind,
-                                   std::max(k,v1->triangles[i].indInTriangle)};//is there a +1 missing?
+                                   std::max(k,v1->triangles[i].ind_in_triangle)};//is there a +1 missing?
                     if(inds[0] == 0 && inds[1] == 2){
                         ind = 2;
                     }
@@ -555,7 +555,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
         //To prevent this from outputting something of the existing geometry, this has to be called before stitching
         Vertex* v = p.get();
         for(int i=0;i<v->triangles.size();i++){
-            int ind = v->triangles[i].indInTriangle;
+            int ind = v->triangles[i].ind_in_triangle;
             //ind--; // decrement if we want to go to the last edge
             if(ind == -1){
                 ind = 2;
@@ -594,7 +594,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
                 Vertex* thisVert = p[i].get();
                 for(int l = 0; l< thisVert->triangles.size();l++){
                     if(thisVert->triangles[l].triangle.get()->containsPoint(p[i2])){
-                        int ind1 = thisVert->triangles[l].indInTriangle;
+                        int ind1 = thisVert->triangles[l].ind_in_triangle;
                         int ind2 =  thisVert->triangles[l].triangle.get()->getPointIndex(p[i2]);
                         if(ind1!= 0){
                             //cout << "this is astonishing" << endl;
@@ -679,7 +679,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
             if(edge.triangle.get()->edges[edge.pos].get(borders) != &edge){
                 assert(0);
             }
-            if(edge.alreadyUsedForStitch){
+            if(edge.already_used_for_stitch){
                 assert(0);//shouldn't every edge be touched only once?
             }
             //Triangle *tri = edge.triangle.get();
@@ -997,7 +997,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
                                 return;
                             }
                             //get next edge
-                            edge.alreadyUsedForStitch = true;
+                            edge.already_used_for_stitch = true;
                             Edge otherEdge;
                             currentSewingEdge.getOtherEdge(1,otherEdge,borders);
                             currentSewingEdge = otherEdge;
@@ -1310,7 +1310,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
 
             triangleCreatedLastEdge = nrTrianglesThisEdge>0;
 
-            edge.alreadyUsedForStitch =true;
+            edge.already_used_for_stitch =true;
         }
     }
 }

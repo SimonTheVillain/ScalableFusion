@@ -6,13 +6,13 @@
 #include "meshReconstruction.h"
 #include "intermediateDepthModel.h"
 
-#include "../datasetLoader/DatasetLoader.h"
+#include "../datasetLoader/datasetLoader.h"
 #include "../icpCUDA/ICPOdometry.h"
 #include "../gpu/ActiveSet.h"
 #include "cuda/xtionCameraModel.h"
 #include "GarbageCollector.h"
 
-
+#include <fstream>
 #include <chrono>
 #include <thread>
 #include <unistd.h>
@@ -84,7 +84,7 @@ void SchedulerThreaded::captureWorker(shared_ptr<MeshReconstruction> map, Stream
         cout << "[SchedulerThreaded::captureWorker] pulling another frame from the dataset/stream" << endl;
 
         Mat depth = stream->getDepthFrame(); // 16 bit 1mm resolution
-        Mat rgb = stream->getRGBFrame(); // 8 bit 3 channels (usually)
+        Mat rgb = stream->getRgbFrame(); // 8 bit 3 channels (usually)
         Matrix4f pose=stream->getDepthPose();
 
         if(depth.type() != CV_16UC1){
@@ -302,7 +302,7 @@ void SchedulerThreaded::updateActiveSet(cv::Mat dStdMat, std::shared_ptr<gfx::Gp
         if(!patch->isPartOfActiveSetWithNeighbours(activeSet.get())){
             continue;
         }
-        if(patch->geomTexPatch->gpu.lock() ==nullptr){
+        if(patch->geom_tex_patch->gpu.lock() ==nullptr){
             cout << "[Scheduler::updateActiveSet] DEBUG/TODO: reinsert the assert at this point" << endl;
 
             //assert(0);//whyyyyy. the geometry textures should be secured at
@@ -335,14 +335,14 @@ void SchedulerThreaded::refineRgb(std::shared_ptr<ActiveSet> activeSet, std::sha
 
 void SchedulerThreaded::refineDepth(std::shared_ptr<ActiveSet> activeSet, std::shared_ptr<gfx::GpuTex2D> dStdTex,
                                     Eigen::Matrix4f depthPose) {
-    map->geometryUpdate.Update(dStdTex,depthPose,activeSet);
+    map->geometryUpdate.update(dStdTex,depthPose,activeSet);
     refineDepthTimer.click();
 }
 
 void SchedulerThreaded::expand(std::shared_ptr<ActiveSet> activeSet, std::shared_ptr<gfx::GpuTex2D> rgbTex,
                                Eigen::Matrix4f rgbPose, std::shared_ptr<gfx::GpuTex2D> dStdTex, cv::Mat dStdMat,
                                Eigen::Matrix4f depthPose) {
-    map->geometryUpdate.Extend(activeSet,
+    map->geometryUpdate.extend(activeSet,
                       dStdTex,dStdMat,depthPose,
                        rgbTex,rgbPose);
     currentlyWorkingOnExpansion = false;
@@ -377,7 +377,7 @@ SchedulerThreaded::SchedulerThreaded(shared_ptr<MeshReconstruction> map, Stream 
 
     auto cleaner = [&map](GLFWwindow** personalContext){
         map->fboStorage.forceGarbageCollect();
-        map->garbageCollector->ForceCollect();
+        map->garbageCollector->forceCollect();
         glFinish();
         glfwDestroyWindow(*personalContext);
         delete personalContext;

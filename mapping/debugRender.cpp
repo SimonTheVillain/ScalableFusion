@@ -70,7 +70,7 @@ void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
 			int start = p->gpu.lock()->triangles->getStartingIndex();
 			int nr = p->gpu.lock()->triangles->getSize();
 			if(i != 0 && force_dst_geom) {
-				glUniform1i(3, p->gpu.lock()->verticesDest->getStartingIndex());
+				glUniform1i(3, p->gpu.lock()->vertices_dest->getStartingIndex());
 			}
 			glDrawArrays(GL_TRIANGLES, start * 3, nr * 3);
 			glDrawArrays(GL_POINTS, start * 3, nr * 3);
@@ -78,9 +78,9 @@ void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
 			if(i != 0)
 				continue;
 
-			for(shared_ptr<DoubleStitch> stitch : p->doubleStitches) {
+			for(shared_ptr<DoubleStitch> stitch : p->double_stitches) {
 				shared_ptr<TriangleBufConnector> triangles = 
-					stitch->trianglesGpu.lock();
+					stitch->triangles_gpu.lock();
 				if(triangles == nullptr)
 					continue; //doesn't need to be
 
@@ -93,9 +93,9 @@ void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
 					"[RenderMapPresentation::render] Binding texPosBuffer");
 			}
 
-			for(shared_ptr<TripleStitch> stitch : p->tripleStitches){
+			for(shared_ptr<TripleStitch> stitch : p->triple_stitches){
 				shared_ptr<TriangleBufConnector> triangles = 
-					stitch->trianglesGpu.lock();
+					stitch->triangles_gpu.lock();
 				if(triangles == nullptr)
 					continue; // doesn't need to be
 

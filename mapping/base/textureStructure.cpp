@@ -351,7 +351,7 @@ bool MeshTextureGpuHandle::checkRefTexDependencies() {
 
 
         //if the triangles are of the wrong/older version than we need
-        if(dependenceGeom->trianglesVersion != dependency.trianglesVersion){
+        if(dependenceGeom->triangles_version != dependency.trianglesVersion){
             return false;
         }
 

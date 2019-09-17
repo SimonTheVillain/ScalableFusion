@@ -3,7 +3,7 @@
 
 #include "scheduler.h"
 
-#include "../datasetLoader/DatasetLoader.h"
+#include "../datasetLoader/datasetLoader.h"
 
 #include <iostream>
 #include <Eigen/Eigen>
@@ -141,7 +141,7 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
         }
 
         Mat depth = stream->getDepthFrame(); // 16 bit 1mm resolution
-        Mat rgb = stream->getRGBFrame(); // 8 bit 3 channels (usually)
+        Mat rgb = stream->getRgbFrame(); // 8 bit 3 channels (usually)
         Matrix4f pose=stream->getDepthPose();
 
         if(depth.type() != CV_16UC1){
@@ -249,7 +249,7 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
         //don't ask me what this is doing here!TODO: find out
         map->clearInvalidGeometry(activeSet,depth,depthPose);
 
-        map->geometryUpdate.Update(dStdTex,depthPose,activeSet);
+        map->geometryUpdate.update(dStdTex,depthPose,activeSet);
 
         map->texturing.ColorTexUpdate(rgbTexture,rgbPose,activeSet);
 
@@ -311,7 +311,7 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
                 newLabels.setTo(Scalar(100000, 1, 1));
                 imshow("newLabels", newLabels);
                 //maybe instead of the dStdTex we use the new label texture
-                map->labelling.ProjectLabels(activeSet, newLabels, dStdTex, depthPoseLastExpand);//activeSet
+                map->labelling.projectLabels(activeSet, newLabels, dStdTex, depthPoseLastExpand);//activeSet
 
 
             }
@@ -325,7 +325,7 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
                               dStdTex,dStdMat,depthPose,
                               rgbTexture,rgbPose);
             */
-            map->geometryUpdate.Extend(activeSet,
+            map->geometryUpdate.extend(activeSet,
                                        dStdTex, dStdMat, depthPose,
                                        rgbTexture, rgbPose);
 
@@ -352,7 +352,7 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
 
         //cleanup VBO and VAOs that are deleted but only used within this thread
         map->cleanupGlStoragesThisThread();
-        garbageCollector->Collect();
+        garbageCollector->collect();
 
         cv::imshow("rgb",rgb);
         cv::waitKey(1);
@@ -381,7 +381,7 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
     }
     //delete everything for the fbo
     map->fboStorage.forceGarbageCollect();
-    garbageCollector->ForceCollect();
+    garbageCollector->forceCollect();
     glFinish();
 
 

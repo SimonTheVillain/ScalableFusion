@@ -1,5 +1,7 @@
-#ifndef FILE_LABELLING_H
-#define FILE_LABELLING_H
+// TODO: reintroduce include guards, once the problem with the double
+//       labelling.h has been fixed
+//#ifndef FILE_LABELLING_H
+//#define FILE_LABELLING_H
 
 //whatever will be going on in here
 #include <cuda.h>
@@ -54,5 +56,5 @@ namespace gpu{
 
 }
 
-#endif
+//#endif
 

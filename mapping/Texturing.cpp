@@ -41,7 +41,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
     vector<shared_ptr<MeshPatch>> validMeshPatches = newPatches;
 
     for(shared_ptr<MeshPatch> patch : newPatches){
-        for(shared_ptr<DoubleStitch> stitch : patch->doubleStitches){
+        for(shared_ptr<DoubleStitch> stitch : patch->double_stitches){
 
             if(stitch->patches[1].lock()->gpu.lock() == nullptr){
                 assert(0);
@@ -54,7 +54,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
                 assert(0);
             }
         }
-        for(shared_ptr<TripleStitch> stitch : patch->tripleStitches){
+        for(shared_ptr<TripleStitch> stitch : patch->triple_stitches){
 
             for(int i=1;i<3;i++){
                 if(stitch->patches[i].lock()->gpu.lock() == nullptr){
@@ -84,9 +84,9 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
         if(max(bound.width,bound.height) > 1024){
             cout << "maybe download everything related to these bounds. we need to find out what is going on here" << endl;
             shared_ptr<MeshPatchGpuHandle> gpu = newPatches[i]->gpu.lock();
-            int count = gpu->verticesSource->getSize();
+            int count = gpu->vertices_source->getSize();
             GpuVertex vertices[count];
-            gpu->verticesSource->download(vertices);
+            gpu->vertices_source->download(vertices);
 
             for(size_t j=0;j<count;j++) {
                 cout << vertices[j].p << endl;
@@ -96,23 +96,23 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
 
 
             cv::namedWindow("test test");
-            thatOneDebugRenderingThingy->vertexBuffer = mesh->m_gpuGeomStorage.vertexBuffer->getGlName();
-            thatOneDebugRenderingThingy->infoBuffer = mesh->m_gpuGeomStorage.patchInfoBuffer->getGlName();
-            thatOneDebugRenderingThingy->triangleBuffer = mesh->m_gpuGeomStorage.triangleBuffer->getGlName();
-            thatOneDebugRenderingThingy->texPosBuffer = mesh->m_gpuGeomStorage.texPosBuffer->getGlName();
+            thatOneDebugRenderingThingy->vertex_buffer = mesh->m_gpuGeomStorage.vertexBuffer->getGlName();
+            thatOneDebugRenderingThingy->info_buffer = mesh->m_gpuGeomStorage.patchInfoBuffer->getGlName();
+            thatOneDebugRenderingThingy->triangle_buffer = mesh->m_gpuGeomStorage.triangleBuffer->getGlName();
+            thatOneDebugRenderingThingy->tex_pos_buffer = mesh->m_gpuGeomStorage.texPosBuffer->getGlName();
             //thatOneDebugRenderingThingy->setPatch(newPatches[i].get());
             //thatOneDebugRenderingThingy->setIndexCount(gpu->triangles->getStartingIndex(),gpu->triangles->getSize());
             thatOneDebugRenderingThingy->addPatch(newPatches[i].get(),1,0,0);
 
             shared_ptr<MeshPatch> debugPatch = newPatches[i];
-            for(int i= 0 ; i< debugPatch->doubleStitches.size();i++){
-                if(debugPatch->doubleStitches[i]->patches[0].lock() != debugPatch){
+            for(int i= 0 ; i< debugPatch->double_stitches.size();i++){
+                if(debugPatch->double_stitches[i]->patches[0].lock() != debugPatch){
                     continue;
                 }
-                if(debugPatch->doubleStitches[i]->patches[1].lock()->gpu.lock() == nullptr){
+                if(debugPatch->double_stitches[i]->patches[1].lock()->gpu.lock() == nullptr){
                     assert(0);
                 }
-                thatOneDebugRenderingThingy->addPatch(debugPatch->doubleStitches[i]->patches[1].lock().get(),
+                thatOneDebugRenderingThingy->addPatch(debugPatch->double_stitches[i]->patches[1].lock().get(),
                                                       0,0,1);
 
 
@@ -145,10 +145,10 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
         shared_ptr<MeshPatch> patch = validMeshPatches[i];
         shared_ptr<MeshPatchGpuHandle> gpuPatch = patch->gpu.lock();
 
-        shared_ptr<MeshTextureGpuHandle> gpuTexture = gpuPatch->geomTex;
+        shared_ptr<MeshTextureGpuHandle> gpuTexture = gpuPatch->geom_tex;
         if(gpuTexture==nullptr){
             //create the gpu resources if they are not existant
-            int nrCoords = patch->geomTexPatch->texCoords.size();
+            int nrCoords = patch->geom_tex_patch->texCoords.size();
             if(bounds[i].width*scale < 0){
                 //why are the bounds at this one negative?
                 //genBoundsFromPatches(newPatches,pose,proj,activeSet);
@@ -164,13 +164,13 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
                             mesh->texAtlasStds.get(),
                             int(bounds[i].width*scale),
                             int(bounds[i].height*scale));
-            gpuPatch->geomTex = gpuTexture;
-            patch->geomTexPatch->gpu = gpuTexture;
+            gpuPatch->geom_tex = gpuTexture;
+            patch->geom_tex_patch->gpu = gpuTexture;
 
             //mark the texture as the most current source for data
             //in case the container gets deleted.
             //patch->geomTexPatch->texCoordsGpu = gpuTexture->coords;
-            patch->geomTexPatch->gpu = gpuTexture;
+            patch->geom_tex_patch->gpu = gpuTexture;
             gpuTexture->gpuDataChanged = true;
 
         }else{
@@ -196,7 +196,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
 
         //now do all the stitches and so on:
 
-        for(shared_ptr<DoubleStitch> stitch : patch->doubleStitches){
+        for(shared_ptr<DoubleStitch> stitch : patch->double_stitches){
             if(stitch->patches[0].lock() != patch){
                 continue;
             }
@@ -211,7 +211,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
 #endif
                 continue;
             }
-            shared_ptr<TriangleBufConnector> gpuStitch = stitch->trianglesGpu.lock();
+            shared_ptr<TriangleBufConnector> gpuStitch = stitch->triangles_gpu.lock();
             if(gpuStitch == nullptr){
                 assert(0);
                 continue;
@@ -225,7 +225,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
         }
 
         //also triple stitches
-        for(shared_ptr<TripleStitch> stitch : patch->tripleStitches){
+        for(shared_ptr<TripleStitch> stitch : patch->triple_stitches){
             if(stitch->patches[0].lock() != patch){
                 continue;
             }
@@ -235,7 +235,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
                 continue;
             }
             shared_ptr<TriangleBufConnector> gpuStitch =
-                    stitch->trianglesGpu.lock();
+                    stitch->triangles_gpu.lock();
             //shared_ptr<StitchGpuHandle> gpuStitch = stitch->gpu.lock();{
             if(gpuStitch == nullptr){
                 assert(0);
@@ -279,14 +279,14 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
     //since the texture has data that needs to only exists on the gpu,
     //we setup the texture to be downloaded as soon
     for(shared_ptr<MeshPatch> patch : validMeshPatches){
-        shared_ptr<MeshTextureGpuHandle> tex = patch->gpu.lock()->geomTex;
+        shared_ptr<MeshTextureGpuHandle> tex = patch->gpu.lock()->geom_tex;
         if(tex==nullptr){
             assert(0);
         }
         //tex->downloadToWhenFinished = patch->geomTexPatch;
         //tex->recycler = this->recycler;
         tex->gpuDataChanged = true;
-        patch->geomTexPatch->debugIsUninitialized = false;
+        patch->geom_tex_patch->debugIsUninitialized = false;
     }
     //TODO: now initialize that stuff
 
@@ -317,7 +317,7 @@ void Texturing::ProjToGeomTex(ActiveSet* activeSet, std::vector<std::shared_ptr<
     for(size_t i=0;i<newPatches.size();i++){
         MeshPatch *patch = newPatches[i].get();
         InitDescriptor command;
-        shared_ptr<MeshTextureGpuHandle>  geomTexGpuHandle = patch->geomTexPatch->gpu.lock();
+        shared_ptr<MeshTextureGpuHandle>  geomTexGpuHandle = patch->geom_tex_patch->gpu.lock();
 
 
         cv::Rect2i rect = geomTexGpuHandle->tex->getRect(); //getRect() //This is different from get rect
@@ -533,20 +533,20 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
         shared_ptr<MeshPatch> patch = visiblePatches[i];
         shared_ptr<MeshPatchGpuHandle> gpuPatch = patch->gpu.lock();
         vector<shared_ptr<MeshTexture>> texPatchesToDelete;
-        patch->texPatchesMutex.lock();
+        patch->tex_patches_mutex.lock();
 
 
         //i don't trust the patch position
         float dist = (patch->getPos() - camPos).norm();
 
         bool createThisTexture=false;
-        if(patch->texPatches.size()!=0){
+        if(patch->tex_patches.size()!=0){
             //vector with textures that need to be removed
-            for(size_t j=0;j<patch->texPatches.size();j++){
+            for(size_t j=0;j<patch->tex_patches.size();j++){
                 //iterate over all texture patches to see which of them need to be removed
 
 
-                Vector4f camPosAtCapture4  = patch->texPatches[j]->camPose.inverse()*Vector4f(0,0,0,1);
+                Vector4f camPosAtCapture4  = patch->tex_patches[j]->camPose.inverse()*Vector4f(0,0,0,1);
                 Vector3f camPosAtCapture = camPosAtCapture4.block<3,1>(0,0);
 
 
@@ -555,7 +555,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
                     //now the camera is so close that the new texture is of
                     //way higher quality. It is time to remove the old texture
                     createThisTexture = true;
-                    texPatchesToDelete.push_back(patch->texPatches[j]);
+                    texPatchesToDelete.push_back(patch->tex_patches[j]);
                     //cout << "[ScaleableMap::applyNewColorData] Replacing an existing texture for this patch" << endl;
                 }
                 //float cosAngleAtCapture;
@@ -566,13 +566,13 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
             //the first implementation only allows one texPatch for each patch.
             if(!createThisTexture){
                 //cout << "we do not add a new texture since there already is one" << endl;
-                patch->texPatchesMutex.unlock();
+                patch->tex_patches_mutex.unlock();
                 continue;
             }
         }else{
             createThisTexture = true;
         }
-        patch->texPatchesMutex.unlock();
+        patch->tex_patches_mutex.unlock();
 
 
         if(createThisTexture){
@@ -592,7 +592,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
             meshTex->camPose = pose;
             //thats a good amount of
             int nrCoords =
-                    patch->gpu.lock()->geomTex->coords->getSize();
+                    patch->gpu.lock()->geom_tex->coords->getSize();
 
             shared_ptr<MeshTextureGpuHandle> meshTexGpu =
                     meshTex->genGpuResource(nrCoords,cv::Size2i(resX,resY));
@@ -612,7 +612,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
             texGenTasks.push_back(task);
 
             //oh and also do this for all the double stitches
-            for(shared_ptr<DoubleStitch> stitch : patch->doubleStitches){
+            for(shared_ptr<DoubleStitch> stitch : patch->double_stitches){
                 if(stitch->patches[0].lock() != patch){
                     continue;
                 }
@@ -621,7 +621,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
                     assert(0);//This actually should not happen
                     continue;
                 }
-                shared_ptr<TriangleBufConnector> gpuStitch = stitch->trianglesGpu.lock();
+                shared_ptr<TriangleBufConnector> gpuStitch = stitch->triangles_gpu.lock();
                 if(gpuStitch == nullptr){
                     assert(0);
                     continue;
@@ -632,7 +632,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
             }
 
             //also triple stitches
-            for(shared_ptr<TripleStitch> stitch : patch->tripleStitches){
+            for(shared_ptr<TripleStitch> stitch : patch->triple_stitches){
                 if(stitch->patches[0].lock() != patch){
                     continue;
                 }
@@ -641,7 +641,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
                     continue;
                 }
                 shared_ptr<TriangleBufConnector> gpuStitch =
-                        stitch->trianglesGpu.lock();
+                        stitch->triangles_gpu.lock();
                 if(gpuStitch == nullptr){
                     assert(0);
                     continue;
@@ -764,7 +764,7 @@ void Texturing::GenLookupTexGeom(ActiveSet *activeSet,
 {
     vector<shared_ptr<MeshTexture>> textures;
     for(size_t i=0;i<patches.size();i++){
-        textures.push_back(patches[i]->geomTexPatch);
+        textures.push_back(patches[i]->geom_tex_patch);
     }
     GenLookupTex(activeSet, patches, textures);
 }
@@ -835,7 +835,7 @@ void Texturing::GenLookupTex(ActiveSet *activeSet,
 
     }
     for(size_t i=0;i<patches.size();i++){
-        patches[i]->geomTexPatch->refTexFilled = true;
+        patches[i]->geom_tex_patch->refTexFilled = true;
     }
 
 

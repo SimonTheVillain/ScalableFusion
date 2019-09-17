@@ -61,16 +61,16 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 
 	for(shared_ptr<MeshPatch> patch_cpu : active_set->retainedMeshPatchesCpu) {
 
-		patch_cpu->labelTexPatchMutex.lock();
+		patch_cpu->label_tex_patch_mutex.lock();
 		shared_ptr<MeshPatchGpuHandle> patch_gpu = patch_cpu->gpu.lock();
 		if(patch_gpu == nullptr) {
 			continue;
 		}
 
-		if(patch_cpu->labelTexPatch == nullptr) {
+		if(patch_cpu->label_tex_patch == nullptr) {
 			//create a new texture, use the same resolution as the geometry texture
 			shared_ptr<MeshTextureGpuHandle> geom_tex_gpu =
-					patch_cpu->geomTexPatch->gpu.lock();
+					patch_cpu->geom_tex_patch->gpu.lock();
 			cv::Rect2i roi  = geom_tex_gpu->tex->getRect();
 			cv::Size2i size = roi.size();
 
@@ -86,13 +86,13 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 					mesh_texture->genGpuResource(tex_coord_count, size);
 
 			mesh_texture->gpu = tex_gpu_handle;//TODO: how to secure the gpuTexPatch?
-			patch_cpu->labelTexPatch = mesh_texture;
+			patch_cpu->label_tex_patch = mesh_texture;
 			patch_gpu->setLabelTex(tex_gpu_handle);
 
 			shared_ptr<MeshPatchGpuHandle> patch_gpu = patch_cpu->gpu.lock();
 
 			if(patch_gpu != nullptr) {
-				shared_ptr<MeshTextureGpuHandle> tex_patch_gpu = patch_gpu->labelTex;
+				shared_ptr<MeshTextureGpuHandle> tex_patch_gpu = patch_gpu->label_tex;
 
 				//TODO: set the label to -1
 				//also don't create a new texture every time!!!!!
@@ -114,7 +114,7 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 
 				GpuTexInfoTask info_task;
 				info_task.dst =
-						&(patch_gpu->patchInfos->getStartingPtr()->segmentationTexture);
+						&(patch_gpu->patch_infos->getStartingPtr()->segmentationTexture);
 
 				info_task.value = tex_patch_gpu->genTexInfo();
 				GpuTextureInfo info = tex_patch_gpu->genTexInfo();
@@ -123,16 +123,16 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 				DEBUGTask debug_task;
 
 				debug_task.src =
-						&(patch_gpu->patchInfos->getStartingPtr()->stdTexture);
+						&(patch_gpu->patch_infos->getStartingPtr()->stdTexture);
 				debug_task.dst =
-						&(patch_gpu->patchInfos->getStartingPtr()->segmentationTexture);
+						&(patch_gpu->patch_infos->getStartingPtr()->segmentationTexture);
 				debug_tasks.push_back(debug_task);
 			} else {
 				assert(0);//this means we lost the newly created tex patch
 			}
 		}
 
-		shared_ptr<MeshTexture> tex_patch = patch_cpu->labelTexPatch;
+		shared_ptr<MeshTexture> tex_patch = patch_cpu->label_tex_patch;
 		shared_ptr<MeshTextureGpuHandle> gpu_tex_patch = tex_patch->gpu.lock();
 		if(gpu_tex_patch == nullptr) {
 			assert(0);
@@ -148,11 +148,11 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 		task.lookupSurf = 
 				gpu_tex_patch->refTex->getAtlasTex()->getTex2D()->getCudaSurfaceObject();
 
-		task.vertexDestStartInd = patch_gpu->verticesSource->getStartingIndex();
+		task.vertexDestStartInd = patch_gpu->vertices_source->getStartingIndex();
 		labelling_tasks.push_back(task);
 
 		labelling_textures_debug.push_back(gpu_tex_patch);
-		patch_cpu->labelTexPatchMutex.unlock();
+		patch_cpu->label_tex_patch_mutex.unlock();
 	}
 
 	//first we need to copy over the texture coordinates from geometry to the

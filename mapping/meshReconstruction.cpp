@@ -1060,8 +1060,8 @@ void MeshReconstruction::clearInvalidGeometry(std::shared_ptr<ActiveSet> set, Ma
         gpu::GeometryValidityChecks::VertexTask task;
 
 
-        task.startSource = gpuPatch->vertices_source->getStartingIndex();
-        task.startDest = gpuPatch->vertices_dest->getStartingIndex();
+        task.start_source = gpuPatch->vertices_source->getStartingIndex();
+        task.start_dest = gpuPatch->vertices_dest->getStartingIndex();
         task.size = gpuPatch->vertices_source->getSize();
         tasks.push_back(task);
     }

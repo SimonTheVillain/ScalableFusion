@@ -38,8 +38,8 @@ __global__ void updateGeomTex_kernel(const cudaSurfaceObject_t geometryInput, //
     gpu::UpdateDescriptor &descriptor = descriptors[k];
 
     int i=threadIdx.x;
-    uint32_t vertexSourceOffset = descriptor.vertexSourceStartInd;
-    uint32_t vertexDestOffset = descriptor.vertexDestinationStartInd;
+    uint32_t vertexSourceOffset = descriptor.vertex_source_start_ind;
+    uint32_t vertexDestOffset = descriptor.vertex_destination_start_ind;
 
     int absolutePixCount = descriptor.destination.height*descriptor.destination.width;
     while(i<absolutePixCount){
@@ -51,8 +51,8 @@ __global__ void updateGeomTex_kernel(const cudaSurfaceObject_t geometryInput, //
         int xDest=x + descriptor.destination.x;
         int yDest=y + descriptor.destination.y;
 
-        int xRef=x + descriptor.referenceOffset.x;
-        int yRef=y + descriptor.referenceOffset.y;
+        int xRef=x + descriptor.reference_offset.x;
+        int yRef=y + descriptor.reference_offset.y;
 
         //the propable source coordinate (not normalized)
         float xSource = ((x)*descriptor.source.width)/
@@ -63,10 +63,10 @@ __global__ void updateGeomTex_kernel(const cudaSurfaceObject_t geometryInput, //
 
         //DEBUG: Copy the source to destRect:
         if(false){
-            float4 surface_k = readFloat4F16(descriptor.sourceGeometry,
+            float4 surface_k = readFloat4F16(descriptor.source_geometry,
                                   xSource,ySource);
 
-            writeResult(surface_k,descriptor.destinationGeometry,xDest,yDest);
+            writeResult(surface_k,descriptor.destination_geometry,xDest,yDest);
             i+=blockDim.x;
             continue;
 
@@ -87,7 +87,7 @@ __global__ void updateGeomTex_kernel(const cudaSurfaceObject_t geometryInput, //
 
         //read from the reference texture
         float4 ref;
-        surf2Dread(&ref,descriptor.destinationReferences,
+        surf2Dread(&ref,descriptor.destination_references,
                    xRef*sizeof(Vector4f),yRef);
 
 
@@ -140,15 +140,15 @@ __global__ void updateGeomTex_kernel(const cudaSurfaceObject_t geometryInput, //
                 descriptor.destination.height == descriptor.source.height){
             //if the source and the destRect
             //texture have the same resolution we handle all of this differently
-            surface_k = readFloat4F16(descriptor.sourceGeometry,
+            surface_k = readFloat4F16(descriptor.source_geometry,
                                       xSource,ySource);
 
         }else{
             surface_k = readBilinear16F(xSource,
                                         ySource,
-                                        descriptor.sourceGeometry,
-                                        descriptor.sourceSize.width,
-                                        descriptor.sourceSize.height);
+                                        descriptor.source_geometry,
+                                        descriptor.source_size.width,
+                                        descriptor.source_size.height);
 
         }
 
@@ -161,7 +161,7 @@ __global__ void updateGeomTex_kernel(const cudaSurfaceObject_t geometryInput, //
             //sensor data. (hoping that this is better than nothing)
             //actually this should have a visibility test (TODO)
             writeResult(make_float4(0,sensor.y,sensor.z,sensor.w),
-                        descriptor.destinationGeometry,
+                        descriptor.destination_geometry,
                         xDest,yDest);
             /*
             print("TODO: prepare for 16BIT");
@@ -175,7 +175,7 @@ __global__ void updateGeomTex_kernel(const cudaSurfaceObject_t geometryInput, //
         if(isnan(sensor.y)){
             //the sensor doesn't have any valid values
             //keep the old surface parameter
-            writeResult(surface_k,descriptor.destinationGeometry,xDest,yDest);
+            writeResult(surface_k,descriptor.destination_geometry,xDest,yDest);
             /*
             print("TODO: prepare for 16BIT");
             surf2Dwrite(surface_k,descriptor.destinationGeometry,xDest*sizeof(float4),yDest);
@@ -201,7 +201,7 @@ __global__ void updateGeomTex_kernel(const cudaSurfaceObject_t geometryInput, //
             //keep the old surface parameter
             //print("TODO: prepare for 16BIT");
             //surf2Dwrite(surface_k,descriptor.destinationGeometry,xDest*sizeof(float4),yDest);
-            writeResult(surface_k,descriptor.destinationGeometry,xDest,yDest);
+            writeResult(surface_k,descriptor.destination_geometry,xDest,yDest);
             i+=blockDim.x;
             continue;
         }
@@ -210,7 +210,7 @@ __global__ void updateGeomTex_kernel(const cudaSurfaceObject_t geometryInput, //
 
         float4 surface_k1 = calcSurfaceUpdate(surface_k,sensor, //the vector of sensor data and of what is on the surface
                                               d, dUp);
-        writeResult(surface_k1,descriptor.destinationGeometry,xDest,yDest);
+        writeResult(surface_k1,descriptor.destination_geometry,xDest,yDest);
 
 
 

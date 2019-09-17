@@ -557,26 +557,26 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		cv::Rect2i rect = geom_tex_gpu_handle->tex->getRect();
 		float width  = tex->getWidth();
 		float height = tex->getHeight();
-		desc.sourceGeometry = tex->getCudaSurfaceObject();
+		desc.source_geometry = tex->getCudaSurfaceObject();
 
 		//wow, this really has to be streamlined
 		desc.source = rect;
-		desc.sourceN = cv::Rect2f(float(rect.x) / width,
-		                          float(rect.y) / height,
-		                          float(rect.width) / width,
-		                          float(rect.height) / height);
-		desc.sourceSize = cv::Size2i(width, height);
+		desc.source_n = cv::Rect2f(float(rect.x) / width,
+		                           float(rect.y) / height,
+		                           float(rect.width) / width,
+		                           float(rect.height) / height);
+		desc.source_size = cv::Size2i(width, height);
 
-		desc.patchInfoSlot = gpu->patch_infos->getStartingIndex();
+		desc.patch_info_slot = gpu->patch_infos->getStartingIndex();
 
 		//set the references to the vertex data.
-		desc.vertexSourceStartInd = gpu->vertices_source->getStartingIndex();
+		desc.vertex_source_start_ind = gpu->vertices_source->getStartingIndex();
 
-		desc.vertexCount = gpu->vertices_source->getSize();
-		desc.vertexDestinationStartInd = gpu->vertices_dest->getStartingIndex();
+		desc.vertex_count = gpu->vertices_source->getSize();
+		desc.vertex_destination_start_ind = gpu->vertices_dest->getStartingIndex();
 
-		desc.triangleSlot = gpu->triangles->getStartingIndex();
-		desc.triangleCount = gpu->triangles->getSize();
+		desc.triangle_slot = gpu->triangles->getStartingIndex();
+		desc.triangle_count = gpu->triangles->getSize();
 
 		//now go for the destRect textures
 		//shared_ptr<MeshTextureGpuHandle> destTex = make_shared<MeshTextureGpuHandle>();
@@ -590,19 +590,19 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		width  = tex->getWidth();
 		height = tex->getHeight();
 
-		desc.destinationGeometry = tex->getCudaSurfaceObject();
+		desc.destination_geometry = tex->getCudaSurfaceObject();
 		desc.destination = rect;
-		desc.destinationN = cv::Rect2f(float(rect.x) / width,
-		                               float(rect.y) / height,
-		                               float(rect.width) / width,
-		                               float(rect.height) / height);
-		desc.destinationSize = cv::Size2i(width, height);
+		desc.destination_n = cv::Rect2f(float(rect.x) / width,
+		                                float(rect.y) / height,
+		                                float(rect.width) / width,
+		                                float(rect.height) / height);
+		desc.destination_size = cv::Size2i(width, height);
 
-		desc.destinationReferences = 
+		desc.destination_references = 
 				geom_tex_gpu_handle->ref_tex->getCudaSurfaceObject();
 
 		rect = geom_tex_gpu_handle->ref_tex->getRect();
-		desc.referenceOffset = rect.tl();
+		desc.reference_offset = rect.tl();
 
 		descriptors.push_back(desc);
 		dest_tex_handles.push_back(dest_tex);

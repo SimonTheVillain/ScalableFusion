@@ -24,10 +24,10 @@ __global__ void vertexUpdate_kernel(const cudaSurfaceObject_t geometryInput, //t
                                      GpuTriangle* triangles,GpuPatchInfo* patchInfos){
     uint32_t k = blockIdx.x;
     gpu::UpdateDescriptor &descriptor = descriptors[k];
-    GpuPatchInfo &info = patchInfos[descriptor.patchInfoSlot];
+    GpuPatchInfo &info = patchInfos[descriptor.patch_info_slot];
     uint32_t i = threadIdx.x;
-    uint32_t vertexSourceOffset = descriptor.vertexSourceStartInd;
-    uint32_t vertexDestOffset = descriptor.vertexDestinationStartInd;
+    uint32_t vertexSourceOffset = descriptor.vertex_source_start_ind;
+    uint32_t vertexDestOffset = descriptor.vertex_destination_start_ind;
 
 
     //TODO: remove this as this is a attempt to check if the bound texture is valid!!!
@@ -62,7 +62,7 @@ __global__ void vertexUpdate_kernel(const cudaSurfaceObject_t geometryInput, //t
     //printf("%d vertexSourceOffset \n",vertexSourceOffset);
     //return;
     uint32_t texPosOffset = info.stdTexture.texCoordStartInd;//*nrTexPosPerPatch;
-    while(i<descriptor.vertexCount){
+    while(i<descriptor.vertex_count){
         GpuVertex &vertIn = vertices[vertexSourceOffset+i];
         GpuVertex &vertOut = vertices[vertexDestOffset+i];
 
@@ -126,8 +126,8 @@ __global__ void vertexUpdate_kernel(const cudaSurfaceObject_t geometryInput, //t
 
         //this tex coordinate still has to be adapted for the texture atlas
         float2 texAtlasCoord = make_float2(
-                    texCoord[0]*descriptor.sourceN.width + descriptor.sourceN.x,
-                    texCoord[1]*descriptor.sourceN.height + descriptor.sourceN.y);
+                    texCoord[0]*descriptor.source_n.width + descriptor.source_n.x,
+                    texCoord[1]*descriptor.source_n.height + descriptor.source_n.y);
         //if(k==10)
         //    printf("texAtlasCoord %f, %f \n",texAtlasCoord.x,texAtlasCoord.y);
 
@@ -152,7 +152,7 @@ __global__ void vertexUpdate_kernel(const cudaSurfaceObject_t geometryInput, //t
             */
             vertOut.n=Eigen::Vector3f(0,0,1);
             __half surfaceData[4];
-            surf2Dread((ushort4*)surfaceData,descriptor.sourceGeometry,int(uv.x)*sizeof(ushort4),int(uv.y));
+            surf2Dread((ushort4*)surfaceData,descriptor.source_geometry,int(uv.x)*sizeof(ushort4),int(uv.y));
             surface_k = make_float4(__half2float(surfaceData[0]),
                                     __half2float(surfaceData[1]),
                                     __half2float(surfaceData[2]),
@@ -181,7 +181,7 @@ __global__ void vertexUpdate_kernel(const cudaSurfaceObject_t geometryInput, //t
             ushort4 surfaceData = float4_2_half4_reinterpret_ushort4_rn(update);
 
             //TODO: reinsert this
-            surf2Dwrite(surfaceData,descriptor.sourceGeometry,int(uv.x)*sizeof(ushort4),int(uv.y));
+            surf2Dwrite(surfaceData,descriptor.source_geometry,int(uv.x)*sizeof(ushort4),int(uv.y));
 
             //TODO: Important!!! Make sure that also the reference is set properly (otherwise we will not see an update)
 
@@ -273,7 +273,7 @@ __global__ void vertexUpdate_kernel(const cudaSurfaceObject_t geometryInput, //t
 
             update.x=0;
             ushort4 surfaceData = float4_2_half4_reinterpret_ushort4_rn(update);
-            surf2Dwrite(surfaceData,descriptor.destinationGeometry,int(uv.x)*sizeof(ushort4),int(uv.y));
+            surf2Dwrite(surfaceData,descriptor.destination_geometry,int(uv.x)*sizeof(ushort4),int(uv.y));
 
             //TODO: make sure to at some point update the normals by sensible means
             vertOut.n=Eigen::Vector3f(0,1,0);

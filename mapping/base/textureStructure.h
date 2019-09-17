@@ -1,22 +1,18 @@
 #ifndef FILE_TEXTURE_STRUCTURE
 #define FILE_TEXTURE_STRUCTURE
 
-#include "meshStructure.h"
-
-
-#include <opencv2/core.hpp>
 #include <vector>
 #include <memory>
 #include <tuple>
 
+#include <Eigen/Core>
+#include <opencv2/core.hpp>
+
 //from ghe gfx package
 #include <gpuTex.h>
-
-#include <Eigen/Core>
-
 #include "texAtlas.h"
 #include "gpuBuffer.h"
-
+#include "meshStructure.h"
 
 /**
  * General discussion about textures:
@@ -84,10 +80,12 @@ associated global memory is modified.
  *
  */
 
+using namespace std;
+using namespace Eigen;
+
 class GeometryBase;
 class MeshReconstruction;
 class MeshPatch;
-//class TexCoordBufConnector;
 class ActiveSet;
 struct MeshTexture;
 class Recycler;
@@ -95,66 +93,53 @@ class Recycler;
 //i think it will be easiest if there is no direct connection between the
 //texture gpu handle and the geometry gpu handle
 //TODO: mechanism to check out
-class MeshTextureGpuHandle{
+class MeshTextureGpuHandle {
 public:
-    std::mutex mutex;
-    std::shared_ptr<TexCoordBufConnector> coords;
-    std::shared_ptr<TexAtlasPatch> refTex;
-    bool refTexFilled = false;
-    //TODO: create measure for when this texture is even valid!!!
-    //because if not we have a problem.
-    //ways to do this might be to connect the validity to certain active sets
-    //->unnecessary recomputation
-    //other way could be to have revision numbers to all the neighbouring patches
-    //and a connection to gpu handles which should not be expired or receive
-    //a new revision number for the lookup to stay valid.
-    //->a lot of effort for keeping the data consistent
-    //(threading is an issue still)
 
-    std::shared_ptr<TexAtlasPatch> tex;
+	struct Dependency {
+		weak_ptr<GeometryBase> geometry; //maybe this needs to be a MeshPatchGpuHandle or GeometryBase
+		// (because we care for triangles)
+		int triangle_position_on_gpu = 0;
+		int triangles_version = 0;
+	};
 
+	MeshTextureGpuHandle(
+			TexCoordBuffer *tex_coord_buf, int nr_tex_coords, TexAtlas *ref_atlas,
+			TexAtlas *data_atlas, int width, int height, 
+			shared_ptr<TexAtlasPatch> source_tex_being_downloaded = nullptr,
+			shared_ptr<TexCoordBufConnector> tex_coords_being_downloaded = nullptr);
 
+	~MeshTextureGpuHandle();
 
+	bool checkRefTexDependencies();
 
-    //std::shared_ptr<TexAtlasPatch> sourceTex;
-    //std::shared_ptr<TexAtlasPatch> destTex;
-    struct Dependency{
-        std::weak_ptr<GeometryBase> geometry; //maybe this needs to be a MeshPatchGpuHandle or GeometryBase
-        // (because we care for triangles)
-        int trianglePositionOnGpu = 0;
-        int trianglesVersion = 0;
-    };
+	GpuTextureInfo genTexInfo();
 
-    std::vector<Dependency> refTexDependencies;
+	mutex tex_mutex;
+	shared_ptr<TexCoordBufConnector> coords;
+	shared_ptr<TexAtlasPatch> ref_tex;
+	bool ref_tex_filled = false;
+	//TODO: create measure for when this texture is even valid!!!
+	//because if not we have a problem.
+	//ways to do this might be to connect the validity to certain active sets
+	//->unnecessary recomputation
+	//other way could be to have revision numbers to all the neighbouring patches
+	//and a connection to gpu handles which should not be expired or receive
+	//a new revision number for the lookup to stay valid.
+	//->a lot of effort for keeping the data consistent
+	//(threading is an issue still)
 
-    bool checkRefTexDependencies();
-/*
-    cudaSurfaceObject_t getCudaSurfaceObject();
-    cudaTextureObject_t getCudaTextureObject();
-*/
-    bool gpuDataChanged=false;
+	shared_ptr<TexAtlasPatch> tex;
 
-    //TODO: get rid of this unless i come to the conclusion that it actually is useful
-    //TODO: document who is supposed to hold the handle of where to download
-    // i really have no clue of how this works
-    //std::weak_ptr<MeshTexture> downloadToWhenFinished;
-    //std::shared_ptr<Recycler> recycler;
+	vector<Dependency> ref_tex_dependencies;
 
-    MeshTextureGpuHandle(TexCoordBuffer* texCoordBuf, int nrTexCoords,
-                         TexAtlas* refAtlas,
-                         TexAtlas* dataAtlas,
-                         int width, int height,
-                         std::shared_ptr<TexAtlasPatch> sourceTexBeingDownloaded=nullptr,
-                         std::shared_ptr<TexCoordBufConnector> texCoordsBeingDownloaded=nullptr);
+	bool gpu_data_changed = false;
 
-    ~MeshTextureGpuHandle();
-
-
-
-    GpuTextureInfo genTexInfo();
-
-    //void swapSrcDst();
-
+	//TODO: get rid of this unless i come to the conclusion that it actually is useful
+	//TODO: document who is supposed to hold the handle of where to download
+	// i really have no clue of how this works
+	//weak_ptr<MeshTexture> downloadToWhenFinished;
+	//shared_ptr<Recycler> recycler;
 };
 
 /**
@@ -166,164 +151,133 @@ public:
  *
  * somehow the GPU payload type should be able to be created by the CPU payload
  */
-//template <typename GpuPayloadType,typename CpuPayloadType>
-struct MeshTexture{
-    friend MeshPatch;
-    friend ActiveSet;
-
-    //TODO: add different types of texture:
-    /*
-     * storing median and standard deviation to the surface
-     * color stores projected color for a surface
-     * integerLabels stores labels on the surface
-     * weightedInteger labels stores a label + an accumulated weight
-     *
-     */
-    enum Type {
-        standardDeviation,
-        color,//16 bit float
-        color8,
-        integerLabels,
-        weightedIntegerLabels
-    };
-
-
-
-private:
-    //Either we store this and also some information so we don't
-    //need to create the gpu
-    //use this at all
-    //GpuBuffer<Eigen::Vector2f>* texPosBuffer;//TODO:
-    //std::shared_ptr<TexAtlas> refAtlas;
-    //std::shared_ptr<TexAtlas> dataAtlas;
-    //or maybe we only store a reference to the map:
-    MeshReconstruction* map;
-    Type type;
-    //everything additional like texAtlas derive from the textureContent enum
-    //TODO: only let the map call the constructor for meshTexture;
-    //Only the meshTexture instantiates
-
-public://debug
-    //std::weak_ptr<TexAtlasPatch> sourceTexPatch;//TODO make this weak
-    bool debugIsUninitialized=true;
-private:
-    //std::weak_ptr<TexAtlasPatch> destinationTexPatch;//TODO make this weak
+struct MeshTexture {
+	friend MeshPatch;
+	friend ActiveSet;
 
 public:
-    std::string name;
+	//TODO: add different types of texture:
+	/*
+	 * storing median and standard deviation to the surface
+	 * color stores projected color for a surface
+	 * integerLabels stores labels on the surface
+	 * weightedInteger labels stores a label + an accumulated weight
+	 *
+	 */
+	enum Type {
+		STANDARD_DEVIATION,
+		COLOR,//16 bit float
+		COLOR8,
+		INTEGER_LABELS,
+		WEIGHTED_INTEGER_LABELS
+	};
 
-    //TODO: remove this
-    MeshTexture(std::shared_ptr<TexAtlas> referenceAtlas,
-                std::shared_ptr<TexAtlas> dataAtlas);//TODO: also add the framebuffer thingy
-    MeshTexture(Type type,
-                MeshReconstruction* map);
-    ~MeshTexture();
+	//TODO: remove this
+	MeshTexture(shared_ptr<TexAtlas> reference_atlas,
+	            shared_ptr<TexAtlas> data_atlas);//TODO: also add the framebuffer thingy
 
+	MeshTexture(Type type, MeshReconstruction *map);
+	
+	~MeshTexture();
 
+	shared_ptr<MeshTextureGpuHandle> genGpuResource(size_t nr_coords, 
+	                                                cv::Size2i size);
 
-    std::shared_ptr<MeshTextureGpuHandle> genGpuResource(size_t nrCoords, cv::Size2i size);
-    //TODO: implement this weakSelf thingy
-    std::weak_ptr<MeshTexture> weakSelf;
+	bool isGpuResidencyRequired();
 
-    //TODO: use these at some point
-    //this camera pose and camera intrisic stuff is great.
-    Eigen::Matrix4f camPose;
-    Eigen::Vector4f camIntrinsics;
-    cv::Rect2i snippet;//since this texture is a cutout of a camera frame we use this
+	cv::Rect2i getLookupRect();
+	//TODO: logic to determine when said lookup is valid
+	//also the tex coords are not valid in any circumstances
 
+	cv::Rect2f getBounds();
 
+	void  scaleAndShiftTexCoordsIntoRect(const cv::Rect2f rect);
 
-    //TODO: Delete this if this relly proves too useless (probably it is so we comment it out)
-    //std::weak_ptr<TexAtlasPatch> textureMostCurrent;
-
-    //TODO: implement another way of retaining the location of the most current geometry
-    /*
-    bool cpuCoordsAhead=false;
-    bool gpuCoordsAhead=false;
-
-    bool cpuContentAhead=false;
-    bool gpuContentAhead=false;
-    */
-    bool refTexFilled=false;
-
-    //altough let the pixel reference framebuffers be created
-    //GLuint glFramebufferToPixReference=0;
-    ///maybe we need to also create a depth attachment / buffer
-    //void createPixReferencesFramebuffer();
-
-    //std::shared_ptr<gfx::GpuTex2D> pixReference;
+	static cv::Rect2f getBounds(const vector<Vector2f> &list);
 
 
-    ///TODO: when this object gets destroyed this reference should be removed from the list.
-    //The slot on which the texture coordinates are.
+	static void scaleAndShiftTexCoordsIntoRect(const cv::Rect2f rect,
+	                                           const vector<Vector2f> &in,
+	                                           vector<Vector2f> &out);
 
 
+	//ACTUALLY THESE NEXT FEW FUNCTIONS ARE HARD TO IMPLEMENT
+	void isLookupTexFilled();
+
+	//this is the most important question
+	void isLookupTexUpToDate();
+
+	void isLookupSecuredAndUpToDate(MeshPatch* patch,shared_ptr<ActiveSet>* set);
+
+	//TODO: implement this weakSelf thingy
+	weak_ptr<MeshTexture> weak_self;
+
+	//TODO: use these at some point
+	//this camera pose and camera intrisic stuff is great.
+	Matrix4f cam_pose;
+	Vector4f cam_intrinsics;
+	cv::Rect2i snippet;//since this texture is a cutout of a camera frame we use this
+
+	//TODO: Delete this if this relly proves too useless (probably it is so we comment it out)
+	//weak_ptr<TexAtlasPatch> textureMostCurrent;
+
+	//TODO: implement another way of retaining the location of the most current geometry
+	/*
+	bool cpuCoordsAhead=false;
+	bool gpuCoordsAhead=false;
+
+	bool cpuContentAhead=false;
+	bool gpuContentAhead=false;
+	*/
+	bool ref_tex_filled = false;
+
+	//altough let the pixel reference framebuffers be created
+	//GLuint glFramebufferToPixReference=0;
+	///maybe we need to also create a depth attachment / buffer
+	//void createPixReferencesFramebuffer();
+
+	//shared_ptr<gfx::GpuTex2D> pixReference;
 
 
-    //int32_t gpuTexCoordSlot=-1;
-    bool gpuTexCoordsUploading=false;
-    //TODO: get rid of this
-    std::vector<Eigen::Vector2f> texCoords;
+	///TODO: when this object gets destroyed this reference should be removed from the list.
+	//The slot on which the texture coordinates are.
 
+	//int32_t gpuTexCoordSlot=-1;
+	bool gpu_tex_coords_uploading = false;
+	//TODO: get rid of this
+	vector<Vector2f> tex_coords;
 
-    bool isGpuResidencyRequired();
+	///TODO: might be needed for gpuGeomstorage !It is actually needed to check if the residency of this patch still is required.
+	MeshPatch *parent_patch = nullptr;
 
+	mutex mat_mutex;
+	cv::Mat mat;
 
-    ///TODO: might be needed for gpuGeomstorage !It is actually needed to check if the residency of this patch still is required.
-    MeshPatch* parentPatch=nullptr;
+	weak_ptr<MeshTextureGpuHandle> gpu;
 
+	//TODO: fully remove this when its proven not to be useful
+	/*
+	weak_ptr<TexCoordBufConnector> texCoordsGpu;
+	weak_ptr<MeshTextureGpuHandle> lookup;//this is optional
+	*/
 
-    //CpuPayloadType cpuPayload;
-    std::mutex matMutex;
-    cv::Mat mat;
+	bool debug_is_uninitialized = true;
 
+	string name;
 
-
-
-
-    std::weak_ptr<MeshTextureGpuHandle> gpu;
-
-    //TODO: fully remove this when its proven not to be useful
-    /*
-    std::weak_ptr<TexCoordBufConnector> texCoordsGpu;
-    std::weak_ptr<MeshTextureGpuHandle> lookup;//this is optional
-    */
-
-    cv::Rect2i getLookupRect();
-    //TODO: logic to determine when said lookup is valid
-    //also the tex coords are not valid in any circumstances
-
-
-
-    cv::Rect2f getBounds();
-    void  scaleAndShiftTexCoordsIntoRect(const cv::Rect2f rect);
-
-    static cv::Rect2f getBounds(const std::vector<Eigen::Vector2f> &list);
-
-
-    static void scaleAndShiftTexCoordsIntoRect(const cv::Rect2f rect,
-                                               const std::vector<Eigen::Vector2f> &in,
-                                               std::vector<Eigen::Vector2f> &out);
-
-
-
-    //ACTUALLY THESE NEXT FEW FUNCTIONS ARE HARD TO IMPLEMENT
-    void isLookupTexFilled();
-
-
-    //this is the most important question
-    void isLookupTexUpToDate();
-
-    //the triangle storage
-
-
-    /*
-    std::map< std::weak_ptr<GeometryBase>,
-              std::weak_ptr<VertexBufConnector> > triangleBlocksRequiredByThis;
-              */
-    //std::vector<std::shared_ptr<ActiveSet>> lookupSecuredBySets;
-    void isLookupSecuredAndUpToDate(MeshPatch* patch,std::shared_ptr<ActiveSet>* set);
-
+private:
+	//Either we store this and also some information so we don't
+	//need to create the gpu
+	//use this at all
+	//GpuBuffer<Vector2f>* texPosBuffer;//TODO:
+	//shared_ptr<TexAtlas> refAtlas;
+	//shared_ptr<TexAtlas> dataAtlas;
+	//or maybe we only store a reference to the map:
+	MeshReconstruction *map_;
+	Type type_;
+	//everything additional like texAtlas derive from the textureContent enum
+	//TODO: only let the map call the constructor for meshTexture;
+	//Only the meshTexture instantiates
 };
 
 

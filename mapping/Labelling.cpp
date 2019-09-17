@@ -106,8 +106,8 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 
 				CoalescedGpuTransfer::TaskD2D tex_coord_task;
 				tex_coord_task.count = tex_coord_count;
-				tex_coord_task.sourceIndex = geom_tex_gpu->coords->getStartingIndex();
-				tex_coord_task.destinationIndex = 
+				tex_coord_task.source_index = geom_tex_gpu->coords->getStartingIndex();
+				tex_coord_task.destination_index = 
 						tex_patch_gpu->coords->getStartingIndex();
 
 				copy_tasks.push_back(tex_coord_task);

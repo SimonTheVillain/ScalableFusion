@@ -524,9 +524,9 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(ActiveSet *activeS
         assert(0);
     }
     //clear the list of dependencies since we are setting up a new one
-    gpuTex->refTexDependencies.clear();
+    gpuTex->ref_tex_dependencies.clear();
     Rect2i r = targetTexture->getLookupRect();
-    glBindFramebuffer(GL_FRAMEBUFFER, gpuTex->refTex->getFBO());
+    glBindFramebuffer(GL_FRAMEBUFFER, gpuTex->ref_tex->getFBO());
 
     gfx::GLUtils::checkOpenGLFramebufferStatus("ScaleableMap::finalizeGeomTexOfNewPatches");
     glEnable(GL_SCISSOR_TEST);
@@ -573,10 +573,10 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(ActiveSet *activeS
 
         //Add the dependency of this central patch
         MeshTextureGpuHandle::Dependency dependency;
-        dependency.trianglePositionOnGpu = patchGpu->triangles->getStartingIndex();
-        dependency.trianglesVersion = patch->triangles_version;
+        dependency.triangle_position_on_gpu = patchGpu->triangles->getStartingIndex();
+        dependency.triangles_version = patch->triangles_version;
         dependency.geometry = patch;
-        gpuTex->refTexDependencies.push_back(dependency);
+        gpuTex->ref_tex_dependencies.push_back(dependency);
 
         patch->double_stitch_mutex.lock();
         for(size_t i=0;i<patch->double_stitches.size();i++){
@@ -600,10 +600,10 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(ActiveSet *activeS
 
                 gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::renderTriangleReferencesForPatch]");
                 //Add the dependency of this stitch
-                dependency.trianglePositionOnGpu = stitchGpu->getStartingIndex();
-                dependency.trianglesVersion = stitch.triangles_version;
+                dependency.triangle_position_on_gpu = stitchGpu->getStartingIndex();
+                dependency.triangles_version = stitch.triangles_version;
                 dependency.geometry = patch->double_stitches[i];
-                gpuTex->refTexDependencies.push_back(dependency);
+                gpuTex->ref_tex_dependencies.push_back(dependency);
             }
 
         }
@@ -633,10 +633,10 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(ActiveSet *activeS
             gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::renderTriangleReferencesForPatch]");
 
             //Add the dependency of this stitch
-            dependency.trianglePositionOnGpu = stitchGpu->getStartingIndex();
-            dependency.trianglesVersion = stitch.triangles_version;
+            dependency.triangle_position_on_gpu = stitchGpu->getStartingIndex();
+            dependency.triangles_version = stitch.triangles_version;
             dependency.geometry = patch->triple_stitches[i];
-            gpuTex->refTexDependencies.push_back(dependency);
+            gpuTex->ref_tex_dependencies.push_back(dependency);
         }
 
         patch->triple_stitch_mutex.unlock();

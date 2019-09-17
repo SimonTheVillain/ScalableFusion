@@ -510,7 +510,7 @@ void Meshing::genTexIndices(vector<shared_ptr<MeshPatch> > &patches) {
 
 		shared_ptr<MeshPatch> &patch = patches[i];
 		patch->geom_tex_patch =
-				mesh_reconstruction->genMeshTexture(MeshTexture::Type::standardDeviation);
+				mesh_reconstruction->genMeshTexture(MeshTexture::Type::STANDARD_DEVIATION);
 
 		// To really accomodate for every vertex (even if it may not be visible)
 		// we also add the vertices that do not have triangles
@@ -553,7 +553,7 @@ void Meshing::genTexIndices(vector<shared_ptr<MeshPatch> > &patches) {
 			}
 		}
 		patch->triple_stitch_mutex.unlock();
-		patch->geom_tex_patch->texCoords.resize(vert_set.size());
+		patch->geom_tex_patch->tex_coords.resize(vert_set.size());
 		size_t j = 0;
 		for(auto v : vert_set) {
 			for(size_t k = 0; k < v.tex_inds.size(); k++) {

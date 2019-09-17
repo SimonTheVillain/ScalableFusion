@@ -736,13 +736,13 @@ void Triangle::registerTriangle(TriangleReference &triangle_to_register,
 		Vertex::VertexInTriangle vit;
 		vit.triangle = triangle_to_register;
 		vit.ind_in_triangle = 0;
-		p1.triangles.push_back(vit);
+		p1.triangles.pushBack(vit);
 
 		vit.ind_in_triangle = 1;
-		p2.triangles.push_back(vit);
+		p2.triangles.pushBack(vit);
 
 		vit.ind_in_triangle = 2;
-		p3.triangles.push_back(vit);
+		p3.triangles.pushBack(vit);
 		return;
 	} else {
 		for(uint8_t i = 0; i < 3; i++) {
@@ -833,13 +833,13 @@ void Triangle::registerTriangle(TriangleReference &triangle_to_register,
 	Vertex::VertexInTriangle vit;
 	vit.triangle = triangle_to_register;
 	vit.ind_in_triangle = 0;
-	p1.triangles.push_back(vit);
+	p1.triangles.pushBack(vit);
 
 	vit.ind_in_triangle = 1;
-	p2.triangles.push_back(vit);
+	p2.triangles.pushBack(vit);
 
 	vit.ind_in_triangle = 2;
-	p3.triangles.push_back(vit);
+	p3.triangles.pushBack(vit);
 
 
 

@@ -80,7 +80,7 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 			        "done here!" << endl;
 
 			shared_ptr<MeshTexture> mesh_texture =
-					mesh->genMeshTexture(MeshTexture::Type::integerLabels);
+					mesh->genMeshTexture(MeshTexture::Type::INTEGER_LABELS);
 
 			shared_ptr<MeshTextureGpuHandle> tex_gpu_handle =
 					mesh_texture->genGpuResource(tex_coord_count, size);
@@ -144,9 +144,9 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 		//wow! this is too long
 		task.destination = gpu_tex_patch->tex->getRect();
 		//position (top left)
-		task.lookup = gpu_tex_patch->refTex->getRect().tl();
+		task.lookup = gpu_tex_patch->ref_tex->getRect().tl();
 		task.lookupSurf = 
-				gpu_tex_patch->refTex->getAtlasTex()->getTex2D()->getCudaSurfaceObject();
+				gpu_tex_patch->ref_tex->getAtlasTex()->getTex2D()->getCudaSurfaceObject();
 
 		task.vertexDestStartInd = patch_gpu->vertices_source->getStartingIndex();
 		labelling_tasks.push_back(task);

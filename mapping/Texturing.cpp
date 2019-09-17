@@ -148,7 +148,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
         shared_ptr<MeshTextureGpuHandle> gpuTexture = gpuPatch->geom_tex;
         if(gpuTexture==nullptr){
             //create the gpu resources if they are not existant
-            int nrCoords = patch->geom_tex_patch->texCoords.size();
+            int nrCoords = patch->geom_tex_patch->tex_coords.size();
             if(bounds[i].width*scale < 0){
                 //why are the bounds at this one negative?
                 //genBoundsFromPatches(newPatches,pose,proj,activeSet);
@@ -171,7 +171,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
             //in case the container gets deleted.
             //patch->geomTexPatch->texCoordsGpu = gpuTexture->coords;
             patch->geom_tex_patch->gpu = gpuTexture;
-            gpuTexture->gpuDataChanged = true;
+            gpuTexture->gpu_data_changed = true;
 
         }else{
             assert(0);//debug: i don't think the gpu texture should be existing
@@ -285,8 +285,8 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
         }
         //tex->downloadToWhenFinished = patch->geomTexPatch;
         //tex->recycler = this->recycler;
-        tex->gpuDataChanged = true;
-        patch->geom_tex_patch->debugIsUninitialized = false;
+        tex->gpu_data_changed = true;
+        patch->geom_tex_patch->debug_is_uninitialized = false;
     }
     //TODO: now initialize that stuff
 
@@ -322,7 +322,7 @@ void Texturing::ProjToGeomTex(ActiveSet* activeSet, std::vector<std::shared_ptr<
 
         cv::Rect2i rect = geomTexGpuHandle->tex->getRect(); //getRect() //This is different from get rect
         command.outOffset = cv::Point2i(rect.x,rect.y);
-        rect = geomTexGpuHandle->refTex->getRect();
+        rect = geomTexGpuHandle->ref_tex->getRect();
         command.refOffset = cv::Point2i(rect.x,rect.y);
         command.width = rect.width;
         command.height = rect.height;
@@ -331,7 +331,7 @@ void Texturing::ProjToGeomTex(ActiveSet* activeSet, std::vector<std::shared_ptr<
         command.output =
                 geomTexGpuHandle->tex->getCudaTextureObject();
         command.referenceTexture =
-                geomTexGpuHandle->refTex->getCudaTextureObject();
+                geomTexGpuHandle->ref_tex->getCudaTextureObject();
         commands.push_back(command);
 
 
@@ -546,7 +546,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
                 //iterate over all texture patches to see which of them need to be removed
 
 
-                Vector4f camPosAtCapture4  = patch->tex_patches[j]->camPose.inverse()*Vector4f(0,0,0,1);
+                Vector4f camPosAtCapture4  = patch->tex_patches[j]->cam_pose.inverse()*Vector4f(0,0,0,1);
                 Vector3f camPosAtCapture = camPosAtCapture4.block<3,1>(0,0);
 
 
@@ -581,7 +581,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
             int resY=bounds[i].height+1;
 
             shared_ptr<MeshTexture> meshTex =
-                    mesh->genMeshTexture(MeshTexture::Type::color8);
+                    mesh->genMeshTexture(MeshTexture::Type::COLOR8);
             /*
                     make_shared<MeshTexture>(nullptr,
                                              texAtlasRgb8Bit);
@@ -589,7 +589,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
 
             //meshTex->genGpuHandle();
             //set the pose at which this texture patch got captured
-            meshTex->camPose = pose;
+            meshTex->cam_pose = pose;
             //thats a good amount of
             int nrCoords =
                     patch->gpu.lock()->geom_tex->coords->getSize();
@@ -719,7 +719,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
     //        "textures" << endl;
     for(GpuCpuTexPair update : updatedTextures){
         //update.gpu->downloadToWhenFinished = update.cpu;
-        update.gpu->gpuDataChanged = true;
+        update.gpu->gpu_data_changed = true;
 
         //TODO: delete if these proves to be useless
         /*
@@ -817,7 +817,7 @@ void Texturing::GenLookupTex(ActiveSet *activeSet,
 
         if(dilate){
             DilationDescriptor dilation;
-            dilation.target = gpuTex->refTex->getCudaSurfaceObject();
+            dilation.target = gpuTex->ref_tex->getCudaSurfaceObject();
             dilation.width=r.width;
             dilation.height=r.height;
             dilation.x=r.x;
@@ -835,7 +835,7 @@ void Texturing::GenLookupTex(ActiveSet *activeSet,
 
     }
     for(size_t i=0;i<patches.size();i++){
-        patches[i]->geom_tex_patch->refTexFilled = true;
+        patches[i]->geom_tex_patch->ref_tex_filled = true;
     }
 
 

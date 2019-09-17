@@ -45,6 +45,7 @@ struct TripleStitch;
 class TexAtlas;
 
 class MeshReconstruction;
+class MeshTextureGpuHandle;
 
 struct Triangle;
 struct Edge;
@@ -185,7 +186,7 @@ struct Vertex {
 		for(size_t i = 0; i < triangles.size(); i++) {
 			if(triangles[i].triangle.get() == triangle) {
 				triangles[i] = triangles.back();
-				triangles.pop_back();
+				triangles.popBack();
 				return;
 			}
 		}
@@ -195,7 +196,7 @@ struct Vertex {
 
 	void removeTriangle(int pos) {
 		triangles[pos] = triangles.back();
-		triangles.pop_back();
+		triangles.popBack();
 	}
 
 	GpuVertex genGpuVertex() {
@@ -217,7 +218,7 @@ struct Vertex {
 
 	int32_t tex_ind_in_main_patch = -1;
 
-	stack_vector<VertexInTriangle, 16> triangles; //this will not really give any speed benefits (a few milliseconds at most)
+	StackVector<VertexInTriangle, 16> triangles; //this will not really give any speed benefits (a few milliseconds at most)
 
 };
 

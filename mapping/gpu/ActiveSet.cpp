@@ -456,7 +456,7 @@ ActiveSet::~ActiveSet()
             }
 
 
-            if(texPatchGpu->gpuDataChanged){
+            if(texPatchGpu->gpu_data_changed){
                 cv::Rect2i roi = texPatchGpu->tex->getRect();
                 cv::Mat mat(roi.height,roi.width,CV_32FC4);
                 //downloading process
@@ -466,7 +466,7 @@ ActiveSet::~ActiveSet()
                                           (float*)mat.data,4);
 
                 texPatch->mat = mat;
-                texPatchGpu->gpuDataChanged = false;//in case somebody really safes this gpu patch last minute
+                texPatchGpu->gpu_data_changed = false;//in case somebody really safes this gpu patch last minute
             }
             CoalescedGpuTransfer::DirectTask task;
             int count = texPatchGpu->coords->getSize();
@@ -496,13 +496,13 @@ ActiveSet::~ActiveSet()
             }
 
 
-            if(texPatchGpu->gpuDataChanged){
+            if(texPatchGpu->gpu_data_changed){
                 cv::Rect2i roi = texPatchGpu->tex->getRect();
                 cv::Mat mat(roi.height,roi.width,CV_8UC4);
                 //downloading process
                 texPatchGpu->tex->downloadData(mat.data);
                 texPatch->mat = mat;
-                texPatchGpu->gpuDataChanged=false;//in case somebody really safes this gpu patch last minute
+                texPatchGpu->gpu_data_changed=false;//in case somebody really safes this gpu patch last minute
             }
             CoalescedGpuTransfer::DirectTask task;
             int count = texPatchGpu->coords->getSize();
@@ -560,7 +560,7 @@ ActiveSet::~ActiveSet()
     }
     for(auto t : downloadedTexCoords){
         //TODO: maybe we also want to use mutexes here and stuff
-        get<0>(t)->texCoords = std::move(get<1>(t));
+        get<0>(t)->tex_coords = std::move(get<1>(t));
     }
 
 
@@ -598,7 +598,7 @@ void ActiveSet::UploadTexAndCoords(std::vector<std::shared_ptr<MeshPatch>> &patc
             shared_ptr<MeshTextureGpuHandle> texPatchGpu =
                     make_shared<MeshTextureGpuHandle>(
                             gpuGeomStorage->texPosBuffer,
-                            texPatch->texCoords.size(),
+                            texPatch->tex_coords.size(),
                             map->texAtlasGeomLookup.get(),
                             map->texAtlasStds.get(),//TODO: the references are supposed to be filled at "CheckAndUpdateRefTextures"
                             width,height);
@@ -618,18 +618,18 @@ void ActiveSet::UploadTexAndCoords(std::vector<std::shared_ptr<MeshPatch>> &patc
 
             //create the task for the tex coord upload
 
-            if(texPatch->texCoords.size() == 0){
+            if(texPatch->tex_coords.size() == 0){
                 assert(0);//either the tex coords would reside on gpu (then we wouldn't reach this code.
                 //or they are on cpu (in which case we wouldn't reach this assert.
             }
             CoalescedGpuTransfer::Task task;
-            task.count = texPatch->texCoords.size();
+            task.count = texPatch->tex_coords.size();
             task.target = texPatchGpu->coords->getStartingPtr();
             task.start = coalescedTexCoords.size();
             coalescedTexCoordTasks.push_back(task);
             coalescedTexCoords.insert(coalescedTexCoords.end(),
-                                      texPatch->texCoords.begin(),
-                                      texPatch->texCoords.end());
+                                      texPatch->tex_coords.begin(),
+                                      texPatch->tex_coords.end());
 
 
 
@@ -658,26 +658,26 @@ void ActiveSet::UploadTexAndCoords(std::vector<std::shared_ptr<MeshPatch>> &patc
                 texPatchGpu =
                         make_shared<MeshTextureGpuHandle>(
                                 gpuGeomStorage->texPosBuffer,
-                                texPatch->texCoords.size(),
+                                texPatch->tex_coords.size(),
                                 nullptr,
                                 map->texAtlasRgb8Bit.get(),//TODO: where to get these from?
                                 width,height);
 
 
-                texPatch->matMutex.lock();
+                texPatch->mat_mutex.lock();
                 patch->tex_patches[i]->gpu = texPatchGpu;
                 texPatchGpu->tex->uploadData(texPatch->mat.data);
-                texPatch->matMutex.unlock();
+                texPatch->mat_mutex.unlock();
 
                 //tex coordinate upload
                 CoalescedGpuTransfer::Task task;
-                task.count = texPatch->texCoords.size();
+                task.count = texPatch->tex_coords.size();
                 task.start = coalescedTexCoords.size();
                 task.target = texPatchGpu->coords->getStartingPtr();
                 coalescedTexCoordTasks.push_back(task);
                 coalescedTexCoords.insert(coalescedTexCoords.end(),
-                                          texPatch->texCoords.begin(),
-                                          texPatch->texCoords.end());
+                                          texPatch->tex_coords.begin(),
+                                          texPatch->tex_coords.end());
 
 
                 patchGpu->texs[i] = texPatchGpu;
@@ -785,7 +785,7 @@ void ActiveSet::drawPatches()
         //first check that all the textures are resident
         if(currentPatch.geom_tex!=nullptr){
             currentPatch.geom_tex->tex->getTex()->makeResidentInThisThread();
-            currentPatch.geom_tex->refTex->getTex()->makeResidentInThisThread();
+            currentPatch.geom_tex->ref_tex->getTex()->makeResidentInThisThread();
         }
         for(size_t j=0;j<currentPatch.tex_count;j++){
             if(currentPatch.texs[j]!=nullptr){
@@ -834,9 +834,9 @@ void ActiveSet::reuploadHeaders()
             info.stdTexture = gpu->geom_tex->genTexInfo();
 
             info.stdTexture.glRefTexPtrDEBUG =
-                    gpu->geom_tex->refTex->getGlHandle();
+                    gpu->geom_tex->ref_tex->getGlHandle();
             cv::Rect2i roi =
-                    gpu->geom_tex->refTex->getRect();
+                    gpu->geom_tex->ref_tex->getRect();
             info.stdTexture.refTexPosDEBUG = Vector2f(roi.x,roi.y)*(1.0f/1024.0f);
 
             //debug

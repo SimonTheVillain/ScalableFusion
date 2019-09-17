@@ -501,14 +501,14 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		}
 		bool expired = false;
 		//TODO: Shorten this by putting it into a method of the geometryBase class
-		if(geom_tex_gpu_handle->refTexDependencies.empty()) {
+		if(geom_tex_gpu_handle->ref_tex_dependencies.empty()) {
 			assert(0);
 			continue;//don't do a update since the refTex obviously is not set (indicated by it having no dependencies)
 			//TODO: create/update the refTex if all the necessary neighbours are also part of this set
 		}
-		for(size_t j = 0; j < geom_tex_gpu_handle->refTexDependencies.size(); j++) {
+		for(size_t j = 0; j < geom_tex_gpu_handle->ref_tex_dependencies.size(); j++) {
 			MeshTextureGpuHandle::Dependency dependency = 
-					geom_tex_gpu_handle->refTexDependencies[j];
+					geom_tex_gpu_handle->ref_tex_dependencies[j];
 
 			shared_ptr<GeometryBase> dependence_geom = dependency.geometry.lock();
 			if(dependence_geom == nullptr ||
@@ -517,13 +517,13 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 				//this should not happen at any time!!!!!!!!!
 			}
 
-			if(dependence_geom->triangles_version != dependency.trianglesVersion) {
+			if(dependence_geom->triangles_version != dependency.triangles_version) {
 				expired = true;
 				assert(0);
 			}
 			shared_ptr<TriangleBufConnector> dependence_tris = dependence_geom->getMostCurrentGpuTriangles();
 			int debug = dependence_tris->getStartingIndex();
-			if(dependence_tris->getStartingIndex() != dependency.trianglePositionOnGpu){
+			if(dependence_tris->getStartingIndex() != dependency.triangle_position_on_gpu){
 				expired = true;
 				assert(0);
 			}
@@ -546,7 +546,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 			continue;
 		}*/
 		//also not run this if the reference texture is not filled
-		if(!patch->geom_tex_patch->refTexFilled) {
+		if(!patch->geom_tex_patch->ref_tex_filled) {
 			assert(0);
 			continue;
 		}
@@ -599,9 +599,9 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		desc.destinationSize = cv::Size2i(width, height);
 
 		desc.destinationReferences = 
-				geom_tex_gpu_handle->refTex->getCudaSurfaceObject();
+				geom_tex_gpu_handle->ref_tex->getCudaSurfaceObject();
 
-		rect = geom_tex_gpu_handle->refTex->getRect();
+		rect = geom_tex_gpu_handle->ref_tex->getRect();
 		desc.referenceOffset = rect.tl();
 
 		descriptors.push_back(desc);
@@ -629,7 +629,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		if(gpuPatch->geom_tex->tex == nullptr) {
 			assert(0);
 		}
-		if(gpuPatch->geom_tex->refTex == nullptr) {
+		if(gpuPatch->geom_tex->ref_tex == nullptr) {
 			assert(0);
 		}
 	}
@@ -683,7 +683,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 
 		//enable the download of mesh textures
 		//gpuTexPatch->downloadToWhenFinished = patch->geomTexPatch;
-		gpu_tex_patch->gpuDataChanged = true;
+		gpu_tex_patch->gpu_data_changed = true;
 	}
 	mesh_reconstruction->cleanupGlStoragesThisThread();
 }

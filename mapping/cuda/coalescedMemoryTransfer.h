@@ -1,65 +1,67 @@
 #ifndef FILE_COALESCED_MEMORY_TRANSFER_H
 #define FILE_COALESCED_MEMORY_TRANSFER_H
+
 #include <vector>
+
 #include "gpuMeshStructure.h"
 //it might be beneficial to combine downloads and then do the copying on the cpu side.
 
+using namespace std;
 
 //especially when downloading vertex data.
-void downloadVertices(std::vector<GpuVertex*> gpuVertices,GpuVertex* data);
+void downloadVertices(vector<GpuVertex*> gpuVertices, GpuVertex *data);
 
-
-class CoalescedGpuTransfer{
+class CoalescedGpuTransfer {
 public:
-    struct Task{
-        int start;
-        int count;
-        void* target;
-    };
-    template<typename T>
-    static void upload(std::vector<T> source,std::vector<Task> tasks);
 
+	struct Task {
+		int  start;
+		int  count;
+		void *target;
+	};
 
-    //this is especially useful for the header information
-    template<typename T>
-    static void upload(std::vector<T> source,std::vector<T*> gpuDst);
+	struct TaskD2D {
+		size_t source_index;
+		size_t destination_index;
+		size_t count;
+	};
 
+	template<typename T>
+	struct SetTaskTemp {
+		T *dst;
+		T value;
+	};
 
-    struct TaskD2D{
-        size_t sourceIndex;
-        size_t destinationIndex;
-        size_t count;
-    };
-    //needed, e.g. when copying texture coordinates
-    template<typename T>
-    static void device2DeviceSameBuf(T* buffer, std::vector<TaskD2D> tasks);
+	template<typename T>
+	struct CpyTaskTemp {
+		T *src;
+		T *dst;
+	};
 
+	struct DirectTask {
+		void *src;
+		void *dst;
+		int  byteCount;
+	};
 
-    template<typename T>
-    struct SetTaskTemp{//templated
-        T* dst;
-        T value;
-    };
-    template<typename T>
-    static void upload(std::vector<SetTaskTemp<T>> tasks);
+	template<typename T>
+	static void upload(vector<T> source, vector<Task> tasks);
 
+	// This is especially useful for the header information
+	template<typename T>
+	static void upload(vector<T> source, vector<T*> gpu_dst);
 
-    template<typename T>
-    struct CpyTaskTemp{//templated
-        T* src;
-        T* dst;
-    };
-    template<typename T>
-    static void copy(std::vector<CpyTaskTemp<T>> tasks);
+	//needed, e.g. when copying texture coordinates
+	template<typename T>
+	static void device2DeviceSameBuf(T *buffer, vector<TaskD2D> tasks);
 
+	template<typename T>
+	static void upload(vector<SetTaskTemp<T>> tasks);
 
+	template<typename T>
+	static void copy(vector<CpyTaskTemp<T>> tasks);
 
-    struct DirectTask{
-        void* src;
-        void* dst;
-        int byteCount;
-    };
-    static void download(std::vector<DirectTask> tasks);
+	static void download(vector<DirectTask> tasks);
 
 };
 

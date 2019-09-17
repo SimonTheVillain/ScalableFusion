@@ -460,7 +460,7 @@ void LowDetailRenderer::addPatches(std::vector<std::shared_ptr<MeshPatch> > &pat
         desc.y = rect.y;
         desc.width = rect.width;
         desc.height = rect.height;
-        desc.vertInd = patch.indexWithinCoarse;
+        desc.vert_ind = patch.indexWithinCoarse;
         descriptors.push_back(desc);
 
     }
@@ -586,7 +586,7 @@ void LowDetailRenderer::updateColorForPatches(std::vector<std::shared_ptr<MeshPa
         desc.y = rect.y;
         desc.width = rect.width;
         desc.height = rect.height;
-        desc.vertInd = patch.indexWithinCoarse;
+        desc.vert_ind = patch.indexWithinCoarse;
         descriptors.push_back(desc);
 
     }

@@ -1,294 +1,202 @@
 
 #include "texCoords.h"
-#include "gpuMeshStructure.h"
-#include "gpuErrchk.h"
-//i would like to include this: but somehow its failing utterly
-//#include "../base/meshStructure.h"
 
 #include <limits>
 
+#include "gpuMeshStructure.h"
+#include "gpuErrchk.h"
 
+using namespace std;
+using namespace Eigen;
 
-__global__ void genTexCoords_kernel(TexCoordGen::Task* tasks,
-                                    Eigen::Matrix4f proj_pose,
-                                    GpuPatchInfo* patchInfos,
-                                    GpuVertex* vertices){
-    int k = blockIdx.x;
-    TexCoordGen::Task &task = tasks[k];
-    int i=threadIdx.x;
-    //ETC: but actually i should work on something different
+__global__ 
+void genTexCoords_kernel(TexCoordGen::Task *tasks, Matrix4f proj_pose,
+                         GpuPatchInfo *patch_infos, GpuVertex* vertices) {
+	int k = blockIdx.x;
+	TexCoordGen::Task &task = tasks[k];
+	int i = threadIdx.x;
+	//ETC: but actually i should work on something different
 
-    //do everything that also is in scaleableMapTexturing.cpp
-    while(i<task.triangleCount){
+	//do everything that also is in scaleableMapTexturing.cpp
+	while(i < task.triangle_count) {
+		for(size_t j = 0; j < 3; j++) {
+			//get the vertex position of this triangle:
+			GpuTriangle triangle = task.triangles[i];
+			GpuPatchInfo patch_info= patch_infos[triangle.patch_info_inds[j]];
+			int ind = patch_info.vertex_source_start_ind + triangle.indices[j];
+			Vector4f p = vertices[ind].p;
 
-        for(size_t j=0;j<3;j++){
-            //get the vertex position of this triangle:
-            GpuTriangle triangle = task.triangles[i];
-            GpuPatchInfo patchInfo= patchInfos[triangle.patch_info_inds[j]];
-            int ind = patchInfo.vertex_source_start_ind + triangle.indices[j];
-            Eigen::Vector4f p=vertices[ind].p;
+			//now do the projection
+			Vector4f proj = proj_pose * p;
 
-            //now do the projection
-            Eigen::Vector4f proj=proj_pose * p;
+			//and store the texture coordinate
+			Vector2f tex_coord = Vector2f(proj[0] / proj[3], proj[1] / proj[3]);
 
+			Vector2f scaled = Vector2f((tex_coord[0] - task.offset_x) * task.scale_x,
+			                           (tex_coord[1] - task.offset_y) * task.scale_y);
 
-
-            //and store the texture coordinate
-            Eigen::Vector2f texCoord =Eigen::Vector2f(
-                        proj[0]/proj[3],proj[1]/proj[3]);
-
-            Eigen::Vector2f scaled = Eigen::Vector2f(
-                        (texCoord[0] - task.offset_x) * task.scale_x ,
-                        (texCoord[1] - task.offset_y) * task.scale_y) ;
-            //TODO: put the point back into bounds
-            task.coords[task.triangles[i].tex_indices[j]] = scaled;
-            //printf("unscaled: %f %f \n",texCoord[0],texCoord[1]);
-            //printf("scaled: %f %f \n",scaled[0],scaled[1]);
-        }
-
-
-        i+=blockDim.x;
-    }
-
-    //ooh shit this also needs the bounds
+			//TODO: put the point back into bounds
+			task.coords[task.triangles[i].tex_indices[j]] = scaled;
+		}
+		i += blockDim.x;
+	}
+	//ooh shit this also needs the bounds
 }
 
 
-void TexCoordGen::genTexCoords(std::vector<TexCoordGen::Task> tasks,
-                               Eigen::Matrix4f proj_pose,
-                               GpuPatchInfo* patchInfos,
-                               GpuVertex* gpuVertices)
-{
-    if(tasks.size()==0){
-        return;
-    }
-    TexCoordGen::Task* gpuTasks;
-    int bytes = sizeof(TexCoordGen::Task)*tasks.size();
-    cudaMalloc(&gpuTasks,sizeof(TexCoordGen::Task)*tasks.size());
-    cudaMemcpy(gpuTasks,&(tasks[0]),bytes,cudaMemcpyHostToDevice);
+void TexCoordGen::genTexCoords(vector<TexCoordGen::Task> tasks, 
+                               Matrix4f proj_pose, GpuPatchInfo *patch_infos,
+                               GpuVertex *gpu_vertices) {
+	if(tasks.empty()) {
+		return;
+	}
+	TexCoordGen::Task *gpu_tasks;
+	int bytes = sizeof(TexCoordGen::Task) * tasks.size();
+	cudaMalloc(&gpu_tasks, sizeof(TexCoordGen::Task) * tasks.size());
+	cudaMemcpy(gpu_tasks, &(tasks[0]), bytes, cudaMemcpyHostToDevice);
 
-    dim3 block(128);
-    dim3 grid(tasks.size());
+	dim3 block(128);
+	dim3 grid(tasks.size());
 
+	genTexCoords_kernel<<<grid, block>>>(gpu_tasks, proj_pose, patch_infos,
+	                                     gpu_vertices);
 
-    genTexCoords_kernel<<<grid,block>>>(gpuTasks,proj_pose,
-                                        patchInfos,gpuVertices
-                                        );
+	cudaDeviceSynchronize();
+	gpuErrchk(cudaPeekAtLastError());
 
-
-    cudaDeviceSynchronize();
-    gpuErrchk( cudaPeekAtLastError() );
-
-    cudaFree(gpuTasks);
+	cudaFree(gpu_tasks);
 }
 
-
-/*
-
-void TexCoordGen::genTexCoords(std::vector<std::shared_ptr<MeshPatch>> patches,
-                               std::vector<std::shared_ptr<MeshTexture>> texPatches,
-                               std::vector<cv::Rect2f> bounds,
-                               Eigen::Matrix4f proj_pose,
-                               GpuPatchInfo* patchInfos,
-                               GpuVertex* gpuVertices)
-{
-    std::vector<TexCoordGen::Task> tasks;
-    for(size_t i=0;i<patches.size();i++){
-        std::cout << "TODO: there are multiple triangle sources like stitches "
-                     "for each patch" << std::endl;
-        MeshPatch* patch = patches[i].get();
-        std::shared_ptr<MeshPatchGpuHandle> gpu = patch->gpu.lock();
-        TexCoordGen::Task task;
-        task.triangles = gpu->triangles->getStartingPtr();
-        task.triangleCount = patch->triangles.size();
-        task.bound = bounds[i];
-
-        //the tex patch has a parent patch as member... don't need to put the
-        //patches to the parameters
-        //task.coords = texPatches[i]->gpuTexCoordBuf.lock()->getStartingPtr();
-
-
-        //tasks.push_back(task);
-    }
-
-    genTexCoords(tasks,proj_pose,patchInfos,gpuVertices);
-
-}
-*/
-struct BoundResult{
-    Eigen::Vector4f bound;
-    int32_t targetInd = -1;
-    uint32_t placeholders[3];
-public:
+struct BoundResult {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	Vector4f bound;
+	int32_t target_ind = -1;
+	uint32_t placeholders[3];
 };
 
-__global__ void getTexCoordBounds_kernel(   TexCoordGen::BoundTask* tasks,
-                                            Eigen::Matrix4f proj_pose,
-                                            GpuPatchInfo* patchInfos,
-                                            GpuVertex* vertices,
-                                            BoundResult* results){
-    __shared__ extern Eigen::Vector4f bounds[];
-    int k = blockIdx.x;
-    TexCoordGen::BoundTask &task = tasks[k];
-    int i=threadIdx.x;
-    //ETC: but actually i should work on something different
-    Eigen::Vector4f bound(FLT_MAX,
-                          FLT_MAX,
-                          -FLT_MAX,
-                          -FLT_MAX);
-    //do everything that also is in scaleableMapTexturing.cpp
-    while(i<task.triangleCount){
-        GpuTriangle triangle = task.triangles[i];
-        for(size_t j=0;j<3;j++){
-            //get the vertex position of this triangle:
-            GpuPatchInfo patchInfo= patchInfos[triangle.patch_info_inds[j]];
-            int ind = patchInfo.vertex_source_start_ind + triangle.indices[j];
-            Eigen::Vector4f p=vertices[ind].p;
+__global__ 
+void getTexCoordBounds_kernel(TexCoordGen::BoundTask *tasks,
+                              Matrix4f proj_pose, GpuPatchInfo *patch_infos,
+                              GpuVertex *vertices, BoundResult *results) {
+	__shared__ extern Vector4f bounds[];
 
-            //now do the projection
-            Eigen::Vector4f proj=proj_pose * p;
+	int k = blockIdx.x;
+	TexCoordGen::BoundTask &task = tasks[k];
+	int i = threadIdx.x;
 
+	//ETC: but actually i should work on something different
+	Vector4f bound(FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX);
 
-            //and store the texture coordinate
-            Eigen::Vector2f texCoord =Eigen::Vector2f(
-                        proj[0]/proj[3],proj[1]/proj[3]);
-            bound[0] = min(bound[0],texCoord[0]);
-            bound[1] = min(bound[1],texCoord[1]);
-            bound[2] = max(bound[2],texCoord[0]);
-            bound[3] = max(bound[3],texCoord[1]);
+	//do everything that also is in scaleableMapTexturing.cpp
+	while(i < task.triangle_count) {
+		GpuTriangle triangle = task.triangles[i];
+		for(size_t j = 0; j < 3; j++) {
+			//get the vertex position of this triangle:
+			GpuPatchInfo patch_info = patch_infos[triangle.patch_info_inds[j]];
+			int ind = patch_info.vertex_source_start_ind + triangle.indices[j];
+			Vector4f p = vertices[ind].p;
 
+			//now do the projection
+			Vector4f proj = proj_pose * p;
 
-            if(texCoord[0]<-6000){
-                //TODO: find out why this tex coord is zero and handle any issues coming with this
-                printf("type = %d, p= %f %f %f %f \n uv= %f %f \n task index = %d, traingle %d\n [texCoords.cu]/whyever this fails\n",task.debugType,
-                        p[0],p[1],p[2],p[3],texCoord[0],texCoord[1],k,triangle.indices[j]);
-            }
-        }
+			//and store the texture coordinate
+			Vector2f tex_coord = Vector2f(proj[0] / proj[3], proj[1] / proj[3]);
+			bound[0] = min(bound[0], tex_coord[0]);
+			bound[1] = min(bound[1], tex_coord[1]);
+			bound[2] = max(bound[2], tex_coord[0]);
+			bound[3] = max(bound[3], tex_coord[1]);
 
+			if(tex_coord[0] < -6000) {
+				//TODO: find out why this tex coord is zero and handle any issues coming with this
+				printf("type = %d, p= %f %f %f %f \n uv= %f %f \n task index = %d, traingle %d\n [texCoords.cu]/whyever this fails\n",
+					task.debug_type, p[0], p[1], p[2], p[3], tex_coord[0], tex_coord[1], k, triangle.indices[j]);
+			}
+		}
+		i += blockDim.x;
+	}
 
-        i+=blockDim.x;
-    }
-
-    //return;
-    //bounds[threadIdx.x] = bound;
-    //__syncthreads();
-
-    int tid = threadIdx.x;
-    bounds[tid] = bound;
-    __syncthreads();
-    for(int s=blockDim.x/2;s>0;s>>=1){
-        if(tid>=s){
-            //return;
-        }
-        if(tid<s){
-            bounds[tid][0] = min(bounds[tid][0],bounds[tid+s][0]);
-            bounds[tid][1] = min(bounds[tid][1],bounds[tid+s][1]);
-            bounds[tid][2] = max(bounds[tid][2],bounds[tid+s][2]);
-            bounds[tid][3] = max(bounds[tid][3],bounds[tid+s][3]);
-        }
-        __syncthreads();
-    }
-    if(tid==0){
-        results[k].bound = bounds[0];
-        results[k].targetInd = task.targetInd;
-        //TODO: output
-        //vertices[desc.vertInd].c = s_colors[0]*(1.0f/float(absolutePixCount));
-    }
-
-
+	int tid = threadIdx.x;
+	bounds[tid] = bound;
+	__syncthreads();
+	for(int s = blockDim.x / 2; s > 0; s >>= 1) {
+		if(tid >= s) {
+			//return;
+		}
+		if(tid < s) {
+			bounds[tid][0] = min(bounds[tid][0], bounds[tid + s][0]);
+			bounds[tid][1] = min(bounds[tid][1], bounds[tid + s][1]);
+			bounds[tid][2] = max(bounds[tid][2], bounds[tid + s][2]);
+			bounds[tid][3] = max(bounds[tid][3], bounds[tid + s][3]);
+		}
+		__syncthreads();
+	}
+	if(tid == 0) {
+		results[k].bound = bounds[0];
+		results[k].target_ind = task.target_ind;
+		//TODO: output
+	}
 }
 
-std::vector<cv::Rect2f> TexCoordGen::getPotentialTexCoordBounds(std::vector<TexCoordGen::BoundTask> tasks,
-                                                                Eigen::Matrix4f proj_pose, int resultCount,
-                                                                GpuPatchInfo* patchInfos,GpuVertex* vertices)
-{
-    if(tasks.size()==0){
-        std::vector<cv::Rect2f> empty;
-        return empty;
-    }
-    TexCoordGen::BoundTask* gpuTasks;
-    cudaMalloc(&gpuTasks,sizeof(TexCoordGen::BoundTask)*tasks.size());
-    BoundResult* gpuResults;
-    cudaMalloc(& gpuResults,sizeof(BoundResult)*tasks.size());
-    cudaMemcpy( gpuTasks,&(tasks[0]),
-            sizeof(TexCoordGen::BoundTask) * tasks.size(),
-            cudaMemcpyHostToDevice);
+vector<cv::Rect2f> TexCoordGen::getPotentialTexCoordBounds(
+		vector<TexCoordGen::BoundTask> tasks, Matrix4f proj_pose, int result_count,
+		GpuPatchInfo *patch_infos, GpuVertex *vertices) {
+	if(tasks.empty()) {
+		vector<cv::Rect2f> empty;
+		return empty;
+	}
+	TexCoordGen::BoundTask *gpu_tasks;
+	cudaMalloc(&gpu_tasks, sizeof(TexCoordGen::BoundTask) * tasks.size());
+	BoundResult *gpu_results;
+	cudaMalloc(&gpu_results, sizeof(BoundResult) * tasks.size());
+	cudaMemcpy(gpu_tasks, &(tasks[0]), 
+	           sizeof(TexCoordGen::BoundTask) * tasks.size(),
+	           cudaMemcpyHostToDevice);
 
+	cudaDeviceSynchronize();
+	gpuErrchk(cudaPeekAtLastError());
 
-    cudaDeviceSynchronize();
-    gpuErrchk( cudaPeekAtLastError() );
+	dim3 block(128);
+	dim3 grid(tasks.size());
+	int shared = block.x * sizeof(Vector4f);
+	if(grid.x > 65000) {
+		grid.x = 65000;
+		printf("This is too many elements in the grid! fix this");
+	}
+	getTexCoordBounds_kernel<<<grid, block, shared>>>(gpu_tasks, proj_pose,
+	                                                  patch_infos, vertices, 
+	                                                  gpu_results);
 
-    dim3 block(128);
-    dim3 grid( tasks.size() );
-    int shared = block.x*sizeof(Eigen::Vector4f);
-    if(grid.x>65000){
-        grid.x=65000;
-        printf("This is too many elements in the grid! fix this");
-    }
-    getTexCoordBounds_kernel<<<grid,block,shared>>>(   gpuTasks,
-                                proj_pose,
-                                patchInfos,
-                                vertices,
-                                gpuResults);
+	cudaDeviceSynchronize();
+	gpuErrchk(cudaPeekAtLastError());
 
-    cudaDeviceSynchronize();
-    gpuErrchk( cudaPeekAtLastError() );
+	vector<BoundResult> raw_res(tasks.size());
+	cudaMemcpy(&(raw_res[0]), gpu_results, sizeof(BoundResult) * tasks.size(),
+	           cudaMemcpyDeviceToHost);
 
-    std::vector<BoundResult> rawRes(tasks.size());
-    cudaMemcpy(&(rawRes[0]),gpuResults,
-            sizeof(BoundResult)* tasks.size(),
-            cudaMemcpyDeviceToHost);
+	cudaFree(gpu_tasks);
+	cudaFree(gpu_results);
 
+	vector<Vector4f> results(result_count, 
+	                         Vector4f(FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX));
 
-    cudaFree(gpuTasks);
-    cudaFree(gpuResults);
-    std::vector<Eigen::Vector4f> results(resultCount,
-                                         Eigen::Vector4f(FLT_MAX,FLT_MAX,
-                                                         -FLT_MAX,-FLT_MAX));
+	for(size_t i = 0; i < raw_res.size(); i++) {
+		BoundResult result = raw_res[i];
 
+		int ind = result.target_ind;
 
-    for(size_t i=0;i<rawRes.size();i++){
-        BoundResult result = rawRes[i];
+		results[ind][0] = min(results[ind][0], result.bound[0]);
+		results[ind][1] = min(results[ind][1], result.bound[1]);
+		results[ind][2] = max(results[ind][2], result.bound[2]);
+		results[ind][3] = max(results[ind][3], result.bound[3]);
+	}
 
-        int ind = result.targetInd;
-
-        results[ind][0] = min(results[ind][0],result.bound[0]);
-        results[ind][1] = min(results[ind][1],result.bound[1]);
-        results[ind][2] = max(results[ind][2],result.bound[2]);
-        results[ind][3] = max(results[ind][3],result.bound[3]);
-
-
-    }
-
-
-
-    std::vector<cv::Rect2f> bounds(resultCount);
-    for(size_t i=0;i<bounds.size();i++){
-        bounds[i].x = results[i][0];
-        bounds[i].y = results[i][1];
-        bounds[i].width = results[i][2]-results[i][0];
-        bounds[i].height = results[i][3]-results[i][1];
-    }
-    return bounds;
+	vector<cv::Rect2f> bounds(result_count);
+	for(size_t i = 0; i < bounds.size(); i++) {
+		bounds[i].x = results[i][0];
+		bounds[i].y = results[i][1];
+		bounds[i].width = results[i][2] - results[i][0];
+		bounds[i].height = results[i][3] - results[i][1];
+	}
+	return bounds;
 }
-
-/*
-std::vector<cv::Rect2f> TexCoordGen::getPotentialTexCoordBounds(
-        std::vector<std::shared_ptr<MeshPatch>> patches,
-        Eigen::Matrix4f proj_pose)
-{
-    //compile list of tasks for these patches.
-
-
-    //run on gpu
-
-
-    //collect the results
-    std::vector<cv::Rect2f> bounds;
-    return bounds;
-
-}
-*/
-
-

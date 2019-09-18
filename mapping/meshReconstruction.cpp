@@ -924,7 +924,7 @@ std::vector<Rect2f> MeshReconstruction::genBoundsFromPatches( std::vector<std::s
         //vector<TexCoordGen::BoundTask> intermediateTasks;
         TexCoordGen::BoundTask task;
 
-        task.targetInd = validCount;
+        task.target_ind = validCount;
 
 
         //now iterate all stitches for neighbours
@@ -948,9 +948,9 @@ std::vector<Rect2f> MeshReconstruction::genBoundsFromPatches( std::vector<std::s
                 valid = false;
                 break;
             }
-            task.triangleCount = gpuStitch->getSize();
+            task.triangle_count = gpuStitch->getSize();
             task.triangles = gpuStitch->getStartingPtr();
-            task.debugType = 1;
+            task.debug_type = 1;
             boundTasks.push_back(task);
 
         }
@@ -976,9 +976,9 @@ std::vector<Rect2f> MeshReconstruction::genBoundsFromPatches( std::vector<std::s
                 break;
                 continue;
             }
-            task.triangleCount = gpuStitch->getSize();
+            task.triangle_count = gpuStitch->getSize();
             task.triangles = gpuStitch->getStartingPtr();
-            task.debugType = 2;
+            task.debug_type = 2;
 
             boundTasks.push_back(task);
         }
@@ -987,9 +987,9 @@ std::vector<Rect2f> MeshReconstruction::genBoundsFromPatches( std::vector<std::s
         }
 
 
-        task.triangleCount = gpuPatch->triangles->getSize();
+        task.triangle_count = gpuPatch->triangles->getSize();
         task.triangles = gpuPatch->triangles->getStartingPtr();
-        task.debugType = 0;
+        task.debug_type = 0;
         if(gpuPatch->triangles->getSize() != 0){
             boundTasks.push_back(task);
         }else{

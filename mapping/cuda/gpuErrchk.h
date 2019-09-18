@@ -1,5 +1,6 @@
 #ifndef FILE_GPU_ERRCHK_H
 #define FILE_GPU_ERRCHK_H
+
 #include <stdio.h>
 #include <assert.h>
 #include <cublas.h>

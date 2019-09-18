@@ -189,7 +189,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
         task.scale_x = 1.0f/(bounds[i].width + 1.0f/float(scale));
         task.scale_y = 1.0f/(bounds[i].height + 1.0f/float(scale));
         task.coords = gpuTexture->coords->getStartingPtr();
-        task.triangleCount = gpuPatch->triangles->getSize();
+        task.triangle_count = gpuPatch->triangles->getSize();
 
         task.triangles = gpuPatch->triangles->getStartingPtr();
         texGenTasks.push_back(task);
@@ -219,7 +219,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
 
 
 
-            task.triangleCount = gpuStitch->getSize();
+            task.triangle_count = gpuStitch->getSize();
             task.triangles = gpuStitch->getStartingPtr();
             texGenTasks.push_back(task);
         }
@@ -242,7 +242,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
                 continue;
             }
 
-            task.triangleCount = gpuStitch->getSize();
+            task.triangle_count = gpuStitch->getSize();
             task.triangles = gpuStitch->getStartingPtr();
             texGenTasks.push_back(task);
 
@@ -606,7 +606,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
             task.scale_x = 1.0f/(bounds[i].width + 1.0f);
             task.scale_y = 1.0f/(bounds[i].height + 1.0f);
             task.coords = meshTexGpu->coords->getStartingPtr();
-            task.triangleCount = gpuPatch->triangles->getSize();
+            task.triangle_count = gpuPatch->triangles->getSize();
 
             task.triangles = gpuPatch->triangles->getStartingPtr();
             texGenTasks.push_back(task);
@@ -626,7 +626,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
                     assert(0);
                     continue;
                 }
-                task.triangleCount = gpuStitch->getSize();
+                task.triangle_count = gpuStitch->getSize();
                 task.triangles = gpuStitch->getStartingPtr();
                 texGenTasks.push_back(task);
             }
@@ -646,7 +646,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
                     assert(0);
                     continue;
                 }
-                task.triangleCount = gpuStitch->getSize();
+                task.triangle_count = gpuStitch->getSize();
                 task.triangles = gpuStitch->getStartingPtr();
                 texGenTasks.push_back(task);
             }

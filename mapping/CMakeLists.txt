@@ -125,7 +125,6 @@ file(GLOB CUDA_SRCS
 	cuda/geomUpdate.cu
 	cuda/labelling.cu
 	cuda/normEst.cu
-	cuda/normSeg.cu
 	cuda/reproject.cu
 	cuda/stdTexUpdate.cu
 	cuda/test.cu

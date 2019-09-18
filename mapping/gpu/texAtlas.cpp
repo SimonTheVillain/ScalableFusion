@@ -391,8 +391,8 @@ GpuTextureInfo TexAtlasPatch::genTexInfo(Size2i size, int texCoordStartingIndex)
     int height = tex->tex->getHeight();
 
     GpuTextureInfo texInfo;
-    texInfo.texCoordStartInd = texCoordStartingIndex;
-    texInfo.glTexPointer = tex->tex->getGlHandle();
+    texInfo.tex_coord_start_ind = texCoordStartingIndex;
+    texInfo.gl_tex_pointer = tex->tex->getGlHandle();
     texInfo.pos = Vector2f(float(pos.x)/float(width),float(pos.y)/float(height));
     texInfo.size = Vector2f(float(size.width)/float(width),float(size.height)/float(height));
     texInfo._size = Vector2f(1.0f/texInfo.size[0],1.0f/texInfo.size[1]);

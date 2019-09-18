@@ -179,7 +179,7 @@ struct Vertex {
 	Vertex(GpuVertex gpu_vertex) {
 		p = gpu_vertex.p;
 		n = gpu_vertex.n;
-		tex_ind_in_main_patch = gpu_vertex.texIndInMainPatch;
+		tex_ind_in_main_patch = gpu_vertex.tex_ind_in_main_patch;
 	}
 
 	void removeTriangle(Triangle* triangle) {
@@ -203,7 +203,7 @@ struct Vertex {
 		GpuVertex vert;
 		vert.p = p;
 		vert.n = n;
-		vert.texIndInMainPatch = static_cast<int16_t>(tex_ind_in_main_patch);
+		vert.tex_ind_in_main_patch = static_cast<int16_t>(tex_ind_in_main_patch);
 		return vert;
 	}
 

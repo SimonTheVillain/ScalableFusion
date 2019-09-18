@@ -114,7 +114,7 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 
 				GpuTexInfoTask info_task;
 				info_task.dst =
-						&(patch_gpu->patch_infos->getStartingPtr()->segmentationTexture);
+						&(patch_gpu->patch_infos->getStartingPtr()->segmentation_texture);
 
 				info_task.value = tex_patch_gpu->genTexInfo();
 				GpuTextureInfo info = tex_patch_gpu->genTexInfo();
@@ -123,9 +123,9 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 				DEBUGTask debug_task;
 
 				debug_task.src =
-						&(patch_gpu->patch_infos->getStartingPtr()->stdTexture);
+						&(patch_gpu->patch_infos->getStartingPtr()->std_texture);
 				debug_task.dst =
-						&(patch_gpu->patch_infos->getStartingPtr()->segmentationTexture);
+						&(patch_gpu->patch_infos->getStartingPtr()->segmentation_texture);
 				debug_tasks.push_back(debug_task);
 			} else {
 				assert(0);//this means we lost the newly created tex patch

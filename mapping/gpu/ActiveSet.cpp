@@ -155,10 +155,10 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
                         patchMap[triangle.points[k].getPatch()];
                 //TODO: do something else to fix this
                 //obviously this fails if we don't set gpu references
-                gpuTriangle.patchInfoInds[k] =
+                gpuTriangle.patch_info_inds[k] =
                         gpuThisPt->patch_infos->getStartingIndex();
                 gpuTriangle.indices[k] = pr.getIndex();
-                gpuTriangle.texIndices[k] = triangle.
+                gpuTriangle.tex_indices[k] = triangle.
                         tex_indices[k];
             }
             coalescedTriangles.push_back(gpuTriangle);
@@ -216,10 +216,10 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
                             assert(0);
                         }
 #endif
-                        gpuTriangle.patchInfoInds[k] =
+                        gpuTriangle.patch_info_inds[k] =
                                 gpuThisPt->patch_infos->getStartingIndex();
                         gpuTriangle.indices[k] = pr.getIndex();
-                        gpuTriangle.texIndices[k] = triangle.tex_indices[k];
+                        gpuTriangle.tex_indices[k] = triangle.tex_indices[k];
                     }
                     coalescedTriangles.push_back(gpuTriangle);
                 }
@@ -270,10 +270,10 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
                 //        pr.getPatch()->gpu.lock();
                 shared_ptr<MeshPatchGpuHandle> gpuThisPt =
                         patchMap[pr.getPatch()];
-                gpuTriangle.patchInfoInds[k] =
+                gpuTriangle.patch_info_inds[k] =
                         gpuThisPt->patch_infos->getStartingIndex();
                 gpuTriangle.indices[k] = pr.getIndex();
-                gpuTriangle.texIndices[k] = triangle.tex_indices[k];
+                gpuTriangle.tex_indices[k] = triangle.tex_indices[k];
             }
             coalescedTriangles.push_back(gpuTriangle);
         }
@@ -826,29 +826,29 @@ void ActiveSet::reuploadHeaders()
     for(shared_ptr<MeshPatch> patch : retainedMeshPatchesCpu){
         GpuPatchInfo info;
         shared_ptr<MeshPatchGpuHandle> gpu = patch->gpu.lock();
-        info.patchId = patch->id;
+        info.patch_id = patch->id;
         info.debug1 = patch->debug1;
 
         //put on the texturing information:
         if(gpu->geom_tex !=nullptr){
-            info.stdTexture = gpu->geom_tex->genTexInfo();
+            info.std_texture = gpu->geom_tex->genTexInfo();
 
-            info.stdTexture.glRefTexPtrDEBUG =
+            info.std_texture.gl_ref_tex_ptr_DEBUG =
                     gpu->geom_tex->ref_tex->getGlHandle();
             cv::Rect2i roi =
                     gpu->geom_tex->ref_tex->getRect();
-            info.stdTexture.refTexPosDEBUG = Vector2f(roi.x,roi.y)*(1.0f/1024.0f);
+            info.std_texture.ref_tex_pos_DEBUG = Vector2f(roi.x,roi.y)*(1.0f/1024.0f);
 
             //debug
             //info.stdTexture.glRefTexPtrDEBUG=info.stdTexture.glTexPointer;
         }else{
-            info.stdTexture.texCoordStartInd=0;
-            info.stdTexture.glTexPointer = 0;
+            info.std_texture.tex_coord_start_ind=0;
+            info.std_texture.gl_tex_pointer = 0;
         }
 
 
 
-        info.texLayers=0;
+        info.tex_layers=0;
         patch->tex_patches_mutex.lock();
         for(size_t i=0;i<patch->tex_patches.size();i++){
             shared_ptr<MeshTextureGpuHandle> gpuTexPatch =
@@ -858,9 +858,9 @@ void ActiveSet::reuploadHeaders()
                 //TODO: place assert here and check
                 continue;
             }
-            info.textureInfos[info.texLayers] = gpuTexPatch->genTexInfo();
+            info.texture_infos[info.tex_layers] = gpuTexPatch->genTexInfo();
                     //gpuTexPatch->genSrcTexInfo();
-            info.texLayers++;
+            info.tex_layers++;
         }
         patch->tex_patches_mutex.unlock();
         //TODO. this texture upload
@@ -878,16 +878,16 @@ void ActiveSet::reuploadHeaders()
                 assert(0);
                 continue;
             }
-            info.segmentationTexture = gpuTexPatch->genTexInfo();//tex->genTexInfo();
-            info.segmentationTexValid = true;
+            info.segmentation_texture = gpuTexPatch->genTexInfo();//tex->genTexInfo();
+            info.segmentation_tex_valid = true;
         }
         // = static_cast<int32_t>(labelCount);
         patch->label_tex_patch_mutex.unlock();
 
 
-        info.vertexSourceStartInd = gpu->vertices_source->getStartingIndex();
-        info.vertexDestinationStartInd = gpu->vertices_dest->getStartingIndex();
-        info.triangleStartInd = gpu->triangles->getStartingIndex();
+        info.vertex_source_start_ind = gpu->vertices_source->getStartingIndex();
+        info.vertex_destination_start_ind = gpu->vertices_dest->getStartingIndex();
+        info.triangle_start_ind = gpu->triangles->getStartingIndex();
 
 
 

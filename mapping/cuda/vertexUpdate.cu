@@ -61,7 +61,7 @@ __global__ void vertexUpdate_kernel(const cudaSurfaceObject_t geometryInput, //t
 
     //printf("%d vertexSourceOffset \n",vertexSourceOffset);
     //return;
-    uint32_t texPosOffset = info.stdTexture.texCoordStartInd;//*nrTexPosPerPatch;
+    uint32_t texPosOffset = info.std_texture.tex_coord_start_ind;//*nrTexPosPerPatch;
     while(i<descriptor.vertex_count){
         GpuVertex &vertIn = vertices[vertexSourceOffset+i];
         GpuVertex &vertOut = vertices[vertexDestOffset+i];
@@ -121,7 +121,7 @@ __global__ void vertexUpdate_kernel(const cudaSurfaceObject_t geometryInput, //t
         //Vector3f front = make_float3(toCamN[0],toCamN[1],toCamN[2]);
 
         //read the current value of the texture
-        Vector2f texCoord = texPos[texPosOffset + vertIn.texIndInMainPatch];
+        Vector2f texCoord = texPos[texPosOffset + vertIn.tex_ind_in_main_patch];
 
 
         //this tex coordinate still has to be adapted for the texture atlas

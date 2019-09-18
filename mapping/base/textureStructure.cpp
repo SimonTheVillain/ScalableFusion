@@ -306,10 +306,10 @@ bool MeshTextureGpuHandle::checkRefTexDependencies() {
 
 GpuTextureInfo MeshTextureGpuHandle::genTexInfo() {
 	GpuTextureInfo info = tex->genTexInfo(coords->getStartingIndex());
-	if(ref_tex != nullptr){
-		info.glRefTexPtrDEBUG = ref_tex->getAtlasTex()->getTex2D()->getGlHandle();
+	if(ref_tex != nullptr) {
+		info.gl_ref_tex_ptr_DEBUG = ref_tex->getAtlasTex()->getTex2D()->getGlHandle();
 		cv::Rect2i pos = ref_tex->getPosition();
-		info.refTexPosDEBUG = Vector2f(pos.x, pos.y) * (1.0f / 1024.0f);
+		info.ref_tex_pos_DEBUG = Vector2f(pos.x, pos.y) * (1.0f / 1024.0f);
 	}
 	return info;
 }

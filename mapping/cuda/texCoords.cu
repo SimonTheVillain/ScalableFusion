@@ -24,8 +24,8 @@ __global__ void genTexCoords_kernel(TexCoordGen::Task* tasks,
         for(size_t j=0;j<3;j++){
             //get the vertex position of this triangle:
             GpuTriangle triangle = task.triangles[i];
-            GpuPatchInfo patchInfo= patchInfos[triangle.patchInfoInds[j]];
-            int ind = patchInfo.vertexSourceStartInd + triangle.indices[j];
+            GpuPatchInfo patchInfo= patchInfos[triangle.patch_info_inds[j]];
+            int ind = patchInfo.vertex_source_start_ind + triangle.indices[j];
             Eigen::Vector4f p=vertices[ind].p;
 
             //now do the projection
@@ -41,7 +41,7 @@ __global__ void genTexCoords_kernel(TexCoordGen::Task* tasks,
                         (texCoord[0] - task.offset_x) * task.scale_x ,
                         (texCoord[1] - task.offset_y) * task.scale_y) ;
             //TODO: put the point back into bounds
-            task.coords[task.triangles[i].texIndices[j]] = scaled;
+            task.coords[task.triangles[i].tex_indices[j]] = scaled;
             //printf("unscaled: %f %f \n",texCoord[0],texCoord[1]);
             //printf("scaled: %f %f \n",scaled[0],scaled[1]);
         }
@@ -142,8 +142,8 @@ __global__ void getTexCoordBounds_kernel(   TexCoordGen::BoundTask* tasks,
         GpuTriangle triangle = task.triangles[i];
         for(size_t j=0;j<3;j++){
             //get the vertex position of this triangle:
-            GpuPatchInfo patchInfo= patchInfos[triangle.patchInfoInds[j]];
-            int ind = patchInfo.vertexSourceStartInd + triangle.indices[j];
+            GpuPatchInfo patchInfo= patchInfos[triangle.patch_info_inds[j]];
+            int ind = patchInfo.vertex_source_start_ind + triangle.indices[j];
             Eigen::Vector4f p=vertices[ind].p;
 
             //now do the projection

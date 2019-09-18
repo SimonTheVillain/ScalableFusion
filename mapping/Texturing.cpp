@@ -657,11 +657,11 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
             copy.y=bounds[i].y*_height;
             copy.width=bounds[i].width*_width;
             copy.height=bounds[i].height*_height;
-            copy.targetWidth=resX;
-            copy.targetHeight=resY;
+            copy.target_width=resX;
+            copy.target_height=resY;
             Rect2i outRect = meshTexGpu->tex->getRect();
-            copy.targetX = outRect.x;
-            copy.targetY = outRect.y;
+            copy.target_x = outRect.x;
+            copy.target_y = outRect.y;
             copy.output = meshTexGpu->tex->getCudaSurfaceObject();
             //meshTexGpu->sourceTex->getTex()->getCudaSurfaceObject();
             //newTexture->getSourceTexPatch()->getTex()->getCudaSurfaceObject();

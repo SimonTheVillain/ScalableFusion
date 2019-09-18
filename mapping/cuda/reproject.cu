@@ -1,100 +1,85 @@
 #include "reproject.h"
+
 #include <stdio.h>
 
+using namespace Eigen;
 
 __global__
-void reproject_kernel(uint16_t *depthIn,uint32_t *depthOut,
-                      int width,int height,
-                      Eigen::Matrix4f poseTransform,
-                      Eigen::Vector4f depthIntrinsics){
-    int x=blockIdx.x * blockDim.x + threadIdx.x;
-    int y=blockIdx.y * blockDim.y + threadIdx.y;
+void reproject_kernel(uint16_t *depth_in, uint32_t *depth_out,
+                      int width, int height,
+                      Matrix4f pose_transform,
+                      Vector4f depth_intrinsics) {
 
-    if(x>=width || y>=height){
-        return;
-    }
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-    //i think the depth is in millimeters
-    //depth
-    float fxD=depthIntrinsics[0];
-    float fyD=depthIntrinsics[1];
-    float cxD=depthIntrinsics[2];
-    float cyD=depthIntrinsics[3];
-    float z = float(depthIn[x+y*width])*0.001f;//from millimeter to meter
+	if(x >= width || y >= height) {
+		return;
+	}
 
-    if(z==0){
-        return;
-    }
+	//depth
+	float fx_d = depth_intrinsics[0];
+	float fy_d = depth_intrinsics[1];
+	float cx_d = depth_intrinsics[2];
+	float cy_d = depth_intrinsics[3];
+	float z = float(depth_in[x + y * width]) * 0.001f; // from millimeter to meter
 
-    Eigen::Vector4f p((float(x)-cxD)*z/fxD,
-                (float(y)-cyD)*z/fyD,
-                z,
-                1.0f);
+	if(z == 0) {
+		return;
+	}
 
-    Eigen::Vector4f pnew= poseTransform*p;
+	Vector4f p((float(x) - cx_d) * z / fx_d,
+	           (float(y) - cy_d) * z / fy_d,
+	           z,
+	           1.0f);
 
-    //now project:
-    float zTarget=pnew[2];
-    float xTarget=pnew[0]/zTarget*fxD+cxD;
-    float yTarget=pnew[1]/zTarget*fyD+cyD;
-    //printf(" w %f \n",pnew[3]);
+	Vector4f pnew= pose_transform * p;
 
+	// Now project:
+	float z_target = pnew[2];
+	float x_target = pnew[0] / z_target * fx_d + cx_d;
+	float y_target = pnew[1] / z_target * fy_d + cy_d;
 
-    /*
-    if(x==100 && y==100){
-        printf("%f %f %f %f\n",p[0],p[1],p[2],p[3]);
-        printf("%f %f %f %f\n",pnew[0],pnew[1],pnew[2],pnew[3]);
-        printf("%f %f %f %f\n",fxD,fyD,cxD,cyD);
-        printf("%f %f\n", (float(x)-cxD),(float(x)-cxD)*fxD);
-    }
-    */
+	int xt = round(x_target);
+	int yt = round(y_target);
 
-    int xt=round(xTarget);
-    int yt=round(yTarget);
+	if(xt >= width || yt >= height || xt < 0 || yt < 0) {
+		return;
+	}
 
-    if(xt>=width || yt>=height ||
-            xt<0 || yt<0){
-        return;
-    }
-    atomicMin(&depthOut[xt+yt*width],
-              uint32_t(zTarget*1000.0f));
-    //depthOut[xt+yt*width] = uint16_t(zTarget*1000.0f);
+	atomicMin(&depth_out[xt + yt * width], uint32_t(z_target * 1000.0f));
 }
-
 
 __global__
-void typecastAndMasking_kernel(uint16_t *depthOut16,uint32_t *depthOut32,
-                      int width,int height){
-    int x=blockIdx.x * blockDim.x + threadIdx.x;
-    int y=blockIdx.y * blockDim.y + threadIdx.y;
+void typecastAndMasking_kernel(uint16_t *depth_out16, uint32_t *depth_out32,
+                               int width, int height) {
 
-    if(x>=width || y>=height){
-        return;
-    }
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-    uint32_t z = depthOut32[x +  y*width];
-    if(z>65000){
-        depthOut16[x +  y*width] = 0;
-    }else{
-        depthOut16[x +  y*width] = z;
-    }
+	if(x >= width || y >= height) {
+		return;
+	}
 
+	uint32_t z = depth_out32[x +  y * width];
+	if(z > 65000) {
+		depth_out16[x +  y * width] = 0;
+	} else {
+		depth_out16[x +  y * width] = z;
+	}
 }
 
-void reproject(uint16_t *depthIn,uint16_t *depthOut16,
-               uint32_t *depthOut32,
-               int width,int height,
-               Eigen::Matrix4f poseTransform,
-               Eigen::Vector4f depthIntrinsics){
-    dim3 block(32,32);
-    dim3 grid((width+block.x-1)/block.x,(height+block.y-1)/block.y);
+void reproject(uint16_t *depth_in, uint16_t *depth_out16, uint32_t *depth_out32,
+               int width, int height, Matrix4f pose_transform, 
+               Vector4f depth_intrinsics) {
 
-    reproject_kernel<<<grid,block>>>(depthIn,depthOut32,
-                                     width,height,
-                                     poseTransform,
-                                     depthIntrinsics);
-    typecastAndMasking_kernel<<<grid,block>>>(  depthOut16,depthOut32,
-                                                width,height);
+	dim3 block(32,32);
+	dim3 grid((width + block.x - 1) / block.x, (height + block.y - 1) / block.y);
 
+	reproject_kernel<<<grid, block>>>(depth_in, depth_out32, width, height,
+	                                  pose_transform, depth_intrinsics);
+
+	typecastAndMasking_kernel<<<grid, block>>>(depth_out16, depth_out32, width,
+	                                           height);
 
 }

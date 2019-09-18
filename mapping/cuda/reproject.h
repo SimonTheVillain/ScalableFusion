@@ -1,12 +1,12 @@
 #ifndef FILE_REPROJECT_H
 #define FILE_REPROJECT_H
+
 #include <Eigen/Eigen>
 #include <stdint.h>
 
-void reproject(uint16_t *depthIn, uint16_t *depthOut16, uint32_t *depthOut32,
+void reproject(uint16_t *depth_in, uint16_t *depth_out16, uint32_t *depth_out32,
                int width, int height,
-               Eigen::Matrix4f poseTransform,
-               Eigen::Vector4f depthIntrinsics);
-
+               Eigen::Matrix4f pose_transform,
+               Eigen::Vector4f depth_intrinsics);
 
 #endif

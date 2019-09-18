@@ -150,7 +150,7 @@ void checkTriangleValidity_kernel(
 		Matrix4f proj_pose, GpuVertex *vertices, Vector2f *tex_pos, 
 		GpuTriangle *triangles, GpuPatchInfo *patch_infos) {
 
-	uint32_t k = blockIdx.x;
+	//uint32_t k = blockIdx.x;
 }
 
 void gpu::GeometryUpdate::calcCenterAndRadiusKernelCall_(

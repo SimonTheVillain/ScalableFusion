@@ -52,7 +52,7 @@ void labelSurfaces_kernel(Labelling::SegProjTask* tasks,
 
 		//readout the lookup shizzle
 		float4 ref;
-		if(x_ref>=1024 || y_ref>=1024) {
+		if(x_ref >= 1024 || y_ref >= 1024) {
 			printf("This is not right!!!! %d, %d \n", x_ref, y_ref);
 		}
 		//TODO: find out why this is creating the memory exception
@@ -94,7 +94,6 @@ void labelSurfaces_kernel(Labelling::SegProjTask* tasks,
 
 		int ui = round(u);
 		int vi = round(v);
-
 
 		if(u < 0 || u > width || v < 0 || v > height || true) {
 			//debug
@@ -147,7 +146,7 @@ void labelSurfaces_kernel(Labelling::SegProjTask* tasks,
 		            //this could lead to alignment issues
 		            y_dest);
 
-		i+=blockDim.x;
+		i += blockDim.x;
 	}
 }
 

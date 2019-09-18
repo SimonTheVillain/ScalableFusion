@@ -321,16 +321,16 @@ void Texturing::ProjToGeomTex(ActiveSet* activeSet, std::vector<std::shared_ptr<
 
 
         cv::Rect2i rect = geomTexGpuHandle->tex->getRect(); //getRect() //This is different from get rect
-        command.outOffset = cv::Point2i(rect.x,rect.y);
+        command.out_offset = cv::Point2i(rect.x,rect.y);
         rect = geomTexGpuHandle->ref_tex->getRect();
-        command.refOffset = cv::Point2i(rect.x,rect.y);
+        command.ref_offset = cv::Point2i(rect.x,rect.y);
         command.width = rect.width;
         command.height = rect.height;
         /*command.x = rect.x;
         command.y = rect.y;*/
         command.output =
                 geomTexGpuHandle->tex->getCudaTextureObject();
-        command.referenceTexture =
+        command.reference_texture =
                 geomTexGpuHandle->ref_tex->getCudaTextureObject();
         commands.push_back(command);
 

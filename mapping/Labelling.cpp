@@ -97,8 +97,8 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 				//TODO: set the label to -1
 				//also don't create a new texture every time!!!!!
 				gpu::Labelling::InitializeTask initialize_task;
-				initialize_task.destSurf = tex_patch_gpu->tex->getCudaSurfaceObject();
-				initialize_task.destRect = tex_patch_gpu->tex->getRect();
+				initialize_task.dest_surf = tex_patch_gpu->tex->getCudaSurfaceObject();
+				initialize_task.dest_rect = tex_patch_gpu->tex->getRect();
 				initialization_tasks.push_back(initialize_task);
 
 				patches_update_lookup.push_back(patch_cpu);
@@ -140,15 +140,15 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 		gpu::Labelling::SegProjTask task;
 		//fill up task
 		task.subchannel = static_cast<int>(0);
-		task.destSurf = gpu_tex_patch->tex->getCudaSurfaceObject();
+		task.dest_surf = gpu_tex_patch->tex->getCudaSurfaceObject();
 		//wow! this is too long
 		task.destination = gpu_tex_patch->tex->getRect();
 		//position (top left)
 		task.lookup = gpu_tex_patch->ref_tex->getRect().tl();
-		task.lookupSurf = 
+		task.lookup_surf = 
 				gpu_tex_patch->ref_tex->getAtlasTex()->getTex2D()->getCudaSurfaceObject();
 
-		task.vertexDestStartInd = patch_gpu->vertices_source->getStartingIndex();
+		task.vertex_dest_start_ind = patch_gpu->vertices_source->getStartingIndex();
 		labelling_tasks.push_back(task);
 
 		labelling_textures_debug.push_back(gpu_tex_patch);

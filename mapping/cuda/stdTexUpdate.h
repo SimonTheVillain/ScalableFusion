@@ -5,12 +5,13 @@
  * maybe we also update the vertices with functions defined within this file
  */
 
+#include <vector>
 
 #include <cuda.h>
 #include <cublas.h>
-#include <vector>
 #include <opencv2/core.hpp>
 #include <Eigen/Eigen>
+
 #include "gpuMeshStructure.h"
 #include "geomUpdate.h"
 
@@ -27,67 +28,63 @@
  * https://devtalk.nvidia.com/default/topic/686211/using-surfaces-in-a-stack-implementation/
  */
 
+using namespace std;
+using namespace Eigen;
 
-
-
-
-void updateGeomTexturesOfPatches(const cudaSurfaceObject_t geometryInput, //the sensor input adapted by standard deviations
-                   int width, int height, //sensor resolution
-                   const std::vector<gpu::UpdateDescriptor> &descriptors,
-                   Eigen::Vector4f camPos,
-                   Eigen::Matrix4f _pose, // because we want the vertex position relative to the camera
-                   Eigen::Matrix4f proj_pose, //to get the position of the point on the image.
-                   GpuVertex *vertices, Eigen::Vector2f *texPos,
-                   GpuTriangle* triangles, GpuPatchInfo* patchInfos); //pointer to the geometric data
+void updateGeomTexturesOfPatches(const cudaSurfaceObject_t geometry_input, //the sensor input adapted by standard deviations
+                                 int width, int height, //sensor resolution
+                                 const vector<gpu::UpdateDescriptor> &descriptors,
+                                 Vector4f cam_pos,
+                                 Matrix4f pose, // because we want the vertex position relative to the camera
+                                 Matrix4f proj_pose, //to get the position of the point on the image.
+                                 GpuVertex *vertices, Vector2f *tex_pos,
+                                 GpuTriangle *triangles, 
+                                 GpuPatchInfo *patch_infos); //pointer to the geometric data
 
 
 #ifdef __CUDACC__
-__global__ void updateGeomTex_kernel(const cudaSurfaceObject_t geometryInput, //the sensor input adapted by standard deviations
-                                     int width,int height, //sensor resolution
-                                     gpu::UpdateDescriptor* descriptors,
-                                     Eigen::Vector4f camPos,//camera position
-                                     Eigen::Matrix4f _pose, // because we want the vertex position relative to the camera
-                                     Eigen::Matrix4f proj_pose, //to get the position of the point on the image.
-                                     GpuVertex *vertices, Eigen::Vector2f *texPos,
-                                     GpuTriangle* triangles,GpuPatchInfo* patchInfos);
+__global__ 
+void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor input adapted by standard deviations
+                          int width, int height, //sensor resolution
+                          gpu::UpdateDescriptor* descriptors,
+                          Vector4f cam_pos, //camera position
+                          Matrix4f _pose, // because we want the vertex position relative to the camera
+                          Matrix4f proj_pose, //to get the position of the point on the image.
+                          GpuVertex *vertices, Vector2f *tex_pos,
+                          GpuTriangle *triangles, GpuPatchInfo *patch_infos);
 #endif
 
 //TODO: a simple dilation kernel
 
-struct DilationDescriptor{
-    cudaSurfaceObject_t target;
-    //theoretically output and input should be different but we do this to not have
-    //invalid references(red lines) in the lookup texture
-    int width;
-    int height;
-    int x;
-    int y;
+struct DilationDescriptor {
+		cudaSurfaceObject_t target;
+		//theoretically output and input should be different but we do this to not have
+		//invalid references(red lines) in the lookup texture
+		int width;
+		int height;
+		int x;
+		int y;
 };
 
-void dilateLookupTextures(const std::vector<DilationDescriptor> &descriptors);
+struct InitDescriptor {
+		cudaSurfaceObject_t output;
 
+		cudaSurfaceObject_t reference_texture;
 
-struct InitDescriptor{
-    cudaSurfaceObject_t output;
-
-    cudaSurfaceObject_t referenceTexture;
-
-    cv::Point2i refOffset;
-    cv::Point2i outOffset;
-    int width;
-    int height;
-
-
-
-
+		cv::Point2i ref_offset;
+		cv::Point2i out_offset;
+		int width;
+		int height;
 };
-void stdTexInit(const cudaTextureObject_t input, const std::vector<InitDescriptor> &descriptors,
-                Eigen::Matrix4f proj_pose,
-                GpuVertex *vertices, Eigen::Vector2f *texPos,
-                GpuTriangle *triangles, GpuPatchInfo *patchInfos); //somehow we now need the gpu textures
 
+void dilateLookupTextures(const vector<DilationDescriptor> &descriptors);
 
+void stdTexInit(const cudaTextureObject_t input, 
+                const vector<InitDescriptor> &descriptors,
+                Matrix4f proj_pose,
+                GpuVertex *vertices, Vector2f *tex_pos,
+                GpuTriangle *triangles, GpuPatchInfo *patch_infos); //somehow we now need the gpu textures
 
-void shiftVerticesALittle(GpuVertex*vertices,size_t from,size_t to);
+void shiftVerticesALittle(GpuVertex *vertices, size_t from, size_t to);
 
 #endif

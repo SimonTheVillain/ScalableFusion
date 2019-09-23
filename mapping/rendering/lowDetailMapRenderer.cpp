@@ -719,8 +719,8 @@ void LowDetailRenderer::renderExceptForActiveSets(std::vector<std::shared_ptr<Ac
             continue;
         }
         //nrDisabledPatches += aset->currentlyAdded.size();
-        for(size_t j=0;j<aset->retainedMeshPatchesCpu.size();j++){
-            shared_ptr<MeshPatch> patch = aset->retainedMeshPatchesCpu[j];
+        for(size_t j=0;j<aset->retained_mesh_patches_cpu.size();j++){
+            shared_ptr<MeshPatch> patch = aset->retained_mesh_patches_cpu[j];
             //shared_ptr<MeshPatchGpuHandle> gpu = aset->retainedMeshPatchesCpu[j]->gpu.lock;
 
             disablePatches.push_back(patch->indexWithinCoarse);

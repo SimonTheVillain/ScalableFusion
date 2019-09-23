@@ -358,10 +358,10 @@ void Texturing::ProjToGeomTex(ActiveSet* activeSet, std::vector<std::shared_ptr<
     //cout << "mvp gpu" << proj*_pose << endl;
     stdTexInit(geomSensorData->getCudaTextureObject(),commands,
                scale*p_p,
-               (GpuVertex*)activeSet->gpuGeomStorage->vertexBuffer->getCudaPtr(),
-               (Vector2f*)activeSet->gpuGeomStorage->texPosBuffer->getCudaPtr(),
-               (GpuTriangle*)activeSet->gpuGeomStorage->triangleBuffer->getCudaPtr(),
-               (GpuPatchInfo*)activeSet->gpuGeomStorage->patchInfoBuffer->getCudaPtr());
+               (GpuVertex*)activeSet->gpu_geom_storage->vertexBuffer->getCudaPtr(),
+               (Vector2f*)activeSet->gpu_geom_storage->texPosBuffer->getCudaPtr(),
+               (GpuTriangle*)activeSet->gpu_geom_storage->triangleBuffer->getCudaPtr(),
+               (GpuPatchInfo*)activeSet->gpu_geom_storage->patchInfoBuffer->getCudaPtr());
 
 
     //TODO: this is not fully filling the textures. Get to the root of this issue
@@ -441,7 +441,7 @@ void Texturing::ColorTexUpdate(std::shared_ptr<gfx::GpuTex2D> rgbaTex,
 
     vector<shared_ptr<MeshPatch>> visibleSharedPatches;
     if(activeSet!=nullptr){
-        visibleSharedPatches = activeSet->retainedMeshPatchesCpu;
+        visibleSharedPatches = activeSet->retained_mesh_patches_cpu;
     }
 
     //todo: replace the depth pose with the rgb camera pose

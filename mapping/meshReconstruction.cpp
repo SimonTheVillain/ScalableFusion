@@ -1049,7 +1049,7 @@ void MeshReconstruction::clearInvalidGeometry(std::shared_ptr<ActiveSet> set, Ma
     Matrix4f proj_pose= proj*_pose;
 
 
-    vector<shared_ptr<MeshPatch>> patches = set->retainedMeshPatchesCpu;
+    vector<shared_ptr<MeshPatch>> patches = set->retained_mesh_patches_cpu;
 
     vector<gpu::GeometryValidityChecks::VertexTask> tasks;
     for(shared_ptr<MeshPatch> patch : patches){

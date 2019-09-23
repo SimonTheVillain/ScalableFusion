@@ -59,7 +59,7 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 
 	//actually, we need to secure the labels in at least this active set.
 
-	for(shared_ptr<MeshPatch> patch_cpu : active_set->retainedMeshPatchesCpu) {
+	for(shared_ptr<MeshPatch> patch_cpu : active_set->retained_mesh_patches_cpu) {
 
 		patch_cpu->label_tex_patch_mutex.lock();
 		shared_ptr<MeshPatchGpuHandle> patch_gpu = patch_cpu->gpu.lock();

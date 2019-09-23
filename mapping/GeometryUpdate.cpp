@@ -41,7 +41,7 @@ void GeometryUpdate::extend(
 
 	//extract the visible patches from the active set
 	vector<shared_ptr<MeshPatch>> visible_patches =
-			active_set_of_formerly_visible_patches->retainedMeshPatchesCpu;
+			active_set_of_formerly_visible_patches->retained_mesh_patches_cpu;
 
 	//this might me more suitable for the beginning but lets do it here:
 	mesh->m_informationRenderer.renderDepth(
@@ -61,10 +61,10 @@ void GeometryUpdate::extend(
 	vector<vector<Edge>> borders;
 	Matrix4f proj_pose = proj_depth * depth_pose_in.inverse();
 	int debug_patch_count = 
-			active_set_of_formerly_visible_patches->retainedMeshPatchesCpu.size();
+			active_set_of_formerly_visible_patches->retained_mesh_patches_cpu.size();
 
 	stitching.genBorderList(
-			active_set_of_formerly_visible_patches->retainedMeshPatchesCpu, borders, 
+			active_set_of_formerly_visible_patches->retained_mesh_patches_cpu, borders, 
 			proj_pose);
 	stitching.reloadBorderGeometry(borders);
 	//TODO: reimplement this function to improve everything!!!
@@ -375,7 +375,7 @@ void GeometryUpdate::extend(
 	mesh->activeSetExpand = new_active_set;
 
 	//debug... check if the active set has all the geometry textures
-	for(auto patch : new_active_set->retainedMeshPatchesCpu) {
+	for(auto patch : new_active_set->retained_mesh_patches_cpu) {
 		//TODO: test patch
 		if(!patch->isPartOfActiveSetWithNeighbours(new_active_set.get())) {
 			continue;
@@ -455,7 +455,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 	// Get the position of the depth camera
 	Vector4f cam_pos = Camera::calcCamPosFromExtrinsic(pose_tmp);
 
-	vector<shared_ptr<MeshPatch>> patches = active_set->retainedMeshPatchesCpu;
+	vector<shared_ptr<MeshPatch>> patches = active_set->retained_mesh_patches_cpu;
 
 	// Creation of the descriptors for this job
 	vector<gpu::UpdateDescriptor> descriptors;
@@ -483,7 +483,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 				patch->geom_tex_patch->gpu.lock();
 		if(geom_tex_gpu_handle == nullptr) {
 			MeshTextureGpuHandle *debug_tex =
-					active_set->retainedMeshPatches[i]->geom_tex.get();
+					active_set->retained_mesh_patches[i]->geom_tex.get();
 			cout << "how come this is not initialized yet?"<< endl;
 			assert(0);
 			continue;//actually this can happen in multithreaded mode

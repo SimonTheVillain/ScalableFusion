@@ -110,7 +110,7 @@ void MapPresentationRenderer::render(ActiveSet *activeSet,Eigen::Matrix4f projec
     if(activeSet==nullptr){
         return;
     }
-    if(activeSet->retainedDoubleStitches.size() == 0){
+    if(activeSet->retained_double_stitches.size() == 0){
         return;
     }
 
@@ -156,23 +156,23 @@ void MapPresentationRenderer::render(ActiveSet *activeSet,Eigen::Matrix4f projec
     gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] Setting up uniforms.");
     //the vertex buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
-                     activeSet->gpuGeomStorage->vertexBuffer->getGlName());
+                     activeSet->gpu_geom_storage->vertexBuffer->getGlName());
 
 
     gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] Binding vertexBuffer");
     //bind texture coordinates
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
-                     activeSet->gpuGeomStorage->texPosBuffer->getGlName());
+                     activeSet->gpu_geom_storage->texPosBuffer->getGlName());
     gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] Binding texPosBuffer");
 
     //the triangle buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
-                     activeSet->gpuGeomStorage->triangleBuffer->getGlName());
+                     activeSet->gpu_geom_storage->triangleBuffer->getGlName());
     gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] Binding triangleBuffer");
 
     //the patch information
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
-                     activeSet->gpuGeomStorage->patchInfoBuffer->getGlName());
+                     activeSet->gpu_geom_storage->patchInfoBuffer->getGlName());
 
 
     gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] Binding buffers");

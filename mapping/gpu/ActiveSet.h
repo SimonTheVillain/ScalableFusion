@@ -1,14 +1,13 @@
-//
-// Created by simon on 11/13/18.
-//
-
-#ifndef SUPERMAPPING_ACTIVESET_H
-#define SUPERMAPPING_ACTIVESET_H
+#ifndef FILE_ACTIVE_SET_H
+#define FILE_ACTIVE_SET_H
 
 #include <iostream>
 #include <memory>
 #include <vector>
+
 #include <coalescedMemoryTransfer.h>
+
+using namespace std;
 
 class MapInformationRenderer;
 class MapPresentationRenderer;
@@ -17,85 +16,76 @@ class MeshReconstruction;
 class MeshPatch;
 class MeshPatchGpuHandle;
 class MeshTextureGpuHandle;
-//class StitchGpuHandle;
 class GpuGeomStorage;
-
-
 
 class GpuTriangle;
 template <typename T>
 class GpuBufferConnector;
-
 typedef GpuBufferConnector<GpuTriangle> TriangleBufConnector;
 
-
-
-class ActiveSet{
-    friend GpuGeomStorage;
-    friend MapInformationRenderer;
-    friend MapPresentationRenderer;
-    friend MeshPatch;
-private:
-    ActiveSet(GpuGeomStorage* storage, std::vector<std::shared_ptr<MeshPatch> > patches,
-            MeshReconstruction *map,
-            bool initial,//TODO: also get rid of these initial frames
-            bool debug1=false);
-
-    //TODO: these:
-    void UploadTexAndCoords(std::vector<std::shared_ptr<MeshPatch>> &patches,
-                            std::vector<std::shared_ptr<MeshPatchGpuHandle>> &patchesGpu,
-            const MeshReconstruction* map,bool initial = false);
-
-    //void UploadTex
-
-
-    void UploadTexAndCoords(MeshPatch* patch,MeshPatchGpuHandle* patchGpu, //lets check if these are necessary
-                        std::vector<CoalescedGpuTransfer::Task> &coalescedTexCoordTasks);
-
-    //TODO: these, but this seems not to be elegant
-    void CheckAndAppendTriangles(const std::vector<std::shared_ptr<MeshPatch>> &patchesToCheck,
-            std::vector<std::shared_ptr<MeshPatch>> &appendTo);
-    void UploadTriangles(std::vector<std::shared_ptr<MeshPatch>> &patches);
-    //TODO: these
-    void CheckAndUpdateRefTextures(const std::vector<std::shared_ptr<MeshPatch>> &patches,MeshReconstruction* map);
-
-    //TODO: propably the same for download
+class ActiveSet {
+	friend GpuGeomStorage;
+	friend MapInformationRenderer;
+	friend MapPresentationRenderer;
+	friend MeshPatch;
 
 public:
-    //bool wasRecentlyCreatedByExpandDELETE_DEPRECATED=false;
-    std::string name;
-    GpuGeomStorage* gpuGeomStorage;
-    //std::vector<std::shared_ptr<MeshPatch>> toRemove;
-    ~ActiveSet();
 
-    //std::mutex vectorUpdateMutex;
+	~ActiveSet();
 
+	void drawDoubleStitches();
+	void drawTripleStitches();
+	void drawPatches();
 
-    std::vector<std::shared_ptr<MeshPatch>> retainedMeshPatchesCpu;
+	void drawEverything();
 
-    std::vector<std::shared_ptr<MeshPatchGpuHandle>> retainedMeshPatches;
+	void reuploadHeaders();
 
-    std::vector<std::shared_ptr<TriangleBufConnector>> retainedDoubleStitches;
-    std::vector<std::shared_ptr<TriangleBufConnector>> retainedTripleStitches;//TODO: implement this (almost just for ref textures)
-    std::shared_ptr<TriangleBufConnector> retainedTripleStitchesCoalesced;
+	void checkForCompleteGeometry();
 
+	string name;
 
-    //TODO: is it better retaining it here compared to retaining it in the actual gpumesh structure?
-    //std::vector<std::shared_ptr<MeshTextureGpuHandle>> retainedMeshTextureGpuHandles;
+	GpuGeomStorage *gpu_geom_storage;
 
+	vector<shared_ptr<MeshPatch>> retained_mesh_patches_cpu;
 
-    void drawDoubleStitches();
-    void drawTripleStitches();
-    void drawPatches();
+	vector<shared_ptr<MeshPatchGpuHandle>> retained_mesh_patches;
 
-    void drawEverything();
+	vector<shared_ptr<TriangleBufConnector>> retained_double_stitches;
+	vector<shared_ptr<TriangleBufConnector>> retained_triple_stitches;//TODO: implement this (almost just for ref textures)
+	shared_ptr<TriangleBufConnector> retained_triple_stitches_coalesced;
 
-    void reuploadHeaders();
+	//TODO: is it better retaining it here compared to retaining it in the actual gpumesh structure?
+	//vector<shared_ptr<MeshTextureGpuHandle>> retainedMeshTextureGpuHandles;
 
-    void checkForCompleteGeometry();
+private:
 
+	ActiveSet(GpuGeomStorage *storage, vector<shared_ptr<MeshPatch>> patches,
+	          MeshReconstruction *map,
+	          bool initial,//TODO: also get rid of these initial frames
+	          bool debug1 = false);
+
+	//TODO: these:
+	void uploadTexAndCoords_(vector<shared_ptr<MeshPatch>> &patches,
+	                         vector<shared_ptr<MeshPatchGpuHandle>> &patches_gpu,
+	                         const MeshReconstruction* map, bool initial = false);
+
+	//void UploadTex
+
+	void uploadTexAndCoords_(
+			MeshPatch *patch, MeshPatchGpuHandle *patch_gpu, //lets check if these are necessary
+			vector<CoalescedGpuTransfer::Task> &coalesced_tex_coord_tasks);
+
+	//TODO: these, but this seems not to be elegant
+	void checkAndAppendTriangles_(
+			const vector<shared_ptr<MeshPatch>> &patches_to_check,
+			vector<shared_ptr<MeshPatch>> &append_to);
+	void uploadTriangles_(vector<shared_ptr<MeshPatch>> &patches);
+	//TODO: these
+	void checkAndUpdateRefTextures_(const vector<shared_ptr<MeshPatch>> &patches,
+	                                MeshReconstruction *map);
+
+	//TODO: propably the same for download
 };
 
-
-
-#endif //SUPERMAPPING_ACTIVESET_H
+#endif

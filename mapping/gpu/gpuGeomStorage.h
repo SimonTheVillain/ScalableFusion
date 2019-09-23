@@ -14,16 +14,16 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+
 #include <GL/glew.h>
 #include <Eigen/Eigen>
-
-//all the cuda and cuda interop stuff
 #include <cuda.h>
 #include <cuda_gl_interop.h>
 
 #include "../cuda/gpuMeshStructure.h"
-
 #include "gpuBuffer.h"
+
+using namespace std;
 
 class MeshReconstruction;
 class GeometryBase;
@@ -41,7 +41,6 @@ class MapPresentationRenderer;
 class MeshPatchGpuHandle;
 
 class GpuSlottedBuffer;
-
 
 class TexAtlasPatch;
 class FBOConnector;
@@ -67,111 +66,102 @@ class GeometryUpdate;
 /**
  * @brief The GpuGeomStorage class
  */
-class GpuGeomStorage{
-    friend ActiveSet;
-    friend MeshReconstruction;
-
-    friend MapInformationRenderer;
-    friend MapPresentationRenderer;
-
-
-    friend Scheduler;
-    friend MeshTexture;
-    friend GeometryUpdate;
-private:
-    uint64_t deleteDebugTexReference;
-
-
-
-    MeshReconstruction* map;
-
-public:
-    ///TODO: these references to MeshPatches etc. should be shared_ptr.
-    /// This would prevent them from being destroyed prematurely but still having references
-    /**
-     * @brief pointers
-     * Have pointers, names and references to all the necessary gpu resources here at this place
-     * They are supposed to be connected to cuda with: cudaGraphicsGLRegisterBuffer
-     * TOTHINK: we have to protect these pointers from beeing used too early.
-     * e.g. as they are not totally uploaded yet but the pointer is set. the renderer might want to render from that.
-     * POSSIBLE SOLUTION: protect these arrays with the pointers with mutexes but add "uploadingInProgress" booleans
-     * to tell the reading threads that there is something going on.
-     * TOTHINK2: a lot of these elements could be deleted on the cpu side.
-     * having weak_ptrs in this list would definitely help managing deleting of objects.
-     * (the destructor would not have to remove pointers from this list)
-     */
-
-    GpuBuffer<GpuVertex>* vertexBuffer = nullptr;
-    GpuBuffer<Eigen::Vector2f>* texPosBuffer = nullptr;
-    GpuBuffer<GpuTriangle>* triangleBuffer = nullptr;
-    GpuBuffer<GpuPatchInfo>* patchInfoBuffer = nullptr;
-    GpuBuffer<GLint>* patchInfoIndex = nullptr;
-private:
-
-    //TODO: add another buffer with references from texture points to vertices!!!!!!
-
-
-    //TODO: get rid of these and spearate the reservation of slots from
-    //the upload of slots
-
-    std::shared_ptr<TexCoordBufConnector> uploadMeshTexCoords(std::shared_ptr<MeshTexture> coords);
-    std::shared_ptr<TriangleBufConnector> uploadTriangles(GeometryBase* baseElement);
-    void uploadMeshPatch(MeshPatch* patch, ActiveSet* activeSet);
-    void unloadMeshPatch(MeshPatch* patch);
-    //std::shared_ptr<BufferSlotConnector> uploadDoubleStitch(DoubleStitch* stitch);
-    void unloadDoubleStitch(DoubleStitch* stitch);
-
-    /**
-     * @brief uploadTripleStitch
-     * again triple stitches, they should be collected and put into one buffer, but only when needed.
-     */
-    void uploadTripleStitches(std::vector<TripleStitch*> tripleStitches);
-
-
+class GpuGeomStorage {
+	friend ActiveSet;
+	friend MeshReconstruction;
+	friend MapInformationRenderer;
+	friend MapPresentationRenderer;
+	friend Scheduler;
+	friend MeshTexture;
+	friend GeometryUpdate;
+	
 public:
 
-    void init(MeshReconstruction* scaleableMap){
-        this->map = scaleableMap;
-    }
+	~GpuGeomStorage();
 
-    std::chrono::duration<double> timeSpentUploadingVertices;
-    int uploadCallsVertices=0;
-    std::chrono::duration<double> timeSpentUploadingTriangles;
-    int uploadCallsTriangles=0;
-    std::chrono::duration<double> timeSpentUploadingPatchInfos;
-    int uploadCallsPatchInfos=0;
-    std::chrono::duration<double> timeSpentUploadingTexPos;
-    int uploadCallsTexPos=0;
-    void resetTimers();
+	void init(MeshReconstruction* scaleable_map) {
+		map_ = scaleable_map;
+	}
 
-    bool debugOutputs=false;
-    uint32_t debug = 3;
-    //TODO: we should get this from the scaleableMap parameter structure
-    //the assumption is that the average patch has 400 triangles
-    uint32_t m_maxNrPatches=1024*5 * 2  * debug;//5k patches is reasonable
-    //*2 for debug because we are fragmenting too much.
-    //debug because we are fragmenting too much
+	void initialize();
 
-    uint32_t m_maxNrVertices = 800*m_maxNrPatches ;
+	void resetTimers();
 
-    uint32_t m_maxNrTexCoordinates = 1000*m_maxNrPatches;
+	shared_ptr<ActiveSet> makeActiveSet(
+			vector<shared_ptr<MeshPatch> > patches = {}, 
+			MeshReconstruction *map = nullptr,
+			bool initial = false, //TODO: get rid of the debug and initial parameter
+			bool debug1 = false);//defaults to an empty element
 
-    uint32_t m_maxNrTriangles = 800*m_maxNrPatches;
-    uint32_t m_maxNrtrianglesInCollection = 800;
+	///TODO: these references to MeshPatches etc. should be shared_ptr.
+	/// This would prevent them from being destroyed prematurely but still having references
+	/**
+	 * @brief pointers
+	 * Have pointers, names and references to all the necessary gpu resources here at this place
+	 * They are supposed to be connected to cuda with: cudaGraphicsGLRegisterBuffer
+	 * TOTHINK: we have to protect these pointers from beeing used too early.
+	 * e.g. as they are not totally uploaded yet but the pointer is set. the renderer might want to render from that.
+	 * POSSIBLE SOLUTION: protect these arrays with the pointers with mutexes but add "uploadingInProgress" booleans
+	 * to tell the reading threads that there is something going on.
+	 * TOTHINK2: a lot of these elements could be deleted on the cpu side.
+	 * having weak_ptrs in this list would definitely help managing deleting of objects.
+	 * (the destructor would not have to remove pointers from this list)
+	 */
 
-    uint32_t m_maxNrLoadedPatchInfos = m_maxNrPatches;//TODO: implement this
+	GpuBuffer<GpuVertex> *vertex_buffer = nullptr;
+	GpuBuffer<Eigen::Vector2f> *tex_pos_buffer = nullptr;
+	GpuBuffer<GpuTriangle> *triangle_buffer = nullptr;
+	GpuBuffer<GpuPatchInfo> *patch_info_buffer = nullptr;
+	GpuBuffer<GLint> *patch_info_index = nullptr;
 
+	chrono::duration<double> time_spent_uploading_vertices;
+	chrono::duration<double> time_spent_uploading_triangles;
+	chrono::duration<double> time_spent_uploading_patch_infos;
+	chrono::duration<double> time_spent_uploading_tex_pos;
 
-    void initialize();
+	int upload_calls_vertices = 0;
+	int upload_calls_triangles = 0;
+	int upload_calls_patch_infos = 0;
+	int upload_calls_tex_pos = 0;
 
-    ~GpuGeomStorage();
+	bool debug_outputs = false;
+	uint32_t debug = 3;
+	//TODO: we should get this from the scaleableMap parameter structure
+	//the assumption is that the average patch has 400 triangles
+	uint32_t max_nr_patches = 1024 * 5 * 2  * debug;//5k patches is reasonable
+	//*2 for debug because we are fragmenting too much.
+	//debug because we are fragmenting too much
 
+	uint32_t max_nr_vertices = 800 * max_nr_patches ;
 
-    std::shared_ptr<ActiveSet> makeActiveSet(std::vector<std::shared_ptr<MeshPatch> > patches =
-                                                {}, MeshReconstruction *map = nullptr,
-                                                bool initial = false, //TODO: get rid of the debug and initial parameter
-                                                bool debug1 = false);//defaults to an empty element
+	uint32_t max_nr_tex_coordinates = 1000 * max_nr_patches;
 
+	uint32_t max_nr_triangles = 800 * max_nr_patches;
+	uint32_t max_nrtriangles_in_collection = 800;
+
+	uint32_t max_nr_loaded_patch_infos = max_nr_patches;//TODO: implement this
+
+private:
+
+	//TODO: add another buffer with references from texture points to vertices!!!!!!
+
+	//TODO: get rid of these and spearate the reservation of slots from
+	//the upload of slots
+
+	shared_ptr<TexCoordBufConnector> uploadMeshTexCoords_(shared_ptr<MeshTexture> coords);
+	shared_ptr<TriangleBufConnector> uploadTriangles_(GeometryBase *base_element);
+	void uploadMeshPatch_(MeshPatch *patch, ActiveSet *active_set);
+	void unloadMeshPatch_(MeshPatch *patch);
+	//shared_ptr<BufferSlotConnector> uploadDoubleStitch(DoubleStitch* stitch);
+	void unloadDoubleStitch_(DoubleStitch *stitch);
+	/**
+	 * @brief uploadTripleStitch
+	 * again triple stitches, they should be collected and put into one buffer, but only when needed.
+	 */
+	void uploadTripleStitches_(vector<TripleStitch*> triple_stitches);
+
+	uint64_t delete_debug_tex_reference_;
+	MeshReconstruction *map_;
 
 };
 

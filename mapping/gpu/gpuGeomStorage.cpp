@@ -1,11 +1,9 @@
 #include "gpuGeomStorage.h"
-#include <Eigen/Eigen>
-
 
 #include <memory>
 #include <set>
-//#include <GL/glew.h>
-//#include <GL/gl.h>
+
+#include <Eigen/Eigen>
 
 #include "../base/meshStructure.h"
 #include "../base/textureStructure.h"
@@ -17,12 +15,8 @@
 #include "../cuda/coalescedMemoryTransfer.h"
 #include "../gpu/ActiveSet.h"
 
-
-using namespace Eigen;
 using namespace std;
-using namespace cv;
-
-
+using namespace Eigen;
 
 /**
  * We need a new way of handling these slots,
@@ -33,36 +27,25 @@ using namespace cv;
  *
  */
 
+void copy(cudaTextureObject_t texture, cv::cuda::GpuMat &to);
 
-
-
-void copy(cudaTextureObject_t texture,cv::cuda::GpuMat &to);
-
-
-
-
-void GpuGeomStorage::resetTimers()
-{
-    timeSpentUploadingVertices = std::chrono::duration<double>::zero();
-    uploadCallsVertices=0;
-    timeSpentUploadingTexPos = std::chrono::duration<double>::zero();
-    uploadCallsTexPos=0;
-    timeSpentUploadingTriangles = std::chrono::duration<double>::zero();
-    uploadCallsTriangles=0;
-    timeSpentUploadingPatchInfos = std::chrono::duration<double>::zero();
-    uploadCallsPatchInfos=0;
+void GpuGeomStorage::resetTimers() {
+	time_spent_uploading_vertices = chrono::duration<double>::zero();
+	upload_calls_vertices = 0;
+	time_spent_uploading_tex_pos = chrono::duration<double>::zero();
+	upload_calls_tex_pos = 0;
+	time_spent_uploading_triangles = chrono::duration<double>::zero();
+	upload_calls_triangles = 0;
+	time_spent_uploading_patch_infos = chrono::duration<double>::zero();
+	upload_calls_patch_infos = 0;
 }
 
-void GpuGeomStorage::unloadMeshPatch(MeshPatch *patch)
-{
-    cout << "the mechanism for unloading a mesh patch is not implemented yet" <<  endl;
-    assert(0);
+void GpuGeomStorage::unloadMeshPatch_(MeshPatch *patch) {
+	cout << "the mechanism for unloading a mesh patch is not implemented yet" <<  endl;
+	assert(0);
 }
 
-
-
-void GpuGeomStorage::unloadDoubleStitch(DoubleStitch *stitch)
-{
+void GpuGeomStorage::unloadDoubleStitch_(DoubleStitch *stitch) {
 
 }
 
@@ -74,60 +57,46 @@ void GpuGeomStorage::unloadDoubleStitch(DoubleStitch *stitch)
  * becomes invalid, the slot should be refilled with the remaining valid triangles.
  * TODO: implement this! or maybe not? Probably not!!! (don't know anymore.... think about it
  */
-void GpuGeomStorage::uploadTripleStitches(std::vector<TripleStitch *> tripleStitches)
-{
-    cout << "[GpuGeomStorage::uploadTripleStitches] for using this unimplemented method i sentence you to crash" << endl;
-    assert(0);
+void GpuGeomStorage::uploadTripleStitches_(
+		vector<TripleStitch*> triple_stitches) {
+	cout << "[GpuGeomStorage::uploadTripleStitches] for using this unimplemented method i sentence you to crash" << endl;
+	assert(0);
 }
 
-void GpuGeomStorage::initialize()
-{
-    //TODO: delete these 2 lines from here,
-    //this 1) is not necessary with only one gpu
-    //and 2) it should happen way earlier in the code
-    cudaSetDevice(0);
-    //cudaGLSetGLDevice(0);
+void GpuGeomStorage::initialize() {
+	//TODO: delete these 2 lines from here,
+	//this 1) is not necessary with only one gpu
+	//and 2) it should happen way earlier in the code
+	cudaSetDevice(0);
+	//cudaGLSetGLDevice(0);
 
-
-    //create the buffers that contain slots for our data (vertices, triangles, references to textures
-    // and texture coordinates)
-    
-    vertexBuffer =
-        new GpuBuffer<GpuVertex>(m_maxNrVertices);
-    texPosBuffer =
-        new GpuBuffer<Eigen::Vector2f>(m_maxNrTexCoordinates);
-    triangleBuffer =
-        new GpuBuffer<GpuTriangle>(m_maxNrTriangles);
-    patchInfoBuffer =
-        new GpuBuffer<GpuPatchInfo>(m_maxNrLoadedPatchInfos);
-    patchInfoIndex =
-            new GpuBuffer<GLint>(m_maxNrLoadedPatchInfos,GL_ATOMIC_COUNTER_BUFFER);//,false,GL_ATOMIC_COUNTER_BUFFER);
-
-
+	//create the buffers that contain slots for our data (vertices, triangles, references to textures
+	// and texture coordinates)
+	vertex_buffer = new GpuBuffer<GpuVertex>(max_nr_vertices);
+	tex_pos_buffer = new GpuBuffer<Vector2f>(max_nr_tex_coordinates);
+	triangle_buffer = new GpuBuffer<GpuTriangle>(max_nr_triangles);
+	patch_info_buffer = new GpuBuffer<GpuPatchInfo>(max_nr_loaded_patch_infos);
+	patch_info_index = new GpuBuffer<GLint>(max_nr_loaded_patch_infos, 
+	                                      GL_ATOMIC_COUNTER_BUFFER);//,false,GL_ATOMIC_COUNTER_BUFFER);
 
 }
 
-GpuGeomStorage::~GpuGeomStorage()
-{
-    if(vertexBuffer != nullptr){
-        delete vertexBuffer;
-        delete texPosBuffer;
-        delete triangleBuffer;
-        delete patchInfoBuffer;
-        delete patchInfoIndex;
-    }
+GpuGeomStorage::~GpuGeomStorage() {
+	if(vertex_buffer != nullptr) {
+		delete vertex_buffer;
+		delete tex_pos_buffer;
+		delete triangle_buffer;
+		delete patch_info_buffer;
+		delete patch_info_index;
+	}
 }
 
-std::shared_ptr<ActiveSet> GpuGeomStorage::makeActiveSet(std::vector<std::shared_ptr<MeshPatch> > patches,
-        MeshReconstruction* map,bool initial,bool debug1)
-{
+shared_ptr<ActiveSet> GpuGeomStorage::makeActiveSet(
+		vector<shared_ptr<MeshPatch> > patches,
+		MeshReconstruction *map, bool initial, bool debug1) {
 
-    shared_ptr<ActiveSet> activeSet =
-            shared_ptr<ActiveSet>(new ActiveSet(this,patches,map,
-                    initial,
-                    debug1));//instead of just patches
+	shared_ptr<ActiveSet> active_set =
+			shared_ptr<ActiveSet>(new ActiveSet(this, patches, map, initial, debug1));//instead of just patches
 
-
-
-    return activeSet;
+	return active_set;
 }

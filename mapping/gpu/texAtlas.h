@@ -3,192 +3,224 @@
 
 #include <memory>
 #include <vector>
-#include <gpuTex.h>
 #include <mutex>
 #include <stack>
 #include <thread>
+
 #include <Eigen/Eigen>
 #include <opencv2/opencv.hpp>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <gpuTex.h>
+
 #include "../cuda/gpuMeshStructure.h"
 #include "threadSafeFBO_VAO.h"
 
-
+using namespace std;
 
 class TexAtlas;
 class TexAtlasTex;
 class TexAtlasPatch;
 class GarbageCollector;
 
-
-
-
-class TexAtlas{
-private:
-    std::mutex mutex;
-
-    //vector of vector with sizes
-    struct SafeVector{
-        std::mutex texMutex;
-        std::vector<std::weak_ptr<TexAtlasTex>> tex;
-    };
-
-    SafeVector *textures;
-    GLuint intType;
-    GLuint format;
-    GLuint type;
-    int cvType;
-    int maxRes;
-    ThreadSafeFBOStorage* fboStorage;
-    GarbageCollector * garbageCollector;
-
-#ifdef GL_MEMORY_LEAK_WORKAROUND
-    std::vector<std::shared_ptr<TexAtlasTex>> texRetainer;
-#endif
+class TexAtlas {
 public:
-    //probably don't need cv type
-    TexAtlas(GarbageCollector* garbageCollector,GLuint intType,GLuint type, GLuint format,int cvType,int res=1024,
-             ThreadSafeFBOStorage* fbos=nullptr);//create one texture atlas for every type of
-    ~TexAtlas();
-    std::shared_ptr<TexAtlasPatch> getTexAtlasPatch(cv::Size2i size);
-    size_t getMaxRes(){return maxRes;}
 
-    int getCvType(){return cvType;}
-    GLuint getGlIntType(){return intType;}
-    GLuint getGlType(){return type;}
+	//probably don't need cv type
+	TexAtlas(GarbageCollector *garbage_collector, GLuint int_type, GLuint type, 
+	         GLuint format, int cv_type, int res = 1024, 
+	         ThreadSafeFBOStorage *fbos = nullptr);//create one texture atlas for every type of
 
+	~TexAtlas();
 
-    int countPatches();
-    int countTex();
+	shared_ptr<TexAtlasPatch> getTexAtlasPatch(cv::Size2i size);
+
+	size_t getMaxRes() {
+		return max_res_;
+	}
+
+	int getCvType() {
+		return cv_type_;
+	}
+
+	GLuint getGlIntType() {
+		return int_type_;
+	}
+
+	GLuint getGlType() {
+		return type_;
+	}
+
+	int countPatches();
+
+	int countTex();
+
+private:
+
+	mutex mutex_;
+
+	//vector of vector with sizes
+	struct SafeVector{
+		mutex tex_mutex;
+		vector<weak_ptr<TexAtlasTex>> tex;
+	};
+
+	SafeVector *textures_;
+	GLuint int_type_;
+	GLuint format_;
+	GLuint type_;
+	int cv_type_;
+	int max_res_;
+	ThreadSafeFBOStorage *fbo_storage_;
+	GarbageCollector *garbage_collector_;
+
+	#ifdef GL_MEMORY_LEAK_WORKAROUND
+	vector<shared_ptr<TexAtlasTex>> tex_retainer_;
+	#endif
 
 };
 
+class TexAtlasTex {
+	friend TexAtlasPatch;
+	friend TexAtlas;
 
-class TexAtlasTex{
-    friend TexAtlasPatch;
-    friend TexAtlas;
-private:
-    std::shared_ptr<gfx::GpuTex2D> tex;
-    int tileSize;//8,16,32,64,etc.
-    int cvType;
-    std::mutex occupantsMutex;
-    //std::vector<std::weak_ptr<TexAtlasPatch>> occupants;//TODO: remove this!!!!!
-    cv::Rect2i posFromIndex(int i);
-
-    //TODO: let this throw an exception if there is no slot left
-    std::shared_ptr<TexAtlasPatch> getFreePatch(std::shared_ptr<TexAtlasTex> self);
-
-    //TODO: this is genious... the stack tells us if and where there is place for new textures
-    //all of this while being superfast. (has to be filled at constructor with empty slots)
-    //TODO: also implement a system like this for the GPU GEOMETRY STORAGE)
-    std::stack<int> freeSlots;
-    void freeTexSlot(int inSlot);
-    //TODO: make the constructor sort of private
-    TexAtlasTex(GarbageCollector* garbageCollector,GLuint intType,GLuint type,
-                GLuint format,int cvType, int res,int fullRes,
-                ThreadSafeFBOStorage* fboStorage);
-
-    //GLuint FBO=0;
-    ThreadSafeFBO* fbo=nullptr;
-    bool debug=false;
-
-    std::thread::id debugThreadIdTexCreatedIn;
 public:
-    ~TexAtlasTex();
-    std::mutex mutex;
-    bool hasSlot();
 
+	~TexAtlasTex();
 
-    void showImage(std::string text);
-    void showImage(std::string text,cv::Rect2i cutOut);
+	bool hasSlot();
 
-    GLuint getFBO();
+	void showImage(string text);
 
-    std::shared_ptr<gfx::GpuTex2D> getTex2D(){
-        return tex;
-    }
-    int getCvType(){
-        return cvType;
-    }
+	void showImage(string text, cv::Rect2i cut_out);
 
-    int countPatches();
+	GLuint getFBO();
 
+	shared_ptr<gfx::GpuTex2D> getTex2D() {
+		return tex_;
+	}
+	int getCvType() {
+		return cv_type_;
+	}
 
+	int countPatches();
 
+	mutex tex_atlas_tex_mutex;
+	
+private:
+
+	//TODO: make the constructor sort of private
+	TexAtlasTex(GarbageCollector *garbage_collector, GLuint int_type, GLuint type,
+	            GLuint format, int cv_type, int res,int full_res,
+	            ThreadSafeFBOStorage *fbo_storage);
+
+	cv::Rect2i posFromIndex_(int i);
+
+	//TODO: let this throw an exception if there is no slot left
+	shared_ptr<TexAtlasPatch> getFreePatch_(shared_ptr<TexAtlasTex> self);
+
+	void freeTexSlot_(int in_slot);
+
+	shared_ptr<gfx::GpuTex2D> tex_;
+	int tile_size_; //8,16,32,64,etc.
+	int cv_type_;
+	mutex occupants_mutex_;
+
+	//TODO: this is genious... the stack tells us if and where there is place for new textures
+	//all of this while being superfast. (has to be filled at constructor with empty slots)
+	//TODO: also implement a system like this for the GPU GEOMETRY STORAGE)
+	stack<int> free_slots_;
+
+	//GLuint FBO=0;
+	ThreadSafeFBO* fbo_ = nullptr;
+	bool debug_ = false;
+
+	thread::id debug_thread_id_tex_created_in_;
 
 };
 
-class TexAtlasPatch{
-    friend TexAtlasTex;
-    friend TexAtlas;
-private:
-    std::shared_ptr<TexAtlasTex> tex;
-    cv::Rect2i pos;//position and reserved size within the texture atlas
-    cv::Size2i size;//size which is actually used
-    int indexInAtlasTex=-1;
+class TexAtlasPatch {
+	friend TexAtlasTex;
+	friend TexAtlas;
 
-    TexAtlasPatch(std::shared_ptr<TexAtlasTex> &tex,cv::Rect2i &pos,int index);
 public:
-    ~TexAtlasPatch();
-    std::shared_ptr<gfx::GpuTex2D> getTex();
-    cv::Rect2i getPosition();
 
-    cv::Rect2i getRect(){
-        return cv::Rect(pos.x,pos.y,size.width,size.height);
-    }
+	~TexAtlasPatch();
 
-    std::shared_ptr<TexAtlasTex> getAtlasTex(){
-        return tex;
-    }
+	shared_ptr<gfx::GpuTex2D> getTex();
 
+	cv::Rect2i getPosition();
 
-    int getFramebuffer();
-    void setFramebufferActive();
+	cv::Rect2i getRect() {
+		return cv::Rect(pos_.x, pos_.y, size_.width, size_.height);
+	}
 
-    GLuint getFBO();
-    void setViewport();
-    void setViewport(cv::Size2i size);
+	shared_ptr<TexAtlasTex> getAtlasTex() {
+		return tex_;
+	}
 
-    bool downloadData(void* data,cv::Rect2i rect);
-    bool downloadData(void* data,cv::Size2i size){
-        return downloadData(data,cv::Rect2i(pos.x,pos.y,size.width,size.height));
-    }
+	int getFramebuffer();
 
-    bool downloadAllData(void* data){
-        return downloadData(data,pos);
-    }
-    bool downloadData(void* data){
-        return downloadData(data,getRect());
-    }
+	void setFramebufferActive();
 
-    bool uploadData(void* data,cv::Rect2i rect);
-    bool uploadData(void* data,cv::Size2i size){
-        return uploadData(data,cv::Rect2i(pos.x,pos.y,size.width,size.height));
-    }
+	GLuint getFBO();
 
-    bool uploadAllData(void* data){
-        return uploadData(data,pos);
-    }
-    bool uploadData(void* data){
-        return uploadData(data,getRect());
-    }
+	void setViewport();
 
-    cudaSurfaceObject_t getCudaSurfaceObject();
-    cudaTextureObject_t getCudaTextureObject();
-    uint64_t getGlHandle();
+	void setViewport(cv::Size2i size);
 
+	bool downloadData(void *data,cv::Rect2i rect);
 
-    void showImage(std::string text);
+	bool downloadData(void *data, cv::Size2i size) {
+		return 
+				downloadData(data, cv::Rect2i(pos_.x, pos_.y, size.width, size.height));
+	}
 
-    void showImage(std::string text,cv::Size2i size);
+	bool downloadAllData(void *data) {
+		return downloadData(data, pos_);
+	}
 
-    GpuTextureInfo genTexInfo(cv::Size2i size, int texCoordStartingIndex);
+	bool downloadData(void *data) {
+		return downloadData(data, getRect());
+	}
 
+	bool uploadData(void *data, cv::Rect2i rect);
 
-    GpuTextureInfo genTexInfo(int texCoordStartingIndex);
-    //test if this patch is required to
-    bool isGpuResidencyRequired();
+	bool uploadData(void *data, cv::Size2i size) {
+		return uploadData(data, cv::Rect2i(pos_.x, pos_.y, size.width, size.height));
+	}
+
+	bool uploadAllData(void *data) {
+		return uploadData(data, pos_);
+	}
+	bool uploadData(void *data) {
+		return uploadData(data, getRect());
+	}
+
+	cudaSurfaceObject_t getCudaSurfaceObject();
+	cudaTextureObject_t getCudaTextureObject();
+	uint64_t getGlHandle();
+
+	void showImage(string text);
+
+	void showImage(string text, cv::Size2i size);
+
+	GpuTextureInfo genTexInfo(cv::Size2i size, int tex_coord_starting_index);
+
+	GpuTextureInfo genTexInfo(int tex_coord_starting_index);
+
+	//test if this patch is required to
+	bool isGpuResidencyRequired();
+
+private:
+	
+	TexAtlasPatch(shared_ptr<TexAtlasTex> &tex, cv::Rect2i &pos, int index);
+
+	shared_ptr<TexAtlasTex> tex_;
+	cv::Rect2i pos_;//position and reserved size within the texture atlas
+	cv::Size2i size_;//size which is actually used
+	int index_in_atlas_tex_ = -1;
+
 };
 
 #endif

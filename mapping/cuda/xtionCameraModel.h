@@ -7,32 +7,31 @@
 
 //#define OVERSIMPLIFY_CAM_MODEL
 
-void generateXtionConfidenceImage(const cudaSurfaceObject_t rawDepth,
+void generateXtionConfidenceImage(const cudaSurfaceObject_t raw_depth,
                                   cudaSurfaceObject_t output,
                                   int width, int height);
 
 
-void generateXtionConfidenceImage16F(const cudaSurfaceObject_t rawDepth,
+void generateXtionConfidenceImage16F(const cudaSurfaceObject_t raw_depth,
                                      cudaSurfaceObject_t output,
                                      int width, int height);
-
-
 
 #ifdef __CUDACC__
 __device__
 #endif
-inline float xtionStdToThresholdSeg(float std){
+inline float xtionStdToThresholdSeg(float std) {
 #ifdef OVERSIMPLIFY_CAM_MODEL
-    //return std; //(DEBUG) this should always be 0.05
-    return 0.05;
+	//return std; //(DEBUG) this should always be 0.05
+	return 0.05;
 #endif
-    return std*1.2;
+	return std * 1.2;
 }
+
 //the idea is that we want differentiate between the thresholds used to create the
 //threshold for creating new geometry and adding geometry
 //UNUSED
-inline float xtionStdToThresholdCreate(float std){
-    return std*0.9;
+inline float xtionStdToThresholdCreate(float std) {
+	return std * 0.9;
 }
 
 #endif

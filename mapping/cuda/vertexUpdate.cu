@@ -11,7 +11,6 @@
 #include "float16_utils.h"
 
 using namespace Eigen;
-//using namespace std; //note never use std namespace in cu file
 
 __global__ 
 void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor input adapted by standard deviations

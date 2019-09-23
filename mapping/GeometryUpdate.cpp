@@ -328,7 +328,7 @@ void GeometryUpdate::extend(
 
 	// We want to create a new active set that replaces the old one.
 	// The pointer to the active set should be secured by a mutex.
-	mesh->m_gpuGeomStorage.deleteDebugTexReference = rgb_tex->getGlHandle();
+	mesh->m_gpuGeomStorage.delete_debug_tex_reference_ = rgb_tex->getGlHandle();
 
 	// Now that we have the geometry on the cpu now do the texture for the geometrical textures:
 
@@ -637,10 +637,10 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 	int debug = updateGeometry(
 			d_std_tex->getCudaSurfaceObject(), width, height, descriptors, cam_pos, 
 			pose_tmp, proj_pose, 
-			(GpuVertex*)mesh->m_gpuGeomStorage.vertexBuffer->getCudaPtr(),
-			(Vector2f*)mesh->m_gpuGeomStorage.texPosBuffer->getCudaPtr(),
-			(GpuTriangle*)mesh->m_gpuGeomStorage.triangleBuffer->getCudaPtr(),
-			(GpuPatchInfo*)mesh->m_gpuGeomStorage.patchInfoBuffer->getCudaPtr());
+			(GpuVertex*)mesh->m_gpuGeomStorage.vertex_buffer->getCudaPtr(),
+			(Vector2f*)mesh->m_gpuGeomStorage.tex_pos_buffer->getCudaPtr(),
+			(GpuTriangle*)mesh->m_gpuGeomStorage.triangle_buffer->getCudaPtr(),
+			(GpuPatchInfo*)mesh->m_gpuGeomStorage.patch_info_buffer->getCudaPtr());
 
 	//cout << "here we should first do the vertex update and then the std texture update" << endl;
 

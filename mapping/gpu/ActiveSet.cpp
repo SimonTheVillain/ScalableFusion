@@ -162,7 +162,7 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 			if(gpu == nullptr) {
 				//in case the stitch is lacking a gpu representation:
 				//create a new one
-				gpu = storage->triangleBuffer->getBlock(stitch->triangles.size());
+				gpu = storage->triangle_buffer->getBlock(stitch->triangles.size());
 				stitch->triangles_gpu = gpu;
 				//create a upload task:
 				CoalescedGpuTransfer::Task task;
@@ -246,7 +246,7 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 		if(gpu == nullptr) {
 			task.count = coalesced_triangles.size()-task.start;
 			shared_ptr<TriangleBufConnector> gpu = 
-					storage->triangleBuffer->getBlock(task.count);
+					storage->triangle_buffer->getBlock(task.count);
 			stitch->triangles_gpu = gpu;
 			retained_triple_stitches.push_back(gpu);
 			task.target = gpu->getStartingPtr();
@@ -259,7 +259,7 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 	//now create a new buffer!
 	if(coalesced_task.count != 0) {
 		shared_ptr<TriangleBufConnector> gpu = 
-				storage->triangleBuffer->getBlock(coalesced_task.count);
+				storage->triangle_buffer->getBlock(coalesced_task.count);
 		coalesced_task.target = gpu->getStartingPtr();
 		coalesced_triangle_tasks.push_back(coalesced_task);
 
@@ -485,7 +485,7 @@ void ActiveSet::uploadTexAndCoords_(
 			int height = tex_patch->mat.rows;
 
 			shared_ptr<MeshTextureGpuHandle> tex_patch_gpu =
-					make_shared<MeshTextureGpuHandle>(gpu_geom_storage->texPosBuffer,
+					make_shared<MeshTextureGpuHandle>(gpu_geom_storage->tex_pos_buffer,
 					                                  tex_patch->tex_coords.size(),
 					                                  map->texAtlasGeomLookup.get(),
 					                                  map->texAtlasStds.get(),//TODO: the references are supposed to be filled at "CheckAndUpdateRefTextures"
@@ -540,7 +540,7 @@ void ActiveSet::uploadTexAndCoords_(
 				int width = tex_patch->mat.cols;
 				int height = tex_patch->mat.rows;
 				tex_patch_gpu = 
-						make_shared<MeshTextureGpuHandle>(gpu_geom_storage->texPosBuffer,
+						make_shared<MeshTextureGpuHandle>(gpu_geom_storage->tex_pos_buffer,
 						                                  tex_patch->tex_coords.size(),
 						                                  nullptr,
 						                                  map->texAtlasRgb8Bit.get(),//TODO: where to get these from?

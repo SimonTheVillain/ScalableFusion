@@ -239,7 +239,7 @@ void SchedulerThreaded::captureWorker(shared_ptr<MeshReconstruction> map, Stream
 
 
         //debug: printing the number of used vertices into a file
-        logMemory << map->m_gpuGeomStorage.vertexBuffer->getUsedElements() << endl;
+        logMemory << map->m_gpuGeomStorage.vertex_buffer->getUsedElements() << endl;
 
         firstLap=false;
 

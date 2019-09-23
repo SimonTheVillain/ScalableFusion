@@ -1002,8 +1002,8 @@ std::vector<Rect2f> MeshReconstruction::genBoundsFromPatches( std::vector<std::s
 
     const vector<Rect2f> &vector = TexCoordGen::getPotentialTexCoordBounds(boundTasks, mvp,
                                                                            validMeshPatches.size(),
-                                                                           m_gpuGeomStorage.patchInfoBuffer->getCudaPtr(),
-                                                                           m_gpuGeomStorage.vertexBuffer->getCudaPtr());
+                                                                           m_gpuGeomStorage.patch_info_buffer->getCudaPtr(),
+                                                                           m_gpuGeomStorage.vertex_buffer->getCudaPtr());
     std::vector<cv::Rect2f> bounds = vector;
     return bounds;
 }
@@ -1070,7 +1070,7 @@ void MeshReconstruction::clearInvalidGeometry(std::shared_ptr<ActiveSet> set, Ma
                                                      _pose,
                                                      proj_pose,
                                                      tasks,
-                                                     m_gpuGeomStorage.vertexBuffer->getCudaPtr());//vertices on gpu
+                                                     m_gpuGeomStorage.vertex_buffer->getCudaPtr());//vertices on gpu
 }
 
 

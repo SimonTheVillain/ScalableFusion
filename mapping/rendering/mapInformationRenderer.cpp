@@ -391,19 +391,19 @@ void MapInformationRenderer::renderDepth(ActiveSet *activeSet, Matrix4f projecti
     }
     //the vertex buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
-                     activeSet->gpu_geom_storage->vertexBuffer->getGlName());
+                     activeSet->gpu_geom_storage->vertex_buffer->getGlName());
 
     //bind texture coordinates
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
-                     activeSet->gpu_geom_storage->texPosBuffer->getGlName());
+                     activeSet->gpu_geom_storage->tex_pos_buffer->getGlName());
 
     //the triangle buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
-                     activeSet->gpu_geom_storage->triangleBuffer->getGlName());
+                     activeSet->gpu_geom_storage->triangle_buffer->getGlName());
 
     //the patch information
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
-                     activeSet->gpu_geom_storage->patchInfoBuffer->getGlName());
+                     activeSet->gpu_geom_storage->patch_info_buffer->getGlName());
 
 
     activeSet->drawEverything();
@@ -485,19 +485,19 @@ void MapInformationRenderer::bindRenderTriangleReferenceProgram()
 
     //the vertex buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
-                     m_map->m_gpuGeomStorage.vertexBuffer->getGlName());
+                     m_map->m_gpuGeomStorage.vertex_buffer->getGlName());
 
     //bind texture coordinates
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
-                     m_map->m_gpuGeomStorage.texPosBuffer->getGlName());
+                     m_map->m_gpuGeomStorage.tex_pos_buffer->getGlName());
 
     //the triangle buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
-                     m_map->m_gpuGeomStorage.triangleBuffer->getGlName());
+                     m_map->m_gpuGeomStorage.triangle_buffer->getGlName());
 
     //the patch information
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
-                     m_map->m_gpuGeomStorage.patchInfoBuffer->getGlName());
+                     m_map->m_gpuGeomStorage.patch_info_buffer->getGlName());
 
     gfx::GLUtils::checkForOpenGLError("[MapInformationRenderer::bindRenderTriangleReferenceProgram] "
                                       "Binding the buffers.");
@@ -686,19 +686,19 @@ void MapInformationRenderer::renderTriangleReferencesAndDepth(ActiveSet *activeS
     */
     //the vertex buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
-                     activeSet->gpu_geom_storage->vertexBuffer->getGlName());
+                     activeSet->gpu_geom_storage->vertex_buffer->getGlName());
 
     //bind texture coordinates
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
-                     activeSet->gpu_geom_storage->texPosBuffer->getGlName());
+                     activeSet->gpu_geom_storage->tex_pos_buffer->getGlName());
 
     //the triangle buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
-                     activeSet->gpu_geom_storage->triangleBuffer->getGlName());
+                     activeSet->gpu_geom_storage->triangle_buffer->getGlName());
 
     //the patch information
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
-                     activeSet->gpu_geom_storage->patchInfoBuffer->getGlName());
+                     activeSet->gpu_geom_storage->patch_info_buffer->getGlName());
 
 
     activeSet->drawEverything();
@@ -753,19 +753,19 @@ MapInformationRenderer::render(ActiveSet *activeSet, Eigen::Matrix4f projection,
 
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
-                     activeSet->gpu_geom_storage->vertexBuffer->getGlName());
+                     activeSet->gpu_geom_storage->vertex_buffer->getGlName());
 
     //bind texture coordinates
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
-                     activeSet->gpu_geom_storage->texPosBuffer->getGlName());
+                     activeSet->gpu_geom_storage->tex_pos_buffer->getGlName());
 
     //the triangle buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
-                     activeSet->gpu_geom_storage->triangleBuffer->getGlName());
+                     activeSet->gpu_geom_storage->triangle_buffer->getGlName());
 
     //the patch information
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
-                     activeSet->gpu_geom_storage->patchInfoBuffer->getGlName());
+                     activeSet->gpu_geom_storage->patch_info_buffer->getGlName());
 
 
 

@@ -96,10 +96,10 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
 
 
             cv::namedWindow("test test");
-            thatOneDebugRenderingThingy->vertex_buffer = mesh->m_gpuGeomStorage.vertexBuffer->getGlName();
-            thatOneDebugRenderingThingy->info_buffer = mesh->m_gpuGeomStorage.patchInfoBuffer->getGlName();
-            thatOneDebugRenderingThingy->triangle_buffer = mesh->m_gpuGeomStorage.triangleBuffer->getGlName();
-            thatOneDebugRenderingThingy->tex_pos_buffer = mesh->m_gpuGeomStorage.texPosBuffer->getGlName();
+            thatOneDebugRenderingThingy->vertex_buffer = mesh->m_gpuGeomStorage.vertex_buffer->getGlName();
+            thatOneDebugRenderingThingy->info_buffer = mesh->m_gpuGeomStorage.patch_info_buffer->getGlName();
+            thatOneDebugRenderingThingy->triangle_buffer = mesh->m_gpuGeomStorage.triangle_buffer->getGlName();
+            thatOneDebugRenderingThingy->tex_pos_buffer = mesh->m_gpuGeomStorage.tex_pos_buffer->getGlName();
             //thatOneDebugRenderingThingy->setPatch(newPatches[i].get());
             //thatOneDebugRenderingThingy->setIndexCount(gpu->triangles->getStartingIndex(),gpu->triangles->getSize());
             thatOneDebugRenderingThingy->addPatch(newPatches[i].get(),1,0,0);
@@ -158,7 +158,7 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
             //this is where we get the size
             gpuTexture =
                     make_shared<MeshTextureGpuHandle>(
-                            mesh->m_gpuGeomStorage.texPosBuffer,
+                            mesh->m_gpuGeomStorage.tex_pos_buffer,
                             nrCoords,
                             mesh->texAtlasGeomLookup.get(),
                             mesh->texAtlasStds.get(),
@@ -253,8 +253,8 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
     //execute the tasks on the gpu:
 
     TexCoordGen::genTexCoords(texGenTasks,mvp,
-                              mesh->m_gpuGeomStorage.patchInfoBuffer->getCudaPtr(),
-                              mesh->m_gpuGeomStorage.vertexBuffer->getCudaPtr());
+                              mesh->m_gpuGeomStorage.patch_info_buffer->getCudaPtr(),
+                              mesh->m_gpuGeomStorage.vertex_buffer->getCudaPtr());
 
 
 
@@ -358,10 +358,10 @@ void Texturing::ProjToGeomTex(ActiveSet* activeSet, std::vector<std::shared_ptr<
     //cout << "mvp gpu" << proj*_pose << endl;
     stdTexInit(geomSensorData->getCudaTextureObject(),commands,
                scale*p_p,
-               (GpuVertex*)activeSet->gpu_geom_storage->vertexBuffer->getCudaPtr(),
-               (Vector2f*)activeSet->gpu_geom_storage->texPosBuffer->getCudaPtr(),
-               (GpuTriangle*)activeSet->gpu_geom_storage->triangleBuffer->getCudaPtr(),
-               (GpuPatchInfo*)activeSet->gpu_geom_storage->patchInfoBuffer->getCudaPtr());
+               (GpuVertex*)activeSet->gpu_geom_storage->vertex_buffer->getCudaPtr(),
+               (Vector2f*)activeSet->gpu_geom_storage->tex_pos_buffer->getCudaPtr(),
+               (GpuTriangle*)activeSet->gpu_geom_storage->triangle_buffer->getCudaPtr(),
+               (GpuPatchInfo*)activeSet->gpu_geom_storage->patch_info_buffer->getCudaPtr());
 
 
     //TODO: this is not fully filling the textures. Get to the root of this issue
@@ -697,8 +697,8 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
 
 
     TexCoordGen::genTexCoords(texGenTasks,mvp,
-                              mesh->m_gpuGeomStorage.patchInfoBuffer->getCudaPtr(),
-                              mesh->m_gpuGeomStorage.vertexBuffer->getCudaPtr());
+                              mesh->m_gpuGeomStorage.patch_info_buffer->getCudaPtr(),
+                              mesh->m_gpuGeomStorage.vertex_buffer->getCudaPtr());
 
     copyToTinyPatches(rgbIn->getCudaTextureObject(),copies); //1.milliseconds for a full image (should be way less if the images are smaller)
 

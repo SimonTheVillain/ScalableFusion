@@ -158,7 +158,7 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 	//first we need to copy over the texture coordinates from geometry to the
 	//label patch
 	CoalescedGpuTransfer::device2DeviceSameBuf(
-			mesh->m_gpuGeomStorage.texPosBuffer->getCudaPtr(), copy_tasks);
+			mesh->m_gpuGeomStorage.tex_pos_buffer->getCudaPtr(), copy_tasks);
 	//now we do the lookup textures
 	cout << "DEBUG: some of these textures are missing?, but why?" << endl;
 
@@ -178,10 +178,10 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 	gpu::Labelling::labelSurfaces(
 			labelling_tasks, label_tex->getCudaSurfaceObject(), 
 			d_std_tex->getCudaSurfaceObject(), cv::Size2i(width, height), pose_tmp, 
-			proj_pose, mesh->m_gpuGeomStorage.vertexBuffer->getCudaPtr(),
-			mesh->m_gpuGeomStorage.texPosBuffer->getCudaPtr(),
-			mesh->m_gpuGeomStorage.triangleBuffer->getCudaPtr(),
-			mesh->m_gpuGeomStorage.patchInfoBuffer->getCudaPtr());
+			proj_pose, mesh->m_gpuGeomStorage.vertex_buffer->getCudaPtr(),
+			mesh->m_gpuGeomStorage.tex_pos_buffer->getCudaPtr(),
+			mesh->m_gpuGeomStorage.triangle_buffer->getCudaPtr(),
+			mesh->m_gpuGeomStorage.patch_info_buffer->getCudaPtr());
 
 	//TODO: update descriptor on gpu
 	CoalescedGpuTransfer::upload(info_update_tasks);

@@ -156,23 +156,23 @@ void MapPresentationRenderer::render(ActiveSet *activeSet,Eigen::Matrix4f projec
     gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] Setting up uniforms.");
     //the vertex buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
-                     activeSet->gpu_geom_storage->vertexBuffer->getGlName());
+                     activeSet->gpu_geom_storage->vertex_buffer->getGlName());
 
 
     gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] Binding vertexBuffer");
     //bind texture coordinates
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
-                     activeSet->gpu_geom_storage->texPosBuffer->getGlName());
+                     activeSet->gpu_geom_storage->tex_pos_buffer->getGlName());
     gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] Binding texPosBuffer");
 
     //the triangle buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
-                     activeSet->gpu_geom_storage->triangleBuffer->getGlName());
+                     activeSet->gpu_geom_storage->triangle_buffer->getGlName());
     gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] Binding triangleBuffer");
 
     //the patch information
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
-                     activeSet->gpu_geom_storage->patchInfoBuffer->getGlName());
+                     activeSet->gpu_geom_storage->patch_info_buffer->getGlName());
 
 
     gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] Binding buffers");

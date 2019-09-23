@@ -607,10 +607,10 @@ vector<shared_ptr<VertexBufConnector>> debug_retain_vertices;
 vector<shared_ptr<TriangleBufConnector>> debug_retain_triangle_buf;
 MeshPatchGpuHandle::MeshPatchGpuHandle(GpuGeomStorage* gpu_geom_storage,
                                        int nr_vertices, int nr_triangles) {
-	vertices_dest   = gpu_geom_storage->vertexBuffer->getBlock(nr_vertices);
-	vertices_source = gpu_geom_storage->vertexBuffer->getBlock(nr_vertices);
-	patch_infos     = gpu_geom_storage->patchInfoBuffer->getBlock(1);
-	triangles       = gpu_geom_storage->triangleBuffer->getBlock(nr_triangles);
+	vertices_dest   = gpu_geom_storage->vertex_buffer->getBlock(nr_vertices);
+	vertices_source = gpu_geom_storage->vertex_buffer->getBlock(nr_vertices);
+	patch_infos     = gpu_geom_storage->patch_info_buffer->getBlock(1);
+	triangles       = gpu_geom_storage->triangle_buffer->getBlock(nr_triangles);
 }
 
 MeshPatchGpuHandle::~MeshPatchGpuHandle() {

@@ -55,7 +55,7 @@ shared_ptr<MeshTextureGpuHandle> MeshTexture::genGpuResource(size_t nr_coords,
 			break;
 	}
 
-	TexCoordBuffer* coord_buf = map_->m_gpuGeomStorage.texPosBuffer;
+	TexCoordBuffer* coord_buf = map_->m_gpuGeomStorage.tex_pos_buffer;
 
 	shared_ptr<MeshTextureGpuHandle> meshTexGpu(
 			new MeshTextureGpuHandle(coord_buf, nr_coords, ref_atlas, data_atlas,

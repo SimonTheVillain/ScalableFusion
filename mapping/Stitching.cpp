@@ -409,7 +409,7 @@ void Stitching::reloadBorderGeometry(std::vector<std::vector<Edge>> &borderList)
     }
 
 
-    GpuVertex* gpuVertBuf = mesh->m_gpuGeomStorage.vertexBuffer->getCudaPtr();
+    GpuVertex* gpuVertBuf = mesh->m_gpuGeomStorage.vertex_buffer->getCudaPtr();
     vector<GpuVertex> downloadedData(pointRefs.size());
 
     vector<GpuVertex*> gpuVerts;

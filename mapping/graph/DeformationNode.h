@@ -37,39 +37,45 @@
 **
 ****************************************************************************/
 
-#ifndef SUPERMAPPING_DEFORMATIONNODE_H
-#define SUPERMAPPING_DEFORMATIONNODE_H
+#ifndef FILE_DEFORMATION_NODE_H
+#define FILE_DEFORMATION_NODE_H
+
 #include <vector>
 #include <map>
 #include <memory>
+
 #include <opencv2/opencv.hpp>
 #include <Eigen/Eigen>
+
 class DeformationNode;
 class MeshPatch;
 
 class DeformationNode {
 public:
 
-    MeshPatch* patch;
-    struct NodePixPos{
-        std::shared_ptr<DeformationNode> node;
-        cv::Vec2f pixPos;
-        Eigen::Vector3f pos;
-    };
-    struct WeakNodeDist{
-        std::weak_ptr<DeformationNode> node;
-        float dist;
-    };
+	struct NodePixPos {
+		std::shared_ptr<DeformationNode> node;
+		cv::Vec2f pix_pos;
+		Eigen::Vector3f pos;
+	};
 
-    //storing neighbours in 4 quadrants (in sorted fashion
-    std::map<float,WeakNodeDist> neighbours[4];
+	struct WeakNodeDist{
+		std::weak_ptr<DeformationNode> node;
+		float dist;
+	};
 
+	DeformationNode(MeshPatch *p) 
+			: patch(p) { }
+	
+	~DeformationNode() { }
 
-    void findNeighbours(const Eigen::Vector3f &pos,const cv::Vec2f &pixPos,const std::vector<NodePixPos> &nodes);
+	void findNeighbours(const Eigen::Vector3f &pos, const cv::Vec2f &pix_pos, 
+	                    const std::vector<NodePixPos> &nodes);
 
-    DeformationNode(MeshPatch* patch) : patch(patch){}
-    ~DeformationNode(){}
+	MeshPatch* patch;
+	//storing neighbours in 4 quadrants (in sorted fashion
+	std::map<float, WeakNodeDist> neighbours[4];
+
 };
 
-
-#endif //SUPERMAPPING_DEFORMATIONNODE_H
+#endif

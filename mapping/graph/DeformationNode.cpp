@@ -38,51 +38,54 @@
 **
 ****************************************************************************/
 
-
 #include "DeformationNode.h"
+
 #include <math.h>
+
 using namespace std;
+using namespace Eigen;
 
-
-template <typename T> inline int sgn(T val) {
-    return (T(0) < val) - (val < T(0));
+template <typename T> 
+inline int sgn(T val) {
+	return (T(0) < val) - (val < T(0));
 }
-void DeformationNode::findNeighbours(const Eigen::Vector3f &pos,const cv::Vec2f &pixPos,
-                                    const std::vector<DeformationNode::NodePixPos> &nodes) {
-    int quadrants[4][2] = {{1,1},{1,-1},{-1,1},{-1,-1}};
-    int maxEdges = 2;
-    for(auto node : nodes){
-        if(node.node.get() == this){
-            continue;
-        }
-        cv::Vec2f delta = pixPos-node.pixPos;
-        float dist = sqrt(delta.ddot(delta));
-        for(size_t i=0;i<4;i++){
-            if( sgn(delta[0]) == quadrants[i][0] &&
-                sgn(delta[1]) == quadrants[i][1]){
-                map<float,DeformationNode::WeakNodeDist> &neighbourMap = neighbours[i];
-                if(neighbourMap.size()>= maxEdges){
 
-                    auto last = --neighbourMap.end();
-                    if(last->first > dist){
-                        //replace the element
-                        neighbourMap.erase(last);//remove old one!!!
-                        //add new one
-                        DeformationNode::WeakNodeDist newNode;
-                        newNode.dist = dist;//TODO: check if this distance is needed
-                        newNode.node = node.node;
-                        neighbourMap[dist] = newNode;
-                    }
+void DeformationNode::findNeighbours(
+		const Vector3f &pos, const cv::Vec2f &pix_pos,
+		const vector<DeformationNode::NodePixPos> &nodes) {
 
-                }else{
-                    //if the neighbour map is empty we just add a new neighbour
-                    DeformationNode::WeakNodeDist newNode;
-                    newNode.dist = dist;//TODO: check if this distance is needed
-                    newNode.node = node.node;
-                    neighbourMap[dist] = newNode;
-                }
+	int quadrants[4][2] = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+	int max_edges = 2;
+	for(auto node : nodes) {
+		if(node.node.get() == this){
+			continue;
+		}
+		cv::Vec2f delta = pix_pos - node.pix_pos;
+		float dist = sqrt(delta.ddot(delta));
+		for(size_t i = 0; i < 4; i++) {
+			if(sgn(delta[0]) == quadrants[i][0] &&
+			   sgn(delta[1]) == quadrants[i][1]) {
+				map<float, DeformationNode::WeakNodeDist> &neighbour_map = neighbours[i];
+				if(neighbour_map.size()>= max_edges){
+					auto last = --neighbour_map.end();
+					if(last->first > dist) {
+						//replace the element
+						neighbour_map.erase(last);//remove old one!!!
+						//add new one
+						DeformationNode::WeakNodeDist new_node;
+						new_node.dist = dist;//TODO: check if this distance is needed
+						new_node.node = node.node;
+						neighbour_map[dist] = new_node;
+					}
 
-            }
-        }
-    }
+				} else {
+					//if the neighbour map is empty we just add a new neighbour
+					DeformationNode::WeakNodeDist new_node;
+					new_node.dist = dist;//TODO: check if this distance is needed
+					new_node.node = node.node;
+					neighbour_map[dist] = new_node;
+				}
+			}
+		}
+	}
 }

@@ -36,58 +36,52 @@
 ** sell copies of their contributions without any restrictions.
 **
 ****************************************************************************/
-#ifndef SUPERMAPPING_DEFORMATIONGRAPH_H
-#define SUPERMAPPING_DEFORMATIONGRAPH_H
+#ifndef FILE_DEFORMATION_GRAPH_H
+#define FILE_DEFORMATION_GRAPH_H
 
-#include <Eigen/Eigen>
 #include <vector>
 
+#include <Eigen/Eigen>
 
-
-class PinConstraint{
+class PinConstraint {
 public:
-    Eigen::Vector3f pos;
-    int node;
+	Eigen::Vector3f pos;
+	int node;
 };
 
 class DeformationGraph {
 public:
 
-    float wrot = 1.0f;
-    float wreg = 10.0f;
-    float wcon = 100.0f;
+	void initializeTransforms();
 
+	void generateNeighbourList();
 
-    std::vector<PinConstraint> pinConstraints;
+	void generateResiduals();
 
-    std::vector<Eigen::Vector3f> nodes;
-    std::vector<unsigned int> indices;
+	void generateJacobian();
 
-    std::vector<std::vector<unsigned int>> neighbours;
+	void gaussNewtonStep();
 
-    std::vector<Eigen::Matrix3f> G_rot;
-    std::vector<Eigen::Vector3f> G_t;
+	void applyUpdate();
 
+	float wrot = 1.0f;
+	float wreg = 10.0f;
+	float wcon = 100.0f;
 
+	std::vector<PinConstraint> pin_constraints;
 
-    void initializeTransforms();
-    void generateNeighbourList();
+	std::vector<Eigen::Vector3f> nodes;
+	std::vector<unsigned int> indices;
 
+	std::vector<std::vector<unsigned int>> neighbours;
 
-    Eigen::MatrixXd residuals;
-    void generateResiduals();
+	Eigen::MatrixXd residuals;
 
+	//lets work with double..... maybe this is a overkill
+	Eigen::SparseMatrix<double> jacobian;
 
-    //lets work with double..... maybe this is a overkill
-    Eigen::SparseMatrix<double> jacobian;
-    void generateJacobian();
-
-    void gaussNewtonStep();
-
-
-    void applyUpdate();
-
-
+	std::vector<Eigen::Matrix3f> G_rot;
+	std::vector<Eigen::Vector3f> G_t;
 
 };
 

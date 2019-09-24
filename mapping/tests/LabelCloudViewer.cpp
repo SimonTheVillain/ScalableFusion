@@ -210,31 +210,31 @@ int main()
     cons.node = 0;
     cons.pos = nodes3[0];
     //cons.pos[1] +=1.0f;
-    deformationGraph.pinConstraints.push_back(cons);//only one constraint should shift everything towards it
+    deformationGraph.pin_constraints.push_back(cons);//only one constraint should shift everything towards it
 
 
     cons.node = 1;
     cons.pos = nodes3[1];
     //cons.pos[1] +=1.5f;
     //cons.pos[0] +=0.5f;
-    deformationGraph.pinConstraints.push_back(cons);//only one constraint should shift everything towards it
+    deformationGraph.pin_constraints.push_back(cons);//only one constraint should shift everything towards it
 
 
     cons.node = 2;
     cons.pos = nodes3[2];
     //cons.pos[1] +=1.0f;
-    deformationGraph.pinConstraints.push_back(cons);//only one constraint should shift everything towards it
+    deformationGraph.pin_constraints.push_back(cons);//only one constraint should shift everything towards it
 
     cons.node = 3;
     cons.pos = nodes3[3];
     //cons.pos[1] +=1.0f;
     //cons.pos[0] +=0.5f;
-    deformationGraph.pinConstraints.push_back(cons);//only one constraint should shift everything towards it
+    deformationGraph.pin_constraints.push_back(cons);//only one constraint should shift everything towards it
 
     for(int i=0;i<100;i++){
         cons.node = i;
         cons.pos = nodes3[i];
-        deformationGraph.pinConstraints.push_back(cons);
+        deformationGraph.pin_constraints.push_back(cons);
 
     }
 
@@ -242,7 +242,7 @@ int main()
         cons.node = i;
         cons.pos = nodes3[i];
         cons.pos[1] += 0.5;
-        deformationGraph.pinConstraints.push_back(cons);
+        deformationGraph.pin_constraints.push_back(cons);
     }
 
 

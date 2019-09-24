@@ -1,90 +1,83 @@
 #ifndef FILE_LOW_DETAIL_MAP_RENDERER
 #define FILE_LOW_DETAIL_MAP_RENDERER
 
-#include <glUtils.h>
-#include <shader.h>
 #include <memory>
 #include <vector>
-#include <Eigen/Eigen>
 #include <mutex>
 
 #include <cuda.h>
 #include <cublas.h>
+#include <Eigen/Eigen>
+#include <glUtils.h>
+#include <shader.h>
 
 #include "gpuMeshStructure.h"
+
+using namespace std;
 
 class MeshPatch;
 struct DoubleStitch;
 struct TripleStitch;
 class ActiveSet;
 
-
-
 template<typename T>
-struct GlCudaBuffer{
-    GLuint glName;
-    //todo: cuda resource
-    size_t nrElements;
-    cudaGraphicsResource_t cudaResource;
-    T* cudaPtr;
+struct GlCudaBuffer {
 
-    GlCudaBuffer(size_t size);
-    ~GlCudaBuffer();
+	GlCudaBuffer(size_t size);
 
+	~GlCudaBuffer();
 
+	GLuint gl_name;
+	//todo: cuda resource
+	size_t nr_elements;
+	cudaGraphicsResource_t cuda_resource;
+	T *cuda_ptr;
 };
 
+struct CoarseTriangle {
 
-struct CoarseTriangle{
-    std::weak_ptr<MeshPatch> patches[3];
-    std::weak_ptr<DoubleStitch> doubleStitches[3];
-    std::weak_ptr<TripleStitch> tripleStitches[3];
-    bool isValid();
-    CoarseTriangle(std::shared_ptr<MeshPatch> p1,std::shared_ptr<MeshPatch> p2,std::shared_ptr<MeshPatch> p3);
-    ~CoarseTriangle();
+	CoarseTriangle(shared_ptr<MeshPatch> p1,
+	               shared_ptr<MeshPatch> p2,
+	               shared_ptr<MeshPatch> p3);
 
-    bool isConnectingSame3Patches(std::shared_ptr<MeshPatch> p1,std::shared_ptr<MeshPatch> p2,std::shared_ptr<MeshPatch> p3);
+	~CoarseTriangle();
 
-    bool flipToFacePos(Eigen::Vector3f pos);
+	bool isValid();
+
+	bool isConnectingSame3Patches(shared_ptr<MeshPatch> p1,
+	                              shared_ptr<MeshPatch> p2,
+	                              shared_ptr<MeshPatch> p3);
+
+	bool flipToFacePos(Eigen::Vector3f pos);
+
+	weak_ptr<MeshPatch> patches[3];
+	weak_ptr<DoubleStitch> double_stitches[3];
+	weak_ptr<TripleStitch> triple_stitches[3];
 };
-
-//class MeshPatch::CoarseTriangle;
-
 
 /**
  * @brief The LowDetailPoint class
  */
-//template <class T>
-class LowDetailPoint{
-private:
+class LowDetailPoint {
 public:
 
+	bool isNeighbourWith(shared_ptr<LowDetailPoint> point);
 
-    int indexWithinCoarse=-1;
+	void addCoarseTriangle(shared_ptr<CoarseTriangle> coarse_triangle);
 
-    bool isNeighbourWith(std::shared_ptr<LowDetailPoint> point);
+	shared_ptr<CoarseTriangle> getCoarseTriangleWith(shared_ptr<MeshPatch> p1,
+	                                                 shared_ptr<MeshPatch> p2,
+	                                                 shared_ptr<MeshPatch> p3);
 
+	void cleanupCoarseTriangles();
 
-    std::mutex coarseTriangleMutex;
-    std::vector<std::shared_ptr<CoarseTriangle>> triangleWithinNeighbours;
+	mutex coarse_triangle_mutex;
+	vector<shared_ptr<CoarseTriangle>> triangle_within_neighbours;
 
-    void addCoarseTriangle(std::shared_ptr<CoarseTriangle> coarseTriangle);
+	int index_within_coarse = -1;
 
-    std::shared_ptr<CoarseTriangle> getCoarseTriangleWith(std::shared_ptr<MeshPatch> p1,
-                                                          std::shared_ptr<MeshPatch> p2,
-                                                          std::shared_ptr<MeshPatch> p3);
-
-    void cleanupCoarseTriangles();
-
-
-
-
-    Eigen::Vector4f averageColor;
-
-
+	Eigen::Vector4f average_color;
 };
-
-
 
 /**
  * @brief The LowDetailRenderer class
@@ -92,81 +85,64 @@ public:
  * each of the patch will only be represented by only one vertex within a mesh
  * Hopefully this will not introduce too many mutex locks so that everything becomest choppy and stuff.
  */
-class LowDetailRenderer{
+class LowDetailRenderer {
+public:
+
+	LowDetailRenderer();
+
+	~LowDetailRenderer();
+
+	void initInGlContext();
+
+	void addPatches(vector<shared_ptr<MeshPatch>> &patches_in,
+	                Eigen::Vector3f cam_pos);
+
+	void updateColorForPatches(vector<shared_ptr<MeshPatch>> &patches_in);
+
+	//TODO: split this up:
+	void renderExceptForActiveSets(vector<shared_ptr<ActiveSet>> &sets, 
+	                               Eigen::Matrix4f proj, 
+	                               Eigen::Matrix4f cam_pose);
+
+	//into the following:
+	void updateMaskForActiveSets(vector<shared_ptr<ActiveSet>> &sets);
+
+	//render the color data
+	void renderColor( Eigen::Matrix4f proj, Eigen::Matrix4f cam_pose);
+
+	//render the geometry for when we click onto the surface:
+	void renderGeometry(Eigen::Matrix4f proj, Eigen::Matrix4f cam_pose);
+
+	void updateAllPatches();
+
+	void downloadCurrentGeometry(vector<GpuCoarseVertex> &vertices, 
+	                             vector<int> &indices);
+
+	vector<weak_ptr<MeshPatch>> patches;
+	vector<weak_ptr<CoarseTriangle>> coarse_triangles;
+
 private:
 
-    static std::weak_ptr<gfx::GLSLProgram> s_shader;
-    std::shared_ptr<gfx::GLSLProgram> shader;
-    static std::weak_ptr<gfx::GLSLProgram> s_geometryShader;
-    std::shared_ptr<gfx::GLSLProgram> geometryShader;
+	static weak_ptr<gfx::GLSLProgram> s_shader_;
+	shared_ptr<gfx::GLSLProgram> shader_;
+	static weak_ptr<gfx::GLSLProgram> s_geometry_shader_;
+	shared_ptr<gfx::GLSLProgram> geometry_shader_;
 
-    std::shared_ptr<gfx::GLSLProgram> debugShader;
+	shared_ptr<gfx::GLSLProgram> debug_shader_;
 
+	mutex replacing_buffers_;
 
+	GLuint VAO_ = 0;
 
+	mutex modifying_buffers_;
+	shared_ptr<GlCudaBuffer<int>> index_buffer_;
+	shared_ptr<GlCudaBuffer<GpuCoarseVertex>> vertex_buffer_;
+	shared_ptr<GlCudaBuffer<int>> visibility_buffer_;
+	int nr_indices_;
 
+	bool new_buffers_ = false;
 
-
-
-    std::mutex replacingBuffers;
-
-    GLuint VAO=0;
-
-
-    std::mutex modifyingBuffers;
-    std::shared_ptr<GlCudaBuffer<int>> indexBuffer;
-    std::shared_ptr<GlCudaBuffer<GpuCoarseVertex>> vertexBuffer;
-    std::shared_ptr<GlCudaBuffer<int>> visibilityBuffer;
-    int nrIndices;
-
-
-
-    bool newBuffers=false;
-
-    std::vector<int> invisibleInLastFrame;
-
-
-public:
-    LowDetailRenderer();
-    ~LowDetailRenderer();
-
-    void initInGlContext();
-
-
-    std::vector<std::weak_ptr<MeshPatch>> patches;
-    std::vector<std::weak_ptr<CoarseTriangle>> coarseTriangles;
-
-    void addPatches(std::vector<std::shared_ptr<MeshPatch>> &patchesIn,Eigen::Vector3f camPos);
-
-
-
-    void updateColorForPatches(std::vector<std::shared_ptr<MeshPatch>> &patchesIn);
-
-
-
-
-    //TODO: split this up:
-    void renderExceptForActiveSets(std::vector<std::shared_ptr<ActiveSet> > &sets, Eigen::Matrix4f proj, Eigen::Matrix4f _camPose);
-
-    //into the following:
-    void updateMaskForActiveSets(std::vector<std::shared_ptr<ActiveSet> > &sets);
-
-    //render the color data
-    void renderColor( Eigen::Matrix4f proj, Eigen::Matrix4f _camPose);
-
-    //render the geometry for when we click onto the surface:
-    void renderGeometry(Eigen::Matrix4f proj, Eigen::Matrix4f _camPose);
-
-    void updateAllPatches();
-
-
-
-
-    void downloadCurrentGeometry(std::vector<GpuCoarseVertex> &vertices,std::vector<int> &indices);
-
-   // void updateAvgColorForPatches(std::vector<std::shared_ptr<MeshPatch>> &patches);
-
-   // bool submit();
+	vector<int> invisible_in_last_frame_;
 };
 
 #endif

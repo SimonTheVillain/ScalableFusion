@@ -409,11 +409,11 @@ void GeometryUpdate::extend(
 		pos4 = proj_pose * pos4;
 		pos4 *= 1.0f / pos4[3];
 		nodes[i].node   = patch->deformation_node;
-		nodes[i].pixPos = cv::Vec2f(pos4[0], pos4[1]);
+		nodes[i].pix_pos = cv::Vec2f(pos4[0], pos4[1]);
 		nodes[i].pos    = pos;
 	}
 	for(auto &node : nodes) {
-		node.node->findNeighbours(node.pos ,node.pixPos, nodes);
+		node.node->findNeighbours(node.pos ,node.pix_pos, nodes);
 	}
 	/*********************************************************************************/
 }

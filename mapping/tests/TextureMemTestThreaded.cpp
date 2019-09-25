@@ -1,190 +1,155 @@
-//
-// Created by simon on 3/8/19.
-//
 #include <iostream>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
 #include <vector>
 #include <memory>
+//mostly because we need to sleep for a longer time
+#include <chrono>
+#include <thread>
+
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 #include "../../gfx/gpuTex.h"
 #include "../../gfx/GarbageCollector.h"
 #include "../../gfx/glUtils.h"
 #include "../gpu/threadSafeFBO_VAO.h"
 
-//mostly because we need to sleep for a longer time
-#include <chrono>
-#include <thread>
-#include <thread>
-using namespace std::this_thread;     // sleep_for, sleep_until
-using namespace std::chrono; // ns, us, ms, s, h, etc.
-using std::chrono::system_clock;
-
 using namespace std;
 
+int main(int argc, const char *argv[]) {
+	cout << "starting allocating tons of memory on a single thread" << endl;
+	GarbageCollector garbage_collector;
+	glfwInit();
+	GLFWwindow *invisible_window;
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+	glfwWindowHint(GLFW_VISIBLE, 0);
+	invisible_window = glfwCreateWindow(640, 480, "HOPE U NO VISIBLE",
+	                                    nullptr, nullptr);
 
-int main(int argc, const char * argv[])
-{
-    cout << "starting allocating tons of memory on a single thread" << endl;
-    GarbageCollector garbageCollector;
-    glfwInit();
-    GLFWwindow* invisibleWindow;
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-    glfwWindowHint(GLFW_VISIBLE, 0);
-    invisibleWindow = glfwCreateWindow(640, 480, "HOPE U NO VISIBLE",
-                                       nullptr, nullptr);
+	glfwMakeContextCurrent(invisible_window);
+	glewExperimental = GL_TRUE;
+	glewInit();
+	glGetError();
 
-    glfwMakeContextCurrent(invisibleWindow);
-    glewExperimental = GL_TRUE;
-    glewInit();
-    glGetError();
+	GLFWwindow *other_context;
+	other_context = glfwCreateWindow(640, 480, "HOPE U NO VISIBLE",
+	                                 nullptr, invisible_window);
 
+	vector<shared_ptr<gfx::GpuTex2D>> textures;
+	int full_res = 1024;
+	GLuint int_type = GL_RGBA32F;
+	GLuint format = GL_RGBA;
+	GLuint type = GL_FLOAT;
+	ThreadSafeFBOStorage fbo_storage;
+	vector<ThreadSafeFBO*> fbos;
+	vector<uint64_t> handles;
+	bool done = false;
+	auto func = [&]() {
+		if (!glfwInit())
+			exit(EXIT_FAILURE);
 
-    GLFWwindow* otherContext;
-    otherContext = glfwCreateWindow(640, 480, "HOPE U NO VISIBLE",
-                                       nullptr, invisibleWindow);
+		glfwMakeContextCurrent(other_context);
+		glewExperimental = GL_TRUE;
+		glewInit();
+		glGetError();
 
+		for(int i = 0; i < 400; i++) {
+			auto tex = make_shared<gfx::GpuTex2D>(&garbage_collector, int_type,
+			                                      format, type, full_res, full_res,
+			                                      true, nullptr);
+			glMakeTextureHandleResidentARB(tex->getGlHandle());
+			handles.push_back(tex->getGlHandle());
+			auto fbo = fbo_storage.createGlObject();
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo->get());
+			glBindTexture(GL_TEXTURE_2D, tex->getGlName());//not necessary
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
+			                     tex->getGlName(), 0);
+			GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
+			glDrawBuffers(1, draw_buffers);
 
-    vector<shared_ptr<gfx::GpuTex2D>> textures;
-    int fullRes=1024;
-    GLuint intType = GL_RGBA32F;
-    GLuint format = GL_RGBA;
-    GLuint type = GL_FLOAT;
-    ThreadSafeFBOStorage fboStorage;
-    vector<ThreadSafeFBO*> fbos;
-    vector<uint64_t> handles;
-    bool done=false;
-    auto func = [&](){
+			GLenum gl_err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+			if(gl_err != GL_FRAMEBUFFER_COMPLETE) {
+				cout << "framebuffer incomplete" << endl;
+			}
+			fbos.push_back(fbo);
+			//TODO: also get a fbo
+			//TODO: also make them resident!!!!!!!
 
-        if (!glfwInit())
-            exit(EXIT_FAILURE);
-        glfwMakeContextCurrent(otherContext);
-        glewExperimental = GL_TRUE;
-        glewInit();
-        glGetError();
+			textures.push_back(tex);
 
-        for(int i=0;i<400;i++){
+			if(glIsTextureHandleResidentARB(tex->getGlHandle())) {
 
-            auto tex =
-                    make_shared<gfx::GpuTex2D>(
-                            &garbageCollector,
-                            intType,format,type,
-                            fullRes,fullRes,
-                            true,
-                            nullptr);
-            glMakeTextureHandleResidentARB(tex->getGlHandle());
-            handles.push_back(tex->getGlHandle());
-            auto fbo = fboStorage.createGlObject();
-            glBindFramebuffer(GL_FRAMEBUFFER,fbo->get());
-            glBindTexture(GL_TEXTURE_2D,tex->getGlName());//not necessary
-            glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,tex->getGlName(),0);
-            GLenum drawBuffers[1]={GL_COLOR_ATTACHMENT0};
-            glDrawBuffers(1,drawBuffers);
+			} else {
+				cout << "why should it not be resident?" << endl;
+			}
+		}
+		fbo_storage.forceGarbageCollect();
 
-            GLenum glErr=glCheckFramebufferStatus( GL_FRAMEBUFFER);
-            if(glErr != GL_FRAMEBUFFER_COMPLETE){
-                cout << "framebuffer incomplete" << endl;
-            }
-            fbos.push_back(fbo);
-            //TODO: also get a fbo
-            //TODO: also make them resident!!!!!!!
+		gfx::GLUtils::checkForOpenGLError(
+				"is making texture resident a big mistake?");
+		done = true;
+	};
 
-            textures.push_back(tex);
+	thread t(func);
+	while(!done) {
+	}
 
+	for(int i = 0; i < 400; i++) {
+		auto tex = textures[i];
+		auto fbo = fbo_storage.createGlObject();
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo->get());
+		glBindTexture(GL_TEXTURE_2D, tex->getGlName());//not necessary
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
+		                     tex->getGlName(), 0);
+		GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
+		glDrawBuffers(1, draw_buffers);
+		GLenum gl_err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		if(gl_err != GL_FRAMEBUFFER_COMPLETE) {
+			cout << "framebuffer incomplete" << endl;
+		}
+		fbos.push_back(fbo);
+		gfx::GLUtils::checkForOpenGLError("is making texture resident a big mistake?");
+	}
 
-            if(glIsTextureHandleResidentARB(tex->getGlHandle())){
-                //glMakeTextureHandleNonResidentARB(tex->getGlHandle());
-            }else{
-                cout << "why should it not be resident?" << endl;
-            }
-        }
-        fboStorage.forceGarbageCollect();
+	t.join();
 
-        gfx::GLUtils::checkForOpenGLError("is making texture resident a big mistake?");
-        done = true;
+	this_thread::sleep_for(chrono::seconds(10));
 
-    };
-    thread t(func);
-    while(!done){
+	for(int i = 0; i < 400; i++) {
+		auto tex = textures[i];
+	}
+	for(size_t i = 0; i < handles.size(); i++) {
+		glMakeTextureHandleNonResidentARB(handles[i]);
+		gfx::GLUtils::checkForOpenGLError("is making texture non resident a big mistake?");
+	}
+	textures.clear();
+	//destroy
+	cout << "textures should be cleared" << endl;
 
-    }
-    for(int i=0;i<400;i++){
-        auto tex = textures[i];
-        auto fbo = fboStorage.createGlObject();
-        glBindFramebuffer(GL_FRAMEBUFFER,fbo->get());
-        glBindTexture(GL_TEXTURE_2D,tex->getGlName());//not necessary
-        glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,tex->getGlName(),0);
-        GLenum drawBuffers[1]={GL_COLOR_ATTACHMENT0};
-        glDrawBuffers(1,drawBuffers);
-        GLenum glErr=glCheckFramebufferStatus( GL_FRAMEBUFFER);
-        if(glErr != GL_FRAMEBUFFER_COMPLETE){
-            cout << "framebuffer incomplete" << endl;
-        }
-        fbos.push_back(fbo);
-        gfx::GLUtils::checkForOpenGLError("is making texture resident a big mistake?");
+	this_thread::sleep_for(chrono::seconds(10));
+	for(auto fbo : fbos) {
+		delete fbo;
+	}
+	fbos.clear();
+	fbo_storage.garbageCollect();
+	glFinish();
+	cout << "fbos should be cleared" << endl;
 
-    }
+	this_thread::sleep_for(chrono::seconds(10));
 
-    t.join();
+	for(size_t i = 0; i < handles.size(); i++) {
+		gfx::GLUtils::checkForOpenGLError("is making texture non resident a big mistake?");
+	}
+	cout << "making the textures non-resident" << endl;
+	this_thread::sleep_for(chrono::seconds(10));
 
+	glfwDestroyWindow(invisible_window);
+	glfwTerminate();
+	cout << "OpenGLContext should be cleared" << endl;
 
-    sleep_for(seconds(10));
+	this_thread::sleep_for(chrono::seconds(10));
 
+	cout << "It is over now" << endl;
 
-    for(int i=0;i<400;i++){
-        auto tex = textures[i];
-        //seemingly these texture handles need to be made resident per thread!!!
-        /*
-        if(glIsTextureHandleResidentARB(tex->getGlHandle())){
-            glMakeTextureHandleNonResidentARB(tex->getGlHandle());
-        }else{
-            cout << "why should it not be resident?" << endl;
-        }
-         */
-
-    }
-    for(size_t i=0;i<handles.size();i++){
-        glMakeTextureHandleNonResidentARB(handles[i]);
-        gfx::GLUtils::checkForOpenGLError("is making texture non resident a big mistake?");
-
-    }
-    textures.clear();
-    //destroy
-    cout << "textures should be cleared" << endl;
-
-    sleep_for(seconds(10));
-    for(auto fbo : fbos){
-        delete fbo;
-    }
-    fbos.clear();
-    fboStorage.garbageCollect();
-    glFinish();
-    cout << "fbos should be cleared" << endl;
-
-    sleep_for(seconds(10));
-
-
-    for(size_t i=0;i<handles.size();i++){
-        //glMakeTextureHandleNonResidentARB(handles[i]);
-        gfx::GLUtils::checkForOpenGLError("is making texture non resident a big mistake?");
-
-    }
-    cout << "making the textures non-resident" << endl;
-    sleep_for(seconds(10));
-
-
-    glfwDestroyWindow(invisibleWindow);
-    glfwTerminate();
-    cout << "OpenGLContext should be cleared" << endl;
-
-    sleep_for(seconds(10));
-
-    cout << "It is over now" << endl;
-
-
-
-    return 0;
-
+	return 0;
 }

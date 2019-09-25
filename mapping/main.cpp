@@ -445,9 +445,9 @@ int main(int argc, const char * argv[])
 
 
         //render the
-        scaleableMap->m_renderPresentation.showWireframe = renderWireframe;
-        scaleableMap->m_renderPresentation.colorMode = colorMode;
-        scaleableMap->m_renderPresentation.shadingMode = shadingMode;
+        scaleableMap->m_renderPresentation.show_wireframe = renderWireframe;
+        scaleableMap->m_renderPresentation.color_mode = colorMode;
+        scaleableMap->m_renderPresentation.shading_mode = shadingMode;
         if(!disableRendering){
             scaleableMap->m_renderPresentation.renderInWindow(view,proj,renderHighDetail,invisibleWindow);
             //scaleableMap->render(view,proj,renderHighDetail,invisibleWindow);

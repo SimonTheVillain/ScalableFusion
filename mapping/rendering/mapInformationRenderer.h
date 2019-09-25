@@ -1,22 +1,23 @@
-#ifndef FILE_RENDER_MAP_INFORMATIONS
-#define FILE_RENDER_MAP_INFORMATIONS
+#ifndef FILE_MAP_INFORMATION_RENDERER
+#define FILE_MAP_INFORMATION_RENDERER
 
 //TODO: rename this to InformationRenderer (better Name, as i think)
-
-//#include "scaleableMap.h"
-#include <gpuTex.h>
-#include <shader.h>
-#include <memory>
 
 #include <map>
 #include <mutex>
 #include <thread>
+#include <memory>
 
+#include <GL/glew.h>
 #include <GL/gl.h>
-
 #include <opencv2/core.hpp>
 
-//class SharedImage;
+#include <gpuTex.h>
+#include <shader.h>
+
+using namespace std;
+using namespace Eigen;
+
 class MeshReconstruction;
 class MeshPatch;
 class MeshTexture;
@@ -45,127 +46,98 @@ class GLFWwindow;
  * or this: (who knows!)
  * http://stackoverflow.com/questions/31768783/get-element-id-in-vertex-shader-in-opengl
  */
-class MapInformationRenderer{ //TODO: maybe split this up
-    friend MeshReconstruction;
-private:
-    int m_width;
-    int m_height;
-
-public://TODO: remove public, just for debug purposes
-    std::shared_ptr<gfx::GpuTex2D> m_debugTexture;
-private:
-
-    struct PerThread{
-       GLuint indexFBO;
-       std::shared_ptr<gfx::GpuTex2D> indexTexture;
-
-
-       GLuint depthVAO=0;
-       GLuint depthFBO=0;
-       GLuint depthBufferTex;
-       std::shared_ptr<gfx::GpuTex2D> depthTexture;
-
-
-       std::shared_ptr<gfx::GpuTex2D> stdTexture;
-
-
-
-        //TODO: these are the new textures
-
-       GLuint combinedVAO=0;
-       GLuint combinedFBO=0;
-       std::shared_ptr<gfx::GpuTex2D> zTexture;
-       std::shared_ptr<gfx::GpuTex2D> colorTexture;
-       std::shared_ptr<gfx::GpuTex2D> labelTexture;
-       std::shared_ptr<gfx::GpuTex2D> normalTexture;
-
-    };
-    //maybe thread_local variable
-    std::map<std::thread::id,PerThread> perThreadGlObjects;
-
-    //GLuint m_geomDensityFBO;
-    //std::shared_ptr<gfx::GpuTex2D> m_geomDensityTexture;
-    //GLuint m_indexFBO;
-    //std::shared_ptr<gfx::GpuTex2D> m_indexTexture;
-
-
-
-    //the one and only depth buffer shared for all the information rendering tasks... (hopefully)
-    //GLuint m_depthBufferTex;
-
-    //GLuint m_depthFBO;
-   // std::shared_ptr<gfx::GpuTex2D> m_depthTexture;
-
-
-    //std::mutex VAOMutex;//TODO: this, create a std::map that connects VAOs to mutexes
-    //(i fear same has to be done for FBOs, which is a shame)
-    //https://www.opengl.org/discussion_boards/showthread.php/169733-Sharing-FBOs-among-contexts
-    //GLuint m_depthVAO;
-
-
-    static std::mutex shaderMutex;
-    static std::weak_ptr<gfx::GLSLProgram> s_depthProgram;
-public://debug
-    std::shared_ptr<gfx::GLSLProgram> m_depthProgram;
-private:
-   MeshReconstruction* m_map;
-
-
-   static std::weak_ptr<gfx::GLSLProgram> s_triangleReferenceProgram;
-   std::shared_ptr<gfx::GLSLProgram> m_triangleReferenceProgram;
-
-
-
-   static std::weak_ptr<gfx::GLSLProgram> s_triangleRefDepthProgram;
-   std::shared_ptr<gfx::GLSLProgram> triangleRefDepthProg;
-
-
-
-   //combined rendering of labels,depth and normals. (TODO)
-   std::shared_ptr<gfx::GLSLProgram> unifiedInfoProg;
-
-
+class MapInformationRenderer { //TODO: maybe split this up
+	friend MeshReconstruction;
 
 public:
-    MapInformationRenderer(int width=640,int height=480);
-    ~MapInformationRenderer();
-    void initInContext(int width,int height,MeshReconstruction* map);
-    void initInContext();
 
-    std::shared_ptr<gfx::GpuTex2D> getDepthTexture();
+	MapInformationRenderer(int width = 640, int height = 480);
 
-    std::shared_ptr<gfx::GpuTex2D> getStdTexture();
+	~MapInformationRenderer();
 
+	void initInContext(int width, int height, MeshReconstruction *map);
 
-    void renderDepth(ActiveSet *activeSet, Eigen::Matrix4f projection, Eigen::Matrix4f pose);
+	void initInContext();
 
-    ///TODO: create a renderer for which patch is used in which image!!!
-    //L.G. Debugging tool
+	shared_ptr<gfx::GpuTex2D> getDepthTexture();
 
-    void bindRenderTriangleReferenceProgram();
-    void renderTriangleReferencesForPatch(ActiveSet *activeSet, std::shared_ptr<MeshPatch> &patch,
-                                          std::shared_ptr <MeshTexture> &targetTexture);
+	shared_ptr<gfx::GpuTex2D> getStdTexture();
 
+	void renderDepth(ActiveSet *active_set, Matrix4f projection, Matrix4f pose);
 
+	///TODO: create a renderer for which patch is used in which image!!!
+	//L.G. Debugging tool
 
-    void renderTriangleReferencesAndDepth(ActiveSet* activeSet,Eigen::Matrix4f projection,Eigen::Matrix4f pose);
+	void bindRenderTriangleReferenceProgram();
 
-
-    void render(ActiveSet *activeSet, Eigen::Matrix4f projection, Eigen::Matrix4f pose,
-                cv::Mat *depth = nullptr, cv::Mat *normals = nullptr, cv::Mat *color = nullptr,
-                cv::Mat *labels = nullptr);
+	void renderTriangleReferencesForPatch(ActiveSet *active_set, 
+	                                      shared_ptr<MeshPatch> &patch,
+	                                      shared_ptr <MeshTexture> &target_texture);
 
 
 
-    Eigen::Vector4f renderAndExtractInfo(Eigen::Matrix4f view,
-                              Eigen::Matrix4f proj,
-                              bool renderVisibleFromCam,
-                              GLFWwindow *rootContext,
-                              int width,int height,
-                              int x, int y,
-                              int* patchInd = nullptr,
-                              int* triangleInd = nullptr);
+	void renderTriangleReferencesAndDepth(ActiveSet *active_set,
+	                                      Matrix4f projection,
+	                                      Matrix4f pose);
 
+	void render(ActiveSet *active_set, Matrix4f projection, Matrix4f pose,
+	            cv::Mat *depth = nullptr, cv::Mat *normals = nullptr, 
+	            cv::Mat *color = nullptr, cv::Mat *labels = nullptr);
+
+	Vector4f renderAndExtractInfo(Matrix4f view, Matrix4f proj, 
+	                              bool render_visible_from_cam,
+	                              GLFWwindow *root_context, 
+	                              int width, int height,
+	                              int x, int y,
+	                              int *patch_ind = nullptr,
+	                              int *triangle_ind = nullptr);
+
+	//TODO: remove, just for debug purposes
+	shared_ptr<gfx::GpuTex2D> m_debug_texture;
+	//debug
+	shared_ptr<gfx::GLSLProgram> depth_program;
+
+private:
+
+	struct PerThread_ {
+	   GLuint index_FBO;
+	   shared_ptr<gfx::GpuTex2D> index_texture;
+
+	   GLuint depth_VAO = 0;
+	   GLuint depth_FBO = 0;
+	   GLuint depth_buffer_tex;
+	   shared_ptr<gfx::GpuTex2D> depth_texture;
+	   shared_ptr<gfx::GpuTex2D> std_texture;
+
+		//TODO: these are the new textures
+	   GLuint combined_VAO = 0;
+	   GLuint combined_FBO = 0;
+	   shared_ptr<gfx::GpuTex2D> z_texture;
+	   shared_ptr<gfx::GpuTex2D> color_texture;
+	   shared_ptr<gfx::GpuTex2D> label_texture;
+	   shared_ptr<gfx::GpuTex2D> normal_texture;
+
+	};
+
+	int width_;
+	int height_;
+
+	//maybe thread_local variable
+	map<thread::id, PerThread_> per_thread_gl_objects_;
+
+	static mutex shader_mutex_;
+	static weak_ptr<gfx::GLSLProgram> s_depth_program_;
+
+	MeshReconstruction *map_;
+
+	static weak_ptr<gfx::GLSLProgram> s_triangle_reference_program_;
+	shared_ptr<gfx::GLSLProgram> triangle_reference_program_;
+
+	static weak_ptr<gfx::GLSLProgram> s_triangle_ref_depth_program_;
+	shared_ptr<gfx::GLSLProgram> triangle_ref_depth_prog_;
+
+	//combined rendering of labels,depth and normals. (TODO)
+	shared_ptr<gfx::GLSLProgram> unified_info_prog_;
 
 };
 

@@ -1,53 +1,54 @@
 #ifndef FILE_GPU_NORM_SEG_H
 #define FILE_GPU_NORM_SEG_H
 
-#include <gpuTex.h>
 #include <memory>
+
 #include <Eigen/Eigen>
 #include <opencv2/opencv.hpp>
 
-class GpuNormSeg{
-private:
-    std::shared_ptr<gfx::GpuTex2D> dStdMaxStd;
-    std::shared_ptr<gfx::GpuTex2D> points;
-    std::shared_ptr<gfx::GpuTex2D> normals;
-    std::shared_ptr<gfx::GpuTex2D> gpuSegmentation;
-    cv::Mat existingGeometry;
-    cv::Mat sensorStds;
-    cv::Mat existingStds;
-    cv::Mat segResult;
-    int segCount=-1;
+#include <gpuTex.h>
+
+using namespace std;
+using namespace Eigen;
+
+class GpuNormSeg {
 public:
-    GpuNormSeg(GarbageCollector* garbageCollector,int width,int height);
-     ~GpuNormSeg();
+	
+	GpuNormSeg(GarbageCollector* garbage_collector, int width, int height);
 
+	void calcNormals();
+	shared_ptr<gfx::GpuTex2D> getGpuNormals();
 
-    void calcNormals();
-    std::shared_ptr<gfx::GpuTex2D> getGpuNormals();
+	void calcPoints(shared_ptr<gfx::GpuTex2D> d_std_max_std, Vector4f fxycxy);
+	shared_ptr<gfx::GpuTex2D> getGpuPoints();
 
+	void segment();
+	shared_ptr<gfx::GpuTex2D> getGpuSegmentation();
+	cv::Mat getSegmentation();
+	int getSegCount();
+	void calcPoints();
+	shared_ptr<gfx::GpuTex2D> segment(shared_ptr<gfx::GpuTex2D> d_std_max_std,
+	                                  cv::Mat existing_d_std_max_std,
+	                                  cv::Mat existing_geometry);
 
-    void calcPoints(std::shared_ptr<gfx::GpuTex2D> dStdMaxStd,Eigen::Vector4f fxycxy);
-    std::shared_ptr<gfx::GpuTex2D> getGpuPoints();
+	int max_nr_points_per_segment;
+	int max_extent_per_segment;
+	int min_nr_points_per_segment;
+	float dist_threshold;
 
-    void segment();
-    std::shared_ptr<gfx::GpuTex2D> getGpuSegmentation();
-    cv::Mat getSegmentation();
-    int getSegCount();
+	float max_distance;
+	Vector4f fxycxy;
 
-
-
-
-    int maxNrPointsPerSegment = 800;
-    int maxExtentPerSegment = 30;
-    int minNrPointsPerSegment = 10;
-    float distThreshold =0.01;
-
-    float maxDistance = 3.5f;
-    Eigen::Vector4f fxycxy;
-    void calcPoints();
-    std::shared_ptr<gfx::GpuTex2D> segment(std::shared_ptr<gfx::GpuTex2D> dStdMaxStd,cv::Mat existingDStdMaxStd,cv::Mat existingGeometry);
-
-
+private:
+	shared_ptr<gfx::GpuTex2D> d_std_max_std_;
+	shared_ptr<gfx::GpuTex2D> points_;
+	shared_ptr<gfx::GpuTex2D> normals_;
+	shared_ptr<gfx::GpuTex2D> gpu_segmentation_;
+	cv::Mat existing_geometry_;
+	cv::Mat sensor_stds_;
+	cv::Mat existing_stds_;
+	cv::Mat seg_result_;
+	int seg_count_;
 
 };
 

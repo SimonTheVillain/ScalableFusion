@@ -102,7 +102,6 @@ file(GLOB CXX_SRCS
 	rendering/mapPresentationRenderer.cpp
 	rendering/renderableModel.cpp
 	utils/gpuNormSeg.cpp
-	utils/gpuPresets.cpp
 	utils/perfMeter.cpp
 	utils/principalPlane.cpp
 	xtionCamModel/xtionModel.cpp

@@ -35,7 +35,6 @@ public:
 	int max_extent_per_segment;
 	int min_nr_points_per_segment;
 	float dist_threshold;
-
 	float max_distance;
 	Vector4f fxycxy;
 

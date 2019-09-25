@@ -112,7 +112,7 @@ void GeometryUpdate::extend(
 	cv::Mat mesh_pointers(height, width, CV_32SC2); // Actually we store pointers in this
 
 	mesh->gpuPreSeg->fxycxy = mesh->params.depthfxycxy;
-	mesh->gpuPreSeg->maxDistance = mesh->getMaxDistance();
+	mesh->gpuPreSeg->max_distance = mesh->getMaxDistance();
 	// Do a proper segmentation on all the pixel not part of the existing geometry
 	mesh->gpuPreSeg->segment(d_std_tex, proj_depth_std, ex_geom);
 

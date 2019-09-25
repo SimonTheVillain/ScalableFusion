@@ -1,77 +1,71 @@
-#ifndef FILE_RENDER_MAP_PRESENTATION
-#define FILE_RENDER_MAP_PRESENTATION
+#ifndef FILE_MAP_PRESENTATION_RENDERER
+#define FILE_MAP_PRESENTATION_RENDERER
+
+#include <memory>
+
+#include <GL/glew.h>
+#include <GL/gl.h>
 
 #include <gpuTex.h>
 #include <shader.h>
-#include <memory>
 
-#include <GL/gl.h>
+using namespace std;
+using namespace Eigen;
 
 //TODO: rename this to something like presentationRenderer
 
 class MeshReconstruction;
 class ActiveSet;
-
 class GLFWwindow;
-
 class Worker;
 
-class MapPresentationRenderer{ //TODO: maybe split this up
-private:
-    int m_width;
-    int m_height;
-
-
-    std::shared_ptr<gfx::GpuTex2D> m_debugTexture;
-
-    GLuint m_geomDensityFBO;
-    std::shared_ptr<gfx::GpuTex2D> m_geomDensityTexture;
-    GLuint m_indexFBO;
-    std::shared_ptr<gfx::GpuTex2D> m_indexTexture;
-
-    //the one and only depth buffer shared for all the information rendering tasks... (hopefully)
-    /*
-    GLuint m_depthBufferTex;
-
-    GLuint m_depthFBO;
-    std::shared_ptr<gfx::GpuTex2D> m_depthTexture;
-    GLuint m_depthVAO;
-    */
-    GLuint m_VAO;
-    static std::weak_ptr<gfx::GLSLProgram> s_rgbProgram;
-    std::shared_ptr<gfx::GLSLProgram> m_rgbProgram;
-
-
-    Worker *renderingActiveSetUpdateWorker=nullptr;
-    GLuint debugVAO;
-    std::shared_ptr<gfx::GLSLProgram> debugProgram;
-
-   MeshReconstruction* m_map;
+class MapPresentationRenderer { //TODO: maybe split this up
 public:
-    MapPresentationRenderer(int width=640,int height=480);
-    ~MapPresentationRenderer();
-    void initInContext(int width,int height,MeshReconstruction* map);
-    void initInContext();
 
-    // render an additional wireframe
-    bool showWireframe=true;
+	MapPresentationRenderer(int width = 640, int height = 480);
 
-    // all the other render modes.
-    bool renderPatchIds;
-    int colorMode = 0;
-    int shadingMode = 0;
+	~MapPresentationRenderer();
 
-    //void render(Eigen::Matrix4f projection, Eigen::Matrix4f pose);
+	void initInContext(int width, int height, MeshReconstruction *map);
 
+	void initInContext();
 
-    void render(ActiveSet *activeSet, Eigen::Matrix4f projection, Eigen::Matrix4f pose);
+	void render(ActiveSet *active_set, Matrix4f projection, Matrix4f pose);
 
+	void renderInWindow(Matrix4f view, Matrix4f proj, bool render_visible_from_cam,
+	                    GLFWwindow *root_context);
 
+	// render an additional wireframe
+	bool show_wireframe;
 
-    void renderInWindow(Eigen::Matrix4f view, Eigen::Matrix4f proj,bool renderVisibleFromCam,GLFWwindow* rootContext);
+	// all the other render modes.
+	bool render_patch_ids;
 
+	int color_mode;
 
+	int shading_mode;
 
+private:
+
+	int width_;
+	int height_;
+
+	shared_ptr<gfx::GpuTex2D> debug_texture_;
+
+	GLuint geom_density_FBO_;
+	shared_ptr<gfx::GpuTex2D> geom_density_texture_;
+	GLuint index_FBO_;
+	shared_ptr<gfx::GpuTex2D> index_texture_;
+
+	GLuint VAO_;
+	static weak_ptr<gfx::GLSLProgram> s_rgb_program_;
+	shared_ptr<gfx::GLSLProgram> rgb_program_;
+
+	Worker *rendering_active_set_update_worker_;
+	GLuint debug_VAO_;
+	shared_ptr<gfx::GLSLProgram> debug_program_;
+
+   MeshReconstruction *map_;
 };
 
 #endif

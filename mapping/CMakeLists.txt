@@ -104,7 +104,6 @@ file(GLOB CXX_SRCS
 	utils/gpuNormSeg.cpp
 	utils/perfMeter.cpp
 	utils/principalPlane.cpp
-	xtionCamModel/xtionModel.cpp
 	debugRender.cpp
 	GeometryUpdate.cpp
 	intermediateDepthModel.cpp

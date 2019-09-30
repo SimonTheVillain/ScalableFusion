@@ -4,18 +4,24 @@
 #include <chrono>
 #include <string>
 
-class FPSCounter{
-private:
-    std::chrono::time_point<std::chrono::system_clock> last;
-public:
-    FPSCounter(std::string counterName = "casualCounter");
-    ~FPSCounter();
-    float printEveryXSeconds=1.0f;
-    std::string name;
-    bool mute=false;
-    int clicks=0;
-    void click();
-};
+using namespace std;
 
+class FPSCounter {
+public:
+
+	FPSCounter(string counter_name = "casualCounter");
+
+	void click();
+
+	string name;
+	float print_every_x_seconds;
+	bool mute;
+	int clicks;
+	
+private:
+
+	chrono::time_point<chrono::system_clock> last_;
+
+};
 
 #endif

@@ -1,7 +1,6 @@
 #ifndef FILE_SCHEDULER_H
 #define FILE_SCHEDULER_H
 
-
 #include <thread>
 #include <condition_variable>
 #include <functional>
@@ -9,7 +8,11 @@
 
 #include <Eigen/Eigen>
 #include <opencv2/core.hpp>
+
 #include "utils/perfMeter.h"
+
+using namespace std;
+using namespace Eigen;
 
 class MeshReconstruction;
 class Stream;
@@ -23,74 +26,69 @@ class IncrementalSegmentation;
 class Segmentation;
 
 class GarbageCollector;
-namespace  gfx{
-    class GpuTex2D;
-}
+
+namespace gfx {
+	class GpuTex2D;
+} // namespace gfx
 
 //TODO: create a base class for the scheduler
-class SchedulerBase{
-
+class SchedulerBase {
 public:
-    static GLFWwindow* createConnectedGlContext(GLFWwindow* context);
-    static void initializeGlContextInThread(GLFWwindow* context);
+
+	virtual ~SchedulerBase() { }
+
+	static GLFWwindow *createConnectedGlContext(GLFWwindow *context);
+	static void initializeGlContextInThread(GLFWwindow *context);
 
 
-    virtual void pause(bool pause) = 0;
-    virtual void nextStep() = 0;
+	virtual void pause(bool pause) = 0;
+	virtual void nextStep() = 0;
 
-    virtual Eigen::Matrix4f getLastKnownDepthPose() = 0;
+	virtual Matrix4f getLastKnownDepthPose() = 0;
 
-    SchedulerBase(){}
-    virtual ~SchedulerBase(){}
 };
 
+class SchedulerLinear : public SchedulerBase {
+public:
 
+	SchedulerLinear(shared_ptr<MeshReconstruction> map,
+	                GarbageCollector *garbage_collector, Stream *capture,
+	                GLFWwindow *context,
+	                shared_ptr<IncrementalSegmentation> incremental_segmentation);
 
+	~SchedulerLinear();
 
-class SchedulerLinear : public SchedulerBase{
+	//TODO: implement pause and step trough functionality
+	void pause(bool pause) {
+		paused_ = pause;
+	}
+	void nextStep() {
+		take_next_step_ = true;
+	}
+
+	Matrix4f getLastKnownDepthPose() {
+		return last_known_depth_pose_;
+	}
+
 private:
-    std::thread captureThread;
 
-    int expandInterval = 30;//10;
+	void captureWorker_(shared_ptr<MeshReconstruction> map, Stream *stream, 
+	                   GLFWwindow *context);
 
-    Eigen::Matrix4f lastKnownDepthPose;
+	thread capture_thread_;
 
-    bool endThreads = false;
-    GarbageCollector *garbageCollector;
+	int expand_interval_;
 
+	Matrix4f last_known_depth_pose_;
 
-    void captureWorker(std::shared_ptr<MeshReconstruction> map,Stream* stream,GLFWwindow* context);
-
-    std::shared_ptr<IncrementalSegmentation> incrementalSegmentation;
-
-    bool paused = false;
-    bool takeNextStep = false;
-public:
-    SchedulerLinear(std::shared_ptr<MeshReconstruction> map,GarbageCollector *garbageCollector,
-            Stream* capture,
-            GLFWwindow* context,
-            std::shared_ptr<IncrementalSegmentation> incrementalSegmentation);
-
-    ~SchedulerLinear();
+	bool end_threads_;
+	GarbageCollector *garbage_collector_;
 
 
+	shared_ptr<IncrementalSegmentation> incremental_segmentation_;
 
-    //TODO: implement pause and step trough functionality
-    void pause(bool pause){
-        paused = pause;
-    }
-    void nextStep(){
-        takeNextStep = true;
-    }
-
-
-    Eigen::Matrix4f getLastKnownDepthPose(){
-        return lastKnownDepthPose;
-    }
-
+	bool paused_;
+	bool take_next_step_;
 };
-
-
-
 
 #endif

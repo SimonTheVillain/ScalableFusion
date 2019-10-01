@@ -207,11 +207,11 @@ void MapPresentationRenderer::renderInWindow(Matrix4f view, Matrix4f proj,
 				glewInit();
 				glGetError();
 				//TODO: it feels weird calling this method within this class
-				map_->m_informationRenderer.initInContext(640, 480, map_);
+				map_->information_renderer.initInContext(640, 480, map_);
 			};
 			auto cleaner = [&](GLFWwindow **context) {
-				map_->fboStorage.forceGarbageCollect();
-				map_->garbageCollector->forceCollect();
+				map_->fbo_storage_.forceGarbageCollect();
+				map_->garbage_collector_->forceCollect();
 				glFinish();
 				glfwDestroyWindow(*context);
 				delete context;
@@ -224,16 +224,16 @@ void MapPresentationRenderer::renderInWindow(Matrix4f view, Matrix4f proj,
 		auto task = [&](Matrix4f inv_cam_pose, Vector4f intrinsics,
 		                Vector2f res, float view_distance) {
 			vector<shared_ptr<MeshPatch>> visible_patches =
-					map_->octree.getObjects(inv_cam_pose, intrinsics, res, view_distance);
+					map_->octree_.getObjects(inv_cam_pose, intrinsics, res, view_distance);
 
 			cudaDeviceSynchronize();
 			gpuErrchk(cudaPeekAtLastError());
 			shared_ptr<ActiveSet> active_set =
-					map_->m_gpuGeomStorage.makeActiveSet(visible_patches, map_);
+					map_->gpu_geom_storage_.makeActiveSet(visible_patches, map_);
 
 			//cleanup VBO and VAOs that are deleted but only used within this thread
-			map_->cleanupGlStoragesThisThread();
-			map_->garbageCollector->collect();
+			map_->cleanupGlStoragesThisThread_();
+			map_->garbage_collector_->collect();
 			glFinish();
 			cudaDeviceSynchronize();
 			gpuErrchk(cudaPeekAtLastError());
@@ -242,9 +242,9 @@ void MapPresentationRenderer::renderInWindow(Matrix4f view, Matrix4f proj,
 			//is this really needed?
 			//activeSet->securePatchTextures();
 			//store the active set
-			map_->activeSetRenderingMutex.lock();
-			map_->activeSetRendering = active_set;
-			map_->activeSetRenderingMutex.unlock();
+			map_->active_set_rendering_mutex_.lock();
+			map_->active_set_rendering_ = active_set;
+			map_->active_set_rendering_mutex_.unlock();
 		};
 
 		//the update worker is not queuing the update tasks.
@@ -253,22 +253,22 @@ void MapPresentationRenderer::renderInWindow(Matrix4f view, Matrix4f proj,
 		                                                      res, 1.0f));
 
 	} else {
-		map_->activeSetRenderingMutex.lock();
-		map_->activeSetRendering = nullptr;
-		map_->activeSetRenderingMutex.unlock();
+		map_->active_set_rendering_mutex_.lock();
+		map_->active_set_rendering_ = nullptr;
+		map_->active_set_rendering_mutex_.unlock();
 	}
 
 	//at last we render the active set
-	map_->activeSetUpdateMutex.lock();
-	shared_ptr<ActiveSet> active_set_work = map_->activeSetUpdate;
-	map_->activeSetUpdateMutex.unlock();
+	map_->active_set_update_mutex.lock();
+	shared_ptr<ActiveSet> active_set_work = map_->active_set_update;
+	map_->active_set_update_mutex.unlock();
 
-	map_->activeSetRenderingMutex.lock();
+	map_->active_set_rendering_mutex_.lock();
 	shared_ptr<ActiveSet> active_set_display;
 	if(!disable_render_of_user_camera) {
-		active_set_display = map_->activeSetRendering;
+		active_set_display = map_->active_set_rendering_;
 	}
-	map_->activeSetRenderingMutex.unlock();
+	map_->active_set_rendering_mutex_.unlock();
 
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());
@@ -290,5 +290,5 @@ void MapPresentationRenderer::renderInWindow(Matrix4f view, Matrix4f proj,
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());
 
-	map_->lowDetailRenderer.renderExceptForActiveSets(sets, proj, view);
+	map_->low_detail_renderer.renderExceptForActiveSets(sets, proj, view);
 }

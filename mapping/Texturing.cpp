@@ -96,10 +96,10 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
 
 
             cv::namedWindow("test test");
-            thatOneDebugRenderingThingy->vertex_buffer = mesh->m_gpuGeomStorage.vertex_buffer->getGlName();
-            thatOneDebugRenderingThingy->info_buffer = mesh->m_gpuGeomStorage.patch_info_buffer->getGlName();
-            thatOneDebugRenderingThingy->triangle_buffer = mesh->m_gpuGeomStorage.triangle_buffer->getGlName();
-            thatOneDebugRenderingThingy->tex_pos_buffer = mesh->m_gpuGeomStorage.tex_pos_buffer->getGlName();
+            thatOneDebugRenderingThingy->vertex_buffer = mesh->gpu_geom_storage_.vertex_buffer->getGlName();
+            thatOneDebugRenderingThingy->info_buffer = mesh->gpu_geom_storage_.patch_info_buffer->getGlName();
+            thatOneDebugRenderingThingy->triangle_buffer = mesh->gpu_geom_storage_.triangle_buffer->getGlName();
+            thatOneDebugRenderingThingy->tex_pos_buffer = mesh->gpu_geom_storage_.tex_pos_buffer->getGlName();
             //thatOneDebugRenderingThingy->setPatch(newPatches[i].get());
             //thatOneDebugRenderingThingy->setIndexCount(gpu->triangles->getStartingIndex(),gpu->triangles->getSize());
             thatOneDebugRenderingThingy->addPatch(newPatches[i].get(),1,0,0);
@@ -158,10 +158,10 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
             //this is where we get the size
             gpuTexture =
                     make_shared<MeshTextureGpuHandle>(
-                            mesh->m_gpuGeomStorage.tex_pos_buffer,
+                            mesh->gpu_geom_storage_.tex_pos_buffer,
                             nrCoords,
-                            mesh->texAtlasGeomLookup.get(),
-                            mesh->texAtlasStds.get(),
+                            mesh->tex_atlas_geom_lookup_.get(),
+                            mesh->tex_atlas_stds_.get(),
                             int(bounds[i].width*scale),
                             int(bounds[i].height*scale));
             gpuPatch->geom_tex = gpuTexture;
@@ -253,8 +253,8 @@ void Texturing::GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPat
     //execute the tasks on the gpu:
 
     TexCoordGen::genTexCoords(texGenTasks,mvp,
-                              mesh->m_gpuGeomStorage.patch_info_buffer->getCudaPtr(),
-                              mesh->m_gpuGeomStorage.vertex_buffer->getCudaPtr());
+                              mesh->gpu_geom_storage_.patch_info_buffer->getCudaPtr(),
+                              mesh->gpu_geom_storage_.vertex_buffer->getCudaPtr());
 
 
 
@@ -425,7 +425,7 @@ void Texturing::ColorTexUpdate(std::shared_ptr<gfx::GpuTex2D> rgbaTex,
     uint64_t texPtr = rgbaTex->getGlHandle();
     rgbaTex->makeResidentInThisThread();
     //2. Step should be the incorporation of new sensor data into the already existing map.
-    Matrix4f proj1 = Camera::genProjMatrix(meshReconstruction->params.rgbfxycxy);
+    Matrix4f proj1 = Camera::genProjMatrix(meshReconstruction->params.rgb_fxycxy);
 
     /**
      * TODO:
@@ -463,7 +463,7 @@ void Texturing::ColorTexUpdate(std::shared_ptr<gfx::GpuTex2D> rgbaTex,
 
 
 
-    meshReconstruction->cleanupGlStoragesThisThread();
+    meshReconstruction->cleanupGlStoragesThisThread_();
     //fboStorage.cleanupThisThread();
 
 
@@ -551,7 +551,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
 
 
                 float distAtCapture = (patch->getPos() - camPosAtCapture).norm();
-                if(distAtCapture*mesh->params.maxDepthFactorThreshForTexAdding > dist){
+                if(distAtCapture*mesh->params.max_depth_factor_thresh_for_tex_adding > dist){
                     //now the camera is so close that the new texture is of
                     //way higher quality. It is time to remove the old texture
                     createThisTexture = true;
@@ -697,8 +697,8 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
 
 
     TexCoordGen::genTexCoords(texGenTasks,mvp,
-                              mesh->m_gpuGeomStorage.patch_info_buffer->getCudaPtr(),
-                              mesh->m_gpuGeomStorage.vertex_buffer->getCudaPtr());
+                              mesh->gpu_geom_storage_.patch_info_buffer->getCudaPtr(),
+                              mesh->gpu_geom_storage_.vertex_buffer->getCudaPtr());
 
     copyToTinyPatches(rgbIn->getCudaTextureObject(),copies); //1.milliseconds for a full image (should be way less if the images are smaller)
 
@@ -710,7 +710,7 @@ void Texturing::ApplyColorData(std::vector<shared_ptr<MeshPatch>> &visiblePatche
 
 
     //also update the low detail map:
-    mesh->lowDetailRenderer.updateColorForPatches(patchesWithColorUpdates);
+    mesh->low_detail_renderer.updateColorForPatches(patchesWithColorUpdates);
 
 
 
@@ -779,7 +779,7 @@ void Texturing::GenLookupTex(ActiveSet *activeSet,
                                            bool dilate){
     vector<DilationDescriptor> dilations;
     dilations.reserve(patches.size());
-    meshReconstruction->m_informationRenderer.bindRenderTriangleReferenceProgram();
+    meshReconstruction->information_renderer.bindRenderTriangleReferenceProgram();
 
     for(size_t i = 0; i < patches.size();i++){
         std::shared_ptr<MeshPatch> patch = patches[i];
@@ -804,7 +804,7 @@ void Texturing::GenLookupTex(ActiveSet *activeSet,
         glViewport(r.x,r.y,r.width,r.height);
          */
         //to solve this we might want to draw a quad
-        meshReconstruction->m_informationRenderer.renderTriangleReferencesForPatch(activeSet,
+        meshReconstruction->information_renderer.renderTriangleReferencesForPatch(activeSet,
                                                                patches[i],
                                                                texture);
         //glFinish();//let the opengl stuff render before we download it.

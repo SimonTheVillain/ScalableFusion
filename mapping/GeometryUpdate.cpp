@@ -29,30 +29,30 @@ void GeometryUpdate::extend(
 	int height = d_std_mat.rows;
 
 	// Prepare the intrinsic parameters of the depth cam
-	float fxd = mesh->params.depthfxycxy[0];
-	float fyd = mesh->params.depthfxycxy[1];
-	float cxd = mesh->params.depthfxycxy[2];
-	float cyd = mesh->params.depthfxycxy[3];
+	float fxd = mesh->params.depth_fxycxy[0];
+	float fyd = mesh->params.depth_fxycxy[1];
+	float cxd = mesh->params.depth_fxycxy[2];
+	float cyd = mesh->params.depth_fxycxy[3];
 
-	Matrix4f proj_depth   = Camera::genProjMatrix(mesh->params.depthfxycxy);
-	Matrix4f proj_depth_n = Camera::genScaledProjMatrix(mesh->params.depthfxycxy,
-	                                                    mesh->params.depthRes);
-	Matrix4f proj_1_color = Camera::genProjMatrix(mesh->params.rgbfxycxy);
+	Matrix4f proj_depth   = Camera::genProjMatrix(mesh->params.depth_fxycxy);
+	Matrix4f proj_depth_n = Camera::genScaledProjMatrix(mesh->params.depth_fxycxy,
+	                                                    mesh->params.depth_res);
+	Matrix4f proj_1_color = Camera::genProjMatrix(mesh->params.rgb_fxycxy);
 
 	//extract the visible patches from the active set
 	vector<shared_ptr<MeshPatch>> visible_patches =
 			active_set_of_formerly_visible_patches->retained_mesh_patches_cpu;
 
 	//this might me more suitable for the beginning but lets do it here:
-	mesh->m_informationRenderer.renderDepth(
+	mesh->information_renderer.renderDepth(
 			active_set_of_formerly_visible_patches.get(),
 			proj_depth_n, depth_pose_in);
 	cv::Mat ex_geom(height, width, CV_32FC4);//existing geometry
-	mesh->m_informationRenderer.getDepthTexture()->downloadData(ex_geom.data);
+	mesh->information_renderer.getDepthTexture()->downloadData(ex_geom.data);
 
 	cv::Mat proj_depth_std(height, width, CV_32FC4);
 
-	mesh->m_informationRenderer.getStdTexture()->downloadData(proj_depth_std.data);
+	mesh->information_renderer.getStdTexture()->downloadData(proj_depth_std.data);
 
 	//TODO: DEBUG: //check all the points if they have still edges assigned to them:
 
@@ -111,13 +111,13 @@ void GeometryUpdate::extend(
 
 	cv::Mat mesh_pointers(height, width, CV_32SC2); // Actually we store pointers in this
 
-	mesh->gpuPreSeg->fxycxy = mesh->params.depthfxycxy;
-	mesh->gpuPreSeg->max_distance = mesh->getMaxDistance();
+	mesh->gpu_pre_seg_->fxycxy = mesh->params.depth_fxycxy;
+	mesh->gpu_pre_seg_->max_distance = mesh->getMaxDistance();
 	// Do a proper segmentation on all the pixel not part of the existing geometry
-	mesh->gpuPreSeg->segment(d_std_tex, proj_depth_std, ex_geom);
+	mesh->gpu_pre_seg_->segment(d_std_tex, proj_depth_std, ex_geom);
 
-	cv::Mat seg = mesh->gpuPreSeg->getSegmentation();
-	int seg_count = mesh->gpuPreSeg->getSegCount();
+	cv::Mat seg = mesh->gpu_pre_seg_->getSegmentation();
+	int seg_count = mesh->gpu_pre_seg_->getSegCount();
 
 	//*****************************************TOOOOODOOOOOO*********************
 	//TODO: put this piece of code into the meshIt part!!!!!
@@ -157,7 +157,7 @@ void GeometryUpdate::extend(
 	vertex_indices.setTo(cv::Scalar(-1)); // TODO: remove this line, should not be necessary
 
 	meshing.meshIt(points, mesh_pointers, vertex_indices, d_std_mat,
-	               mesh->params.maxDepthStep, depth_pose_in);
+	               mesh->params.max_depth_step, depth_pose_in);
 
 	for(size_t i = 0; i < new_shared_mesh_patches.size(); i++) {
 		//TODO: unify these functions and maybe do this at the very end of everything!!!!!
@@ -181,7 +181,7 @@ void GeometryUpdate::extend(
 	//debugCheckTriangleNeighbourConsistency(GetAllPatches());
 	stitching.stitchOnBorders(borders, depth_pose_in, proj_depth, proj_depth_std, 
 	                          ex_geom, points, d_std_mat, 
-	                          mesh->generateColorCodedTexture(mesh_pointers),
+	                          mesh->generateColorCodedTexture_(mesh_pointers),
 	                          mesh_pointers, vertex_indices, stitch_list);
 
 	stitching.freeBorderList(borders);
@@ -267,7 +267,7 @@ void GeometryUpdate::extend(
 	                       new_shared_mesh_patches.begin(),
 	                       new_shared_mesh_patches.end());
 	shared_ptr<ActiveSet> new_active_set =
-			mesh->m_gpuGeomStorage.makeActiveSet(visible_patches, mesh, true); // most of the members are initial
+			mesh->gpu_geom_storage_.makeActiveSet(visible_patches, mesh, true); // most of the members are initial
 	new_active_set->name = "createdInApplyNewData";
 
 	/*************************************TOOOODOOOOO************************/
@@ -328,7 +328,7 @@ void GeometryUpdate::extend(
 
 	// We want to create a new active set that replaces the old one.
 	// The pointer to the active set should be secured by a mutex.
-	mesh->m_gpuGeomStorage.delete_debug_tex_reference_ = rgb_tex->getGlHandle();
+	mesh->gpu_geom_storage_.delete_debug_tex_reference_ = rgb_tex->getGlHandle();
 
 	// Now that we have the geometry on the cpu now do the texture for the geometrical textures:
 
@@ -351,7 +351,7 @@ void GeometryUpdate::extend(
 
 	//add the objects to the low detail renderer
 	auto start_low_detail = chrono::system_clock::now();
-	mesh->lowDetailRenderer.addPatches(new_shared_mesh_patches,
+	mesh->low_detail_renderer.addPatches(new_shared_mesh_patches,
 	                                   -depth_pose_in.block<3, 1>(0, 3));
 	auto end_low_detail = chrono::system_clock::now();
 
@@ -367,12 +367,12 @@ void GeometryUpdate::extend(
 	cout << "[GeometryUpdate::Extend] Time consumed by projecting the geometry to the geometry texture:"
 	     << time_elapsed.count() << "ms" << endl;
 
-	mesh->octree.addObjects(new_shared_mesh_patches);
+	mesh->octree_.addObjects(new_shared_mesh_patches);
 
 	//TODO: remove
 	//check if the newly created active set is completely loaded
 	new_active_set->checkForCompleteGeometry();
-	mesh->activeSetExpand = new_active_set;
+	mesh->active_set_expand = new_active_set;
 
 	//debug... check if the active set has all the geometry textures
 	for(auto patch : new_active_set->retained_mesh_patches_cpu) {
@@ -447,7 +447,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 	 */
 
 
-	Matrix4f proj = Camera::genProjMatrix(mesh->params.depthfxycxy);
+	Matrix4f proj = Camera::genProjMatrix(mesh->params.depth_fxycxy);
 	Matrix4f pose = depth_pose_in;
 	Matrix4f pose_tmp = pose.inverse();
 	Matrix4f proj_pose = proj * pose_tmp;
@@ -579,9 +579,8 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		desc.triangle_count = gpu->triangles->getSize();
 
 		//now go for the destRect textures
-		//shared_ptr<MeshTextureGpuHandle> destTex = make_shared<MeshTextureGpuHandle>();
-		shared_ptr<TexAtlasPatch> dest_tex = mesh->texAtlasStds->getTexAtlasPatch(rect.size());
-		//destTex->refTex = geomTexGpuHandle->refTex;
+		shared_ptr<TexAtlasPatch> dest_tex = 
+				mesh->tex_atlas_stds_->getTexAtlasPatch(rect.size());
 		//assert(0); // TODO: also copy over the  dependencies belonging to the referenceTexture if we are really copying
 
 		tex  = dest_tex->getTex();
@@ -637,10 +636,10 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 	int debug = updateGeometry(
 			d_std_tex->getCudaSurfaceObject(), width, height, descriptors, cam_pos, 
 			pose_tmp, proj_pose, 
-			(GpuVertex*)mesh->m_gpuGeomStorage.vertex_buffer->getCudaPtr(),
-			(Vector2f*)mesh->m_gpuGeomStorage.tex_pos_buffer->getCudaPtr(),
-			(GpuTriangle*)mesh->m_gpuGeomStorage.triangle_buffer->getCudaPtr(),
-			(GpuPatchInfo*)mesh->m_gpuGeomStorage.patch_info_buffer->getCudaPtr());
+			(GpuVertex*)mesh->gpu_geom_storage_.vertex_buffer->getCudaPtr(),
+			(Vector2f*)mesh->gpu_geom_storage_.tex_pos_buffer->getCudaPtr(),
+			(GpuTriangle*)mesh->gpu_geom_storage_.triangle_buffer->getCudaPtr(),
+			(GpuPatchInfo*)mesh->gpu_geom_storage_.patch_info_buffer->getCudaPtr());
 
 	//cout << "here we should first do the vertex update and then the std texture update" << endl;
 
@@ -685,5 +684,5 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		//gpuTexPatch->downloadToWhenFinished = patch->geomTexPatch;
 		gpu_tex_patch->gpu_data_changed = true;
 	}
-	mesh_reconstruction->cleanupGlStoragesThisThread();
+	mesh_reconstruction->cleanupGlStoragesThisThread_();
 }

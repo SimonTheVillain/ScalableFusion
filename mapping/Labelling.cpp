@@ -31,7 +31,7 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 
 	// GL_R
 	shared_ptr<gfx::GpuTex2D> label_tex = make_shared<gfx::GpuTex2D>(
-			mesh->garbageCollector, GL_R32I, GL_RED_INTEGER, GL_INT, width, height,
+			mesh->garbage_collector_, GL_R32I, GL_RED_INTEGER, GL_INT, width, height,
 			true, nullptr, GL_NEAREST);
 	label_tex->uploadData(labels.data);
 
@@ -158,7 +158,7 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 	//first we need to copy over the texture coordinates from geometry to the
 	//label patch
 	CoalescedGpuTransfer::device2DeviceSameBuf(
-			mesh->m_gpuGeomStorage.tex_pos_buffer->getCudaPtr(), copy_tasks);
+			mesh->gpu_geom_storage_.tex_pos_buffer->getCudaPtr(), copy_tasks);
 	//now we do the lookup textures
 	cout << "DEBUG: some of these textures are missing?, but why?" << endl;
 
@@ -171,17 +171,17 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 	                                             initial_value);
 	cudaDeviceSynchronize();
 
-	Matrix4f proj = Camera::genProjMatrix(mesh->params.depthfxycxy);
+	Matrix4f proj = Camera::genProjMatrix(mesh->params.depth_fxycxy);
 
 	Matrix4f pose_tmp = pose.inverse();
 	Matrix4f proj_pose =  proj * pose_tmp;
 	gpu::Labelling::labelSurfaces(
 			labelling_tasks, label_tex->getCudaSurfaceObject(), 
 			d_std_tex->getCudaSurfaceObject(), cv::Size2i(width, height), pose_tmp, 
-			proj_pose, mesh->m_gpuGeomStorage.vertex_buffer->getCudaPtr(),
-			mesh->m_gpuGeomStorage.tex_pos_buffer->getCudaPtr(),
-			mesh->m_gpuGeomStorage.triangle_buffer->getCudaPtr(),
-			mesh->m_gpuGeomStorage.patch_info_buffer->getCudaPtr());
+			proj_pose, mesh->gpu_geom_storage_.vertex_buffer->getCudaPtr(),
+			mesh->gpu_geom_storage_.tex_pos_buffer->getCudaPtr(),
+			mesh->gpu_geom_storage_.triangle_buffer->getCudaPtr(),
+			mesh->gpu_geom_storage_.patch_info_buffer->getCudaPtr());
 
 	//TODO: update descriptor on gpu
 	CoalescedGpuTransfer::upload(info_update_tasks);

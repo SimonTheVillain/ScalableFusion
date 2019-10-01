@@ -409,7 +409,7 @@ void Stitching::reloadBorderGeometry(std::vector<std::vector<Edge>> &borderList)
     }
 
 
-    GpuVertex* gpuVertBuf = mesh->m_gpuGeomStorage.vertex_buffer->getCudaPtr();
+    GpuVertex* gpuVertBuf = mesh->gpu_geom_storage_.vertex_buffer->getCudaPtr();
     vector<GpuVertex> downloadedData(pointRefs.size());
 
     vector<GpuVertex*> gpuVerts;
@@ -769,7 +769,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
                                 sewingMode= false;
                                 return;
                             }
-                            map->addTriangle(lastSewingPr, pr0,pr1,debugListNewEdges);
+                            map->addTriangle_(lastSewingPr, pr0,pr1,debugListNewEdges);
                             nrTrianglesThisEdge++;
 #ifdef SHOW_TEXT_STITCHING
                             cout << "e" << endl;
@@ -856,7 +856,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
                                     continue;
 
                                 }
-                                map->addTriangle(currentSewingPr,lastSewingPr,pr1,debugListNewEdges  );
+                                map->addTriangle_(currentSewingPr,lastSewingPr,pr1,debugListNewEdges  );
                                 nrTrianglesThisEdge++;
                                 lastPr = currentSewingPr;
 #ifdef SHOW_TEXT_STITCHING
@@ -891,7 +891,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
                                 sewingMode=false;
                                 return;
                             }
-                            map->addTriangle(lastSewingPr,pr0,pr1,debugListNewEdges);
+                            map->addTriangle_(lastSewingPr,pr0,pr1,debugListNewEdges);
                             nrTrianglesThisEdge++;
                             lastPr = lastSewingPr;
 #ifdef SHOW_TEXT_STITCHING
@@ -916,7 +916,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
                                     return;
 
                                 }
-                                map->addTriangle(currentSewingPr,lastSewingPr,pr1,debugListNewEdges);
+                                map->addTriangle_(currentSewingPr,lastSewingPr,pr1,debugListNewEdges);
                                 lastPr = currentSewingPr;
 #ifdef SHOW_TEXT_STITCHING
                                 cout << "g2" << endl;
@@ -1142,7 +1142,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
                             }
                             checkAndStartSewing(thisPr);
 
-                            map->addTriangle(thisPr,pr0,pr1,debugListNewEdges);
+                            map->addTriangle_(thisPr,pr0,pr1,debugListNewEdges);
 #ifdef SHOW_TEXT_STITCHING
                             cout << "a" << endl;
 #endif
@@ -1172,7 +1172,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
                                 }
                                 checkAndStartSewing(thisPr);
 
-                                map->addTriangle(thisPr,pr0,pr1,debugListNewEdges);
+                                map->addTriangle_(thisPr,pr0,pr1,debugListNewEdges);
 #ifdef SHOW_TEXT_STITCHING
                                 cout << "b" << endl;
 #endif
@@ -1206,7 +1206,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
 
                                 }
 
-                                map->addTriangle(lastPr,pr0,pr1,debugListNewEdges);//TODO: reinsert this
+                                map->addTriangle_(lastPr,pr0,pr1,debugListNewEdges);//TODO: reinsert this
 #ifdef SHOW_TEXT_STITCHING
                                 cout << "c" << endl;
 #endif
@@ -1228,7 +1228,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
                                 if(!isTrianglePossible({thisPr,lastPr,pr1})){
                                     continue;
                                 }
-                                map->addTriangle(thisPr,lastPr,pr1,debugListNewEdges);
+                                map->addTriangle_(thisPr,lastPr,pr1,debugListNewEdges);
 #ifdef SHOW_TEXT_STITCHING
                                 cout << "c" << endl;
 #endif
@@ -1269,7 +1269,7 @@ void Stitching::stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen:
                             needToConnectHole= true;
                             //TODO: check if the hole is one or two hops long.
                         }
-                        map->addTriangle(thisPr,lastPr,pr1,debugListNewEdges);//third point is from last edge
+                        map->addTriangle_(thisPr,lastPr,pr1,debugListNewEdges);//third point is from last edge
 #ifdef SHOW_TEXT_STITCHING
                         cout << "d" << endl;
 #endif

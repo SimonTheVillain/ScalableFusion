@@ -105,10 +105,10 @@ void SchedulerThreaded::captureWorker(shared_ptr<MeshReconstruction> map, Stream
 
         }
 
-        map->activeSetUpdateMutex.lock();
+        map->active_set_update_mutex.lock();
         shared_ptr<ActiveSet> activeSetCapturing =
-                map->activeSetUpdate;
-        map->activeSetUpdateMutex.unlock();
+                map->active_set_update;
+        map->active_set_update_mutex.unlock();
 
         bool hasGeometry=false;
         if(map->hasGeometry() && activeSetCapturing != nullptr){
@@ -208,10 +208,10 @@ void SchedulerThreaded::captureWorker(shared_ptr<MeshReconstruction> map, Stream
         /***************************************/
         //lets integrate the new data
         //get current active set:
-        map->activeSetUpdateMutex.lock();
+        map->active_set_update_mutex.lock();
         std::shared_ptr<ActiveSet> activeSet =
-                map->activeSetUpdate;
-        map->activeSetUpdateMutex.unlock();
+                map->active_set_update;
+        map->active_set_update_mutex.unlock();
 
         //refine rgb and depth data on patches residing in the current active set
         /*
@@ -239,7 +239,7 @@ void SchedulerThreaded::captureWorker(shared_ptr<MeshReconstruction> map, Stream
 
 
         //debug: printing the number of used vertices into a file
-        logMemory << map->m_gpuGeomStorage.vertex_buffer->getUsedElements() << endl;
+        logMemory << map->gpu_geom_storage_.vertex_buffer->getUsedElements() << endl;
 
         firstLap=false;
 
@@ -283,7 +283,7 @@ void SchedulerThreaded::updateActiveSet(cv::Mat dStdMat, std::shared_ptr<gfx::Gp
 
     std::shared_ptr<ActiveSet> activeSet = map->genActiveSetFromPose(depthPose);
 
-    map->setActiveSetUpdate(activeSet);
+    map->setActiveSetUpdate_(activeSet);
 
 
     //DEBUG:
@@ -335,14 +335,14 @@ void SchedulerThreaded::refineRgb(std::shared_ptr<ActiveSet> activeSet, std::sha
 
 void SchedulerThreaded::refineDepth(std::shared_ptr<ActiveSet> activeSet, std::shared_ptr<gfx::GpuTex2D> dStdTex,
                                     Eigen::Matrix4f depthPose) {
-    map->geometryUpdate.update(dStdTex,depthPose,activeSet);
+    map->geometry_update.update(dStdTex,depthPose,activeSet);
     refineDepthTimer.click();
 }
 
 void SchedulerThreaded::expand(std::shared_ptr<ActiveSet> activeSet, std::shared_ptr<gfx::GpuTex2D> rgbTex,
                                Eigen::Matrix4f rgbPose, std::shared_ptr<gfx::GpuTex2D> dStdTex, cv::Mat dStdMat,
                                Eigen::Matrix4f depthPose) {
-    map->geometryUpdate.extend(activeSet,
+    map->geometry_update.extend(activeSet,
                       dStdTex,dStdMat,depthPose,
                        rgbTex,rgbPose);
     currentlyWorkingOnExpansion = false;
@@ -376,8 +376,8 @@ SchedulerThreaded::SchedulerThreaded(shared_ptr<MeshReconstruction> map, Stream 
 
 
     auto cleaner = [&map](GLFWwindow** personalContext){
-        map->fboStorage.forceGarbageCollect();
-        map->garbageCollector->forceCollect();
+        map->fbo_storage_.forceGarbageCollect();
+        map->garbage_collector_->forceCollect();
         glFinish();
         glfwDestroyWindow(*personalContext);
         delete personalContext;

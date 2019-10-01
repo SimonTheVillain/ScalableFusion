@@ -487,8 +487,8 @@ void ActiveSet::uploadTexAndCoords_(
 			shared_ptr<MeshTextureGpuHandle> tex_patch_gpu =
 					make_shared<MeshTextureGpuHandle>(gpu_geom_storage->tex_pos_buffer,
 					                                  tex_patch->tex_coords.size(),
-					                                  map->texAtlasGeomLookup.get(),
-					                                  map->texAtlasStds.get(),//TODO: the references are supposed to be filled at "CheckAndUpdateRefTextures"
+					                                  map->tex_atlas_geom_lookup_.get(),
+					                                  map->tex_atlas_stds_.get(),//TODO: the references are supposed to be filled at "CheckAndUpdateRefTextures"
 					                                  width, height);
 
 			//now do the uploading
@@ -543,7 +543,7 @@ void ActiveSet::uploadTexAndCoords_(
 						make_shared<MeshTextureGpuHandle>(gpu_geom_storage->tex_pos_buffer,
 						                                  tex_patch->tex_coords.size(),
 						                                  nullptr,
-						                                  map->texAtlasRgb8Bit.get(),//TODO: where to get these from?
+						                                  map->tex_atlas_rgb_8_bit_.get(),//TODO: where to get these from?
 						                                  width, height);
 
 				tex_patch->mat_mutex.lock();

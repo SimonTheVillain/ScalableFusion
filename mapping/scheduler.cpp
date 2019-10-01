@@ -171,10 +171,10 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
             accuPose=accuPose*relPose;
         }
 
-        map->activeSetUpdateMutex.lock();
+        map->active_set_update_mutex.lock();
         shared_ptr<ActiveSet> activeSetCapturing =
-                map->activeSetUpdate;
-        map->activeSetUpdateMutex.unlock();
+                map->active_set_update;
+        map->active_set_update_mutex.unlock();
 
 
 
@@ -249,12 +249,12 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
         //don't ask me what this is doing here!TODO: find out
         map->clearInvalidGeometry(activeSet,depth,depthPose);
 
-        map->geometryUpdate.update(dStdTex,depthPose,activeSet);
+        map->geometry_update.update(dStdTex,depthPose,activeSet);
 
         map->texturing.ColorTexUpdate(rgbTexture,rgbPose,activeSet);
 
         //there definitely is a reason to keep the active set here!
-        map->setActiveSetUpdate(activeSet);
+        map->setActiveSetUpdate_(activeSet);
 
 
         //every now and then we add new geometry:
@@ -280,7 +280,7 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
                 Mat renderedNormals(depth.rows, depth.cols, CV_32FC4);
                 Mat renderedLabels(depth.rows, depth.cols, CV_32FC4);//SC1?
                 Mat renderedColor(depth.rows, depth.cols, CV_32FC4);
-                map->m_informationRenderer.render(activeSet.get(),//activeSetExpand
+                map->information_renderer.render(activeSet.get(),//activeSetExpand
                                                   proj, depthPoseLastExpand,
                                                   &renderedDepth, &renderedNormals, &renderedColor,
                                                   &renderedLabels);
@@ -325,7 +325,7 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
                               dStdTex,dStdMat,depthPose,
                               rgbTexture,rgbPose);
             */
-            map->geometryUpdate.extend(activeSet,
+            map->geometry_update.extend(activeSet,
                                        dStdTex, dStdMat, depthPose,
                                        rgbTexture, rgbPose);
 
@@ -334,11 +334,11 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
             //setting the active set, which also gets rendered to
             //the one updated in the expand method.
             //only do this in single threaded mode.
-            map->setActiveSetUpdate(map->activeSetExpand);
+            map->setActiveSetUpdate_(map->active_set_expand);
 
             frameCount = 0;
 
-            activeSetLastExpand = map->activeSetExpand;
+            activeSetLastExpand = map->active_set_expand;
             depthPoseLastExpand = depthPose;
             //waitKey();//DEBUG
         }
@@ -351,36 +351,36 @@ void SchedulerLinear::captureWorker(shared_ptr<MeshReconstruction> map, Stream *
 
 
         //cleanup VBO and VAOs that are deleted but only used within this thread
-        map->cleanupGlStoragesThisThread();
+        map->cleanupGlStoragesThisThread_();
         garbageCollector->collect();
 
         cv::imshow("rgb",rgb);
         cv::waitKey(1);
         //tons of debug output to find this fucking memory leak!!!!
         int texCount =
-                map->texAtlasStds->countTex() +
-                map->texAtlasGeomLookup->countTex() +
-                map->texAtlasRgb8Bit->countTex() +
-                map->texAtlasSegLabels->countTex();
+                map->tex_atlas_stds_->countTex() +
+                map->tex_atlas_geom_lookup_->countTex() +
+                map->tex_atlas_rgb_8_bit_->countTex() +
+                map->tex_atlas_seg_labels_->countTex();
         cout << "texCount overall: " << texCount <<
-        " stds " << map->texAtlasStds->countTex() << " lookup " <<
-        map->texAtlasGeomLookup->countTex() << " rgb " << map->texAtlasRgb8Bit->countTex() <<   endl;
+        " stds " << map->tex_atlas_stds_->countTex() << " lookup " <<
+        map->tex_atlas_geom_lookup_->countTex() << " rgb " << map->tex_atlas_rgb_8_bit_->countTex() <<   endl;
 
         int patchCount =
-                map->texAtlasStds->countPatches() +
-                map->texAtlasGeomLookup->countPatches() +
-                map->texAtlasRgb8Bit->countPatches() +
-                map->texAtlasSegLabels->countPatches();
+                map->tex_atlas_stds_->countPatches() +
+                map->tex_atlas_geom_lookup_->countPatches() +
+                map->tex_atlas_rgb_8_bit_->countPatches() +
+                map->tex_atlas_seg_labels_->countPatches();
         cout << "patchCount overall: " << patchCount <<
-             " stds " << map->texAtlasStds->countPatches() << " lookup " <<
-             map->texAtlasGeomLookup->countPatches() << " rgb " << map->texAtlasRgb8Bit->countPatches() <<   endl;
+             " stds " << map->tex_atlas_stds_->countPatches() << " lookup " <<
+             map->tex_atlas_geom_lookup_->countPatches() << " rgb " << map->tex_atlas_rgb_8_bit_->countPatches() <<   endl;
 
 
-        cout << "FBOs active " << map->getFboCountDebug() << endl;
+        cout << "FBOs active " << map->getFboCountDebug_() << endl;
 
     }
     //delete everything for the fbo
-    map->fboStorage.forceGarbageCollect();
+    map->fbo_storage_.forceGarbageCollect();
     garbageCollector->forceCollect();
     glFinish();
 

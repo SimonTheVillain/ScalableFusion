@@ -32,7 +32,7 @@ MeshTexture::~MeshTexture() {
 shared_ptr<MeshTextureGpuHandle> MeshTexture::genGpuResource(size_t nr_coords,
                                                              cv::Size2i size) {
 
-	TexAtlas* ref_atlas  = map_->texAtlasGeomLookup.get();
+	TexAtlas* ref_atlas  = map_->tex_atlas_geom_lookup_.get();
 	TexAtlas* data_atlas = nullptr;
 	switch(type_) {
 		case MeshTexture::Type::COLOR:
@@ -40,22 +40,22 @@ shared_ptr<MeshTextureGpuHandle> MeshTexture::genGpuResource(size_t nr_coords,
 			//dataAtlas = map->texAtlasRgb16F.get();
 			break;
 		case MeshTexture::Type::COLOR8:
-			data_atlas = map_->texAtlasRgb8Bit.get();
+			data_atlas = map_->tex_atlas_rgb_8_bit_.get();
 			//TODO: add this to exarregate the impact of that texture leak
 			ref_atlas = nullptr;//TODO: remove this when we finally have a better way of updating the color texture
 			break;
 		case MeshTexture::Type::INTEGER_LABELS:
-			data_atlas = map_->texAtlasSegLabels.get();
+			data_atlas = map_->tex_atlas_seg_labels_.get();
 			break;
 		case MeshTexture::Type::WEIGHTED_INTEGER_LABELS:
-			data_atlas = map_->texAtlasSemSegLabelsWeights.get();
+			data_atlas = map_->tex_atlas_sem_seg_labels_weights_.get();
 			break;
 		case MeshTexture::Type::STANDARD_DEVIATION:
-			data_atlas = map_->texAtlasStds.get();
+			data_atlas = map_->tex_atlas_stds_.get();
 			break;
 	}
 
-	TexCoordBuffer* coord_buf = map_->m_gpuGeomStorage.tex_pos_buffer;
+	TexCoordBuffer* coord_buf = map_->gpu_geom_storage_.tex_pos_buffer;
 
 	shared_ptr<MeshTextureGpuHandle> meshTexGpu(
 			new MeshTextureGpuHandle(coord_buf, nr_coords, ref_atlas, data_atlas,

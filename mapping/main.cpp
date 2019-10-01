@@ -445,11 +445,11 @@ int main(int argc, const char * argv[])
 
 
         //render the
-        scaleableMap->m_renderPresentation.show_wireframe = renderWireframe;
-        scaleableMap->m_renderPresentation.color_mode = colorMode;
-        scaleableMap->m_renderPresentation.shading_mode = shadingMode;
+        scaleableMap->render_presentation.show_wireframe = renderWireframe;
+        scaleableMap->render_presentation.color_mode = colorMode;
+        scaleableMap->render_presentation.shading_mode = shadingMode;
         if(!disableRendering){
-            scaleableMap->m_renderPresentation.renderInWindow(view,proj,renderHighDetail,invisibleWindow);
+            scaleableMap->render_presentation.renderInWindow(view,proj,renderHighDetail,invisibleWindow);
             //scaleableMap->render(view,proj,renderHighDetail,invisibleWindow);
         }
         if(readOutSurfaceInfo==true){
@@ -457,7 +457,7 @@ int main(int argc, const char * argv[])
             int patchInd;
             int triangleInd;
             Eigen::Vector4f clickedPoint =
-                    scaleableMap->m_informationRenderer.renderAndExtractInfo(view,proj,
+                    scaleableMap->information_renderer.renderAndExtractInfo(view,proj,
                                     renderHighDetail,invisibleWindow,
                                     1280,800,
                                     static_cast<int>(xposOld),
@@ -479,7 +479,7 @@ int main(int argc, const char * argv[])
         if(centerCamera==true){
             cout << "Reading out the clicked patch to get further info and center the camera" << endl;
             Eigen::Vector4f center =
-            scaleableMap->m_informationRenderer.renderAndExtractInfo(view,proj,
+            scaleableMap->information_renderer.renderAndExtractInfo(view,proj,
                                     renderHighDetail,invisibleWindow,
                                     1280,800,
                                     static_cast<int>(xposOld),

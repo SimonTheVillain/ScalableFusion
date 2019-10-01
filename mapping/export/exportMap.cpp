@@ -33,7 +33,7 @@ void Exporter::exportMesh(MeshReconstruction *map,string path,
 void Exporter::storeCoarse(MeshReconstruction *map, string file_path) {
 	vector<GpuCoarseVertex> vertices;
 	vector<int> indices;
-	map->lowDetailRenderer.downloadCurrentGeometry(vertices, indices);
+	map->low_detail_renderer.downloadCurrentGeometry(vertices, indices);
 
 	aiScene scene;
 
@@ -115,8 +115,8 @@ void Exporter::storeFine(MeshReconstruction *map, string file_path) {
 
 	size_t triangle_count = 0;
 	size_t vertex_count = 0;
-	map->m_patchesMutex.lock();
-	for(pair<int, shared_ptr<MeshPatch>> id_patch : map->m_patches) {//of course auto would be valid here as well
+	map->patches_mutex_.lock();
+	for(pair<int, shared_ptr<MeshPatch>> id_patch : map->patches_) {//of course auto would be valid here as well
 		shared_ptr<MeshPatch> patch = id_patch.second;
 		start_indices[id_patch.first] = vertex_count;
 		triangle_count += patch->triangles.size();
@@ -137,7 +137,7 @@ void Exporter::storeFine(MeshReconstruction *map, string file_path) {
 	}
 	//how to store
 
-	map->m_patchesMutex.unlock();
+	map->patches_mutex_.unlock();
 
 	aiScene scene;
 
@@ -187,7 +187,7 @@ void Exporter::storeFine(MeshReconstruction *map, string file_path) {
 		}
 	};
 
-	for(pair<int, shared_ptr<MeshPatch>> id_patch : map->m_patches) {
+	for(pair<int, shared_ptr<MeshPatch>> id_patch : map->patches_) {
 		shared_ptr<MeshPatch> patch = id_patch.second;
 		for(int i = 0 ; i < patch->vertices.size(); i++) {
 			aiVector3D vec;
@@ -311,7 +311,7 @@ void Exporter::storeGraph(MeshReconstruction *map, string file_path) {
 	unordered_map<MeshPatch*, int> index_map;
 	unordered_set<shared_ptr<DoubleStitch>> unique_stitches;
 	int k = 0;
-	for(pair<int, shared_ptr<MeshPatch>> id_patch : map->m_patches) {//of course auto would be valid here as well
+	for(pair<int, shared_ptr<MeshPatch>> id_patch : map->patches_) {//of course auto would be valid here as well
 		shared_ptr<MeshPatch> patch = id_patch.second;
 		index_map[patch.get()] = k;
 		k++;
@@ -324,7 +324,7 @@ void Exporter::storeGraph(MeshReconstruction *map, string file_path) {
 	file.open(file_path);
 	file << index_map.size() << endl;
 	file << unique_stitches.size() << endl;
-	for(auto patch : map->m_patches) {
+	for(auto patch : map->patches_) {
 		Vector3f center = patch.second->getPos();
 		file << center[0] << " " << center[1] << " " << center[2]  << endl;
 	}
@@ -346,7 +346,7 @@ void Exporter::storeDeformationGraph(MeshReconstruction *map,
 	unordered_map<MeshPatch*, unordered_set<MeshPatch*>> unique_edges;
 	unordered_map<MeshPatch*,int> index_map;
 	int k = 0;
-	for(pair<int,shared_ptr<MeshPatch>> id_patch : map->m_patches) {//of course auto would be valid here as well
+	for(pair<int,shared_ptr<MeshPatch>> id_patch : map->patches_) {//of course auto would be valid here as well
 		shared_ptr<MeshPatch> patch = id_patch.second;
 		index_map[patch.get()] = k;
 		k++;
@@ -382,7 +382,7 @@ void Exporter::storeDeformationGraph(MeshReconstruction *map,
 	file.open(file_path);
 	file << index_map.size() << endl;
 	file << size << endl;
-	for(auto patch : map->m_patches) {
+	for(auto patch : map->patches_) {
 		Vector3f center = patch.second->getPos();
 		file << center[0] << " " << center[1] << " " << center[2]  << endl;
 	}

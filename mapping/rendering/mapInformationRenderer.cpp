@@ -188,13 +188,13 @@ void MapInformationRenderer::initInContext() {
 
 			//texture creation
 			//depth:
-			pt.depth_texture = make_shared<gfx::GpuTex2D>(map_->garbageCollector,
+			pt.depth_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
 			                                              GL_RGBA32F,GL_RGBA,
 			                                              GL_FLOAT,
 			                                              width_, height_, false);
 			pt.depth_texture->name = "perThread depth texture";
 			//debug:
-			pt.std_texture = make_shared<gfx::GpuTex2D>(map_->garbageCollector,
+			pt.std_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
 			                                           GL_RGBA32F,
 			                                           GL_RGBA,
 			                                           GL_FLOAT,
@@ -244,22 +244,22 @@ void MapInformationRenderer::initInContext() {
 			glGenFramebuffers(1, &pt.combined_FBO);
 			glBindFramebuffer(GL_FRAMEBUFFER, pt.combined_FBO);
 
-			pt.z_texture = make_shared<gfx::GpuTex2D>(map_->garbageCollector,
+			pt.z_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
 			                                         GL_R32F, GL_RED, GL_FLOAT,
 			                                         width_, height_, false);
 			pt.z_texture->name = "per thread zTexture";
-			pt.color_texture = make_shared<gfx::GpuTex2D>(map_->garbageCollector,
+			pt.color_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
 			                                              GL_RGBA32F, GL_RGBA, 
 			                                              GL_FLOAT, 
 			                                              width_, height_, false);
 			pt.color_texture->name = "per thread colorTexture";
-			pt.normal_texture = make_shared<gfx::GpuTex2D>(map_->garbageCollector,
+			pt.normal_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
 			                                              GL_RGBA32F, GL_RGBA, 
 			                                              GL_FLOAT, width_, height_, 
 			                                              false);
 			pt.normal_texture->name = "per thread normalTexture";
 			//make this an int32.... this is going to be hard enough
-			pt.label_texture = make_shared<gfx::GpuTex2D>(map_->garbageCollector,
+			pt.label_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
 			                                              GL_RGBA32F, GL_RGBA, 
 			                                              GL_FLOAT, width_, height_,
 			                                              false);
@@ -354,19 +354,19 @@ void MapInformationRenderer::bindRenderTriangleReferenceProgram() {
 
 	//the vertex buffer
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
-	                 map_->m_gpuGeomStorage.vertex_buffer->getGlName());
+	                 map_->gpu_geom_storage_.vertex_buffer->getGlName());
 
 	//bind texture coordinates
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
-	                 map_->m_gpuGeomStorage.tex_pos_buffer->getGlName());
+	                 map_->gpu_geom_storage_.tex_pos_buffer->getGlName());
 
 	//the triangle buffer
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
-	                 map_->m_gpuGeomStorage.triangle_buffer->getGlName());
+	                 map_->gpu_geom_storage_.triangle_buffer->getGlName());
 
 	//the patch information
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
-	                 map_->m_gpuGeomStorage.patch_info_buffer->getGlName());
+	                 map_->gpu_geom_storage_.patch_info_buffer->getGlName());
 
 	gfx::GLUtils::checkForOpenGLError(
 			"[MapInformationRenderer::bindRenderTriangleReferenceProgram] "
@@ -618,13 +618,13 @@ Vector4f MapInformationRenderer::renderAndExtractInfo(
 	gfx::GLUtils::checkForOpenGLError(
 		"[MapInformationRenderer::renderInfo] Before rendering");
 
-	map_->activeSetUpdateMutex.lock();
-	shared_ptr<ActiveSet> active_set1 = map_->activeSetUpdate;
-	map_->activeSetUpdateMutex.unlock();
+	map_->active_set_update_mutex.lock();
+	shared_ptr<ActiveSet> active_set1 = map_->active_set_update;
+	map_->active_set_update_mutex.unlock();
 
-	map_->activeSetRenderingMutex.lock();
-	shared_ptr<ActiveSet> active_set2 = map_->activeSetRendering;
-	map_->activeSetRenderingMutex.unlock();
+	map_->active_set_rendering_mutex_.lock();
+	shared_ptr<ActiveSet> active_set2 = map_->active_set_rendering_;
+	map_->active_set_rendering_mutex_.unlock();
 
 	GLuint screen_FBO;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*) &screen_FBO);
@@ -680,16 +680,16 @@ Vector4f MapInformationRenderer::renderAndExtractInfo(
 
 	if(render_visible_from_cam) {
 		if(active_set1 != nullptr) {
-			map_->m_informationRenderer.renderTriangleReferencesAndDepth(
+			map_->information_renderer.renderTriangleReferencesAndDepth(
 					active_set1.get(), proj, view);
 		}
 		if(active_set2 != nullptr) {
-			map_->m_informationRenderer.renderTriangleReferencesAndDepth(
+			map_->information_renderer.renderTriangleReferencesAndDepth(
 					active_set2.get(), proj, view);
 		}
 	}
 	//TODO: also render the low detail stuff... at least do it for the
-	map_->lowDetailRenderer.renderGeometry(proj, view);
+	map_->low_detail_renderer.renderGeometry(proj, view);
 
 	glFinish();
 

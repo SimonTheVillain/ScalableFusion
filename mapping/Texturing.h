@@ -1,55 +1,54 @@
-//
-// Created by simon on 8/2/19.
-//
-
-#ifndef SUPERMAPPING_TEXTURING_H
-#define SUPERMAPPING_TEXTURING_H
-
+#ifndef FILE_TEXTURING_H
+#define FILE_TEXTURING_H
 
 #include <memory>
+
 #include <Eigen/Eigen>
+
 #include "base/meshStructure.h"
 
+using namespace std;
+using namespace Eigen;
 
 class MeshReconstruction;
 
 class Texturing {
 public:
-    MeshReconstruction *meshReconstruction;
 
+	void generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
+	                     Matrix4f pose, Matrix4f proj,
+	                     shared_ptr<gfx::GpuTex2D> geom_sensor_data,
+	                     shared_ptr<ActiveSet> active_set);
 
+	void projToGeomTex(ActiveSet *active_set, 
+	                   vector<shared_ptr<MeshPatch> > &new_patches,
+	                   shared_ptr<gfx::GpuTex2D> geom_sensor_data,
+	                   Matrix4f pose, Matrix4f proj);
 
-    //formerly
-    void GenerateGeomTex(std::vector<std::shared_ptr<MeshPatch> > &newPatches,
-                         Eigen::Matrix4f pose, Eigen::Matrix4f proj,
-                         std::shared_ptr<gfx::GpuTex2D> geomSensorData,
-                         std::shared_ptr<ActiveSet> activeSet);
+	//TODO: put this to geometryUpdate else or split it up properly
+	void vertGeomTexUpdate(shared_ptr<gfx::GpuTex2D> d_std_tex,
+	                       Matrix4f depth_pose_in,
+	                       shared_ptr<ActiveSet> &active_set);
 
+	void colorTexUpdate(shared_ptr<gfx::GpuTex2D> rgba_tex,
+	                    Matrix4f color_pose_in,
+	                    shared_ptr<ActiveSet> &active_set);
 
-    void ProjToGeomTex(ActiveSet* activeSet, std::vector<std::shared_ptr<MeshPatch> > &newPatches,
-                       std::shared_ptr<gfx::GpuTex2D> geomSensorData,
-                       Eigen::Matrix4f pose, Eigen::Matrix4f proj);
+	void applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
+	                    shared_ptr<gfx::GpuTex2D> rgb_in,
+	                    Matrix4f &pose, Matrix4f &proj, 
+	                    shared_ptr<ActiveSet> active_set);
 
+	void genLookupTexGeom(ActiveSet *active_set, 
+	                      vector<shared_ptr<MeshPatch> > &patches);
 
-    //TODO: put this to geometryUpdate else or split it up properly
-    void VertGeomTexUpdate(std::shared_ptr<gfx::GpuTex2D> dStdTex,
-                           Eigen::Matrix4f depthPoseIn,
-                           std::shared_ptr<ActiveSet> &activeSet);
-    void ColorTexUpdate(std::shared_ptr<gfx::GpuTex2D> rgbaTex,
-                        Eigen::Matrix4f colorPoseIn,
-                        std::shared_ptr<ActiveSet> &activeSet);
+	void genLookupTex(ActiveSet *active_set,
+	                  vector<shared_ptr<MeshPatch> > &patches,
+	                  vector<shared_ptr<MeshTexture>> &textures,
+	                  bool dilate = true);
 
-    void ApplyColorData(std::vector<std::shared_ptr<MeshPatch>> &visiblePatches,
-                           std::shared_ptr<gfx::GpuTex2D> rgbIn,
-                           Eigen::Matrix4f &pose, Eigen::Matrix4f &proj, std::shared_ptr<ActiveSet> activeSet);
-
-    void GenLookupTexGeom(ActiveSet *activeSet, std::vector<std::shared_ptr<MeshPatch> > &patches);
-    void GenLookupTex(ActiveSet *activeSet,
-                      std::vector<std::shared_ptr<MeshPatch> > &patches,
-                      std::vector<std::shared_ptr<MeshTexture>> &textures,
-                      bool dilate = true);
-
+	MeshReconstruction *mesh_reconstruction;
 };
 
 
-#endif //SUPERMAPPING_TEXTURING_H
+#endif

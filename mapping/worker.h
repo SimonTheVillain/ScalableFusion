@@ -1,9 +1,5 @@
-//
-// Created by simon on 11/9/18.
-//
-
-#ifndef SUPERMAPPING_WORKER_H
-#define SUPERMAPPING_WORKER_H
+#ifndef FILE_WORKER_H
+#define FILE_WORKER_H
 
 #include <thread>
 #include <mutex>
@@ -11,49 +7,59 @@
 #include <queue>
 #include <functional>
 
+using namespace std;
 
-class Worker{
-private:
-    std::string debugName;
-    bool endThreadVar=false;
-    std::mutex taskMutex;
-    std::function<void ()> task;
-    std::mutex messagingMutex;
-    std::condition_variable conditionVar;
-    std::thread workerThread;
-    static void proc(Worker* worker,std::function<void ()> initializer,std::function<void ()> cleaner);
-    void method();
+class Worker {
 public:
-    void setNextTask(std::function<void ()> task);
 
-    void endThread();
+	Worker(function<void()> initializer, const string name,
+	       function<void()> cleaner = function<void()>());
 
-    Worker(std::function<void ()> initializer,
-            const std::string name,
-            std::function<void ()> cleaner =  std::function<void ()>());
-    ~Worker();
+	~Worker();
+
+	void setNextTask(function<void ()> task);
+
+	void endThread();
+
+private:
+
+	static void proc_(Worker *worker, function<void()> initializer, 
+	                  function<void()> cleaner);
+
+	void method_();
+
+	bool end_thread_var_;
+	mutex task_mutex_;
+	function<void()> task_;
+	mutex messaging_mutex_;
+	condition_variable condition_var_;
+	thread worker_thread_;
 };
 
 
-class QueuedWorker{
-private:
-    bool endThreadVar=false;
-    std::mutex tasksMutex;
-    std::queue<std::function<void ()>> tasks;
-    std::mutex messagingMutex;
-    std::condition_variable conditionVar;
-    std::thread workerThread;
-    static void proc(QueuedWorker *worker, std::function<void ()> initializer);
-    void method();
+class QueuedWorker {
 public:
-    void appendTask(std::function<void ()> task);
 
-    void endThread();
+	QueuedWorker(function<void()> initializer);
 
-    QueuedWorker(std::function<void ()> initializer);
-    ~QueuedWorker();
+	~QueuedWorker();
 
+	void appendTask(function<void()> task);
+
+	void endThread();
+
+private:
+
+	static void proc_(QueuedWorker *worker, function<void()> initializer);
+
+	void method_();
+
+	bool end_thread_var_;
+	mutex tasks_mutex_;
+	queue<function<void()>> tasks_;
+	mutex messaging_mutex_;
+	condition_variable condition_var_;
+	thread worker_thread_;
 };
 
-
-#endif //SUPERMAPPING_WORKER_H
+#endif

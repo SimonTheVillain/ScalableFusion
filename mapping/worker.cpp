@@ -1,133 +1,109 @@
-//
-// Created by simon on 11/9/18.
-//
-
 #include "worker.h"
+
 #include <iostream>
 
 using namespace std;
 
-
-void Worker::proc(Worker *worker, std::function<void ()> initializer,std::function<void ()> cleaner)
-{
-    initializer();
-    worker->method();
-    if(cleaner){
-        cleaner();
-    }
+Worker::Worker(function<void()> initializer, const string name,
+               function<void()> cleaner) 
+		: end_thread_var_(false) {
+	worker_thread_ = thread(Worker::proc_, this, initializer, cleaner);
+	pthread_setname_np(worker_thread_.native_handle(), name.c_str());
 }
 
-void Worker::method()
-{
-    while(true){
-        unique_lock<mutex> l(messagingMutex);
-        conditionVar.wait(l);
-        if(endThreadVar){
-            //maybe we also need to call some destructors (opengl contexts and stuff)
-            //TODO
-            return;
-        }
-
-        taskMutex.lock();
-        auto t = task;
-        taskMutex.unlock();
-        if(t){
-            t();
-        }
-    }
+Worker::~Worker() {
+	endThread();
+	worker_thread_.join();
 }
 
-void Worker::setNextTask(std::function<void ()> task)
-{
-    taskMutex.lock();
-    this->task = task;
-    taskMutex.unlock();
-    conditionVar.notify_one();
+void Worker::setNextTask(function<void()> task) {
+	task_mutex_.lock();
+	task_ = task;
+	task_mutex_.unlock();
+	condition_var_.notify_one();
 }
 
-void Worker::endThread()
-{
-    endThreadVar = true;
-    conditionVar.notify_one();
+void Worker::endThread() {
+	end_thread_var_ = true;
+	condition_var_.notify_one();
 }
 
-Worker::Worker(std::function<void ()> initializer,const std::string name,std::function<void ()> cleaner)
-{
-    workerThread = thread(Worker::proc,this,initializer,cleaner);
-    //renameThread(workerThread,name);
-    pthread_setname_np(workerThread.native_handle(),name.c_str());
-    debugName=name;
-
+void Worker::proc_(Worker *worker, function<void()> initializer,
+                   function<void()> cleaner) {
+	initializer();
+	worker->method_();
+	if(cleaner) {
+		cleaner();
+	}
 }
 
-Worker::~Worker()
-{
-    endThread();
+void Worker::method_() {
+	while(true) {
+		unique_lock<mutex> l(messaging_mutex_);
+		condition_var_.wait(l);
+		if(end_thread_var_) {
+			//maybe we also need to call some destructors (opengl contexts and stuff)
+			//TODO
+			return;
+		}
 
-    workerThread.join();
+		task_mutex_.lock();
+		auto task = task_;
+		task_mutex_.unlock();
+		if(task) {
+			task();
+		}
+	}
 }
 
-void QueuedWorker::proc(QueuedWorker *worker, std::function<void ()> initializer)
-{
-    initializer();
-    worker->method();
+QueuedWorker::QueuedWorker(function<void()> initializer)
+		: end_thread_var_(false) {
+	worker_thread_ = thread(QueuedWorker::proc_, this, initializer);
 }
 
-void QueuedWorker::method()
-{
-
-    while(true){
-        unique_lock<mutex> l(messagingMutex);
-        conditionVar.wait(l);
-
-
-        tasksMutex.lock();
-        if(endThreadVar &&
-           this->tasks.empty()){
-            cout << "TODO: delete the opengl context and stuff here" << endl;
-            //maybe we also need to call some destructors (opengl contexts and stuff)
-            tasksMutex.unlock();
-            return;
-        }
-        tasksMutex.unlock();
-        while(!tasks.empty()){
-            tasksMutex.lock();
-            auto t = this->tasks.front();
-            this->tasks.pop();
-            tasksMutex.unlock();
-            if(t){
-                t();
-            }
-        }
-    }
+QueuedWorker::~QueuedWorker() {
+	endThread();
+	worker_thread_.join();
 }
 
-void QueuedWorker::appendTask(std::function<void ()> task)
-{
-
-    tasksMutex.lock();
-    this->tasks.push(task);
-    tasksMutex.unlock();
-    conditionVar.notify_one();
+void QueuedWorker::appendTask(function<void()> task) {
+	tasks_mutex_.lock();
+	tasks_.push(task);
+	tasks_mutex_.unlock();
+	condition_var_.notify_one();
 }
 
-void QueuedWorker::endThread()
-{
-    endThreadVar = true;
-    conditionVar.notify_one();
-
+void QueuedWorker::endThread() {
+	end_thread_var_ = true;
+	condition_var_.notify_one();
 }
 
-QueuedWorker::QueuedWorker(std::function<void ()> initializer)
-{
-    workerThread = thread(QueuedWorker::proc,this,initializer);
-
+void QueuedWorker::proc_(QueuedWorker *worker, function<void()> initializer) {
+	initializer();
+	worker->method_();
 }
 
-QueuedWorker::~QueuedWorker()
-{
-    endThread();
+void QueuedWorker::method_() {
+	while(true) {
+		unique_lock<mutex> l(messaging_mutex_);
+		condition_var_.wait(l);
 
-    workerThread.join();
+		tasks_mutex_.lock();
+		if(end_thread_var_ && tasks_.empty()){
+			cout << "TODO: delete the opengl context and stuff here" << endl;
+			//maybe we also need to call some destructors (opengl contexts and stuff)
+			tasks_mutex_.unlock();
+			return;
+		}
+		tasks_mutex_.unlock();
+		while(!tasks_.empty()) {
+			tasks_mutex_.lock();
+			auto task = tasks_.front();
+			tasks_.pop();
+			tasks_mutex_.unlock();
+			if(task) {
+				task();
+			}
+		}
+	}
 }
-

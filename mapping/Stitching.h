@@ -1,48 +1,50 @@
-//
-// Created by simon on 8/2/19.
-//
-
-#ifndef SUPERMAPPING_STITCHING_H
-#define SUPERMAPPING_STITCHING_H
+#ifndef FILE_STITCHING_H
+#define FILE_STITCHING_H
 
 #include <vector>
+
 #include <opencv2/core.hpp>
+
 #include "../base/meshStructure.h"
+
+using namespace std;
+using namespace Eigen;
 
 class MeshReconstruction;
 
 class Stitching {
 public:
-    MeshReconstruction* meshReconstruction;
 
-    void Setup(MeshReconstruction* reconstruction){
-        meshReconstruction = reconstruction;
-    }
+	void setup(MeshReconstruction *reconstruction) {
+		mesh_reconstruction = reconstruction;
+	}
 
-    std::vector<std::vector<Edge>> borderList;
+	vector<vector<Edge>> border_list;
 
-    void rasterBorderGeometry(std::vector<std::vector<Edge>> &borders,
-                              Eigen::Matrix4f view, Eigen::Matrix4f proj, cv::Mat geometry);
+	void rasterBorderGeometry(vector<vector<Edge>> &borders, Matrix4f view, 
+	                          Matrix4f proj, cv::Mat geometry);
 
+	void rasterLineGeometry(Matrix4f view, Matrix4f proj, Edge *edge, 
+	                        cv::Mat geometry, cv::Mat debug);
 
-    void rasterLineGeometry(Eigen::Matrix4f _view, Eigen::Matrix4f proj, Edge* edge, cv:: Mat geometry, cv::Mat debug);
+	void genBorderList(vector<shared_ptr<MeshPatch>> &patches, 
+	                   vector<vector<Edge>> &border_list, 
+	                   Matrix4f debug_proj_pose);
 
+	void reloadBorderGeometry(vector<vector<Edge>> &border_list);
 
-    void genBorderList(std::vector<std::shared_ptr<MeshPatch>> &patches,
-                       std::vector<std::vector<Edge>> &borderList,
-                       Eigen::Matrix4f debugProj_pose);
-    void reloadBorderGeometry(std::vector<std::vector<Edge>> &borderList);
-    //TODO: also download the geometry of such list
-    void freeBorderList(std::vector<std::vector<Edge>> &borderList);
+	//TODO: also download the geometry of such list
+	void freeBorderList(vector<vector<Edge>> &border_list);
 
-    void stitchOnBorders(std::vector<std::vector<Edge> > &borders, Eigen::Matrix4f view, Eigen::Matrix4f proj,
-                                    cv::Mat stdProj, cv::Mat geomProjM, cv::Mat newGeomM, cv::Mat newStd,
-                                    cv::Mat debugColorCodedNewSegmentation, cv::Mat newSegPM,
-                                    cv::Mat newPtIndM,
-                                    std::vector<std::weak_ptr<GeometryBase>> &debugListNewEdges);
+	void stitchOnBorders(vector<vector<Edge> > &borders, Matrix4f view, 
+	                     Matrix4f proj, cv::Mat std_proj, cv::Mat geom_proj_m, 
+	                     cv::Mat new_geom_m, cv::Mat new_std, 
+	                     cv::Mat debug_color_coded_new_segmentation, 
+	                     cv::Mat new_seg_p_m, cv::Mat new_pt_ind_m,
+	                     vector<weak_ptr<GeometryBase>> &debug_list_new_edges);
 
+	MeshReconstruction *mesh_reconstruction;
 
 };
 
-
-#endif //SUPERMAPPING_STITCHING_H
+#endif

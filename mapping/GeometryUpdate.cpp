@@ -281,7 +281,7 @@ void GeometryUpdate::extend(
 	time_start = time_end;
 
 	new_active_set->reuploadHeaders();
-	mesh->texturing.GenerateGeomTex(new_shared_mesh_patches, depth_pose_in, 
+	mesh->texturing.generateGeomTex(new_shared_mesh_patches, depth_pose_in, 
 	                                proj_depth, d_std_tex, new_active_set);
 	for(shared_ptr<MeshPatch> patch : new_shared_mesh_patches) {
 		//TODO: test patch
@@ -305,7 +305,7 @@ void GeometryUpdate::extend(
 	time_start = time_end;
 
 	// Add and fill new color patches to the surface
-	mesh->texturing.ApplyColorData(new_shared_mesh_patches, rgb_tex,
+	mesh->texturing.applyColorData(new_shared_mesh_patches, rgb_tex,
 	                              color_pose_in, proj_1_color, new_active_set);
 
 	// After doing the textures and geometry we are supposed to be done with this

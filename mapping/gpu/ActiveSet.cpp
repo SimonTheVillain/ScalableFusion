@@ -605,7 +605,7 @@ void ActiveSet::checkAndUpdateRefTextures_(
 		}
 		//TODO: also update refTextures for the labelTextures if available
 	}
-	map->texturing.GenLookupTex(this, dated_patches, dated_textures, true);//true: dilate the resulting textures
+	map->texturing.genLookupTex(this, dated_patches, dated_textures, true);//true: dilate the resulting textures
 }
 
 void ActiveSet::drawDoubleStitches() {

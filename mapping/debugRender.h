@@ -50,6 +50,6 @@ private:
 
 };
 
-extern RenderDebugInfo* thatOneDebugRenderingThingy;
+extern RenderDebugInfo *that_one_debug_rendering_thingy;
 
 #endif

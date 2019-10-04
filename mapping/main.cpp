@@ -394,7 +394,7 @@ int main(int argc, const char * argv[])
 
 
     //initialize the debug outputs
-    thatOneDebugRenderingThingy = new RenderDebugInfo();
+    that_one_debug_rendering_thingy = new RenderDebugInfo();
 
     //TODO: implement proper destructor for these and destroy before cloing opengl context
     CameraFrustrumRenderableModel camModel(Eigen::Vector4f(0,1,0,1),//color is red
@@ -502,8 +502,8 @@ int main(int argc, const char * argv[])
 
 
         //maybe deactive all the other stuff
-        thatOneDebugRenderingThingy->force_dst_geom = forceDestinationGeometry;
-        thatOneDebugRenderingThingy->render(proj,view);
+        that_one_debug_rendering_thingy->force_dst_geom = forceDestinationGeometry;
+        that_one_debug_rendering_thingy->render(proj,view);
 
         //display everything that got rendered
         glfwSwapBuffers(window);

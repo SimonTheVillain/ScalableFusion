@@ -208,7 +208,7 @@ MeshReconstruction::MeshReconstruction(GLFWwindow *context,
 	params.depth_res.height = depth_height;
 	params.rgb_res.width = rgb_width;
 	params.rgb_res.height = rgb_height;
-	texturing.meshReconstruction = this;
+	texturing.mesh_reconstruction = this;
 
 	//TODO: name these setup functions consistently
 	geometry_update.setup(this);

@@ -11,8 +11,7 @@ const std::string debug_vert =
 #include "debugGeometry.vert"
 ;
 
-
-RenderDebugInfo* thatOneDebugRenderingThingy;
+RenderDebugInfo *that_one_debug_rendering_thingy;
 
 using namespace std;
 using namespace gfx;

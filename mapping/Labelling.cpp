@@ -162,7 +162,7 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 	//now we do the lookup textures
 	cout << "DEBUG: some of these textures are missing?, but why?" << endl;
 
-	mesh->texturing.GenLookupTex(active_set.get(), patches_update_lookup,
+	mesh->texturing.genLookupTex(active_set.get(), patches_update_lookup,
 	                             textures_update_lookup, false); // no dilation of lookup
 
 	int minuseins = -1; // TODO: wth?

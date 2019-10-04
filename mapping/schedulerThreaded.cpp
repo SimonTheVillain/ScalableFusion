@@ -259,7 +259,7 @@ void SchedulerThreaded::updateActiveSet_(cv::Mat d_std_mat,
 void SchedulerThreaded::refineRgb_(shared_ptr<ActiveSet> active_set, 
                                    shared_ptr<gfx::GpuTex2D> rgb_tex,
                                    Matrix4f rgb_pose) {
-	map_->texturing.ColorTexUpdate(rgb_tex, rgb_pose, active_set);
+	map_->texturing.colorTexUpdate(rgb_tex, rgb_pose, active_set);
 	refine_rgb_timer_.click();
 }
 

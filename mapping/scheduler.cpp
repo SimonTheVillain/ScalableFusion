@@ -210,7 +210,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 
 		map->geometry_update.update(d_std_tex, depth_pose, active_set);
 
-		map->texturing.ColorTexUpdate(rgb_texture, rgb_pose, active_set);
+		map->texturing.colorTexUpdate(rgb_texture, rgb_pose, active_set);
 
 		//there definitely is a reason to keep the active set here!
 		map->setActiveSetUpdate_(active_set);

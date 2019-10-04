@@ -1,5 +1,5 @@
-#ifndef FILE_STITCHING_H
-#define FILE_STITCHING_H
+#ifndef FILE_STITCHING_UTILS_H
+#define FILE_STITCHING_UTILS_H
 
 #include <Eigen/Core>
 #include <limits>

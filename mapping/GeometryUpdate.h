@@ -21,9 +21,9 @@ class GpuTex2D;
 class GeometryUpdate {
 public:
 
-	void setup(MeshReconstruction* reconstruction) {
+	void setup(MeshReconstruction *reconstruction) {
 		mesh_reconstruction = reconstruction;
-		stitching.Setup(reconstruction);
+		stitching.setup(reconstruction);
 		meshing.setup(reconstruction);
 	}
 

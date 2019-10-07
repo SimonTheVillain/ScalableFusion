@@ -42,14 +42,6 @@ void labelSurfaces_kernel(Labelling::SegProjTask* tasks,
 		int x_dest = x + task.destination.x;
 		int y_dest = y + task.destination.y;
 
-		// DEBUG THINGY END THIS AND PUT A UNIFORM COLOR IN PLACE!!!!!!!<
-		if(false) {
-			float4 data = make_float4(0.5f, 0, 0, 0);
-			surf2Dwrite(data, task.dest_surf, x_dest * sizeof(float4), y_dest);
-			i += blockDim.x;
-			continue;
-		}
-
 		//readout the lookup shizzle
 		float4 ref;
 		if(x_ref >= 1024 || y_ref >= 1024) {
@@ -66,15 +58,7 @@ void labelSurfaces_kernel(Labelling::SegProjTask* tasks,
 			i += blockDim.x;
 			continue;
 		}
-
-		if(false) {
-			//another debug!!!!! The illegal memory access is already happening here!!!
-			float4 data = make_float4(0.5f, 0, 0, 0);
-			surf2Dwrite(data, task.dest_surf, x_dest * sizeof(float4), y_dest);
-			i += blockDim.x;
-			continue;
-		}
-
+		
 		GpuTriangle &triangle = triangles[triangle_id];
 
 		Vector4f point(0, 0, 0, 0);

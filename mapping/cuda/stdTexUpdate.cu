@@ -56,18 +56,6 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
 		float y_source = 
 				(y * descriptor.source.height) / descriptor.destination.height + descriptor.source.y;
 
-		//DEBUG: Copy the source to destRect:
-		if(false) {
-			float4 surface_k = readFloat4F16(descriptor.source_geometry, x_source, 
-			                                 y_source);
-
-			writeResult(surface_k, descriptor.destination_geometry, x_dest, y_dest);
-			i += blockDim.x;
-			continue;
-		}
-
-		//the old code:
-
 		//read from the reference texture
 		float4 ref;
 		surf2Dread(&ref, descriptor.destination_references, x_ref*sizeof(Vector4f),

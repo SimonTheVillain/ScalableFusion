@@ -9,8 +9,6 @@
 #include "shader.h"
 
 #include <fstream>
-#include <sstream>
-#include <iostream>
 
 #include <sys/stat.h>
 

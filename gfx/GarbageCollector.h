@@ -1,7 +1,6 @@
 #ifndef FILE_GARBAGECOLLECTOR_H
 #define FILE_GARBAGECOLLECTOR_H
 
-#include <map>
 #include <vector>
 #include <mutex>
 #include <unordered_map>
@@ -31,6 +30,5 @@ private:
 	unordered_map<thread::id, vector<function<void()>>> list_force_clean_;
 
 };
-
 
 #endif

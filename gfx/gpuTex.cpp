@@ -2,9 +2,6 @@
 
 #include <iostream>
 #include <cstring>
-#include <chrono>
-
-#include <stdio.h>
 #include <assert.h>
 
 #include <cuda.h>
@@ -251,7 +248,6 @@ gfx::GpuTex2D::~GpuTex2D() {
 
 	//i hope this forces the driver to free the memory
 	glFinish();
-	auto end = chrono::high_resolution_clock::now();
 
 	overall_tex_list_mutex_.lock();
 	for(size_t i = overall_tex_list_.size() - 1; i >= 0; i--) {

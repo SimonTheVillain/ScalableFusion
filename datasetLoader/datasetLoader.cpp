@@ -8,7 +8,7 @@
 using namespace std;
 using namespace Eigen;
 
-TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
+TumDataset::TumDataset(string folder, bool realtime, bool use_pose,
                        bool use_high_res, int skip_n_frames, float depth_scale,
                        float trajectory_GT_scale, bool invert_GT_trajectory) 
 		: folder_path_(folder),
@@ -40,10 +40,9 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 		}
 	}
 
-
 	// Read rgb-depth-associations
 	string line;
-	while(std::getline(frame_list, line)) {
+	while(getline(frame_list, line)) {
 		istringstream line_ss(line);
 		string word;
 
@@ -73,19 +72,17 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 		assert(0);
 	}
 
-
 	// TODO: White fix? What is this?
 	cv::FileStorage fs_white_fix_;
 	has_high_res_ ?
-		fs_white_fix_.open(folder + "/white_fix_ids.yml", cv::FileStorage::READ) :
-		fs_white_fix_.open(folder + "/white_fix_.yml", cv::FileStorage::READ);
+			fs_white_fix_.open(folder + "/white_fix_ids.yml", cv::FileStorage::READ) :
+			fs_white_fix_.open(folder + "/white_fix_.yml", cv::FileStorage::READ);
 
 	if(fs_white_fix_.isOpened()) {
 		fs_white_fix_["r_gain"] >> white_fix_[2];
 		fs_white_fix_["g_gain"] >> white_fix_[1];
 		fs_white_fix_["b_gain"] >> white_fix_[0];
 	}
-
 
 	// Read groundtruth
 	ifstream trajectory_file(folder + "/groundtruth.txt");
@@ -124,7 +121,6 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 			}
 		}
 	}
-	
 
 	if(folder.find("tumalike") != string::npos) {
 		if(folder.find("1") != string::npos ||
@@ -153,7 +149,7 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 			depth_intrinsics_ = Vector4f(528, 528, 320, 240);
 			depth_2_rgb_      = Matrix4f::Identity(); // TODO: no.
 		} else {
-			rgb_intrinsics_   = Vector4f(537.562, 537.278, 313.73,  243.601);
+			rgb_intrinsics_   = Vector4f(537.562, 537.278, 313.730, 243.601);
 			depth_intrinsics_ = Vector4f(563.937, 587.847, 328.987, 225.661);
 			depth_2_rgb_      = Matrix4f::Identity(); // TODO: no.
 		}
@@ -164,42 +160,43 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 		depth_2_rgb_      = Matrix4f::Identity();
 	}
 
-
 	// Read exposure file if it exists
 	ifstream exposure_file;
 	has_high_res_ ?
-		exposure_file.open(folder + "/rgb_ids_exposure.txt") :
-		exposure_file.open(folder + "/rgb_exposure.txt");
+			exposure_file.open(folder + "/rgb_ids_exposure.txt") :
+			exposure_file.open(folder + "/rgb_exposure.txt");
 
 	if(exposure_file.is_open()) {
-		std::string line;
-		while(getline(exposure_file, line))
+		string line;
+		while(getline(exposure_file, line)) {
 			exposure_times_.push_back(atof(line.c_str()));
+		}
 
 		cout << "these exposure times are all wrong and need to be assigned to the correct frame" << endl;
 
 		cv::Size size;
 		cv::Mat M;
 		cv::Mat D;
-		cv::Mat Mnew;
+		cv::Mat M_new;
 		if(has_high_res_) {
 			cv::FileStorage intrinsics_id_storage(folder + "/../calib_result_ids.yml", 
 			                                      cv::FileStorage::READ);
-			if(!intrinsics_id_storage.isOpened())
+			if(!intrinsics_id_storage.isOpened()){
 				assert(0);
+			}
 
 			intrinsics_id_storage["camera_matrix"]           >> M;
 			intrinsics_id_storage["distortion_coefficients"] >> D;
 			intrinsics_id_storage["image_width"]             >> size.width;
 			intrinsics_id_storage["image_height"]            >> size.height;
 
-			Mnew = cv::getOptimalNewCameraMatrix(M, D, size, 1, size);
-			Mnew = M; // TODO What does this do?
-			rgb_intrinsics_ = Vector4f(Mnew.at<double>(0, 0), 
-			                           Mnew.at<double>(1, 1),
-			                           Mnew.at<double>(0, 2), 
-			                           Mnew.at<double>(1, 2));
-			cv::initUndistortRectifyMap(M, D, cv::Mat(), Mnew, size, CV_16SC2, 
+			M_new = cv::getOptimalNewCameraMatrix(M, D, size, 1, size);
+			M_new = M; // TODO: excuse me wtf
+			rgb_intrinsics_ = Vector4f(M_new.at<double>(0, 0), 
+			                           M_new.at<double>(1, 1),
+			                           M_new.at<double>(0, 2), 
+			                           M_new.at<double>(1, 2));
+			cv::initUndistortRectifyMap(M, D, cv::Mat(), M_new, size, CV_16SC2, 
 			                            rgb_undistort_1_, rgb_undistort_2_);
 
 			float focalScale = 1.0f;
@@ -211,11 +208,9 @@ TumDataset::TumDataset(std::string folder, bool realtime, bool use_pose,
 			rgb_intrinsics_ = Vector4f(530, 530, 320, 240);
 		}
 
-
 		// Default values
 		depth_intrinsics_ = Vector4f(568, 568, 320, 240); // the structure sensor
 		//depth_intrinsics_ = Vector4f(570, 570, 320, 240); // xtion
-
 
 		cv::Mat R, T, Rf, Tf;
 
@@ -276,9 +271,9 @@ void TumDataset::readNewSetOfImages() {
 		frame_index_ += skip_count;
 
 	if(frame_index_ < rgb_files_.size()) {
-		current_depth_ = cv::imread(depth_files_[frame_index_], 
-		                            cv::IMREAD_UNCHANGED) * scale_depth_;
-		current_rgb_   = cv::imread(rgb_files_[frame_index_]);
+		current_depth_     = cv::imread(depth_files_[frame_index_], 
+		                                cv::IMREAD_UNCHANGED) * scale_depth_;
+		current_rgb_       = cv::imread(rgb_files_[frame_index_]);
 		current_timestamp_ = timestamps_[frame_index_];
 
 		if(!exposure_times_.empty()) {
@@ -305,7 +300,6 @@ void TumDataset::readNewSetOfImages() {
 				v[2] *= white_fix_[2];
 				radiance.at<cv::Vec3f>(i) = v;
 			}
-
 			radiometric_response_->directMap(radiance, current_rgb_);
 		}
 
@@ -331,7 +325,6 @@ void TumDataset::readNewSetOfImages() {
 	} else {
 		running_ = false;
 	}
-
 
 	// If we are done before our time we wait....
 	chrono::system_clock::time_point now = chrono::system_clock::now();

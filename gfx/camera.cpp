@@ -19,8 +19,8 @@ Matrix4f Camera::lookFromAt(Vector4f eye, Vector4f at, Vector4f up) {
 	Vector3f intermediate_up = q1 * Vector3f(0, 1, 0);
 	Vector3f up_on_img_plane = up.block<3, 1>(0, 0) - dir * up.block<3, 1>(0, 0).dot(dir);
 	
-	Quaternionf  q2 = Quaternionf::FromTwoVectors(intermediate_up, up_on_img_plane);
-	Quaternionf   q = q2 * q1;
+	Quaternionf q2  = Quaternionf::FromTwoVectors(intermediate_up, up_on_img_plane);
+	Quaternionf q   = q2 * q1;
 	Matrix3f    rot = q.normalized().toRotationMatrix();
 
 	Matrix4f look_at = Matrix4f::Identity();

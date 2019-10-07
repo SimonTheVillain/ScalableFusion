@@ -46,7 +46,8 @@ struct shader_file_extension extensions[] = {
 
 GLSLProgram::GLSLProgram()
 		: handle_(0), 
-		  linked_(false) { }
+		  linked_(false) { 
+}
 
 GLSLProgram::~GLSLProgram() {
 	if(handle_ == 0)
@@ -75,14 +76,14 @@ void GLSLProgram::compileShader(string filename) {
 }
 
 void GLSLProgram::compileShader(const char *filename) {
-	int numExts = sizeof(GLSLShaderInfo::extensions) / 
-	              sizeof(GLSLShaderInfo::shader_file_extension);
+	int num_exts = sizeof(GLSLShaderInfo::extensions) / 
+	               sizeof(GLSLShaderInfo::shader_file_extension);
 
 	// Check the file name's extension to determine the shader type
 	string ext = getExtension_(filename);
 	GLSLShader::GLSLShaderType type = GLSLShader::VERTEX;
 	bool match_found = false;
-	for(int i = 0; i < numExts; i++) {
+	for(int i = 0; i < num_exts; i++) {
 		if(ext == GLSLShaderInfo::extensions[i].ext) {
 			match_found = true;
 			type = GLSLShaderInfo::extensions[i].type;
@@ -131,7 +132,7 @@ void GLSLProgram::compileShader(const char *filename,
 	}
 
 	// Get file contents
-	std::stringstream code;
+	stringstream code;
 	code << in_file.rdbuf();
 	in_file.close();
 
@@ -288,11 +289,11 @@ void GLSLProgram::setUniform(const char *name, GLuint val) {
 	glUniform1ui(loc, val);
 }
 
-GLint GLSLProgram::getAttribLocation(std::string attribute_name) {
+GLint GLSLProgram::getAttribLocation(string attribute_name) {
 	return glGetAttribLocation(handle_, attribute_name.c_str());
 }
 
-GLint GLSLProgram::getUniformLocation(std::string uniform_name) {
+GLint GLSLProgram::getUniformLocation(string uniform_name) {
 	return glGetUniformLocation(handle_, uniform_name.c_str());
 }
 
@@ -303,83 +304,14 @@ void GLSLProgram::setUniform(const char *name, bool val) {
 
 void GLSLProgram::printActiveUniforms() {
 	printf("Not implemented yet!! Sorry!!!\n");
-	/* GLint numUniforms = 0;
-	 glGetProgramInterfaceiv( handle, GL_UNIFORM, GL_ACTIVE_RESOURCES, &numUniforms);
-
-	 GLenum properties[] = {GL_NAME_LENGTH, GL_TYPE, GL_LOCATION, GL_BLOCK_INDEX};
-
-	 printf("Active uniforms:\n");
-	 for( int i = 0; i < numUniforms; ++i ) {
-	 GLint results[4];
-	 //book page 37..... similar results also with older versions of opengl achieveable
-	 glGetProgramResourceiv(handle, GL_UNIFORM, i, 4, properties, 4, NULL, results);
-
-	 if( results[3] != -1 ) continue;  // Skip uniforms in blocks
-	 GLint nameBufSize = results[0] + 1;
-	 char * name = new char[nameBufSize];
-	 glGetProgramResourceName(handle, GL_UNIFORM, i, nameBufSize, NULL, name);
-	 printf("%-5d %s (%s)\n", results[2], name, getTypeString(results[1]));
-	 delete [] name;
-	 }*/
 }
 
 void GLSLProgram::printActiveUniformBlocks() {
 	printf("Not implemented yet!! Sorry!!!\n");
-	/* GLint numBlocks = 0;
-
-	 glGetProgramInterfaceiv(handle, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numBlocks);
-	 GLenum blockProps[] = {GL_NUM_ACTIVE_VARIABLES, GL_NAME_LENGTH};
-	 GLenum blockIndex[] = {GL_ACTIVE_VARIABLES};
-	 GLenum props[] = {GL_NAME_LENGTH, GL_TYPE, GL_BLOCK_INDEX};
-
-	 for(int block = 0; block < numBlocks; ++block) {
-	 GLint blockInfo[2];
-	 glGetProgramResourceiv(handle, GL_UNIFORM_BLOCK, block, 2, blockProps, 2, NULL, blockInfo);
-	 GLint numUnis = blockInfo[0];
-
-	 char * blockName = new char[blockInfo[1]+1];
-	 glGetProgramResourceName(handle, GL_UNIFORM_BLOCK, block, blockInfo[1]+1, NULL, blockName);
-	 printf("Uniform block \"%s\":\n", blockName);
-	 delete [] blockName;
-
-	 GLint * unifIndexes = new GLint[numUnis];
-	 glGetProgramResourceiv(handle, GL_UNIFORM_BLOCK, block, 1, blockIndex, numUnis, NULL, unifIndexes);
-
-	 for( int unif = 0; unif < numUnis; ++unif ) {
-	 GLint uniIndex = unifIndexes[unif];
-	 GLint results[3];
-	 glGetProgramResourceiv(handle, GL_UNIFORM, uniIndex, 3, props, 3, NULL, results);
-
-	 GLint nameBufSize = results[0] + 1;
-	 char * name = new char[nameBufSize];
-	 glGetProgramResourceName(handle, GL_UNIFORM, uniIndex, nameBufSize, NULL, name);
-	 printf("    %s (%s)\n", name, getTypeString(results[1]));
-	 delete [] name;
-	 }
-
-	 delete [] unifIndexes;
-	 }*/
 }
 
 void GLSLProgram::printActiveAttribs() {
 	printf("Not implemented yet!! Sorry!!!\n");
-
-	/* GLint numAttribs;
-	 glGetProgramInterfaceiv( handle, GL_PROGRAM_INPUT, GL_ACTIVE_RESOURCES, &numAttribs);//redo this
-
-	 GLenum properties[] = {GL_NAME_LENGTH, GL_TYPE, GL_LOCATION};
-
-	 printf("Active attributes:\n");
-	 for( int i = 0; i < numAttribs; ++i ) {
-	 GLint results[3];
-	 glGetProgramResourceiv(handle, GL_PROGRAM_INPUT, i, 3, properties, 3, NULL, results);
-
-	 GLint nameBufSize = results[0] + 1;
-	 char * name = new char[nameBufSize];
-	 glGetProgramResourceName(handle, GL_PROGRAM_INPUT, i, nameBufSize, NULL, name);
-	 printf("%-5d %s (%s)\n", results[2], name, getTypeString(results[1]));
-	 delete [] name;
-	 }*/
 }
 
 const char* GLSLProgram::getTypeString(GLenum type) {

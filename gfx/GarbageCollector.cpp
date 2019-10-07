@@ -14,8 +14,7 @@ void GarbageCollector::collect() {
 	list_mutex_.unlock();
 }
 
-void GarbageCollector::forceCollect(){
-
+void GarbageCollector::forceCollect() {
 	thread::id id = this_thread::get_id();
 	list_mutex_.lock();
 	if(list_force_clean_.count(id) == 1) {
@@ -39,4 +38,3 @@ void GarbageCollector::addToForceCollect(std::function<void()> func) {
 	list_force_clean_[id].push_back(func);
 	list_mutex_.unlock();
 }
-

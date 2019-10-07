@@ -42,12 +42,12 @@ public:
 	int                      getWidth() {return width_;}
 	int                      getHeight() {return height_;}
 
-	void uploadData(void* data); //if size == 0 we only load
-	void uploadData(void* data, int width_, int height_);
-	void uploadData(void* data, int x, int y, int width, int height);
+	void uploadData(void *data); //if size == 0 we only load
+	void uploadData(void *data, int width_, int height_);
+	void uploadData(void *data, int x, int y, int width, int height);
 
-	void downloadData(void* data);
-	void downloadData(void* data, int x, int y, int width, int height);
+	void downloadData(void *data);
+	void downloadData(void *data, int x, int y, int width, int height);
 
 	void makeResidentInThisThread();
 
@@ -73,7 +73,7 @@ private:
 	int height_;
 	int width_;
 
-	GarbageCollector* garbage_collector_;
+	GarbageCollector *garbage_collector_;
 	mutex             token_mutex_;
 	unordered_map<thread::id, shared_ptr<bool>> resident_token_;
 

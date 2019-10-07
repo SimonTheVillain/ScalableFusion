@@ -20,7 +20,7 @@ namespace gfx {
 namespace GLUtils{
 
 // Returns 1 if an OpenGL error occurred, 0 otherwise.
-int checkForOpenGLError(std::string msg) {
+int checkForOpenGLError(string msg) {
 	int    ret_code = 0;	
 	GLenum gl_error = glGetError();
 	while(gl_error != GL_NO_ERROR) {
@@ -56,7 +56,7 @@ int checkForOpenGLError(std::string msg) {
 	return ret_code;
 }
 
-int checkOpenGLFramebufferStatus(std::string msg, GLenum tgt_FBO) {
+int checkOpenGLFramebufferStatus(string msg, GLenum tgt_FBO) {
 	GLenum gl_error = glCheckFramebufferStatus(tgt_FBO);
 	if(gl_error) {
 		string error_msg;

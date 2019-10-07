@@ -20,9 +20,9 @@ public:
 	// resources that exist on a per thread basis are deleted properly.
 	void forceCollect();
 
-	void addToClean(std::thread::id id,std::function<void()> func);
+	void addToClean(thread::id id,function<void()> func);
 
-	void addToForceCollect(std::function<void()> func);
+	void addToForceCollect(function<void()> func);
 
 private:
 

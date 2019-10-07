@@ -38,7 +38,7 @@ vector<gfx::GpuTex2D*> gfx::GpuTex2D::getTexList() {
 	return overall_tex_list_;
 }
 
-gfx::GpuTex2D::GpuTex2D(GarbageCollector* garbage_collector,
+gfx::GpuTex2D::GpuTex2D(GarbageCollector *garbage_collector,
                         GLuint gl_internal_format, GLuint gl_format, 
                         GLuint gl_type, int width, int height, 
                         bool cuda_normalized_tex_coords, void *data, 

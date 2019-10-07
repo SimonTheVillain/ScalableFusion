@@ -1,33 +1,21 @@
 #ifndef FILE_MESH_STRUCTURE
 #define FILE_MESH_STRUCTURE
 
-#include <list>
 #include <vector>
 #include <mutex>
 #include <iostream>
-#include <memory>
 #include <set>
 
 #include <eigen3/Eigen/Core> ///TODO: Change this!!!!! this is baaaad!!!
 
 #include "textureStructure.h"
-
-#include <gpuTex.h>
-
 #include "stackVector.h"
-
-// I included this for deleting stuff
-#include <algorithm>
 #include <gpuGeomStorage.h>
 #include "octree.h"
-
 #include "lowDetailMapRenderer.h"
-#include "gpuBuffer.h"
-
 
 using namespace std;
 using namespace Eigen;
-
 
 /**
  * REMEMBER: This structure has to be done in a way that even when we remove one point, the
@@ -37,7 +25,6 @@ using namespace Eigen;
  * the most primitive elements. (points, triangles, edges)
  * THIS IS CRITICAL!!!!! It would increase the performance a lot if we reduce the use of smart pointers!!!
  */
-
 
 struct DoubleStitch;
 struct TripleStitch;
@@ -70,7 +57,7 @@ public:
 	 */
 	virtual bool isGpuResidencyRequired() = 0;
 
-	virtual bool isPartOfActiveSet(const ActiveSet* set) = 0;
+	virtual bool isPartOfActiveSet(const ActiveSet *set) = 0;
 
 	//TODO: maybe do this with respect to the active set!
 	virtual	shared_ptr<TriangleBufConnector> getMostCurrentGpuTriangles() = 0;
@@ -134,7 +121,7 @@ struct TriangleReference {
 
 	TriangleReference() { }
 
-	TriangleReference(GeometryBase* geometry_base, int ind)
+	TriangleReference(GeometryBase *geometry_base, int ind)
 			: container(geometry_base),
 			  index(ind) { };
 
@@ -155,7 +142,7 @@ struct TriangleReference {
 		return (!(*this == other));
 	}
 
-	Triangle* get() {
+	Triangle *get() {
 		assert(valid());
 		return &container->triangles[index];
 	};
@@ -174,7 +161,9 @@ struct Vertex {
 		int ind_in_triangle = -1;
 	};
 
-	Vertex() { }
+	Vertex() 
+			: tex_ind_in_main_patch(-1) { 
+	}
 
 	Vertex(GpuVertex gpu_vertex) {
 		p = gpu_vertex.p;
@@ -216,7 +205,7 @@ struct Vertex {
 	Vector4f p;
 	Vector3f n; // TODO: start using this at some point
 
-	int32_t tex_ind_in_main_patch = -1;
+	int32_t tex_ind_in_main_patch;
 
 	StackVector<VertexInTriangle, 16> triangles; //this will not really give any speed benefits (a few milliseconds at most)
 
@@ -249,7 +238,7 @@ public:
 	shared_ptr<VertexBufConnector>    vertices_dest;
 	shared_ptr<TriangleBufConnector>  triangles;
 
-	bool gpu_vertices_changed = false;
+	bool gpu_vertices_changed;
 
 	weak_ptr<MeshPatch> download_to_when_finished;
 
@@ -261,10 +250,10 @@ public:
 	shared_ptr<MeshTextureGpuHandle> texs[GPU_MAX_TEX_PER_PATCH];
 
 	shared_ptr<MeshTextureGpuHandle> label_tex;
-	bool label_tex_valid = false;
+	bool label_tex_valid;
 
 	shared_ptr<MeshTextureGpuHandle> weighted_label_texs[3];
-	size_t weighted_label_tex_count = 0;
+	size_t weighted_label_tex_count;
 
 	//todo replace this with 0 and keep it up to date
 	const size_t tex_count = GPU_MAX_TEX_PER_PATCH;
@@ -284,7 +273,7 @@ public:
  */
 class MeshPatch : public GeometryBase,
                   public OctreeMember<MeshPatch>, //The name of this pattern is CRTP https://stackoverflow.com/questions/4030224/whats-the-use-of-the-derived-class-as-a-template-parameter
-                  public LowDetailPoint {//<MeshPatch>{// : public enable_shared_from_this<MeshPatch>{
+                  public LowDetailPoint {
 public:
 
 	MeshPatch(Octree<MeshPatch> *octree);

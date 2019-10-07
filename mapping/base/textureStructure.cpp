@@ -1,10 +1,7 @@
 #include "textureStructure.h"
 
-#include <chrono>
 #include <limits>
 
-#include "../gpu/gpuGeomStorage.h"
-#include "../gpu/gpuBuffer.h"
 #include "../cuda/float16_utils.h"
 #include "../cuda/gpuErrchk.h"
 #include "../meshReconstruction.h"
@@ -14,8 +11,6 @@ using namespace Eigen;
 
 MeshTexture::MeshTexture(shared_ptr<TexAtlas> reference_atlas, 
                          shared_ptr<TexAtlas> data_atlas) {
-	//this->refAtlas = referenceAtlas;
-	//this->dataAtlas = dataAtlas;
 }
 
 MeshTexture::MeshTexture(MeshTexture::Type type, MeshReconstruction *map) 
@@ -23,17 +18,11 @@ MeshTexture::MeshTexture(MeshTexture::Type type, MeshReconstruction *map)
 		  type_(type) {
 }
 
-MeshTexture::~MeshTexture() {
-	/*if(glFramebufferToPixReference){
-		glDeleteFramebuffers(1,&glFramebufferToPixReference);
-	}*/
-}
-
 shared_ptr<MeshTextureGpuHandle> MeshTexture::genGpuResource(size_t nr_coords,
                                                              cv::Size2i size) {
 
-	TexAtlas* ref_atlas  = map_->tex_atlas_geom_lookup_.get();
-	TexAtlas* data_atlas = nullptr;
+	TexAtlas *ref_atlas  = map_->tex_atlas_geom_lookup_.get();
+	TexAtlas *data_atlas = nullptr;
 	switch(type_) {
 		case MeshTexture::Type::COLOR:
 			assert(0);
@@ -55,12 +44,11 @@ shared_ptr<MeshTextureGpuHandle> MeshTexture::genGpuResource(size_t nr_coords,
 			break;
 	}
 
-	TexCoordBuffer* coord_buf = map_->gpu_geom_storage_.tex_pos_buffer;
+	TexCoordBuffer *coord_buf = map_->gpu_geom_storage_.tex_pos_buffer;
 
 	shared_ptr<MeshTextureGpuHandle> meshTexGpu(
 			new MeshTextureGpuHandle(coord_buf, nr_coords, ref_atlas, data_atlas,
 			                         size.width, size.height, nullptr, nullptr));
-	//cout << "[MeshTexture] todo" << endl;
 	//Explanation: When textures or tex coordinates are currently being downloaded
 	//for this module they should be safed from being scrapped and then reapplied
 	//the MeshTexture class is just the right place to handle this!!!!!!
@@ -70,13 +58,6 @@ shared_ptr<MeshTextureGpuHandle> MeshTexture::genGpuResource(size_t nr_coords,
 	return meshTexGpu;
 
 }
-
-/*
-void MeshTexture::createPixReferencesFramebuffer()
-{
-	//use the proper function in
-}
-*/
 
 bool MeshTexture::isGpuResidencyRequired() {
 	if(parent_patch != NULL) {
@@ -96,7 +77,7 @@ cv::Rect2i MeshTexture::getLookupRect() {
 cv::Rect2f MeshTexture::getBounds(const vector<Vector2f> &list) {
 	if(list.size() == 0) {
 		cout << "[MeshTexture::getBounds] this is not correct yet." << endl;
-		return cv::Rect2f(0, 0, 0, 0); // this is a very dirty workaround
+		return cv::Rect2f(0, 0, 0, 0); // this is a very dirty workaround TODO: but why?
 	}
 	Vector2f min = Vector2f(numeric_limits<float>::max(), 
 	                        numeric_limits<float>::max());
@@ -177,102 +158,6 @@ MeshTextureGpuHandle::MeshTextureGpuHandle(
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());
 }
-
-MeshTextureGpuHandle::~MeshTextureGpuHandle() {
-	//shared_ptr<MeshTexture> downloadTo = downloadToWhenFinished.lock();
-	//instead of doing the download in a separate recycling task lets do it where it happens.
-	//specifically whenever the active set changes!!!!!
-	//we might want to aggregate this download
-
-/*    if(recycler!=nullptr &&
-			downloadTo!=nullptr &&
-			gpuDataChanged){
-		//downloadTo->TextureMostCurrent = sourceTex;
-
-
-		auto downloadFunc = [](shared_ptr<MeshTexture> patch,
-				shared_ptr<TexCoordBufConnector> coords,
-				shared_ptr<TexAtlasPatch> texture){    //The assumption is that the gpu vertex and the cpu vertex are the
-			//same
-
-
-			if(coords==nullptr){
-				assert(0);
-			}
-			vector<Vector2f> coordData(coords->getSize());
-			coords->download(&(coordData[0]));
-
-			//now do the texture:
-			cv::Rect2i roi = texture->getRectOfInterest();
-			GLuint intFormat = texture->getTex()->getGlInternalFormat();
-			uint32_t cvType = texture->getAtlasTex()->getCvType();
-
-
-			//cout << "DEBUG: roi " << roi << endl;
-			if(cvType!=CV_32FC4 &&
-					cvType!=CV_8UC4){
-				assert(0);
-			}
-			cv::Mat data(roi.height,roi.width,cvType);
-			if(intFormat == GL_RGBA16F){
-				if(cvType != CV_32FC4){
-					assert(0);
-				}
-
-
-				//maybe we should also hold the texture with a mutex
-				cudaSurfaceObject_t surface =
-						texture->getTex()->getCudaSurfaceObject();
-				castF16SurfaceToF32Buffer(surface,
-										  roi.x,roi.y,
-										  roi.width,roi.height,
-										  (float*)data.data,4);
-
-				cudaDeviceSynchronize();
-
-			}else{
-
-				//data.create(roi.height,roi.width,cvFormat);
-				if(cvType!=CV_8UC4){
-					assert(0);
-				}
-				//texture->
-				texture->downloadData(data.data);
-				cudaDeviceSynchronize();
-			}
-
-
-			patch->cpuPayloadMutex.lock();
-			patch->cpuPayload = data;
-			patch->texCoords = coordData;
-			patch->cpuPayloadMutex.unlock();
-		};
-
-		if(downloadTo->texCoordsMostCurrent.lock() == nullptr){
-			cout << "can't download the resource. "
-					"Something i myself do not really get is wrong" << endl;
-			return;
-			assert(0);
-		}
-		if(downloadTo->TextureMostCurrent.lock() == nullptr){
-			cout << "can't download the resource. "
-					"Something i myself do not really get is wrong" << endl;
-			return;
-			assert(0);
-		}
-
-		//ORIGINAL
-		auto task = bind(downloadFunc,downloadTo,
-							  downloadTo->texCoordsMostCurrent.lock(),//these should be valid
-							  downloadTo->TextureMostCurrent.lock());
-		recycler->addRecycleTask(task);
-		//DEBUG:
-		//downloadFunc(downloadTo,coords,sourceTex);
-	}
-	*/
-}
-
-
 
 bool MeshTextureGpuHandle::checkRefTexDependencies() {
 	//TODO: maybe check the refTex dependencies relative to a active set. !?

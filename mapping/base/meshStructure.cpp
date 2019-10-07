@@ -4,8 +4,6 @@
 
 #include "../utils/principalPlane.h"
 #include "../gpu/texAtlas.h"
-#include "../gpu/gpuGeomStorage.h"
-#include "../gpu/gpuBuffer.h"
 #include "../graph/DeformationNode.h"
 
 using namespace std;
@@ -605,44 +603,19 @@ bool Vertex::encompassed() {
 
 vector<shared_ptr<VertexBufConnector>> debug_retain_vertices;
 vector<shared_ptr<TriangleBufConnector>> debug_retain_triangle_buf;
-MeshPatchGpuHandle::MeshPatchGpuHandle(GpuGeomStorage* gpu_geom_storage,
-                                       int nr_vertices, int nr_triangles) {
-	vertices_dest   = gpu_geom_storage->vertex_buffer->getBlock(nr_vertices);
-	vertices_source = gpu_geom_storage->vertex_buffer->getBlock(nr_vertices);
-	patch_infos     = gpu_geom_storage->patch_info_buffer->getBlock(1);
-	triangles       = gpu_geom_storage->triangle_buffer->getBlock(nr_triangles);
+MeshPatchGpuHandle::MeshPatchGpuHandle(GpuGeomStorage *gpu_geom_storage,
+                                       int nr_vertices, int nr_triangles) 
+		: vertices_dest(gpu_geom_storage->vertex_buffer->getBlock(nr_vertices)),
+		  vertices_source(gpu_geom_storage->vertex_buffer->getBlock(nr_vertices)),
+		  patch_infos(gpu_geom_storage->patch_info_buffer->getBlock(1)),
+		  triangles(gpu_geom_storage->triangle_buffer->getBlock(nr_triangles)),
+		  gpu_vertices_changed(false),
+		  label_tex_valid(false),
+		  weighted_label_tex_count(0) {
 }
 
 MeshPatchGpuHandle::~MeshPatchGpuHandle() {
 	shared_ptr<MeshPatch> download_to = download_to_when_finished.lock();
-	/*
-	if(recycler!=nullptr &&
-			downloadTo!=nullptr &&
-			gpuVerticesChanged){
-		//cout << "we need to download the source vertices" << endl;
-		downloadTo->mostCurrentVertices = verticesSource;
-		downloadTo->mostCurrentTriangles = triangles;
-
-		auto downloadFunc = [](shared_ptr<MeshPatch> patch,
-				shared_ptr<VertexBufConnector> vertices,
-				shared_ptr<TriangleBufConnector> retainPatches){
-			patch->vertices.reserve(vertices->getSize());
-			//The assumption is that the gpu vertex and the cpu vertex are the
-			//same
-			vertices->download((GpuVertex*)&(patch->vertices[0]));
-			retainPatches.reset();
-
-
-		};
-
-		//TODO bind the function and forward it to the recycler
-		auto task = bind(downloadFunc,downloadTo,verticesSource,triangles);
-		recycler->addRecycleTask(task);
-	}else{
-		//cout << "[MeshPatchGpuHandle::~MeshPatchGpuHandle] recycler is not set" << endl;
-	}
-	 */
-	//TODO: do something similar for textures and texture coordinates
 }
 
 bool MeshPatchGpuHandle::setLabelTex(shared_ptr<MeshTextureGpuHandle> tex) {

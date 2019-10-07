@@ -2,8 +2,6 @@
 #define FILE_TEXTURE_STRUCTURE
 
 #include <vector>
-#include <memory>
-#include <tuple>
 
 #include <Eigen/Core>
 #include <opencv2/core.hpp>
@@ -12,7 +10,6 @@
 #include <gpuTex.h>
 #include "texAtlas.h"
 #include "gpuBuffer.h"
-#include "meshStructure.h"
 
 /**
  * General discussion about textures:
@@ -109,8 +106,6 @@ public:
 			shared_ptr<TexAtlasPatch> source_tex_being_downloaded = nullptr,
 			shared_ptr<TexCoordBufConnector> tex_coords_being_downloaded = nullptr);
 
-	~MeshTextureGpuHandle();
-
 	bool checkRefTexDependencies();
 
 	GpuTextureInfo genTexInfo();
@@ -177,8 +172,7 @@ public:
 	            shared_ptr<TexAtlas> data_atlas);//TODO: also add the framebuffer thingy
 
 	MeshTexture(Type type, MeshReconstruction *map);
-	
-	~MeshTexture();
+
 
 	shared_ptr<MeshTextureGpuHandle> genGpuResource(size_t nr_coords, 
 	                                                cv::Size2i size);
@@ -199,7 +193,6 @@ public:
 	static void scaleAndShiftTexCoordsIntoRect(const cv::Rect2f rect,
 	                                           const vector<Vector2f> &in,
 	                                           vector<Vector2f> &out);
-
 
 	//ACTUALLY THESE NEXT FEW FUNCTIONS ARE HARD TO IMPLEMENT
 	void isLookupTexFilled();
@@ -222,27 +215,12 @@ public:
 	//weak_ptr<TexAtlasPatch> textureMostCurrent;
 
 	//TODO: implement another way of retaining the location of the most current geometry
-	/*
-	bool cpuCoordsAhead=false;
-	bool gpuCoordsAhead=false;
 
-	bool cpuContentAhead=false;
-	bool gpuContentAhead=false;
-	*/
 	bool ref_tex_filled = false;
-
-	//altough let the pixel reference framebuffers be created
-	//GLuint glFramebufferToPixReference=0;
-	///maybe we need to also create a depth attachment / buffer
-	//void createPixReferencesFramebuffer();
-
-	//shared_ptr<gfx::GpuTex2D> pixReference;
-
 
 	///TODO: when this object gets destroyed this reference should be removed from the list.
 	//The slot on which the texture coordinates are.
 
-	//int32_t gpuTexCoordSlot=-1;
 	bool gpu_tex_coords_uploading = false;
 	//TODO: get rid of this
 	vector<Vector2f> tex_coords;
@@ -255,12 +233,6 @@ public:
 
 	weak_ptr<MeshTextureGpuHandle> gpu;
 
-	//TODO: fully remove this when its proven not to be useful
-	/*
-	weak_ptr<TexCoordBufConnector> texCoordsGpu;
-	weak_ptr<MeshTextureGpuHandle> lookup;//this is optional
-	*/
-
 	bool debug_is_uninitialized = true;
 
 	string name;
@@ -268,10 +240,6 @@ public:
 private:
 	//Either we store this and also some information so we don't
 	//need to create the gpu
-	//use this at all
-	//GpuBuffer<Vector2f>* texPosBuffer;//TODO:
-	//shared_ptr<TexAtlas> refAtlas;
-	//shared_ptr<TexAtlas> dataAtlas;
 	//or maybe we only store a reference to the map:
 	MeshReconstruction *map_;
 	Type type_;
@@ -279,9 +247,6 @@ private:
 	//TODO: only let the map call the constructor for meshTexture;
 	//Only the meshTexture instantiates
 };
-
-
-
 
 //https://stackoverflow.com/questions/6087441/fast-swapping-framebuffers-opengl
 //This seems unproven. the article linked provides no timing examples and no
@@ -292,6 +257,5 @@ private:
 //those criteria need to be checked. On the other hand a framebuffer that has
 //already been checked doesn't need to be checked again. QED switching f
 //ramebuffers should be faster.
-
 
 #endif

@@ -1,7 +1,5 @@
 #include "reproject.h"
 
-#include <stdio.h>
-
 using namespace Eigen;
 
 __global__

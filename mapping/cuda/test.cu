@@ -1,7 +1,5 @@
 #include "test.h"
 
-#include <cublas.h>
-
 struct RGBStorage {
 	unsigned char r;
 	unsigned char g;

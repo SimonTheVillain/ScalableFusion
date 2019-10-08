@@ -1,15 +1,9 @@
 #ifndef FILE_SURFACE_READ_H
 #define FILE_SURFACE_READ_H
 
-#include <iostream>
-#include <stdio.h>
 #include <assert.h>
 
-#include <Eigen/Eigen>
-
 #include "helper_math.h"
-#include "gpuErrchk.h"
-#include "geomUpdate.h"
 
 #ifdef __CUDACC__
 
@@ -18,11 +12,6 @@ inline float2 unnormalizeTexCoords(float2 in, cv::Rect2i &rect) {
 	return make_float2(in.x * float(rect.width - 1) + rect.x,
 	                   in.y * float(rect.height - 1) + rect.y);
 }
-
-/*__device__ 
-inline float4 readFloat4FromAtlas(float2 pos, gpu::TexAtlasSubSurface surface) {
-
-}*/
 
 //TODO: adapt this for texAtlas
 __device__ 
@@ -44,7 +33,6 @@ inline float4 readSensor(float x, float y, const cudaSurfaceObject_t surface,
 	//return closest;
 	//This is the old version that interpolates unconditionally!
 	//which is wrong of course!
-
 
 	//there is a lot that plays into this
 	//think about it simon
@@ -254,7 +242,7 @@ inline float4 calcSurfaceUpdate(float4 surface_k,float4 sensor, //the vector of 
 	float s_k1_ = s_k_ * s_s_ / (s_k_ + s_s_);
 	if(s_k1_ < epsilon) {
 		s_k1_ = 0; //set the standard deviation update
-		//to zero if it is too close to zero
+		           //to zero if it is too close to zero
 	}
 	float dev_k1 = (dev_s / s_s + dev_k / s_k_) * s_k1_;
 

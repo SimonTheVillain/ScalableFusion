@@ -2,11 +2,8 @@
 
 #include "vertexUpdate.h"
 #include "stdTexUpdate.h"
-#include "helper_math.h"
 #include "surfaceRead.h"
 #include "xtionCameraModel.h"
-
-#include "../base/meshStructure.h"
 
 using namespace std;
 using namespace Eigen;
@@ -150,7 +147,6 @@ void checkTriangleValidity_kernel(
 		Matrix4f proj_pose, GpuVertex *vertices, Vector2f *tex_pos, 
 		GpuTriangle *triangles, GpuPatchInfo *patch_infos) {
 
-	//uint32_t k = blockIdx.x;
 }
 
 void gpu::GeometryUpdate::calcCenterAndRadiusKernelCall_(
@@ -159,89 +155,6 @@ void gpu::GeometryUpdate::calcCenterAndRadiusKernelCall_(
 
 	calcCenter_kernel<<<grid, block, bytes>>>(gpu_tasks, results);
 }
-/*
-void GeometryUpdate::calcCenterAndRadius(vector<shared_ptr<MeshPatch>> &patches) {
-
-	shared_ptr<float> debugTestShared(new float);
-	*debugTestShared = 1.0f;
-	weak_ptr<float> debugTestWeak = debugTestShared;
-
-	cout << *debugTestWeak.lock() << endl;
-	//TODO: implement this! we really need to
-	if(patches.size()==0){
-		return;
-	}
-	vector<GeometryUpdate::CalcCenterTask> tasks;
-
-	int debug=0;
-	for(shared_ptr<MeshPatch> patch : patches){
-		GeometryUpdate::CalcCenterTask task;
-		shared_ptr<MeshPatchGpuHandle> gpuPatch = patch->gpu.lock();
-		if(gpuPatch == nullptr){
-			assert(0);
-		}
-		shared_ptr<VertexBufConnector> buffer = gpuPatch->verticesSource;
-		task.vertices = buffer->getStartingPtr();
-		task.count = buffer->getSize();
-		tasks.push_back(task);
-		debug++;
-
-	}
-
-	//allocate gpu memory
-	GeometryUpdate::CalcCenterTask* gpuTasks;
-	size_t bytes = sizeof(GeometryUpdate::CalcCenterTask)*tasks.size();
-	cudaMalloc(&gpuTasks,bytes);
-	cudaMemcpy(gpuTasks,&tasks[0],bytes,cudaMemcpyHostToDevice);
-	Vector4f *gpuCenters;
-	cudaMalloc(&gpuCenters,sizeof(Vector4f)*tasks.size());
-
-
-
-	cudaDeviceSynchronize();
-	gpuErrchk( cudaPeekAtLastError() );
-
-
-
-	//calc center and radius in one run
-	dim3 block(256);
-	dim3 grid(tasks.size());
-	bytes = sizeof(Vector4f)*block.x;
-	calcCenter_kernel<<<grid,block,bytes>>>(gpuTasks,gpuCenters);
-
-	cudaDeviceSynchronize();
-	gpuErrchk( cudaPeekAtLastError() );
-
-	Vector4f centers[tasks.size()];
-	cudaMemcpy(centers,gpuCenters,sizeof(Vector4f)*tasks.size(),cudaMemcpyDeviceToHost);
-
-	cudaDeviceSynchronize();
-	gpuErrchk( cudaPeekAtLastError() );
-
-
-	cudaFree(gpuTasks);
-	cudaFree(gpuCenters);
-	cudaDeviceSynchronize();
-	gpuErrchk( cudaPeekAtLastError() );
-
-	for(size_t i = 0; i< tasks.size();i++){
-		cout << "new center" << endl << centers[i] << endl;
-		patches[i]->setSphere(centers[i].block<3,1>(0,0),
-				sqrt(centers[i][3]));
-	}
-	//calc radius
-
-	//download it,
-
-
-	//and last step:
-	//maybe even set this stuff on the patch itself. or all patches at once?
-	//it at least needs to be efficiently set for the octree
-
-	//assert(0);
-
-}
- */
 
 void gpu::GeometryValidityChecks::checkTriangleValidity(
 		vector<TriangleTask> tasks, const cudaSurfaceObject_t sensor,

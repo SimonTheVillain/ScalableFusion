@@ -1,11 +1,5 @@
 #include "geomUpdate.h"
 
-#include "vertexUpdate.h"
-#include "stdTexUpdate.h"
-#include "helper_math.h"
-#include "surfaceRead.h"
-#include "xtionCameraModel.h"
-
 #include "../base/meshStructure.h"
 
 using namespace std;
@@ -79,7 +73,5 @@ void gpu::GeometryUpdate::calcCenterAndRadius(vector<shared_ptr<MeshPatch>> &pat
 	//and last step:
 	//maybe even set this stuff on the patch itself. or all patches at once?
 	//it at least needs to be efficiently set for the octree
-
-	//assert(0);
 
 }

@@ -1,12 +1,8 @@
 #include "lowDetailMapRenderer.h"
 
 #include <iostream>
-#include <memory>
-
-#include <glUtils.h>
 
 #include "meshStructure.h"
-#include "gpuGeomStorage.h"
 #include "gpuErrchk.h"
 #include "coarseUpdate.h"
 #include "../gpu/ActiveSet.h"

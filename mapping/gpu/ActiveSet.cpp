@@ -7,12 +7,8 @@
 
 #include "gpuGeomStorage.h"
 #include "../base/meshStructure.h"
-#include "../base/textureStructure.h"
 #include "../cuda/gpuErrchk.h"
 #include "../cuda/float16_utils.h"
-#include "../cuda/texPatchInit.h"
-#include "../cuda/stdTexUpdate.h"
-#include "../cuda/coalescedMemoryTransfer.h"
 #include "../meshReconstruction.h"
 
 using namespace std;

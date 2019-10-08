@@ -12,13 +12,8 @@
 
 #include <vector>
 #include <memory>
-#include <mutex>
-#include <queue>
 
-#include <GL/glew.h>
 #include <Eigen/Eigen>
-#include <cuda.h>
-#include <cuda_gl_interop.h>
 
 #include "../cuda/gpuMeshStructure.h"
 #include "gpuBuffer.h"

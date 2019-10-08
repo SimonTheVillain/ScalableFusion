@@ -40,8 +40,6 @@
 
 #include "DeformationNode.h"
 
-#include <math.h>
-
 using namespace std;
 using namespace Eigen;
 

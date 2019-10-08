@@ -1,18 +1,9 @@
 #include "gpuGeomStorage.h"
 
-#include <memory>
-#include <set>
+#include <iostream>
 
-#include <Eigen/Eigen>
+#include <opencv2/core/cuda.hpp>
 
-#include "../base/meshStructure.h"
-#include "../base/textureStructure.h"
-#include "../meshReconstruction.h"
-#include "../cuda/gpuErrchk.h"
-#include "../cuda/float16_utils.h"
-#include "../cuda/texPatchInit.h"
-#include "../cuda/stdTexUpdate.h"
-#include "../cuda/coalescedMemoryTransfer.h"
 #include "../gpu/ActiveSet.h"
 
 using namespace std;
@@ -68,16 +59,15 @@ void GpuGeomStorage::initialize() {
 	//this 1) is not necessary with only one gpu
 	//and 2) it should happen way earlier in the code
 	cudaSetDevice(0);
-	//cudaGLSetGLDevice(0);
 
 	//create the buffers that contain slots for our data (vertices, triangles, references to textures
 	// and texture coordinates)
-	vertex_buffer = new GpuBuffer<GpuVertex>(max_nr_vertices);
-	tex_pos_buffer = new GpuBuffer<Vector2f>(max_nr_tex_coordinates);
-	triangle_buffer = new GpuBuffer<GpuTriangle>(max_nr_triangles);
+	vertex_buffer     = new GpuBuffer<GpuVertex>(max_nr_vertices);
+	tex_pos_buffer    = new GpuBuffer<Vector2f>(max_nr_tex_coordinates);
+	triangle_buffer   = new GpuBuffer<GpuTriangle>(max_nr_triangles);
 	patch_info_buffer = new GpuBuffer<GpuPatchInfo>(max_nr_loaded_patch_infos);
-	patch_info_index = new GpuBuffer<GLint>(max_nr_loaded_patch_infos, 
-	                                      GL_ATOMIC_COUNTER_BUFFER);//,false,GL_ATOMIC_COUNTER_BUFFER);
+	patch_info_index  = new GpuBuffer<GLint>(max_nr_loaded_patch_infos, 
+	                                         GL_ATOMIC_COUNTER_BUFFER);
 
 }
 

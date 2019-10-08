@@ -1,9 +1,5 @@
-
 #include "texCoords.h"
 
-#include <limits>
-
-#include "gpuMeshStructure.h"
 #include "gpuErrchk.h"
 
 using namespace std;

@@ -1,13 +1,7 @@
 #include "vertexUpdate.h"
 
-#include <iostream>
-#include <stdio.h>
-#include <assert.h>
-
-#include "helper_math.h"
 #include "surfaceRead.h"
 #include "xtionCameraModel.h"
-#include "geomUpdate.h"
 #include "float16_utils.h"
 
 using namespace Eigen;

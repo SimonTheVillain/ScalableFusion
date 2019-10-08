@@ -1,11 +1,9 @@
 #include "mapPresentationRenderer.h"
 
-#include <opencv2/opencv.hpp>
 #include <glUtils.h>
 
 #include "../meshReconstruction.h"
 #include "../worker.h"
-#include "mapInformationRenderer.h"
 #include <GarbageCollector.h>
 #include "ActiveSet.h"
 #include "gpuErrchk.h"

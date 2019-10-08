@@ -1,6 +1,8 @@
 #include "coalescedMemoryTransfer.h"
-#include "gpuErrchk.h"
+
 #include <iostream>
+
+#include "gpuErrchk.h"
 
 using namespace std;
 using namespace Eigen;

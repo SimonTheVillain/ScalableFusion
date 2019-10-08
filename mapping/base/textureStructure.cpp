@@ -2,7 +2,6 @@
 
 #include <limits>
 
-#include "../cuda/float16_utils.h"
 #include "../cuda/gpuErrchk.h"
 #include "../meshReconstruction.h"
 

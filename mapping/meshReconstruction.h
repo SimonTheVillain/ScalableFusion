@@ -4,17 +4,14 @@
 #include <map>
 //synchronization
 #include <condition_variable>
-#include <thread>
-#include <chrono>
 #include <atomic>
 
-#include <eigen3/Eigen/Eigen>
+#include <Eigen/Eigen>
 #include <opencv2/core.hpp>
 
 #include "gpu/gpuGeomStorage.h"
 #include "utils/octree.h"
 #include "gpu/threadSafeFBO_VAO.h"
-#include "base/meshStructure.h"
 #include "mapInformationRenderer.h"
 #include "mapPresentationRenderer.h"
 #include "lowDetailMapRenderer.h"
@@ -26,6 +23,7 @@
 #include "Labelling.h"
 
 using namespace std;
+using namespace Eigen;
 
 class PreSegmentation;
 class GpuNormSeg;
@@ -89,9 +87,9 @@ public:
 		float max_depth_step = 0.1f;
 		float max_distance = 3.0f;//distance cutoff
 
-		Eigen::Vector4f rgb_fxycxy;
-		Eigen::Vector4f depth_fxycxy;
-		Eigen::Matrix4f cam_position;//maybe this should not be in here!!!
+		Vector4f rgb_fxycxy;
+		Vector4f depth_fxycxy;
+		Matrix4f cam_position;//maybe this should not be in here!!!
 
 	};
 
@@ -113,7 +111,7 @@ public:
 	vector<shared_ptr<MeshPatch>> GetAllPatches();
 
 	void clearInvalidGeometry(shared_ptr<ActiveSet> set, cv::Mat depth, 
-	                          Eigen::Matrix4f depth_pose);
+	                          Matrix4f depth_pose);
 
 	float getMaxDistance() {
 		return params.max_distance;
@@ -123,12 +121,12 @@ public:
 	shared_ptr<MeshPatch> genMeshPatch();
 	shared_ptr<MeshTexture> genMeshTexture(MeshTexture::Type content_type);
 
-	void setRGBIntrinsics(Eigen::Vector4f fxycxy);
-	void setDepthIntrinsics(Eigen::Vector4f fxycxy);
+	void setRGBIntrinsics(Vector4f fxycxy);
+	void setDepthIntrinsics(Vector4f fxycxy);
 
-	cv::Mat generateDepthFromView(int width, int height, Eigen::Matrix4f pose);
+	cv::Mat generateDepthFromView(int width, int height, Matrix4f pose);
 
-	Eigen::Matrix4f genDepthProjMat();
+	Matrix4f genDepthProjMat();
 
 	/**
 	 * @brief initInGlLogicContext
@@ -143,10 +141,10 @@ public:
 	bool hasGeometry();
 
 	//pls describe these
-	shared_ptr<ActiveSet> genActiveSetFromPose(Eigen::Matrix4f depth_pose);
+	shared_ptr<ActiveSet> genActiveSetFromPose(Matrix4f depth_pose);
 	vector<cv::Rect2f> genBoundsFromPatches(
-			vector<shared_ptr<MeshPatch>> &patches, Eigen::Matrix4f pose, 
-			Eigen::Matrix4f proj, shared_ptr<ActiveSet> active_set);
+			vector<shared_ptr<MeshPatch>> &patches, Matrix4f pose, 
+			Matrix4f proj, shared_ptr<ActiveSet> active_set);
 
 	//Free everything
 	void erase();

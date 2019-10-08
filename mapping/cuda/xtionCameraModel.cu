@@ -1,10 +1,6 @@
 #include "xtionCameraModel.h"
 
-#include <iostream>
-#include <stdio.h>
 #include <assert.h>
-
-#include <cuda_fp16.h>
 
 #include "gpuErrchk.h"
 

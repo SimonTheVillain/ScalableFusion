@@ -2,10 +2,7 @@
 #define FILE_GEOM_UPDATE
 
 #include <vector>
-#include <memory>
 
-#include <cuda.h>
-#include <cublas.h>
 #include <opencv2/core.hpp>
 #include <Eigen/Eigen>
 
@@ -35,9 +32,9 @@ namespace gpu {
 		cv::Rect2f source_n;
 		cv::Size2i source_size;
 		cudaSurfaceObject_t source_geometry; // const in a sense of we wont overwrite its pixel
-												//we might have to change that to be able to build
-												//the structure
-		//Pointers or indices to triangles are missing for this part.
+		                                     //we might have to change that to be able to build
+		                                     //the structure
+		                                     //Pointers or indices to triangles are missing for this part.
 		
 		cudaSurfaceObject_t destination_references;
 

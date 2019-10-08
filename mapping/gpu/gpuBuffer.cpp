@@ -3,8 +3,6 @@
 #include <iostream>
 #include <assert.h>
 
-#include <cuda_gl_interop.h>
-
 #include "../cuda/gpuErrchk.h"
 
 using namespace std;
@@ -35,8 +33,6 @@ GpuBuffer<T>::GpuBuffer(size_t element_count, GLuint buffer_type,
 		gpuErrchk(error_test);
 		error_test = cudaGraphicsUnmapResources(1, &cuda_graphics_resource_);//stream0
 		gpuErrchk(error_test);
-		//create a list with occupied slots
-		//m_texPosBufferSlotOccupants = new weak_ptr<MeshTexture>[m_maxNrLoadedTextures];
 
 		error_test = cudaGraphicsMapResources(1, &cuda_graphics_resource_);//stream 0
 		gpuErrchk(error_test);

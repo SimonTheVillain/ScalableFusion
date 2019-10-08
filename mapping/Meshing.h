@@ -8,6 +8,8 @@
 
 #include "meshStructure.h"
 
+using namespace std;
+
 class MeshReconstruction;
 
 class Meshing {
@@ -32,7 +34,7 @@ public:
 
 
 	// TODO: move fillNovelPatchesWithTexIndices here! (because it is a terrible function name
-	void genTexIndices(std::vector<std::shared_ptr<MeshPatch> > &patches);
+	void genTexIndices(vector<shared_ptr<MeshPatch> > &patches);
 
 	MeshReconstruction *mesh_reconstruction;
 

@@ -1,13 +1,10 @@
 #include "exportMap.h"
 
-#include <map>//TODO: remove since it should be included already
 #include <unordered_map>
 #include <fstream>
 
 #include <assimp/Exporter.hpp>
-#include <assimp/Importer.hpp>      // C++ importer interface
 #include <assimp/scene.h>           // Output data structure
-#include <assimp/postprocess.h>
 #include <assimp/version.h>
 #include <Eigen/Core>
 
@@ -19,15 +16,11 @@ using namespace Eigen;
 
 void Exporter::exportMap(MeshReconstruction *map, string path,
                          unsigned int properties) {
-
-	//lets start with the low detail stuff:
-	//map->lowDetailRenderer.coarseTriangles
 }
 
 //only HighRes or LowRes is valid
 void Exporter::exportMesh(MeshReconstruction *map,string path,
                           Exporter::Properties_ properties) {
-
 }
 
 void Exporter::storeCoarse(MeshReconstruction *map, string file_path) {

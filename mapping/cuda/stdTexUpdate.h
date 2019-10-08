@@ -7,8 +7,6 @@
 
 #include <vector>
 
-#include <cuda.h>
-#include <cublas.h>
 #include <opencv2/core.hpp>
 #include <Eigen/Eigen>
 

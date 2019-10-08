@@ -1,8 +1,6 @@
 #ifndef FILE_TEST_H
 #define FILE_TEST_H
 
-#include <cuda.h>
-#include <cublas.h>
 #include <opencv2/opencv.hpp>
 
 

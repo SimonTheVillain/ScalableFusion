@@ -1,7 +1,7 @@
 #ifndef FILE_EXPORT_MAP_H
 #define FILE_EXPORT_MAP_H
 
-#include <iostream>
+#include <string>
 
 using namespace std;
 
@@ -20,7 +20,7 @@ private:
 		LOW_RES = 2,
 		TEXTURE = 4
 	};
-
+	
 public:
 	static void exportMapTest(string test);
 	static void exportMap(MeshReconstruction *map, string path, 
@@ -35,7 +35,6 @@ public:
 
 	static void storeGraph(MeshReconstruction *map,string file_path);
 	static void storeDeformationGraph(MeshReconstruction* map, string file_path);
-	
 };
 
 #endif

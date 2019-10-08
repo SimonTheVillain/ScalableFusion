@@ -1,7 +1,5 @@
-#include <iostream>
-#include <unordered_map>
-
 #include "GeometryUpdate.h"
+
 #include "meshReconstruction.h"
 #include "ActiveSet.h"
 #include "camera.h"
@@ -9,7 +7,6 @@
 #include "utils/gpuNormSeg.h"
 #include "graph/DeformationNode.h"
 #include "cuda/xtionCameraModel.h"
-#include "cuda/coalescedMemoryTransfer.h"
 
 using namespace std;
 using namespace Eigen;
@@ -18,7 +15,7 @@ void GeometryUpdate::extend(
 		shared_ptr<ActiveSet> active_set_of_formerly_visible_patches,
 		shared_ptr<gfx::GpuTex2D> d_std_tex, cv::Mat& d_std_mat,
 		Matrix4f depth_pose_in, shared_ptr<gfx::GpuTex2D> rgb_tex,
-		Eigen::Matrix4f color_pose_in) {
+		Matrix4f color_pose_in) {
 
 	MeshReconstruction *mesh = mesh_reconstruction;
 	// TODO: add everything from meshReconstructionLogic.cpp here!!!!!

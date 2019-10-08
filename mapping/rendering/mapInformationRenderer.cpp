@@ -1,6 +1,5 @@
 #include "mapInformationRenderer.h"
 
-#include <opencv2/opencv.hpp>
 #include <glUtils.h>
 
 #include "../meshReconstruction.h"

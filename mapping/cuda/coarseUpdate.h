@@ -4,8 +4,6 @@
 #include <vector>
 
 #include <Eigen/Eigen>
-#include <cuda.h>
-#include <cublas.h>
 
 #include "gpuMeshStructure.h"
 
@@ -13,7 +11,7 @@ using namespace std;
 
 //TODO: the next two functions could be generalized (its a index attached to some structure to store
 struct CoarseUpdateVisDescriptor {
-	int vert_ind   = -1;//the index of the vector
+	int vert_ind   = -1; //the index of the vector
 	int visibility = 1;
 };
 

@@ -1,10 +1,7 @@
 #include "stdTexUpdate.h"
 
-#include <iostream>
-#include <stdio.h>
 #include <assert.h>
 
-#include "helper_math.h"
 #include "gpuErrchk.h"
 #include "surfaceRead.h"
 #include "xtionCameraModel.h"
@@ -23,9 +20,9 @@ inline void writeResult(float4 result, cudaSurfaceObject_t surface,
 __global__ 
 void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor input adapted by standard deviations
                           int width,int height, //sensor resolution
-                          gpu::UpdateDescriptor* descriptors,
+                          gpu::UpdateDescriptor *descriptors,
                           Vector4f cam_pos,//camera position
-                          Matrix4f _pose, // because we want the vertex position relative to the camera
+                          Matrix4f pose, // because we want the vertex position relative to the camera
                           Matrix4f proj_pose, //to get the position of the point on the image.
                           GpuVertex *vertices, Vector2f *tex_pos,
                           GpuTriangle* triangles,GpuPatchInfo* patch_infos) {
@@ -129,9 +126,9 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
 		}
 
 		//transform the coordinates relative to camera
-		Vector4f pos_cam_frame = _pose*point;
+		Vector4f pos_cam_frame = pose*point;
 
-		Vector4f pos_up_cam_frame = _pose * point_updated;
+		Vector4f pos_up_cam_frame = pose * point_updated;
 		//depth test against sensor input
 		float d    = pos_cam_frame[2];
 		float d_up = pos_up_cam_frame[2];
@@ -194,7 +191,7 @@ void updateGeomTexturesOfPatches(
     int width, int height, //sensor resolution
     const vector<gpu::UpdateDescriptor> &descriptors,
     Vector4f cam_pos,
-    Matrix4f _pose, // because we want the vertex position relative to the camera
+    Matrix4f pose, // because we want the vertex position relative to the camera
     Matrix4f proj_pose, //to get the position of the point on the image.
     GpuVertex *vertices, Vector2f *tex_pos,
     GpuTriangle *triangles,GpuPatchInfo *patch_infos) { //pointer to the geometric data
@@ -217,7 +214,7 @@ void updateGeomTexturesOfPatches(
 	                                      width, height, //sensor resolution
 	                                      descs,
 	                                      cam_pos,
-	                                      _pose, // because we want the vertex position relative to the camera
+	                                      pose, // because we want the vertex position relative to the camera
 	                                      proj_pose, //to get the position of the point on the image.
 	                                      vertices, tex_pos,
 	                                      triangles, patch_infos);

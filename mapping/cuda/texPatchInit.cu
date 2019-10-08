@@ -1,9 +1,5 @@
 #include "texPatchInit.h"
 
-#include <iostream>
-#include <stdio.h>
-#include <assert.h>
-
 #include "gpuErrchk.h"
 
 /**

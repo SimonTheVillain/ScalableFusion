@@ -5,7 +5,6 @@
 #include <vector>
 #include <mutex>
 
-#include <cuda.h>
 #include <cublas.h>
 #include <Eigen/Eigen>
 #include <glUtils.h>
@@ -14,6 +13,7 @@
 #include "gpuMeshStructure.h"
 
 using namespace std;
+using namespace Eigen;
 
 class MeshPatch;
 struct DoubleStitch;
@@ -48,7 +48,7 @@ struct CoarseTriangle {
 	                              shared_ptr<MeshPatch> p2,
 	                              shared_ptr<MeshPatch> p3);
 
-	bool flipToFacePos(Eigen::Vector3f pos);
+	bool flipToFacePos(Vector3f pos);
 
 	weak_ptr<MeshPatch> patches[3];
 	weak_ptr<DoubleStitch> double_stitches[3];
@@ -76,7 +76,7 @@ public:
 
 	int index_within_coarse = -1;
 
-	Eigen::Vector4f average_color;
+	Vector4f average_color;
 };
 
 /**
@@ -95,23 +95,23 @@ public:
 	void initInGlContext();
 
 	void addPatches(vector<shared_ptr<MeshPatch>> &patches_in,
-	                Eigen::Vector3f cam_pos);
+	                Vector3f cam_pos);
 
 	void updateColorForPatches(vector<shared_ptr<MeshPatch>> &patches_in);
 
 	//TODO: split this up:
 	void renderExceptForActiveSets(vector<shared_ptr<ActiveSet>> &sets, 
-	                               Eigen::Matrix4f proj, 
-	                               Eigen::Matrix4f cam_pose);
+	                               Matrix4f proj, 
+	                               Matrix4f cam_pose);
 
 	//into the following:
 	void updateMaskForActiveSets(vector<shared_ptr<ActiveSet>> &sets);
 
 	//render the color data
-	void renderColor( Eigen::Matrix4f proj, Eigen::Matrix4f cam_pose);
+	void renderColor( Matrix4f proj, Matrix4f cam_pose);
 
 	//render the geometry for when we click onto the surface:
-	void renderGeometry(Eigen::Matrix4f proj, Eigen::Matrix4f cam_pose);
+	void renderGeometry(Matrix4f proj, Matrix4f cam_pose);
 
 	void updateAllPatches();
 

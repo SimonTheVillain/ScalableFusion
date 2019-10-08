@@ -32,13 +32,10 @@ struct GpuTriangle {
 	//TODO: transition from absolute indices to relative indices and
 	//references to the patch itself.
 	int16_t patch_info_inds[3];//patch info indices for the triangle
-	//int16_t placeholder1;
 
 	int16_t indices[3];//these are absolute indices for the vertex buffer.
 
-	//int16_t placeholder2;
 	int16_t tex_indices[3];//these texIndices are relative. the texture information itself is within the patchSlot
-	//int16_t placeholder3;
 
 	// TODO:
 	int16_t invalid = 0;//invalid pixel which are valid
@@ -62,13 +59,10 @@ struct GpuTextureInfo {
 	 */
 	//don't know yet what will be needed afterall
 	Vector2f pos;
-	//Vector2f placeholder2;
 	Vector2f size;
-	//Vector2f placeholder3;
 	Vector2f _size;
-	//Vector2f placeholder4;
 
-};//__attribute__ ((aligned(16)));//this is needed even though it doesn't work
+};
 //there is some padding/ alignment issues!
 
 //https://www.ibm.com/developerworks/aix/tutorials/au-memorymanager/
@@ -89,15 +83,13 @@ struct GpuPatchInfo {
 	static const int max_sem_tex_cnt = 3;//shouldn't take space
 	GpuTextureInfo semantic_textures[max_sem_tex_cnt];
 
-
-	//static const int maxSegTexCnt = 3;//shouldn't take space
 	GpuTextureInfo segmentation_texture; //TODO add a bool to show this actually exists
 	int32_t tex_layers;
 	int32_t semantic_tex_count;
 	int32_t segmentation_tex_valid;
 
 	int32_t debug1 = 0;
-};//__attribute__ ((aligned(16)));
+};
 
 struct GpuCoarseVertex {
 	Vector4f p;

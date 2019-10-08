@@ -2,9 +2,7 @@
 
 #include "camera.h"
 #include "meshReconstruction.h"
-#include "cuda/coalescedMemoryTransfer.h"
 #include "cuda/labelling.h"
-#include "cuda/coalescedMemoryTransfer.h"
 #include "gpu/ActiveSet.h"
 
 using namespace std;

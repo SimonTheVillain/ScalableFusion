@@ -1,14 +1,10 @@
 #ifndef FILE_THREAD_SAFE_FBO_VAO_H
 #define FILE_THREAD_SAFE_FBO_VAO_H
 
-#include <iostream>
 #include <mutex>
 #include <thread>
-#include <map>
 #include <unordered_map>
-#include <stack>
 #include <vector>
-#include <set>
 #include <unordered_set>
 #include <assert.h>
 

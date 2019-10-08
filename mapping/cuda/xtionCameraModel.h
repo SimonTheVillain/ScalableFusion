@@ -1,7 +1,6 @@
 #ifndef FILE_XTION_CAMERA_MODEL_H
 #define FILE_XTION_CAMERA_MODEL_H
 
-#include <cublas.h>
 //given the depthmap of the xtion the camera model returns the standard deviation of the signal,
 //the minimum achievable standard deviation at this distance and the depth combined within one texture.
 

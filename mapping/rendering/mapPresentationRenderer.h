@@ -65,7 +65,7 @@ private:
 	GLuint debug_VAO_;
 	shared_ptr<gfx::GLSLProgram> debug_program_;
 
-   MeshReconstruction *map_;
+	MeshReconstruction *map_;
 };
 
 #endif

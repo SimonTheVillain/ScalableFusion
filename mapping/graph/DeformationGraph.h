@@ -43,9 +43,12 @@
 
 #include <Eigen/Eigen>
 
+using namespace std;
+using namespace Eigen;
+
 class PinConstraint {
 public:
-	Eigen::Vector3f pos;
+	Vector3f pos;
 	int node;
 };
 
@@ -68,22 +71,21 @@ public:
 	float wreg = 10.0f;
 	float wcon = 100.0f;
 
-	std::vector<PinConstraint> pin_constraints;
+	vector<PinConstraint> pin_constraints;
 
-	std::vector<Eigen::Vector3f> nodes;
-	std::vector<unsigned int> indices;
+	vector<Vector3f> nodes;
+	vector<unsigned int> indices;
 
-	std::vector<std::vector<unsigned int>> neighbours;
+	vector<vector<unsigned int>> neighbours;
 
-	Eigen::MatrixXd residuals;
+	MatrixXd residuals;
 
 	//lets work with double..... maybe this is a overkill
-	Eigen::SparseMatrix<double> jacobian;
+	SparseMatrix<double> jacobian;
 
-	std::vector<Eigen::Matrix3f> G_rot;
-	std::vector<Eigen::Vector3f> G_t;
+	vector<Matrix3f> G_rot;
+	vector<Vector3f> G_t;
 
 };
 
-
-#endif //SUPERMAPPING_DEFORMATIONGRAPH_H
+#endif

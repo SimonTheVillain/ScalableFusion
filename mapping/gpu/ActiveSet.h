@@ -1,7 +1,6 @@
 #ifndef FILE_ACTIVE_SET_H
 #define FILE_ACTIVE_SET_H
 
-#include <iostream>
 #include <memory>
 #include <vector>
 

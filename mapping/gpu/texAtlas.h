@@ -2,12 +2,11 @@
 #define FILE_TEX_ATLAS_H
 
 #include <memory>
-#include <vector>
 #include <mutex>
 #include <stack>
 #include <thread>
+#include <vector>
 
-#include <Eigen/Eigen>
 #include <opencv2/opencv.hpp>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -132,7 +131,7 @@ private:
 	stack<int> free_slots_;
 
 	//GLuint FBO=0;
-	ThreadSafeFBO* fbo_ = nullptr;
+	ThreadSafeFBO *fbo_ = nullptr;
 	bool debug_ = false;
 
 	thread::id debug_thread_id_tex_created_in_;
@@ -219,7 +218,7 @@ private:
 	shared_ptr<TexAtlasTex> tex_;
 	cv::Rect2i pos_;//position and reserved size within the texture atlas
 	cv::Size2i size_;//size which is actually used
-	int index_in_atlas_tex_ = -1;
+	int index_in_atlas_tex_;
 
 };
 

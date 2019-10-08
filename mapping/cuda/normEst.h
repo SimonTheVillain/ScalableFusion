@@ -1,7 +1,6 @@
 #ifndef FILE_NORM_EST_H
 #define FILE_NORM_EST_H
 
-#include <cublas.h>
 #include <Eigen/Eigen>
 
 void cudaCalcNormals(cudaSurfaceObject_t d_std_min_std, 

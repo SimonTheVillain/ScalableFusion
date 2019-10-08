@@ -2,7 +2,6 @@
 #define FILE_TEX_COORDS_H
 
 #include <vector>
-#include <memory>
 
 #include <Eigen/Eigen>
 #include <opencv2/opencv.hpp>

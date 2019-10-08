@@ -1,18 +1,13 @@
-// TODO: reintroduce include guards, once the problem with the double
-//       labelling.h has been fixed
-//#ifndef FILE_LABELLING_H
-//#define FILE_LABELLING_H
+#ifndef FILE_LABELLING_CUDA_H
+#define FILE_LABELLING_CUDA_H
 
 //whatever will be going on in here
 #include <vector>
 
-#include <cuda.h>
-#include <cublas.h>
 #include <opencv2/core.hpp>
 #include <Eigen/Eigen>
 
 #include "gpuMeshStructure.h"
-#include "gpuErrchk.h"
 
 using namespace std;
 using namespace Eigen;
@@ -54,5 +49,4 @@ namespace gpu {
 	};
 } // namespace gpu
 
-//#endif
-
+#endif

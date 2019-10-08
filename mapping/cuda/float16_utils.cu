@@ -1,6 +1,8 @@
 #include "float16_utils.h"
-#include "gpuErrchk.h"
+
 #include <iostream>
+
+#include "gpuErrchk.h"
 
 using namespace std;
 

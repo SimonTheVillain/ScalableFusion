@@ -1,9 +1,5 @@
 #include "normEst.h"
 
-#include <iostream>
-#include <cstdio>
-
-#include "gpuErrchk.h"
 #include "helper_math.h"
 
 using namespace std;

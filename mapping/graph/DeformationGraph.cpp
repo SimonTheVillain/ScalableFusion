@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include <Eigen/Dense>
-#include<Eigen/SparseCholesky>
 
 using namespace std;
 using namespace Eigen;
@@ -30,7 +29,6 @@ void DeformationGraph::generateNeighbourList() {
 
 
 void DeformationGraph::generateResiduals() {
-
 	int edge_con_count = 0;
 	for(int i = 0; i < neighbours.size(); i++) {
 		edge_con_count += neighbours[i].size();

@@ -1,12 +1,10 @@
 ﻿#ifndef FILE_GPU_BUFFER_H
 #define FILE_GPU_BUFFER_H
 
-#include <thread>
 #include <mutex>
-#include <vector>
 #include <set>
 #include <map>
-#include <utility>
+#include <memory>
 
 #include <GL/glew.h>
 #include <cuda.h>

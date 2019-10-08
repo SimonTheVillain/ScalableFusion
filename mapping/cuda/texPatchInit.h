@@ -6,9 +6,6 @@
 
 #include <vector>
 
-#include <cuda.h>
-#include <cublas.h>
-
 struct CopyDescriptor {
 
 	cudaSurfaceObject_t output;

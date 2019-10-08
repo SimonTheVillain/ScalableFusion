@@ -47,6 +47,9 @@
 #include <opencv2/opencv.hpp>
 #include <Eigen/Eigen>
 
+using namespace std;
+using namespace Eigen;
+
 class DeformationNode;
 class MeshPatch;
 
@@ -54,13 +57,13 @@ class DeformationNode {
 public:
 
 	struct NodePixPos {
-		std::shared_ptr<DeformationNode> node;
+		shared_ptr<DeformationNode> node;
 		cv::Vec2f pix_pos;
-		Eigen::Vector3f pos;
+		Vector3f pos;
 	};
 
-	struct WeakNodeDist{
-		std::weak_ptr<DeformationNode> node;
+	struct WeakNodeDist {
+		weak_ptr<DeformationNode> node;
 		float dist;
 	};
 
@@ -69,12 +72,12 @@ public:
 	
 	~DeformationNode() { }
 
-	void findNeighbours(const Eigen::Vector3f &pos, const cv::Vec2f &pix_pos, 
-	                    const std::vector<NodePixPos> &nodes);
+	void findNeighbours(const Vector3f &pos, const cv::Vec2f &pix_pos, 
+	                    const vector<NodePixPos> &nodes);
 
-	MeshPatch* patch;
+	MeshPatch *patch;
 	//storing neighbours in 4 quadrants (in sorted fashion
-	std::map<float, WeakNodeDist> neighbours[4];
+	map<float, WeakNodeDist> neighbours[4];
 
 };
 

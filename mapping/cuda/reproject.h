@@ -2,7 +2,6 @@
 #define FILE_REPROJECT_H
 
 #include <Eigen/Eigen>
-#include <stdint.h>
 
 void reproject(uint16_t *depth_in, uint16_t *depth_out16, uint32_t *depth_out32,
                int width, int height,

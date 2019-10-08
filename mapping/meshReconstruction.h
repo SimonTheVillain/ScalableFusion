@@ -16,7 +16,7 @@
 #include <eigen3/Eigen/Eigen>
 
 #include <opencv2/core.hpp>
-#include <opencv2/cudaimgproc.hpp>
+//#include <opencv2/cudaimgproc.hpp>
 
 #include <map>
 

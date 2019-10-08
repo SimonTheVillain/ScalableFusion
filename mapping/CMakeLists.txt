@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.8)
 set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/")
 enable_language(CUDA)
+include_directories("/usr/local/cuda/include/crt")
 #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "--expt-relaxed-constexpr")
 
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr ")
@@ -40,7 +41,7 @@ pkg_search_module(GLFW REQUIRED glfw3)
 
 find_package(glfw3 3.1 REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(OpenCV 3.4.3 REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 find_package(ASSIMP REQUIRED)
 
 #find_package(PCL 1.2 REQUIRED)

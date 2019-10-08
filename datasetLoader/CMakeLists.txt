@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.8)
 set(CMAKE_CXX_STANDARD 11)
 
 project (datasetLoader)
-find_package(OpenCV 3.4.3 REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 
 
 

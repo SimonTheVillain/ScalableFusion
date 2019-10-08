@@ -51,7 +51,7 @@ class SchedulerLinear : public SchedulerBase{
 private:
     std::thread captureThread;
 
-    int expandInterval = 30;//10;
+    int expandInterval = 10;//10;
 
     Eigen::Matrix4f lastKnownDepthPose;
 

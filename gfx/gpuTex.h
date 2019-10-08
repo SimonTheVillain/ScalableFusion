@@ -2,7 +2,7 @@
 #define FILE_GPUTEX_H
 
 #include <GL/glew.h>
-#include <cublas.h>
+//#include <cublas.h>
 #include <cuda_gl_interop.h>
 
 #include <string>

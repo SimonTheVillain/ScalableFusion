@@ -3,6 +3,7 @@ cmake_minimum_required (VERSION 3.8)
 #should not be necessary
 set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda")
 set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/")
+include_directories("/usr/local/cuda/include/")
 
 
 set(CMAKE_CXX_STANDARD 11)

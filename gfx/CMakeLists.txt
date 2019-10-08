@@ -24,7 +24,7 @@ if (GLEW_FOUND)
     message("${GLEW_LIBRARIES}")
 endif()
 find_package(OpenGL REQUIRED)
-find_package(OpenCV 3.4.3 REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 #find_package(datasetLoader REQUIRED)
 
 

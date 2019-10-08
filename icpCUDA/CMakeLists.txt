@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
-set(CUDA_INCLUDE_DIRS "/usr/local/cuda/include")
+set(CUDA_INCLUDE_DIRS "/usr/local/cuda/include")# "/usr/local/cuda/include/crt")
 enable_language(CUDA)
 set(CMAKE_CXX_STANDARD 11) #cpp 11 not 14
 set(CMAKE_CUDA_STANDARD 11)
@@ -11,21 +11,21 @@ project(ICP)
 find_package(Pangolin REQUIRED)
 message("${CMAKE_MODULE_PATH}")
 #find_package(CUDA 10 REQUIRED)
-find_package(Eigen3 3.3.5 REQUIRED)
+find_package(Eigen3 3.3.7 REQUIRED)
 find_package(Sophus REQUIRED)
 
 
 
       
 include_directories(${Pangolin_INCLUDE_DIRS})
-#message("${Pangolin_INCLUDE_DIRS}")#simon debug
+message("${Pangolin_INCLUDE_DIRS}")#simon debug
 include_directories(${CUDA_INCLUDE_DIRS})
-#message("${CUDA_INCLUDE_DIRS}")#simon debug
+message("${CUDA_INCLUDE_DIRS}")#simon debug
 include_directories(${EIGEN_INCLUDE_DIRS})
-#message("${EIGEN_INCLUDE_DIRS}")#simon debug
+message("${EIGEN_INCLUDE_DIRS}")#simon debug
 include_directories(${Sophus_INCLUDE_DIR})
-#message("${Sophus_INCLUDE_DIRS}")#simon debug
-#message(${Pangolin_INCLUDE_DIRS})
+message("${Sophus_INCLUDE_DIRS}")#simon debug
+message(${Pangolin_INCLUDE_DIRS})
 #message(${CUDA_INCLUDE_DIRS})
 #message(${EIGEN_INCLUDE_DIRS})
 #message(${Sophus_INCLUDE_DIR})

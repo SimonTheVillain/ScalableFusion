@@ -7,7 +7,7 @@ set(CMAKE_CUDA_COMPILER "/usr/local/cuda-10.1/bin/")
 set (CMAKE_CXX_STANDARD 11)
 project (segmentation)
 #find_package(OpenCV 3.1 REQUIRED)
-find_package(OpenCV 3.4.4 REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 
 
 include_directories(${OpenCV_INCLUDE_DIRS})

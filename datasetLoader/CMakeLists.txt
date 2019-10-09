@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 3.8)
 
 
 # Project
-project(datasetLoader
+project(dataset_loader
 	LANGUAGES CXX
 )
 
@@ -51,9 +51,10 @@ target_link_libraries(${PROJECT_NAME}
 # Install
 install (TARGETS ${PROJECT_NAME} DESTINATION lib)
 
+
 # Tests
 add_executable(${PROJECT_NAME}_test
-	test/datasetLoader_test.cpp
+	test/dataset_loader_test.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test
 	${PROJECT_NAME}

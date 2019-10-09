@@ -7,7 +7,7 @@
 #include <opencv2/core.hpp>
 #include <Eigen/Eigen>
 
-#include "gpuMeshStructure.h"
+#include "gpu_mesh_structure.h"
 
 using namespace std;
 using namespace Eigen;

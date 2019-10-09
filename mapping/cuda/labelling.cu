@@ -1,7 +1,7 @@
 #include "labelling.h"
 
-#include "gpuErrchk.h"
-#include "surfaceRead.h"
+#include "gpu_errchk.h"
+#include "surface_read.h"
 
 using namespace std;
 using namespace Eigen;

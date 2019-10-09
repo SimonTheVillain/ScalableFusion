@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "gpuErrchk.h"
+#include "gpu_errchk.h"
 
 using namespace std;
 

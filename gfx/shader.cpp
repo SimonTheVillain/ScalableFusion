@@ -9,7 +9,6 @@
 #include "shader.h"
 
 #include <fstream>
-
 #include <sys/stat.h>
 
 using namespace std;

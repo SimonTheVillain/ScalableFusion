@@ -6,7 +6,7 @@
 
 #include <eigen3/Eigen/Eigen>
 
-#include "glUtils.h"
+#include "gl_utils.h"
 
 using namespace std;
 using namespace Eigen;

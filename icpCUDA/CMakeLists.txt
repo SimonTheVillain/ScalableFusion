@@ -14,7 +14,7 @@ endif()
 
 
 # Project
-project(icpCUDA
+project(icp_cuda
 	LANGUAGES CXX CUDA
 )
 

@@ -137,4 +137,4 @@ public:
 	size_t heap_capacity = 0;
 };
 
-#endif
+#endif // FILE_STACK_VECTOR_H

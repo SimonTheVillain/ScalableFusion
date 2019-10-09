@@ -97,4 +97,4 @@ private:
 
 } // namespace gfx
 
-#endif
+#endif // FILE_SHADER_H

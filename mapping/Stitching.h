@@ -47,4 +47,4 @@ public:
 
 };
 
-#endif
+#endif // FILE_STITCHING_H

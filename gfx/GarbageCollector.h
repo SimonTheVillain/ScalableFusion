@@ -1,5 +1,5 @@
-#ifndef FILE_GARBAGECOLLECTOR_H
-#define FILE_GARBAGECOLLECTOR_H
+#ifndef FILE_GARBAGE_COLLECTOR_H
+#define FILE_GARBAGE_COLLECTOR_H
 
 #include <vector>
 #include <mutex>
@@ -31,4 +31,4 @@ private:
 
 };
 
-#endif
+#endif // FILE_GARBAGE_COLLECTOR_H

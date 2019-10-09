@@ -20,4 +20,4 @@ public:
 
 };
 
-#endif
+#endif // FILE_CAMERA_H

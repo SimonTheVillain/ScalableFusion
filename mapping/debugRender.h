@@ -52,4 +52,4 @@ private:
 
 extern RenderDebugInfo *that_one_debug_rendering_thingy;
 
-#endif
+#endif // FILE_DEBUG_RENDER_H

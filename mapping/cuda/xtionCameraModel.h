@@ -33,4 +33,4 @@ inline float xtionStdToThresholdCreate(float std) {
 	return std * 0.9;
 }
 
-#endif
+#endif // FILE_XTION_CAMERA_MODEL_H

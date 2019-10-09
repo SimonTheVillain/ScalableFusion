@@ -41,6 +41,6 @@ public:
 
 };
 
-#endif
+#endif // FILE_TEX_COORDS_H
 
 

@@ -695,4 +695,4 @@ bool OctreeNode<T>::fitsWithinNode(Vector3f center, float radius,
 	return true;
 }
 
-#endif
+#endif // FILE_OCTREE_H

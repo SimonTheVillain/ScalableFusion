@@ -97,4 +97,4 @@ struct GpuCoarseVertex {
 	Vector4f c;
 };
 
-#endif
+#endif // FILE_GPU_MESH_STRUCTURE_H

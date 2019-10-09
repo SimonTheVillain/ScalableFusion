@@ -1,5 +1,5 @@
-#ifndef FILE_TEXTURE_STRUCTURE
-#define FILE_TEXTURE_STRUCTURE
+#ifndef FILE_TEXTURE_STRUCTURE_H
+#define FILE_TEXTURE_STRUCTURE_H
 
 #include <vector>
 
@@ -258,4 +258,4 @@ private:
 //already been checked doesn't need to be checked again. QED switching f
 //ramebuffers should be faster.
 
-#endif
+#endif // FILE_TEXTURE_STRUCTURE_H

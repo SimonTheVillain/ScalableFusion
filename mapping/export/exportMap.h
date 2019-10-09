@@ -37,4 +37,4 @@ public:
 	static void storeDeformationGraph(MeshReconstruction* map, string file_path);
 };
 
-#endif
+#endif // FILE_EXPORT_MAP_H

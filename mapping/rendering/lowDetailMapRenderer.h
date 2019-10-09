@@ -1,5 +1,5 @@
-#ifndef FILE_LOW_DETAIL_MAP_RENDERER
-#define FILE_LOW_DETAIL_MAP_RENDERER
+#ifndef FILE_LOW_DETAIL_MAP_RENDERER_H
+#define FILE_LOW_DETAIL_MAP_RENDERER_H
 
 #include <memory>
 #include <vector>
@@ -145,4 +145,4 @@ private:
 	vector<int> invisible_in_last_frame_;
 };
 
-#endif
+#endif // FILE_LOW_DETAIL_MAP_RENDERER_H

@@ -69,4 +69,4 @@ private:
 	
 };
 
-#endif
+#endif // FILE_ARCBALL_H

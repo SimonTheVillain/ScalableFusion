@@ -1,5 +1,5 @@
-#ifndef FILE_GEOMETRYUPDATE_H
-#define FILE_GEOMETRYUPDATE_H
+#ifndef FILE_GEOMETRY_UPDATE_H
+#define FILE_GEOMETRY_UPDATE_H
 
 #include <memory>
 #include <iostream>
@@ -49,4 +49,4 @@ public:
 
 };
 
-#endif
+#endif // FILE_GEOMETRY_UPDATE_H

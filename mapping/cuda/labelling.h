@@ -49,4 +49,4 @@ namespace gpu {
 	};
 } // namespace gpu
 
-#endif
+#endif // FILE_LABELLING_CUDA_H

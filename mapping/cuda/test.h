@@ -8,4 +8,4 @@
 
 void copy(cudaTextureObject_t texture, cv::cuda::GpuMat &to);
 
-#endif
+#endif // FILE_TEST_H

@@ -1,5 +1,5 @@
-#ifndef FILE_GPUTEX_H
-#define FILE_GPUTEX_H
+#ifndef FILE_GPU_TEX_H
+#define FILE_GPU_TEX_H
 
 #include <string>
 #include <vector>
@@ -85,4 +85,4 @@ private:
 
 } // namespace gfx
 
-#endif
+#endif // FILE_GPU_TEX_H

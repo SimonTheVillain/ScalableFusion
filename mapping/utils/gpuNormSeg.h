@@ -51,4 +51,4 @@ private:
 
 };
 
-#endif
+#endif // FILE_GPU_NORM_SEG_H

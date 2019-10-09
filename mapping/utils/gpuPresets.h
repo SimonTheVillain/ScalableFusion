@@ -19,4 +19,4 @@ public:
 	GpuConf getParams(std::string gpu);
 };
 
-#endif
+#endif // FILE_GPU_PRESETS_H

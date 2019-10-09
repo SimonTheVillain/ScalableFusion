@@ -33,4 +33,4 @@ void calcRadius_kernel(gpu::GeometryUpdate::CalcCenterTask *tasks,
 
 #endif
 
-#endif
+#endif // FILE_VERTEX_UPDATE_H

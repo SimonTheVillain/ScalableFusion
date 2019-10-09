@@ -1,5 +1,5 @@
-#ifndef FILE_MESH_STRUCTURE
-#define FILE_MESH_STRUCTURE
+#ifndef FILE_MESH_STRUCTURE_H
+#define FILE_MESH_STRUCTURE_H
 
 #include <vector>
 #include <mutex>
@@ -971,4 +971,4 @@ struct Edge {
 	Vector2f outermost_connection_fragment_pos[2];
 };
 
-#endif
+#endif // FILE_MESH_STRUCTURE_H

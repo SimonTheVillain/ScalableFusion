@@ -42,4 +42,4 @@ struct CopyDescriptor {
 void copyToTinyPatches(const cudaTextureObject_t input,
                        const std::vector<CopyDescriptor> &descriptors);
 
-#endif
+#endif // FILE_TEX_PATCH_INIT_H

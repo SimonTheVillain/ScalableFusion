@@ -1,5 +1,5 @@
-#ifndef FILE_ICPODOMETRY_H_
-#define FILE_ICPODOMETRY_H_
+#ifndef FILE_ICP_ODOMETRY_H
+#define FILE_ICP_ODOMETRY_H
 
 #include <vector>
 
@@ -56,4 +56,4 @@ private:
 	const int height_;
 };
 
-#endif
+#endif // FILE_ICP_ODOMETRY_H

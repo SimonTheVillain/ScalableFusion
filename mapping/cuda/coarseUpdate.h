@@ -51,4 +51,4 @@ void coarseUpdateVert(vector<CoarseUpdateVisDescriptor> descriptors,
 void calcMeanColor(vector<CalcMeanColorDescriptor> descriptors, 
                    GpuCoarseVertex *vertices, Eigen::Vector4f *colors);
 
-#endif
+#endif // FILE_COARSE_UPDATE_H

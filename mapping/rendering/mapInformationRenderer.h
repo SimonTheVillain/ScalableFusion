@@ -1,5 +1,5 @@
-#ifndef FILE_MAP_INFORMATION_RENDERER
-#define FILE_MAP_INFORMATION_RENDERER
+#ifndef FILE_MAP_INFORMATION_RENDERER_H
+#define FILE_MAP_INFORMATION_RENDERER_H
 
 //TODO: rename this to InformationRenderer (better Name, as i think)
 
@@ -141,4 +141,4 @@ private:
 
 };
 
-#endif
+#endif // FILE_MAP_INFORMATION_RENDERER_H

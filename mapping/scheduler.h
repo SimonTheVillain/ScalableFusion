@@ -85,4 +85,4 @@ private:
 	bool take_next_step_;
 };
 
-#endif
+#endif // FILE_SCHEDULER_H

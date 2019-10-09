@@ -1,5 +1,5 @@
-#ifndef FILE_MAP_PRESENTATION_RENDERER
-#define FILE_MAP_PRESENTATION_RENDERER
+#ifndef FILE_MAP_PRESENTATION_RENDERER_H
+#define FILE_MAP_PRESENTATION_RENDERER_H
 
 #include <memory>
 
@@ -68,4 +68,4 @@ private:
 	MeshReconstruction *map_;
 };
 
-#endif
+#endif // FILE_GEOMETRY_UPDATE_H

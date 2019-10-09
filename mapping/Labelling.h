@@ -28,4 +28,4 @@ public:
 	MeshReconstruction *mesh_reconstruction;
 };
 
-#endif
+#endif // FILE_LABELLING_H

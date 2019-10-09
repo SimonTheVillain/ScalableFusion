@@ -51,4 +51,4 @@ ushort4 float4_2_half4_reinterpret_ushort4_rn(float4 in) {
 }
 #endif
 
-#endif
+#endif // FILE_FLOAT16_UTILS_H

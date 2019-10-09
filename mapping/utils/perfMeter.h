@@ -24,4 +24,4 @@ private:
 
 };
 
-#endif
+#endif // FILE_PERF_METER_H

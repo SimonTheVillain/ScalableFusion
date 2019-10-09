@@ -19,4 +19,4 @@ void dumpGLInfo(bool dump_extensions = false);
 } // namespace GLUtils
 } // namespace gfx
 
-#endif
+#endif // FILE_GL_UTILS_H

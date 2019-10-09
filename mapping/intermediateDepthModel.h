@@ -38,4 +38,4 @@ private:
 
 };
 
-#endif
+#endif // FILE_INTERMEDIATE_DEPTH_MODEL_H

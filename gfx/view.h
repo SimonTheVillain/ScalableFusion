@@ -19,4 +19,4 @@ public:
 
 } // namespace gfx
 
-#endif
+#endif // FILE_VIEW_H

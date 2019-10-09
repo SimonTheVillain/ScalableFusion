@@ -135,4 +135,4 @@ typedef GpuBufferConnector<GpuPatchInfo> PatchInfoBufConnector;
 
 void testBuffer();
 
-#endif
+#endif // FILE_GPU_BUFFER_H

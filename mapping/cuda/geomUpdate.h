@@ -1,5 +1,5 @@
-#ifndef FILE_GEOM_UPDATE
-#define FILE_GEOM_UPDATE
+#ifndef FILE_GEOM_UPDATE_H
+#define FILE_GEOM_UPDATE_H
 
 #include <vector>
 
@@ -112,4 +112,4 @@ namespace gpu {
 
 } // namespace gpu
 
-#endif
+#endif // FILE_GEOM_UPDATE_H

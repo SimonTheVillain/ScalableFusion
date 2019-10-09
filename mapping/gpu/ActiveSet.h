@@ -87,4 +87,4 @@ private:
 	//TODO: propably the same for download
 };
 
-#endif
+#endif // FILE_ACTIVE_SET_H

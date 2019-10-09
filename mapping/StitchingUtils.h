@@ -99,4 +99,4 @@ inline bool isEqual(Vector2f point1, Vector2f point2) {
 	return (point1[0] == point2[0]) && (point1[1] == point2[1]);
 }
 
-#endif
+#endif // FILE_STITCHING_UTILS_H

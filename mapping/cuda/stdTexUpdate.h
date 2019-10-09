@@ -85,4 +85,4 @@ void stdTexInit(const cudaTextureObject_t input,
 
 void shiftVerticesALittle(GpuVertex *vertices, size_t from, size_t to);
 
-#endif
+#endif // FILE_STD_TEX_UPDATE_H

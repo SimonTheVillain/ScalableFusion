@@ -198,4 +198,4 @@ inline void vaoDelFun(GLsizei count, GLuint *vaos) {
 typedef ThreadSafeGl<vaoGenFun, vaoDelFun> ThreadSafeVAO;
 typedef ThreadSafeGlStorage<vaoGenFun, vaoDelFun> ThreadSafeVAOStorage;
 
-#endif
+#endif // FILE_THREAD_SAFE_FBO_VAO_H

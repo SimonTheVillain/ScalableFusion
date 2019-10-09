@@ -8,4 +8,4 @@ void reproject(uint16_t *depth_in, uint16_t *depth_out16, uint32_t *depth_out32,
                Eigen::Matrix4f pose_transform,
                Eigen::Vector4f depth_intrinsics);
 
-#endif
+#endif // FILE_REPROJECT_H

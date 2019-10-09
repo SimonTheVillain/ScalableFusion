@@ -147,7 +147,6 @@ private:
 	shared_ptr<TriangleBufConnector> uploadTriangles_(GeometryBase *base_element);
 	void uploadMeshPatch_(MeshPatch *patch, ActiveSet *active_set);
 	void unloadMeshPatch_(MeshPatch *patch);
-	//shared_ptr<BufferSlotConnector> uploadDoubleStitch(DoubleStitch* stitch);
 	void unloadDoubleStitch_(DoubleStitch *stitch);
 	/**
 	 * @brief uploadTripleStitch
@@ -160,4 +159,4 @@ private:
 
 };
 
-#endif
+#endif // FILE_GPU_GEOM_STORAGE_H

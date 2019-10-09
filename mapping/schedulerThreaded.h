@@ -116,6 +116,4 @@ private:
 	Matrix4f last_known_depth_pose_;
 };
 
-
-
-#endif
+#endif // FILE_SCHEDULER_THREADED_H

@@ -75,4 +75,4 @@ private:
 
 };
 
-#endif
+#endif // FILE_RENDERABLE_MODEL_H

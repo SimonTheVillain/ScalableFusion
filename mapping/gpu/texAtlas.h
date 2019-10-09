@@ -222,4 +222,4 @@ private:
 
 };
 
-#endif
+#endif // FILE_TEX_ATLAS_H

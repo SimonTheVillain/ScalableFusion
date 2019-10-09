@@ -62,4 +62,4 @@ private:
 	thread worker_thread_;
 };
 
-#endif
+#endif // FILE_WORKER_H

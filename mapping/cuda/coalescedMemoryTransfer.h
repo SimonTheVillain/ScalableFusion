@@ -65,4 +65,4 @@ public:
 
 };
 
-#endif
+#endif // FILE_COALESCED_MEMORY_TRANSFER_H

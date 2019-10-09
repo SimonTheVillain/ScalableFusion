@@ -2,7 +2,7 @@
 
 #include <gfx/camera.h>
 #include <mesh_reconstruction.h>
-#include <cuda/labelling.h>
+#include <cuda/labelling_cuda.h>
 #include <gpu/active_set.h>
 
 using namespace std;

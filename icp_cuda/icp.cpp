@@ -7,6 +7,7 @@
 #include "icp_odometry.h"
 
 using namespace std;
+using namespace Eigen;
 
 ifstream as_file;
 string directory;
@@ -68,7 +69,7 @@ uint64_t loadDepth(pangolin::Image<unsigned short> &depth) {
 }
 
 void outputFreiburg(const string filename, const uint64_t &timestamp, 
-                    const Eigen::Matrix4f &currentPose) {
+                    const Matrix4f &currentPose) {
 	ofstream file;
 	file.open(filename.c_str(), fstream::app);
 
@@ -76,12 +77,12 @@ void outputFreiburg(const string filename, const uint64_t &timestamp,
 
 	strs << setprecision(6) << fixed << (double)timestamp / 1000000.0 << " ";
 
-	Eigen::Vector3f trans = currentPose.topRightCorner(3, 1);
-	Eigen::Matrix3f rot   = currentPose.topLeftCorner(3, 3);
+	Vector3f trans = currentPose.topRightCorner(3, 1);
+	Matrix3f rot   = currentPose.topLeftCorner(3, 3);
 
 	file << strs.str() << trans(0) << " " << trans(1) << " " << trans(2) << " ";
 
-	Eigen::Quaternionf current_cam_rot(rot);
+	Quaternionf current_cam_rot(rot);
 
 	file << current_cam_rot.x() << " " <<
 	        current_cam_rot.y() << " " <<

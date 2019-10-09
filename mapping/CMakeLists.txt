@@ -111,7 +111,7 @@ file(GLOB CUDA_SRCS
 	cuda/coarse_update.cu
 	cuda/float16_utils.cu
 	cuda/geom_update.cu
-	cuda/labelling.cu
+	cuda/labelling_cuda.cu
 	cuda/norm_est.cu
 	cuda/reproject.cu
 	cuda/std_tex_update.cu

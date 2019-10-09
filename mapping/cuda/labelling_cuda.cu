@@ -1,4 +1,4 @@
-#include "labelling.h"
+#include "labelling_cuda.h"
 
 #include "gpu_errchk.h"
 #include "surface_read.h"

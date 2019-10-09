@@ -7,8 +7,8 @@ using namespace Eigen;
 
 //gauss where the width is in line with sigma, but integrating over the curve would not yield 1 as
 //it should be as simple as possible
-inline __device__ 
-float gaussUnscaled(float x, float sigma) {
+__device__ 
+inline float gaussUnscaled(float x, float sigma) {
 	return exp((-x * x) / (2.0f * sigma * sigma));
 }
 

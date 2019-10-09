@@ -142,8 +142,8 @@ void Labelling::labelSurfaces(vector<Labelling::SegProjTask> tasks,
                               Matrix4f proj_pose,
                               GpuVertex *vertices,
                               Vector2f *tex_pos,
-                              GpuTriangle* triangles,
-                              GpuPatchInfo* patch_infos) {
+                              GpuTriangle *triangles,
+                              GpuPatchInfo *patch_infos) {
 
 	if(tasks.empty()) {
 		return;

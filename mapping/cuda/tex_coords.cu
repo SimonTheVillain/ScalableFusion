@@ -7,7 +7,7 @@ using namespace Eigen;
 
 __global__ 
 void genTexCoords_kernel(TexCoordGen::Task *tasks, Matrix4f proj_pose,
-                         GpuPatchInfo *patch_infos, GpuVertex* vertices) {
+                         GpuPatchInfo *patch_infos, GpuVertex *vertices) {
 	int k = blockIdx.x;
 	TexCoordGen::Task &task = tasks[k];
 	int i = threadIdx.x;

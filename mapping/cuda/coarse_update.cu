@@ -75,7 +75,7 @@ void calcMeanColor(vector<CalcMeanColorDescriptor> descriptors,
 	dim3 block(1024);
 	dim3 grid(descriptors.size());
 
-	Vector4f* colors_gpu = 0;
+	Vector4f *colors_gpu = 0;
 	if(colors) {
 		cudaMalloc(&colors_gpu, descriptors.size() * sizeof(Vector4f));
 	}
@@ -122,7 +122,8 @@ void coarseUpdateVisibility(vector<int> enable_patches,
 	gpuErrchk(cudaPeekAtLastError());
 	int *data;
 	cudaMalloc(&data, 
-	           sizeof(int) * max(enable_patches.size(), disable_patches.size()));
+	           sizeof(int) * max(enable_patches.size(), 
+	           disable_patches.size()));
 
 	dim3 block(256);
 	dim3 grid(enable_patches.size() / block.x + 1);
@@ -144,7 +145,7 @@ void coarseUpdateVisibility(vector<int> enable_patches,
 	grid.x = disable_patches.size() / block.x + 1;
 
 	cudaMemcpy(data, &disable_patches[0], disable_patches.size() * sizeof(int),
-	          cudaMemcpyHostToDevice);
+	           cudaMemcpyHostToDevice);
 	if(!disable_patches.empty()) {
 		setVisibility_kernel<<<grid, block>>>(data, disable_patches.size(),
 		                                      gpu_vis_buffer, 0);

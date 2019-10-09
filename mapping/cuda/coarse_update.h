@@ -42,7 +42,7 @@ struct CalcPatchCenter {
 void coarseUpdateVis(vector<CoarseUpdateVisDescriptor> descriptors,
                      int *gpuVisBuf);
 
-void coarseUpdateVisibility(vector<int> enablePatches, 
+void coarseUpdateVisibility(vector<int> enable_patches, 
                             vector<int> disable_patches, int *gpu_vis_buffer);
 
 void coarseUpdateVert(vector<CoarseUpdateVisDescriptor> descriptors,

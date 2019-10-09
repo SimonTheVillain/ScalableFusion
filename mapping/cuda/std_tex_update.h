@@ -44,7 +44,7 @@ void updateGeomTexturesOfPatches(const cudaSurfaceObject_t geometry_input, //the
 __global__ 
 void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor input adapted by standard deviations
                           int width, int height, //sensor resolution
-                          gpu::UpdateDescriptor* descriptors,
+                          gpu::UpdateDescriptor *descriptors,
                           Vector4f cam_pos, //camera position
                           Matrix4f _pose, // because we want the vertex position relative to the camera
                           Matrix4f proj_pose, //to get the position of the point on the image.

@@ -19,7 +19,7 @@ void Exporter::exportMap(MeshReconstruction *map, string path,
 }
 
 //only HighRes or LowRes is valid
-void Exporter::exportMesh(MeshReconstruction *map,string path,
+void Exporter::exportMesh(MeshReconstruction *map, string path,
                           Exporter::Properties_ properties) {
 }
 
@@ -344,7 +344,8 @@ void Exporter::storeDeformationGraph(MeshReconstruction *map,
 		index_map[patch.get()] = k;
 		k++;
 		for(int i = 0; i < 4; i++) {
-			for(pair<float, DeformationNode::WeakNodeDist> neighbour : patch->deformation_node->neighbours[i]) {
+			for(pair<float, DeformationNode::WeakNodeDist> neighbour : 
+			    patch->deformation_node->neighbours[i]) {
 				MeshPatch *p1 = patch.get();
 				if(neighbour.second.node.lock() != nullptr) {
 					MeshPatch *p2 = neighbour.second.node.lock()->patch;

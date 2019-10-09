@@ -5,7 +5,8 @@
 using namespace std;
 using namespace Eigen;
 
-void gpu::GeometryUpdate::calcCenterAndRadius(vector<shared_ptr<MeshPatch>> &patches) {
+void gpu::GeometryUpdate::calcCenterAndRadius(
+		vector<shared_ptr<MeshPatch>> &patches) {
 
 	if(patches.empty()) {
 		return;

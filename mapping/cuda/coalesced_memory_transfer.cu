@@ -265,18 +265,18 @@ void download_kernel(CoalescedGpuTransfer::DirectTask *tasks) {
 	uint32_t *src = static_cast<uint32_t*>(task.src);
 	uint32_t *dst = static_cast<uint32_t*>(task.dst);
 
-	int words = task.byteCount / 4;
+	int words = task.byte_count / 4;
 	while(i < words) {
 		dst[i] = src[i];
 		i += blockDim.x;
 	}
 
 	i = threadIdx.x;
-	int leftover = task.byteCount % 4;
+	int leftover = task.byte_count % 4;
 	if(i < leftover) {
 		uint8_t *src8 = static_cast<uint8_t*>(task.src);
 		uint8_t *dst8 = static_cast<uint8_t*>(task.dst);
-		dst8[task.byteCount - leftover + i] = src8[task.byteCount - leftover + i];
+		dst8[task.byte_count - leftover + i] = src8[task.byte_count - leftover + i];
 	}
 }
 
@@ -292,8 +292,8 @@ void CoalescedGpuTransfer::download(
 	vector<int> starting_indices(tasks.size());
 	for(int i = 0; i < tasks.size(); i++) {
 		starting_indices[i] = word_count;
-		word_count += tasks[i].byteCount / 4;
-		if(tasks[i].byteCount % 4) {
+		word_count += tasks[i].byte_count / 4;
+		if(tasks[i].byte_count % 4) {
 			word_count++;
 		}
 	}
@@ -337,26 +337,28 @@ void CoalescedGpuTransfer::download(
 	//fill everything to target
 	for(int i = 0; i < tasks.size(); i++) {
 		//copy the results to the real target...
-		memcpy(tasks[i].dst, &result[starting_indices[i]], tasks[i].byteCount);
+		memcpy(tasks[i].dst, &result[starting_indices[i]], tasks[i].byte_count);
 	}
 }
 
 //instantiate this templated method
 template void CoalescedGpuTransfer::upload(vector<GpuPatchInfo> source,
-								vector<GpuPatchInfo*> gpuDst);
+                                           vector<GpuPatchInfo*> gpu_dst);
 
 //instantiate these templated methods
-template void CoalescedGpuTransfer::upload(vector<GpuVertex> source,
-								vector<CoalescedGpuTransfer::Task> tasks);
-template void CoalescedGpuTransfer::upload(vector<GpuTriangle> source,
-								vector<CoalescedGpuTransfer::Task> tasks);
+template void CoalescedGpuTransfer::upload(
+		vector<GpuVertex> source, vector<CoalescedGpuTransfer::Task> tasks);
+template void CoalescedGpuTransfer::upload(
+		vector<GpuTriangle> source, vector<CoalescedGpuTransfer::Task> tasks);
 
-template void CoalescedGpuTransfer::upload(vector<Eigen::Vector2f> source,
-								vector<CoalescedGpuTransfer::Task> tasks);
+template void CoalescedGpuTransfer::upload(
+		vector<Vector2f> source, vector<CoalescedGpuTransfer::Task> tasks);
 
-template void CoalescedGpuTransfer::device2DeviceSameBuf(Eigen::Vector2f* buf,
-vector<CoalescedGpuTransfer::TaskD2D> tasks);
+template void CoalescedGpuTransfer::device2DeviceSameBuf(
+		Vector2f *buf, vector<CoalescedGpuTransfer::TaskD2D> tasks);
 
-template void CoalescedGpuTransfer::upload(vector<CoalescedGpuTransfer::SetTaskTemp<GpuTextureInfo>> tasks);
+template void CoalescedGpuTransfer::upload(
+		vector<CoalescedGpuTransfer::SetTaskTemp<GpuTextureInfo>> tasks);
 
-template void CoalescedGpuTransfer::copy(vector<CoalescedGpuTransfer::CpyTaskTemp<GpuTextureInfo>> tasks);
+template void CoalescedGpuTransfer::copy(
+		vector<CoalescedGpuTransfer::CpyTaskTemp<GpuTextureInfo>> tasks);

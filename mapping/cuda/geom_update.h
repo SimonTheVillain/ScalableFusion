@@ -65,7 +65,7 @@ namespace gpu {
 
 		static void calcCenterAndRadiusKernelCall_(dim3 grid, dim3 block,
 		                                           size_t bytes,
-		                                           CalcCenterTask *gpuTasks,
+		                                           CalcCenterTask *gpu_tasks,
 		                                           Vector4f *results);
 	};
 

@@ -15,8 +15,8 @@ using namespace std;
 using namespace Eigen;
 
 ActiveSet::ActiveSet(GpuGeomStorage *storage,
-                     vector<shared_ptr<MeshPatch> > patches,
-                     MeshReconstruction* map, bool initial,
+                     vector<shared_ptr<MeshPatch>> patches,
+                     MeshReconstruction *map, bool initial,
                      bool debug1) {
 	//TODO: for all the patches that needed to be reuploaded we also upload the
 	//textures!
@@ -61,17 +61,16 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 			//TODO:
 			//triggering this update not only when the gpu resources are
 			//initially created
-			//if(gpuVerticesInDownload==nullptr){//TODO: get rid of this verticesIndownloadThingy
-				CoalescedGpuTransfer::Task task;
-				task.count = patch->vertices.size();
-				task.start = coalesced_vertices.size();
-				task.target = gpu_patch->vertices_source->getStartingPtr();
-				coalesced_vertex_tasks.push_back(task);
+			CoalescedGpuTransfer::Task task;
+			task.count = patch->vertices.size();
+			task.start = coalesced_vertices.size();
+			task.target = gpu_patch->vertices_source->getStartingPtr();
+			coalesced_vertex_tasks.push_back(task);
 
-				//create the necessary vertices
-				for(size_t j = 0; j < patch->vertices.size(); j++) {
-					coalesced_vertices.push_back(patch->vertices[j].genGpuVertex());
-				}
+			//create the necessary vertices
+			for(size_t j = 0; j < patch->vertices.size(); j++) {
+				coalesced_vertices.push_back(patch->vertices[j].genGpuVertex());
+			}
 
 			//when reuploading the geometry before it got downloaded
 			//we use these vertices to prevent the gpu content from being
@@ -179,7 +178,7 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 							//no triangle should have any invalid reference
 							assert(0);
 						}
-						#endif
+						#endif // DEBUG
 
 						gpu_triangle.patch_info_inds[k] =
 								gpu_this_pt->patch_infos->getStartingIndex();
@@ -273,7 +272,7 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 
 	//TODO: checkout what this is doing!!!
 	vector<CoalescedGpuTransfer::Task> coalesced_tex_coord_tasks;
-	vector<Eigen::Vector2f> coalesced_tex_coords;
+	vector<Vector2f> coalesced_tex_coords;
 
 	uploadTexAndCoords_(new_mesh_patches_cpu, new_mesh_patches_gpu, map, initial);
 
@@ -409,7 +408,6 @@ ActiveSet::~ActiveSet() {
 			task.dst = static_cast<void*>(&target[0]);
 			coalesced_download_tasks.push_back(task);
 			downloaded_tex_coords.push_back(make_tuple(tex_patch, move(target)));
-
 		}
 
 		//TODO: download label textures
@@ -452,7 +450,6 @@ ActiveSet::~ActiveSet() {
 	}
 }
 
-
 //ideally this method only got patches with newly generated gpuPatches but probably it doesn't have any gpuTextures
 void ActiveSet::uploadTexAndCoords_(
 		vector<shared_ptr<MeshPatch>> &patches,
@@ -460,7 +457,7 @@ void ActiveSet::uploadTexAndCoords_(
 		const MeshReconstruction *map, bool initial) {
 
 	vector<CoalescedGpuTransfer::Task> coalesced_tex_coord_tasks;
-	vector<Eigen::Vector2f> coalesced_tex_coords;
+	vector<Vector2f> coalesced_tex_coords;
 
 	for(size_t k = 0; k < patches.size(); k++) {
 		shared_ptr<MeshPatch> patch = patches[k];

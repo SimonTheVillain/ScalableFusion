@@ -9,7 +9,7 @@
 using namespace std;
 
 //especially when downloading vertex data.
-void downloadVertices(vector<GpuVertex*> gpuVertices, GpuVertex *data);
+void downloadVertices(vector<GpuVertex*> gpu_vertices, GpuVertex *data);
 
 class CoalescedGpuTransfer {
 public:
@@ -41,7 +41,7 @@ public:
 	struct DirectTask {
 		void *src;
 		void *dst;
-		int  byteCount;
+		int  byte_count;
 	};
 
 	template<typename T>

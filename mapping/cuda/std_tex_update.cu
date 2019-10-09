@@ -49,21 +49,23 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
 
 		//the propable source coordinate (not normalized)
 		float x_source = 
-				(x * descriptor.source.width) / descriptor.destination.width + descriptor.source.x;
+				(x * descriptor.source.width) / descriptor.destination.width + 
+				descriptor.source.x;
 		float y_source = 
-				(y * descriptor.source.height) / descriptor.destination.height + descriptor.source.y;
+				(y * descriptor.source.height) / descriptor.destination.height + 
+				descriptor.source.y;
 
 		//read from the reference texture
 		float4 ref;
-		surf2Dread(&ref, descriptor.destination_references, x_ref*sizeof(Vector4f),
-		           y_ref);
+		surf2Dread(&ref, descriptor.destination_references, 
+		           x_ref * sizeof(Vector4f), y_ref);
 
 		//TODO: if the  vertex doesn't have a triangle within this patch
 		//we want to use a different method. (but for this to work we need to
 		//implement code in the vertex update part)
 
 		float bary[3] = {ref.y, ref.z, ref.w};
-		int32_t triangle_id = *((int*) (&ref.x));
+		int32_t triangle_id = *((int*) &ref.x);
 
 		if(triangle_id < 0) {
 			i += blockDim.x;

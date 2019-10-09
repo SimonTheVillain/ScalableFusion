@@ -17,12 +17,12 @@ void generateXtionConfidenceImage16F(const cudaSurfaceObject_t raw_depth,
 
 #ifdef __CUDACC__
 __device__
-#endif
+#endif // __CUDACC__
 inline float xtionStdToThresholdSeg(float std) {
 #ifdef OVERSIMPLIFY_CAM_MODEL
 	//return std; //(DEBUG) this should always be 0.05
 	return 0.05;
-#endif
+#endif // OVERSIMPLIFY_CAM_MODEL
 	return std * 1.2;
 }
 

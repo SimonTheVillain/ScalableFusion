@@ -20,17 +20,14 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
                          GpuVertex *vertices, Vector2f *tex_pos,
                          GpuTriangle *triangles, GpuPatchInfo *patch_infos);
 
-
 __global__ 
 void calcCenter_kernel(gpu::GeometryUpdate::CalcCenterTask *tasks,
-                       Vector4f* centers);
-
-
+                       Vector4f *centers);
 
 __global__ 
 void calcRadius_kernel(gpu::GeometryUpdate::CalcCenterTask *tasks,
-                       Vector4f* centers_radii);
+                       Vector4f *centers_radii);
 
-#endif
+#endif // __CUDACC__
 
 #endif // FILE_VERTEX_UPDATE_H

@@ -40,8 +40,8 @@ namespace gpu {
 		                          Matrix4f proj_pose,
 		                          GpuVertex *vertices,
 		                          Vector2f *tex_pos,
-		                          GpuTriangle* triangles,
-		                          GpuPatchInfo* patch_infos);
+		                          GpuTriangle *triangles,
+		                          GpuPatchInfo *patch_infos);
 
 		template<class T>
 		static void initializeSurfaces(vector<InitializeTask> tasks, T value);

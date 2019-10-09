@@ -34,7 +34,7 @@ public:
 	static void storeFine(MeshReconstruction *map, string file_path);
 
 	static void storeGraph(MeshReconstruction *map,string file_path);
-	static void storeDeformationGraph(MeshReconstruction* map, string file_path);
+	static void storeDeformationGraph(MeshReconstruction *map, string file_path);
 };
 
 #endif // FILE_EXPORT_MAP_H

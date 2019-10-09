@@ -37,7 +37,7 @@ void generateXtionConfidenceImage_kernel(const cudaSurfaceObject_t raw_depth,
 	return;
 #endif
 	float delta = depth - min_dist;
-	float sigma_m = a0 + delta*a1 + delta * delta * a2;//minimum standard deviation
+	float sigma_m = a0 + delta * a1 + delta * delta * a2;//minimum standard deviation
 	float sigma = c * sigma_m;
 
 	//there is some kind of depth depending vignetting on the kinects

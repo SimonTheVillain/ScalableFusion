@@ -1,11 +1,7 @@
 #ifndef FILE_STITCHING_UTILS_H
 #define FILE_STITCHING_UTILS_H
 
-#include <limits>
-#include <math.h>
-
 #include <Eigen/Core>
-#include <opencv2/core.hpp>
 
 using namespace std;
 using namespace Eigen;

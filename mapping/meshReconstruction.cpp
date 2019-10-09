@@ -3,24 +3,16 @@
 #include <iostream>
 
 #include <gpuTex.h>
-#include <shader.h>
-#include "cuda/coalescedMemoryTransfer.h"
 #include "cuda/xtionCameraModel.h"
 #include "cuda/texCoords.h"
-#include "cuda/texPatchInit.h"
-#include "cuda/stdTexUpdate.h"
 #include "cuda/geomUpdate.h"
-#include "debugRender.h"
 #include "gpu/ActiveSet.h"
 #include "utils/gpuNormSeg.h"
-#include "StitchingUtils.h"
-#include "camera.h"
 #include "worker.h"
 
 using namespace std;
 using namespace Eigen;
 /*
-#include "../icpCUDA/ICPOdometry.h"//this is not supposed to be the way how to include a library
 //TODO: add icp to this project
 //#include <ICPOdometry.h>
 */

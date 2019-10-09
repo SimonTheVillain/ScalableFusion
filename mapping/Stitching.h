@@ -19,8 +19,6 @@ public:
 		mesh_reconstruction = reconstruction;
 	}
 
-	vector<vector<Edge>> border_list;
-
 	void rasterBorderGeometry(vector<vector<Edge>> &borders, Matrix4f view, 
 	                          Matrix4f proj, cv::Mat geometry);
 
@@ -43,6 +41,8 @@ public:
 	                     cv::Mat new_seg_p_m, cv::Mat new_pt_ind_m,
 	                     vector<weak_ptr<GeometryBase>> &debug_list_new_edges);
 
+	vector<vector<Edge>> border_list;
+	
 	MeshReconstruction *mesh_reconstruction;
 
 };

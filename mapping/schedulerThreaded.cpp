@@ -1,7 +1,6 @@
 #include "schedulerThreaded.h"
 
 #include <fstream>
-#include <chrono>
 #include <thread>
 //mainly for naming threads
 #include <pthread.h>

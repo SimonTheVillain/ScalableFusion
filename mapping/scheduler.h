@@ -2,14 +2,8 @@
 #define FILE_SCHEDULER_H
 
 #include <thread>
-#include <condition_variable>
-#include <functional>
-#include <queue>
 
 #include <Eigen/Eigen>
-#include <opencv2/core.hpp>
-
-#include "utils/perfMeter.h"
 
 using namespace std;
 using namespace Eigen;

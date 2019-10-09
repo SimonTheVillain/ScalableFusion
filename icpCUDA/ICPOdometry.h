@@ -10,6 +10,7 @@
 #include "Cuda/internal.h"
 
 using namespace std;
+using namespace Eigen;
 
 class ICPOdometry {
 public:
@@ -17,16 +18,14 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	ICPOdometry(int width, int height, float cx, float cy, float fx, float fy,
-	            float distThresh = 0.10f, 
-	            float angleThresh = sinf(20.f * 3.14159254f / 180.f));
+	            float dist_thresh = 0.10f, 
+	            float angle_thresh = sinf(20.f * 3.14159254f / 180.f));
 
-	virtual ~ICPOdometry();
+	void initICP(unsigned short *depth, const float depth_cutoff = 20.0f);
 
-	void initICP(unsigned short * depth, const float depthCutoff = 20.0f);
+	void initICPModel(unsigned short *depth, const float depth_cutoff = 20.0f);
 
-	void initICPModel(unsigned short * depth, const float depthCutoff = 20.0f);
-
-	void getIncrementalTransformation(Sophus::SE3d & T_prev_curr, int threads, 
+	void getIncrementalTransformation(Sophus::SE3d &T_prev_curr, int threads, 
 	                                  int blocks);
 
 	float last_error;
@@ -45,9 +44,8 @@ private:
 
 	Intr intr_;
 
-	DeviceArray<Eigen::Matrix<float, 29, 1, Eigen::DontAlign>> sum_data_;
-	DeviceArray<Eigen::Matrix<float, 29, 1, Eigen::DontAlign>> out_data_;
-
+	DeviceArray<Matrix<float, 29, 1, DontAlign>> sum_data_;
+	DeviceArray<Matrix<float, 29, 1, DontAlign>> out_data_;
 
 	vector<int> iterations_;
 

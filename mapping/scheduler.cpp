@@ -1,12 +1,7 @@
-//this needs to be up here otherwise we have some ambiguity related issues
-#include "../icpCUDA/ICPOdometry.h"
-
 #include "scheduler.h"
 
 #include <iostream>
-#include <chrono>
 #include <thread>
-#include <unistd.h>
 #include <pthread.h>
 
 #include <Eigen/Eigen>
@@ -14,9 +9,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "../icpCUDA/ICPOdometry.h"
 //TODO: remove since it is not needed in this class
 #include "intermediateDepthModel.h"
-#include "worker.h"
 #include "../segmentation/IncrementalSegmentation.h"
 #include "cuda/xtionCameraModel.h"
 #include "../datasetLoader/datasetLoader.h"

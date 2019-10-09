@@ -83,10 +83,10 @@ void outputFreiburg(const string filename, const uint64_t &timestamp,
 
 	Eigen::Quaternionf current_cam_rot(rot);
 
-	file << current_cam_rot.x() << " " 
-	     << current_cam_rot.y() << " " 
-	     << current_cam_rot.z() << " " 
-	     << current_cam_rot.w() << "\n";
+	file << current_cam_rot.x() << " " <<
+	        current_cam_rot.y() << " " <<
+	        current_cam_rot.z() << " " <<
+	        current_cam_rot.w() << "\n";
 
 	file.close();
 }
@@ -94,8 +94,7 @@ void outputFreiburg(const string filename, const uint64_t &timestamp,
 uint64_t getCurrTime() {
 	return 
 		chrono::duration_cast<chrono::microseconds>(
-			chrono::high_resolution_clock::now().time_since_epoch()
-		).count();
+				chrono::high_resolution_clock::now().time_since_epoch()).count();
 }
 
 int main(int argc, char *argv[]) {
@@ -118,10 +117,10 @@ int main(int argc, char *argv[]) {
 
 	pangolin::Image<unsigned short> first_raw(first_data.w, first_data.h, 
 	                                          first_data.pitch, 
-	                                          (unsigned short*)first_data.ptr);
+	                                          (unsigned short*) first_data.ptr);
 	pangolin::Image<unsigned short> second_raw(second_data.w, second_data.h, 
 	                                           second_data.pitch, 
-	                                           (unsigned short*)second_data.ptr);
+	                                           (unsigned short*) second_data.ptr);
 
 	ICPOdometry icp_odom(640, 480, 319.5, 239.5, 528, 528);
 
@@ -201,9 +200,9 @@ int main(int argc, char *argv[]) {
 						best_blocks = blocks;
 					}
 
-					cout << "\rBest: " << best_threads << " threads, " 
-					     << best_blocks << " blocks (" << best << "ms), " 
-					     << int((counter / 1024.f) * 100.f) << "%    ";
+					cout << "\rBest: " << best_threads << " threads, " <<
+					        best_blocks << " blocks (" << best << "ms), " <<
+					        int((counter / 1024.f) * 100.f) << "%    ";
 					cout.flush();
 				}
 			}

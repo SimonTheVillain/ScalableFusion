@@ -100,7 +100,6 @@ void Stitching::rasterLineGeometry(Matrix4f view, Matrix4f proj, Edge *edge,
 	bresenham(pix0, pix1, f);
 }
 
-
 void Stitching::genBorderList(vector<shared_ptr<MeshPatch>> &patches,
                               vector<vector<Edge>> &border_list, 
                               Matrix4f debug_proj_pose) {

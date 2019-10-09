@@ -3,6 +3,10 @@
 
 #include "scheduler.h"
 
+#include <opencv2/core.hpp>
+
+#include "utils/perfMeter.h"
+
 using namespace std;
 using namespace Eigen;
 

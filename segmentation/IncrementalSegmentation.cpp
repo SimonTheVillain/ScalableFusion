@@ -10,4 +10,3 @@ cv::Mat EdithSegmentation::generateNewLabels(cv::Mat *depth, cv::Mat *normals,
 	placeholder = 100000;
 	return placeholder;
 }
-

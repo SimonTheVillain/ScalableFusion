@@ -115,7 +115,6 @@ void Texturing::generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
 		assert(0);
 	}
 
-
 	vector<TexCoordGen::Task> tex_gen_tasks;
 	tex_gen_tasks.reserve(valid_mesh_patches.size());
 
@@ -298,7 +297,6 @@ void Texturing::projToGeomTex(ActiveSet* active_set,
 			(Vector2f*) active_set->gpu_geom_storage->tex_pos_buffer->getCudaPtr(),
 			(GpuTriangle*) active_set->gpu_geom_storage->triangle_buffer->getCudaPtr(),
 			(GpuPatchInfo*) active_set->gpu_geom_storage->patch_info_buffer->getCudaPtr());
-
 
 	//TODO: this is not fully filling the textures. Get to the root of this issue
 

@@ -38,10 +38,6 @@ ICPOdometry::ICPOdometry(int width, int height, float cx, float cy, float fx,
 	}
 }
 
-ICPOdometry::~ICPOdometry() {
-
-}
-
 void ICPOdometry::initICP(unsigned short *depth, const float depth_cutoff) {
 	depth_tmp_[0].upload(depth, sizeof(unsigned short) * width_, height_, width_);
 
@@ -96,7 +92,7 @@ void ICPOdometry::getIncrementalTransformation(Sophus::SE3d &T_prev_curr,
 			last_inliers = residual_inliers[1];
 
 			const Matrix<double, 6, 1> update =
-				A_icp.cast<double>().ldlt().solve(b_icp.cast<double>());
+					A_icp.cast<double>().ldlt().solve(b_icp.cast<double>());
 
 			T_prev_curr = Sophus::SE3d::exp(update) * T_prev_curr;
 		}

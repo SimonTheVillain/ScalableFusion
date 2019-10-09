@@ -3,29 +3,28 @@
 #include <gfx/gl_utils.h>
 #include <base/mesh_structure.h>
 
-const std::string debug_frag =
+using namespace std;
+using namespace Eigen;
+
+const string debug_frag =
 #include <rendering/shader/debugGeometry.frag>
 ;
 
-const std::string debug_vert =
+const string debug_vert =
 #include <rendering/shader/datastructure.glsl>
 #include <rendering/shader/debugGeometry.vert>
 ;
 
 RenderDebugInfo *that_one_debug_rendering_thingy;
 
-using namespace std;
-using namespace gfx;
-using namespace Eigen;
-
 RenderDebugInfo::RenderDebugInfo()
 		: count_(0),
 		  force_dst_geom(false),
 		  rendered_patch(nullptr) {
-	shader_ = make_shared<GLSLProgram>();
-	shader_->compileShader(debug_frag, GLSLShader::GLSLShaderType::FRAGMENT,
+	shader_ = make_shared<gfx::GLSLProgram>();
+	shader_->compileShader(debug_frag, gfx::GLSLShader::GLSLShaderType::FRAGMENT,
 	                       "debugGeometry.frag");
-	shader_->compileShader(debug_vert, GLSLShader::GLSLShaderType::VERTEX,
+	shader_->compileShader(debug_vert, gfx::GLSLShader::GLSLShaderType::VERTEX,
 	                       "debugGeometry.vert");
 	shader_->link();
 }

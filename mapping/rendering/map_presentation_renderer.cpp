@@ -7,7 +7,6 @@
 #include <gpu/active_set.h>
 #include <cuda/gpu_errchk.h>
 
-using namespace gfx;
 using namespace std;
 using namespace Eigen;
 
@@ -59,7 +58,7 @@ void MapPresentationRenderer::initInContext() {
 
 	}else{//otherwise create a new shader
 
-		rgb_program_ = shared_ptr<GLSLProgram>(new GLSLProgram());
+		rgb_program_ = shared_ptr<gfx::GLSLProgram>(new gfx::GLSLProgram());
 		rgb_program_->compileShader(presentation_frag,
 		                            gfx::GLSLShader::GLSLShaderType::FRAGMENT,
 		                            "presentation.frag" );
@@ -72,7 +71,7 @@ void MapPresentationRenderer::initInContext() {
 	glGenVertexArrays(1, &VAO_);
 	glBindVertexArray(VAO_);
 
-	debug_program_ = shared_ptr<GLSLProgram>(new GLSLProgram());
+	debug_program_ = shared_ptr<gfx::GLSLProgram>(new gfx::GLSLProgram());
 	debug_program_->compileShader(presentation_debug_frag,
 	                              gfx::GLSLShader::GLSLShaderType::FRAGMENT,
 	                              "presentationDebug.frag" );

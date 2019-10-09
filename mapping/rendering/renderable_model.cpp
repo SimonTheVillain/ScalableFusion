@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-using namespace gfx;
 using namespace std;
 using namespace Eigen;
 
@@ -18,7 +17,7 @@ weak_ptr<gfx::GLSLProgram> RenderVerySimpleModel::s_flat_program_;
 
 RenderVerySimpleModel::RenderVerySimpleModel() {
 	if(s_flat_program_.use_count() == 0) {
-		unlit_program_ = shared_ptr<GLSLProgram>(new GLSLProgram());
+		unlit_program_ = shared_ptr<gfx::GLSLProgram>(new gfx::GLSLProgram());
 		unlit_program_->compileShader(unlit_frag,
 		                              gfx::GLSLShader::GLSLShaderType::FRAGMENT,
 		                              "unlit.frag" );

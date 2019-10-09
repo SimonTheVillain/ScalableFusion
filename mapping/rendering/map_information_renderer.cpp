@@ -4,7 +4,6 @@
 #include <mesh_reconstruction.h>
 #include <gpu/active_set.h>
 
-using namespace gfx;
 using namespace std;
 using namespace Eigen;
 
@@ -84,7 +83,7 @@ void MapInformationRenderer::initInContext() {
 		depth_program = s_depth_program_.lock();
 
 	} else {//otherwise create a new shader
-		depth_program = shared_ptr<GLSLProgram>(new GLSLProgram());
+		depth_program = shared_ptr<gfx::GLSLProgram>(new gfx::GLSLProgram());
 		depth_program->compileShader(information_frag,
 		                             gfx::GLSLShader::GLSLShaderType::FRAGMENT,
 		                             "information.frag" );
@@ -107,7 +106,7 @@ void MapInformationRenderer::initInContext() {
 	if(s_triangle_reference_program_.use_count()){
 		triangle_reference_program_ = s_triangle_reference_program_.lock();
 	} else {
-		triangle_reference_program_ = shared_ptr<GLSLProgram>(new GLSLProgram());
+		triangle_reference_program_ = shared_ptr<gfx::GLSLProgram>(new gfx::GLSLProgram());
 		triangle_reference_program_->compileShader(
 				coordinates_frag,
 				gfx::GLSLShader::GLSLShaderType::FRAGMENT,
@@ -129,7 +128,7 @@ void MapInformationRenderer::initInContext() {
 		triangle_ref_depth_prog_ = s_triangle_ref_depth_program_.lock();
 	} else {
 		//create the shader i was looking for
-		triangle_ref_depth_prog_ = shared_ptr<GLSLProgram>(new GLSLProgram());
+		triangle_ref_depth_prog_ = shared_ptr<gfx::GLSLProgram>(new gfx::GLSLProgram());
 		triangle_ref_depth_prog_->compileShader(
 				triangle_ref_depth_frag,
 				gfx::GLSLShader::GLSLShaderType::FRAGMENT,
@@ -146,7 +145,7 @@ void MapInformationRenderer::initInContext() {
 	//TODO: get rid of these overflowing error checks
 	gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] after setting up triangle Ref shader");
 
-	unified_info_prog_ = make_shared<GLSLProgram>();
+	unified_info_prog_ = make_shared<gfx::GLSLProgram>();
 
 	assert(gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] before setting up unified info shader") == GL_NO_ERROR);
 
@@ -192,10 +191,10 @@ void MapInformationRenderer::initInContext() {
 			pt.depth_texture->name = "perThread depth texture";
 			//debug:
 			pt.std_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
-			                                           GL_RGBA32F,
-			                                           GL_RGBA,
-			                                           GL_FLOAT,
-			                                           width_, height_, false);
+			                                            GL_RGBA32F,
+			                                            GL_RGBA,
+			                                            GL_FLOAT,
+			                                            width_, height_, false);
 			pt.std_texture->name = "perThread std Texture";
 
 			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
@@ -204,7 +203,8 @@ void MapInformationRenderer::initInContext() {
 			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, 
 			                     pt.std_texture->getGlName(), 0);
 
-			gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] setting up depth buffer");
+			gfx::GLUtils::checkForOpenGLError(
+					"[RenderMapInformations::initInContext] setting up depth buffer");
 
 			//setting up the depth buffer
 			glGenTextures(1, &pt.depth_buffer_tex);
@@ -217,18 +217,22 @@ void MapInformationRenderer::initInContext() {
 			//http://stackoverflow.com/questions/32611002/opengl-depth-buffer-to-cuda
 			//https://devtalk.nvidia.com/default/topic/877969/opengl-z-buffer-to-cuda/
 
-			gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] setting up z buffer");
+			gfx::GLUtils::checkForOpenGLError(
+					"[RenderMapInformations::initInContext] setting up z buffer");
 
 			//TODO: it might not work if the
 			GLenum draw_buffers[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
 			glDrawBuffers(2, draw_buffers); // "1" is the size of DrawBuffers
 
-			gfx::GLUtils::checkOpenGLFramebufferStatus("Initializing Render map Informations");
-			gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] setting up framebuffer");
+			gfx::GLUtils::checkOpenGLFramebufferStatus(
+					"Initializing Render map Informations");
+			gfx::GLUtils::checkForOpenGLError(
+					"[RenderMapInformations::initInContext] setting up framebuffer");
 
 			//todo add depth buffer...
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);//unbind the framebuffer
-			gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] while setting up framebuffer");
+			gfx::GLUtils::checkForOpenGLError(
+					"[RenderMapInformations::initInContext] while setting up framebuffer");
 
 			//create the VAO just because it is necessary for rendering:
 			glGenVertexArrays(1, &pt.depth_VAO);
@@ -285,11 +289,11 @@ void MapInformationRenderer::initInContext() {
 	return;
 }
 
-shared_ptr<GpuTex2D> MapInformationRenderer::getDepthTexture() {
+shared_ptr<gfx::GpuTex2D> MapInformationRenderer::getDepthTexture() {
 	return per_thread_gl_objects_[this_thread::get_id()].depth_texture;
 }
 
-shared_ptr<GpuTex2D> MapInformationRenderer::getStdTexture() {
+shared_ptr<gfx::GpuTex2D> MapInformationRenderer::getStdTexture() {
 	return per_thread_gl_objects_[this_thread::get_id()].std_texture;
 }
 

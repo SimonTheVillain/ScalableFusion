@@ -73,7 +73,7 @@ include_directories(./rendering)
 include_directories(./rendering/shader)
 include_directories(./utils)
 include_directories(./xtionCamModel)
-include_directories(../datasetLoader)
+include_directories(../dataset_loader)
 include_directories(../gfx)
 include_directories(../icpCUDA)
 

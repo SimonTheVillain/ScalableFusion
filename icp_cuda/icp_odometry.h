@@ -7,7 +7,7 @@
 #include <Eigen/Geometry>
 #include <sophus/se3.hpp>
 
-#include "Cuda/internal.h"
+#include "cuda/internal.h"
 
 using namespace std;
 using namespace Eigen;

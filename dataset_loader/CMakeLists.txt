@@ -25,6 +25,7 @@ find_package(radical CONFIG REQUIRED)
 
 
 # Includes
+include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 

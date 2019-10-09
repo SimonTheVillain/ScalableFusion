@@ -1,7 +1,7 @@
 #include "tex_atlas.h"
 
-#include <gl_utils.h>
-#include <garbage_collector.h>
+#include <gfx/gl_utils.h>
+#include <gfx/garbage_collector.h>
 
 using namespace std;
 using namespace Eigen;

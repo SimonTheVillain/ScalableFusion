@@ -8,8 +8,8 @@
 #include <assimp/version.h>
 #include <Eigen/Core>
 
-#include "../graph/deformation_node.h"
-#include "../mesh_reconstruction.h"
+#include <graph/deformation_node.h>
+#include <mesh_reconstruction.h>
 
 using namespace std;
 using namespace Eigen;

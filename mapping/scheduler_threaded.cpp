@@ -6,14 +6,14 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "mesh_reconstruction.h"
-#include "intermediate_depth_model.h"
-#include "../dataset_loader/dataset_loader.h"
-#include "../icp_cuda/icp_odometry.h"
-#include "../gpu/active_set.h"
-#include "cuda/xtion_camera_model.h"
-#include "garbage_collector.h"
-#include "worker.h"
+#include <mesh_reconstruction.h>
+#include <intermediate_depth_model.h>
+#include <dataset_loader/dataset_loader.h>
+#include <icp_cuda/icp_odometry.h>
+#include <gpu/active_set.h>
+#include <cuda/xtion_camera_model.h>
+#include <gfx/garbage_collector.h>
+#include <worker.h>
 
 using namespace std;
 using namespace Eigen;

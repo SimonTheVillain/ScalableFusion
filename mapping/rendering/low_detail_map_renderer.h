@@ -8,9 +8,9 @@
 #include <cublas.h>
 #include <Eigen/Eigen>
 
-#include <gl_utils.h>
-#include <shader.h>
-#include "gpu_mesh_structure.h"
+#include <gfx/gl_utils.h>
+#include <gfx/shader.h>
+#include <cuda/gpu_mesh_structure.h>
 
 using namespace std;
 using namespace Eigen;

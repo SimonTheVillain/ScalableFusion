@@ -1,56 +1,55 @@
 #include "map_information_renderer.h"
 
-#include <gl_utils.h>
-#include "../mesh_reconstruction.h"
-#include "../gpu/active_set.h"
+#include <gfx/gl_utils.h>
+#include <mesh_reconstruction.h>
+#include <gpu/active_set.h>
 
 using namespace gfx;
 using namespace std;
 using namespace Eigen;
 
 const string information_frag =
-#include "information.frag"//todo: update this file with stuff from renderDepth.frag
+#include <rendering/shader/information.frag>//todo: update this file with stuff from renderDepth.frag
 ;
 const string information_vert =
-#include "datastructure.glsl"
-#include "information.vert"
+#include "shader/datastructure.glsl"
+#include "shader/information.vert"
 ;
 
 const string coordinates_frag =
-#include "coordinates.frag"
+#include "shader/coordinates.frag"
 ;
 
 const string coordinates_vert =
-#include "datastructure.glsl"
-#include "coordinates.vert"
+#include "shader/datastructure.glsl"
+#include "shader/coordinates.vert"
 ;
 
 const string triangle_ref_depth_frag =
-#include "triangleRefDepth.frag"
+#include "shader/triangleRefDepth.frag"
 ;
 
 const string triangle_ref_depth_geom =
-#include "datastructure.glsl"
-#include "triangleRefDepth.geom"
+#include "shader/datastructure.glsl"
+#include "shader/triangleRefDepth.geom"
 ;
 
 const string triangle_ref_depth_vert =
-#include "datastructure.glsl"
-#include "triangleRefDepth.vert"
+#include "shader/datastructure.glsl"
+#include "shader/triangleRefDepth.vert"
 ;
 
 const string unified_info_frag =
-//#include "datastructure.glsl"
-#include "unifiedInfo.frag"
+#include "shader/unifiedInfo.frag"
 ;
 
 const string unified_info_geom =
-#include "datastructure.glsl"
-#include "unifiedInfo.geom"
+#include "shader/datastructure.glsl"
+#include "shader/unifiedInfo.geom"
 ;
 const string unified_info_vert =
-#include "datastructure.glsl"
-#include "unifiedInfo.vert"
+#include "shader/datastructure.glsl"
+#include "shader/unifiedInfo.vert"
 ;
 
 mutex MapInformationRenderer::shader_mutex_;

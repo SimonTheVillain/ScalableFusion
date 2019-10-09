@@ -1,11 +1,11 @@
 #include "map_presentation_renderer.h"
 
-#include <gl_utils.h>
-#include "../mesh_reconstruction.h"
-#include "../worker.h"
-#include <garbage_collector.h>
-#include "active_set.h"
-#include "gpu_errchk.h"
+#include <gfx/gl_utils.h>
+#include <mesh_reconstruction.h>
+#include <worker.h>
+#include <gfx/garbage_collector.h>
+#include <gpu/active_set.h>
+#include <cuda/gpu_errchk.h>
 
 using namespace gfx;
 using namespace std;
@@ -14,18 +14,18 @@ using namespace Eigen;
 //c++ 11 string literals as measure to include shader files
 //http://stackoverflow.com/questions/20443560/how-to-practically-ship-glsl-shaders-with-your-c-software
 const string presentation_frag =
-#include "presentation.frag"
+#include "shader/presentation.frag"
 ;
 const string presentation_vert =
-#include "datastructure.glsl"
-#include "presentation.vert"
+#include "shader/datastructure.glsl"
+#include "shader/presentation.vert"
 ;
 
 const string presentation_debug_frag =
-#include "presentationDebug.frag"
+#include "shader/presentationDebug.frag"
 ;
 const string presentation_debug_vert =
-#include "presentationDebug.vert"
+#include "shader/presentationDebug.vert"
 ;
 
 weak_ptr<gfx::GLSLProgram> MapPresentationRenderer::s_rgb_program_;

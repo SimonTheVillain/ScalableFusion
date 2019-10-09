@@ -4,7 +4,7 @@
 #include <mutex>
 #include <memory>
 
-#include "../gfx/shader.h"
+#include <gfx/shader.h>
 
 class MeshPatch;
 

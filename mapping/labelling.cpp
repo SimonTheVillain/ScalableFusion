@@ -1,9 +1,9 @@
 #include "labelling.h"
 
-#include "camera.h"
-#include "mesh_reconstruction.h"
-#include "cuda/labelling.h"
-#include "gpu/active_set.h"
+#include <gfx/camera.h>
+#include <mesh_reconstruction.h>
+#include <cuda/labelling.h>
+#include <gpu/active_set.h>
 
 using namespace std;
 using namespace Eigen;

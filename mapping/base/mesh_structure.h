@@ -10,9 +10,9 @@
 
 #include "texture_structure.h"
 #include "stack_vector.h"
-#include <gpu_geom_storage.h>
-#include "octree.h"
-#include "low_detail_map_renderer.h"
+#include <gpu/gpu_geom_storage.h>
+#include <utils/octree.h>
+#include <rendering/low_detail_map_renderer.h>
 
 using namespace std;
 using namespace Eigen;

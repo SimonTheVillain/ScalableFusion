@@ -11,9 +11,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <gpu_tex.h>
-#include "../cuda/gpu_mesh_structure.h"
-#include "thread_safe_FBO_VAO.h"
+#include <gfx/gpu_tex.h>
+#include <cuda/gpu_mesh_structure.h>
+#include <gpu/thread_safe_FBO_VAO.h>
 
 using namespace std;
 

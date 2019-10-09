@@ -1,12 +1,12 @@
 #include "texturing.h"
 
-#include "cuda/tex_coords.h"
-#include "cuda/tex_patch_init.h"
-#include "cuda/std_tex_update.h"
-#include "gpu/active_set.h"
-#include "debug_render.h"
-#include "mesh_reconstruction.h"
-#include "camera.h"
+#include <cuda/tex_coords.h>
+#include <cuda/tex_patch_init.h>
+#include <cuda/std_tex_update.h>
+#include <gpu/active_set.h>
+#include <debug_render.h>
+#include <mesh_reconstruction.h>
+#include <gfx/camera.h>
 
 using namespace std;
 using namespace Eigen;

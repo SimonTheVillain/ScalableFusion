@@ -7,8 +7,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "../cuda/norm_est.h"
-#include "../cuda/xtion_camera_model.h"
+#include <cuda/norm_est.h>
+#include <cuda/xtion_camera_model.h>
 
 using namespace std;
 using namespace Eigen;

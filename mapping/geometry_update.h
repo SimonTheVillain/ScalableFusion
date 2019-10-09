@@ -8,8 +8,8 @@
 #include <Eigen/Eigen>
 #include <opencv2/core.hpp>
 
-#include "meshing.h"
-#include "stitching.h"
+#include <meshing.h>
+#include <stitching.h>
 
 using namespace std;
 using namespace Eigen;

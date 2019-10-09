@@ -6,7 +6,7 @@
 #include <opencv2/opencv.hpp>
 #include <Eigen/Eigen>
 
-#include "mesh_structure.h"
+#include <base/mesh_structure.h>
 
 using namespace std;
 

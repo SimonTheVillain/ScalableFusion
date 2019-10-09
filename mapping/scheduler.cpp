@@ -9,15 +9,15 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "../icp_cuda/icp_odometry.h"
+#include <icp_cuda/icp_odometry.h>
 //TODO: remove since it is not needed in this class
-#include "intermediate_depth_model.h"
-#include "../segmentation/incremental_segmentation.h"
-#include "cuda/xtion_camera_model.h"
-#include "../dataset_loader/dataset_loader.h"
-#include <garbage_collector.h>
-#include "mesh_reconstruction.h"
-#include "../gpu/active_set.h"
+#include <intermediate_depth_model.h>
+#include <segmentation/incremental_segmentation.h>
+#include <cuda/xtion_camera_model.h>
+#include <dataset_loader/dataset_loader.h>
+#include <gfx/garbage_collector.h>
+#include <mesh_reconstruction.h>
+#include <gpu/active_set.h>
 
 using namespace std;
 using namespace Eigen;

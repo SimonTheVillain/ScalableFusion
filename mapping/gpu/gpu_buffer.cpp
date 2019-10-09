@@ -3,7 +3,7 @@
 #include <iostream>
 #include <assert.h>
 
-#include "../cuda/gpu_errchk.h"
+#include <cuda/gpu_errchk.h>
 
 using namespace std;
 

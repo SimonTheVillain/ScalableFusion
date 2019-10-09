@@ -9,18 +9,18 @@
 #include <Eigen/Eigen>
 #include <opencv2/core.hpp>
 
-#include "gpu/gpu_geom_storage.h"
-#include "utils/octree.h"
-#include "gpu/thread_safe_FBO_VAO.h"
-#include "map_information_renderer.h"
-#include "map_presentation_renderer.h"
-#include "low_detail_map_renderer.h"
+#include <gpu/gpu_geom_storage.h>
+#include <utils/octree.h>
+#include <gpu/thread_safe_FBO_VAO.h>
+#include <rendering/map_information_renderer.h>
+#include <rendering/map_presentation_renderer.h>
+#include <rendering/low_detail_map_renderer.h>
 //TODO: migrate functionality to these new classes
-#include "texturing.h"
-#include "geometry_update.h"
-#include "meshing.h"
-#include "stitching.h"
-#include "labelling.h"
+#include <texturing.h>
+#include <geometry_update.h>
+#include <meshing.h>
+#include <stitching.h>
+#include <labelling.h>
 
 using namespace std;
 using namespace Eigen;

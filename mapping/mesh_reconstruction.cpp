@@ -2,13 +2,13 @@
 
 #include <iostream>
 
-#include <gpu_tex.h>
-#include "cuda/xtion_camera_model.h"
-#include "cuda/tex_coords.h"
-#include "cuda/geom_update.h"
-#include "gpu/active_set.h"
-#include "utils/gpu_norm_seg.h"
-#include "worker.h"
+#include <gfx/gpu_tex.h>
+#include <cuda/xtion_camera_model.h>
+#include <cuda/tex_coords.h>
+#include <cuda/geom_update.h>
+#include <gpu/active_set.h>
+#include <utils/gpu_norm_seg.h>
+#include <worker.h>
 
 using namespace std;
 using namespace Eigen;

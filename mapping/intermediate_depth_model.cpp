@@ -2,7 +2,7 @@
 
 #include <cublas.h>
 #include <cuda.h>
-#include "cuda/reproject.h"
+#include <cuda/reproject.h>
 
 using namespace std;
 using namespace Eigen;

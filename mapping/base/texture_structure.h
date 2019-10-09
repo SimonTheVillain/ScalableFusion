@@ -6,10 +6,9 @@
 #include <Eigen/Core>
 #include <opencv2/core.hpp>
 
-//from ghe gfx package
-#include <gpu_tex.h>
-#include "tex_atlas.h"
-#include "gpu_buffer.h"
+#include <gfx/gpu_tex.h>
+#include <gpu/tex_atlas.h>
+#include <gpu/gpu_buffer.h>
 
 /**
  * General discussion about textures:

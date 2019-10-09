@@ -2,8 +2,8 @@
 
 #include <limits>
 
-#include "../cuda/gpu_errchk.h"
-#include "../mesh_reconstruction.h"
+#include <cuda/gpu_errchk.h>
+#include <mesh_reconstruction.h>
 
 using namespace std;
 using namespace Eigen;

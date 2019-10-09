@@ -6,8 +6,8 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 
-#include <gpu_tex.h>
-#include <shader.h>
+#include <gfx/gpu_tex.h>
+#include <gfx/shader.h>
 
 using namespace std;
 using namespace Eigen;

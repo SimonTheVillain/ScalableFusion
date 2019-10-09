@@ -6,7 +6,7 @@
 #include <Eigen/Eigen>
 #include <opencv2/opencv.hpp>
 
-#include <gpu_tex.h>
+#include <gfx/gpu_tex.h>
 
 using namespace std;
 using namespace Eigen;

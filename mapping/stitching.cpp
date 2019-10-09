@@ -2,9 +2,9 @@
 
 #include <Eigen/Eigen>
 
-#include "mesh_reconstruction.h"
-#include "stitching_utils.h"
-#include "cuda/coalesced_memory_transfer.h"
+#include <mesh_reconstruction.h>
+#include <stitching_utils.h>
+#include <cuda/coalesced_memory_transfer.h>
 
 using namespace std;
 using namespace Eigen;

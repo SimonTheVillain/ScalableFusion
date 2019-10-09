@@ -1,15 +1,15 @@
 #include "debug_render.h"
 
-#include "../gfx/gl_utils.h"
-#include "base/mesh_structure.h"
+#include <gfx/gl_utils.h>
+#include <base/mesh_structure.h>
 
 const std::string debug_frag =
-#include "debugGeometry.frag"
+#include <rendering/shader/debugGeometry.frag>
 ;
 
 const std::string debug_vert =
-#include "datastructure.glsl"
-#include "debugGeometry.vert"
+#include <rendering/shader/datastructure.glsl>
+#include <rendering/shader/debugGeometry.vert>
 ;
 
 RenderDebugInfo *that_one_debug_rendering_thingy;

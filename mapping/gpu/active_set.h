@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 
-#include <coalesced_memory_transfer.h>
+#include <cuda/coalesced_memory_transfer.h>
 
 using namespace std;
 

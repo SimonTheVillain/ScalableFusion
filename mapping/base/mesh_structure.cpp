@@ -2,9 +2,9 @@
 
 #include <iostream>
 
-#include "../utils/principal_plane.h"
-#include "../gpu/tex_atlas.h"
-#include "../graph/deformation_node.h"
+#include <utils/principal_plane.h>
+#include <gpu/tex_atlas.h>
+#include <graph/deformation_node.h>
 
 using namespace std;
 using namespace Eigen;

@@ -11,20 +11,20 @@
 #include <GLFW/glfw3.h>
 #include <glog/logging.h>
 
-#include <dataset_loader.h>
-#include <camera.h>
-#include "mesh_reconstruction.h"
-#include <gpu_tex.h>
-#include "cuda/test.h"
-#include "scheduler.h"
-#include "scheduler_threaded.h"
-#include "utils/arcball.h"
-#include "renderable_model.h"
-#include "debug_render.h"
-#include "garbage_collector.h"
-#include "export/export_map.h"
-#include "../segmentation/incremental_segmentation.h"
-#include "utils/perf_meter.h"
+#include <dataset_loader/dataset_loader.h>
+#include <gfx/camera.h>
+#include <mesh_reconstruction.h>
+#include <gfx/gpu_tex.h>
+#include <cuda/test.h>
+#include <scheduler.h>
+#include <scheduler_threaded.h>
+#include <utils/arcball.h>
+#include <rendering/renderable_model.h>
+#include <debug_render.h>
+#include <gfx/garbage_collector.h>
+#include <export/export_map.h>
+#include <segmentation/incremental_segmentation.h>
+#include <utils/perf_meter.h>
 
 //how to measure memory consumption on a shell basis:
 //while true; do sleep 0.1; nvidia-smi | grep mapping | grep -oh "[0-9]*MiB" >> mappingMemory.txt ; done

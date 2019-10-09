@@ -57,6 +57,8 @@ find_package(radical CONFIG REQUIRED)
 
 
 # Includes
+include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/../)
 include_directories(${ASSIMP_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIR})
 include_directories(${CUDA_INCLUDE_DIRS})
@@ -64,18 +66,6 @@ include_directories(${EIGEN3_INCLUDE_DIRS})
 include_directories(${GLEW_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${OPENGL_INCLUDE_DIR})
-include_directories(./base)
-include_directories(./cuda)
-include_directories(./export)
-include_directories(./gpu)
-include_directories(./remeshing)
-include_directories(./rendering)
-include_directories(./rendering/shader)
-include_directories(./utils)
-include_directories(./xtionCamModel)
-include_directories(../dataset_loader)
-include_directories(../gfx)
-include_directories(../icpCUDA)
 
 
 # Links

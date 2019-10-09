@@ -1,7 +1,7 @@
 #include "meshing.h"
 
-#include "mesh_reconstruction.h"
-#include "cuda/xtion_camera_model.h"
+#include <mesh_reconstruction.h>
+#include <cuda/xtion_camera_model.h>
 
 using namespace Eigen;
 using namespace std;

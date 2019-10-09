@@ -1,6 +1,6 @@
 #include "geom_update.h"
 
-#include "../base/mesh_structure.h"
+#include <base/mesh_structure.h>
 
 using namespace std;
 using namespace Eigen;

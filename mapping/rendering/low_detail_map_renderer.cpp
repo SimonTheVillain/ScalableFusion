@@ -2,40 +2,39 @@
 
 #include <iostream>
 
-#include "mesh_structure.h"
-#include "gpu_errchk.h"
-#include "coarse_update.h"
-#include "../gpu/active_set.h"
+#include <base/mesh_structure.h>
+#include <cuda/gpu_errchk.h>
+#include <cuda/coarse_update.h>
+#include <gpu/active_set.h>
 
-using namespace gfx;
 using namespace std;
 using namespace Eigen;
 
 const string low_detail_frag =
-#include "lowDetail.frag"
+#include "shader/lowDetail.frag"
 ;
 const string low_detail_vert =
-#include "lowDetail.vert"
+#include "shader/lowDetail.vert"
 ;
 const string low_detail_geom =
-#include "lowDetail.geom"
+#include "shader/lowDetail.geom"
 ;
 const string low_detail_ref_depth_frag =
-#include "lowDetailRefDepth.frag"
+#include "shader/lowDetailRefDepth.frag"
 ;
 const string low_detail_ref_depth_vert =
-#include "lowDetailRefDepth.vert"
+#include "shader/lowDetailRefDepth.vert"
 ;
 const string low_detail_ref_depth_geom =
-#include "lowDetailRefDepth.geom"
+#include "shader/lowDetailRefDepth.geom"
 ;
 
 //the purpose of these should be obvious!!!!!
 const string debug_frag =
-#include "debug.frag"
+#include "shader/debug.frag"
 ;
 const string debug_vert =
-#include "debug.vert"
+#include "shader/debug.vert"
 ;
 
 weak_ptr<gfx::GLSLProgram> LowDetailRenderer::s_shader_;
@@ -51,20 +50,25 @@ void LowDetailRenderer::initInGlContext() {
 	if(LowDetailRenderer::s_shader_.use_count()) {
 		shader_ = LowDetailRenderer::s_shader_.lock();
 	} else {
-		shader_ = make_shared<GLSLProgram>();
-		shader_->compileShader(low_detail_frag, GLSLShader::GLSLShaderType::FRAGMENT,
+		shader_ = make_shared<gfx::GLSLProgram>();
+		shader_->compileShader(low_detail_frag, 
+		                       gfx::GLSLShader::GLSLShaderType::FRAGMENT,
 		                      "lowDetail.frag");
-		shader_->compileShader(low_detail_geom, GLSLShader::GLSLShaderType::GEOMETRY,
+		shader_->compileShader(low_detail_geom, 
+		                       gfx::GLSLShader::GLSLShaderType::GEOMETRY,
 		                      "lowDetail.geom");
-		shader_->compileShader(low_detail_vert, GLSLShader::GLSLShaderType::VERTEX,
+		shader_->compileShader(low_detail_vert, 
+		                       gfx::GLSLShader::GLSLShaderType::VERTEX,
 		                      "lowDetail.vert");
 		shader_->link();
 		s_shader_ = shader_;
 
-		debug_shader_ = make_shared<GLSLProgram>();
-		debug_shader_->compileShader(debug_frag, GLSLShader::GLSLShaderType::FRAGMENT,
+		debug_shader_ = make_shared<gfx::GLSLProgram>();
+		debug_shader_->compileShader(debug_frag, 
+		                       gfx::GLSLShader::GLSLShaderType::FRAGMENT,
 		                           "debug.frag");
-		debug_shader_->compileShader(debug_vert, GLSLShader::GLSLShaderType::VERTEX,
+		debug_shader_->compileShader(debug_vert, 
+		                       gfx::GLSLShader::GLSLShaderType::VERTEX,
 		                           "debug.vert");
 		debug_shader_->link();
 	}
@@ -72,15 +76,15 @@ void LowDetailRenderer::initInGlContext() {
 	if(LowDetailRenderer::s_geometry_shader_.use_count()) {
 		geometry_shader_ = LowDetailRenderer::s_geometry_shader_.lock();
 	} else {
-		geometry_shader_ = make_shared<GLSLProgram>();
+		geometry_shader_ = make_shared<gfx::GLSLProgram>();
 		geometry_shader_->compileShader(low_detail_ref_depth_frag,
-		                                GLSLShader::GLSLShaderType::FRAGMENT,
+		                                gfx::GLSLShader::GLSLShaderType::FRAGMENT,
 		                                "lowDetailRefDepth.frag");
 		geometry_shader_->compileShader(low_detail_ref_depth_geom,
-		                                GLSLShader::GLSLShaderType::GEOMETRY,
+		                                gfx::GLSLShader::GLSLShaderType::GEOMETRY,
 		                                "lowDetailRefDepth.geom");
 		geometry_shader_->compileShader(low_detail_ref_depth_vert,
-		                                GLSLShader::GLSLShaderType::VERTEX,
+		                                gfx::GLSLShader::GLSLShaderType::VERTEX,
 		                                "lowDetailRefDepth.vert");
 		geometry_shader_->link();
 
@@ -473,8 +477,8 @@ void LowDetailRenderer::updateColorForPatches(
 
 void LowDetailRenderer::renderExceptForActiveSets(
 		vector<shared_ptr<ActiveSet> > &sets, Matrix4f proj, Matrix4f cam_pose) {
-	GLUtils::checkForOpenGLError("[LowDetailRenderer::renderExceptForActiveSets] "
-									  "At the beginning.");
+	gfx::GLUtils::checkForOpenGLError(
+			"[LowDetailRenderer::renderExceptForActiveSets] At the beginning.");
 	shader_->use();
 
 	modifying_buffers_.lock();
@@ -579,16 +583,18 @@ void LowDetailRenderer::renderExceptForActiveSets(
 	Matrix4f mvp = proj * cam_pose;
 	glUniformMatrix4fv(0, 1, false, (float*) &mvp);
 
-	GLUtils::checkForOpenGLError("[LowDetailRenderer::renderExceptForActiveSets] "
-	                             "Error at setting up the low detail rendering.");
+	gfx::GLUtils::checkForOpenGLError(
+			"[LowDetailRenderer::renderExceptForActiveSets] "
+			"Error at setting up the low detail rendering.");
 
 	//render the low poly version of the map
 	glDrawElements(GL_TRIANGLES, nr_inds, GL_UNSIGNED_INT, (void*) 0);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);//back from debug
 	glFinish();//DEBUG: this should not be necessary.
 	//check for opengl errors
-	GLUtils::checkForOpenGLError("[LowDetailRenderer::renderExceptForActiveSets] "
-	                             "Error at rendering coarse reconstruction.");
+	gfx::GLUtils::checkForOpenGLError(
+			"[LowDetailRenderer::renderExceptForActiveSets] "
+			"Error at rendering coarse reconstruction.");
 }
 
 void LowDetailRenderer::updateMaskForActiveSets(
@@ -619,16 +625,18 @@ void LowDetailRenderer::renderColor(Matrix4f proj, Matrix4f cam_pose) {
 	Matrix4f mvp = proj * cam_pose;
 	glUniformMatrix4fv(0, 1, false, (float*) &mvp);
 
-	GLUtils::checkForOpenGLError("[LowDetailRenderer::renderExceptForActiveSets] "
-	                             "Error at setting up the low detail rendering.");
+	gfx::GLUtils::checkForOpenGLError(
+			"[LowDetailRenderer::renderExceptForActiveSets] "
+			"Error at setting up the low detail rendering.");
 
 	//render the low poly version of the map
 	glDrawElements(GL_TRIANGLES, nr_inds, GL_UNSIGNED_INT, (void*) 0);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);//back from debug
 	glFinish();//DEBUG: this should not be necessary.
 	//check for opengl errors
-	GLUtils::checkForOpenGLError("[LowDetailRenderer::renderColor] "
-	                             "Error at rendering coarse reconstruction.");
+	gfx::GLUtils::checkForOpenGLError(
+			"[LowDetailRenderer::renderColor] "
+			"Error at rendering coarse reconstruction.");
 }
 
 void LowDetailRenderer::renderGeometry(Matrix4f proj, Matrix4f cam_pose) {

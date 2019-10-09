@@ -12,8 +12,8 @@
 #include <GL/gl.h>
 #include <opencv2/core.hpp>
 
-#include <gpu_tex.h>
-#include <shader.h>
+#include <gfx/gpu_tex.h>
+#include <gfx/shader.h>
 
 using namespace std;
 using namespace Eigen;

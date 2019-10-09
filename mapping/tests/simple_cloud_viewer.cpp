@@ -9,10 +9,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <camera.h>
-#include "../utils/arcball.h"
-#include "../rendering/renderable_model.h"
-#include "../graph/deformation_graph.h"
+#include <gfx/camera.h>
+#include <utils/arcball.h>
+#include <rendering/renderable_model.h>
+#include <graph/deformation_graph.h>
 
 #define MAX_LABELS 21
 

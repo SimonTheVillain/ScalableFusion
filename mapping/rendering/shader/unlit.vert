@@ -1,19 +1,11 @@
 R"(
 #version 450 core
 
-layout (location = 0) in vec4 pos;
+layout(location = 0) in vec4 pos;
 
+layout(location = 0) uniform mat4 proj_trans;
 
-layout(location = 0)uniform mat4 projTrans;
-
-
-
-void main(){
-    gl_Position = projTrans*pos;
-
-    //gl_Position = pos*10;
-    //gl_Position.zw = vec2(0,1);
-    //gl_Position = vec4(0,0,0,1);
+void main() {
+	gl_Position = proj_trans * pos;
 }
-
 )"

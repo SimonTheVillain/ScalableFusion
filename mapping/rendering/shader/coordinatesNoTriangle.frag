@@ -1,7 +1,6 @@
 R"(
 #version 450 core
 
-
 #extension GL_NV_bindless_texture : require
 #extension GL_NV_gpu_shader5 : require // for uint64_t
 
@@ -12,15 +11,11 @@ R"(
 //https://www.youtube.com/watch?v=-bCeNzgiJ8I
 layout(location = 0) out vec4 color;
 
+flat in int vertex_index;//thats an easy one
 
-
-
-flat in int vertexIndex;//thats an easy one
-
-void main(void)
-{
+void main(void) {
     //lets store the vertex index, the 0 in the barycentric
     //weight section tells that this is a vertex index and not a triangle index
-    color=vec4(intBitsToFloat(vertexIndex),0,0,0);
+    color = vec4(intBitsToFloat(vertex_index), 0, 0, 0);
 }
 )"

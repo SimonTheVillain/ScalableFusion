@@ -1,7 +1,6 @@
 R"(
 #version 450 core
 
-
 #extension GL_NV_bindless_texture : require
 #extension GL_NV_gpu_shader5 : require // for uint64_t
 
@@ -10,34 +9,23 @@ R"(
 
 //this guy is awesome:
 //https://www.youtube.com/watch?v=-bCeNzgiJ8I
-layout(location = 0) out vec4 texRef;//triangle reference
+layout(location = 0) out vec4 texref;//triangle reference
 layout(location = 1) out vec4 geometry;
-
 
 //this guy seems to have a good approach to uniforms:
 //https://www.opengl.org/discussion_boards/showthread.php/177593-Nvidia-bindless-textures-first-experiences-and-bugs
 
+flat in int is_stitch;//maybe later
+flat in int patch_id;
+flat in int triangle_index;
 
-flat in int isStitch;//maybe later
-flat in int patchId;
-flat in int triangleIndex;
+in vec4 point_world;
 
-
-in vec4 pointWorld;
-
-
-
-void main(void)
-{
-
-
-    texRef.z=2;
-    texRef.w=3.0;
-    texRef.x= intBitsToFloat(patchId);
-    texRef.y= intBitsToFloat(triangleIndex);
-    geometry = pointWorld;
-
-
-
+void main(void) {
+	tex_ref.z = 2;
+	tex_ref.w = 3.0;
+	tex_ref.x = intBitsToFloat(patch_id);
+	tex_ref.y = intBitsToFloat(triangle_index);
+	geometry  = point_world;
 }
 )"

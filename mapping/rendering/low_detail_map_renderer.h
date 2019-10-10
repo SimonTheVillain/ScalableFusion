@@ -88,9 +88,9 @@ public:
 class LowDetailRenderer {
 public:
 
-	LowDetailRenderer();
+	LowDetailRenderer() { };
 
-	~LowDetailRenderer();
+	~LowDetailRenderer() { };
 
 	void initInGlContext();
 

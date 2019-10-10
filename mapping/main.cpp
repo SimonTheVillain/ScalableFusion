@@ -83,7 +83,6 @@ void mouse_button_callback(GLFWwindow *window, int button, int action,
 	if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) {
 		capture_left = false;
 	}
-
 	if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		capture_right = true;
 		arcball.clickBegin(static_cast<float>(xpos_old),
@@ -96,7 +95,6 @@ void mouse_button_callback(GLFWwindow *window, int button, int action,
 	   glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
 		read_out_surface_info = true;
 	}
-
 	if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS &&
 	   glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
 		center_camera = true;
@@ -108,9 +106,9 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 	dist_from_ball *= (1.0f + static_cast<float>(yoffset) * scale);
 }
 
-static bool render_wireframe = false;
+static bool render_wireframe   = false;
 static bool render_high_detail = true;
-static int color_mode = 0;//5 would be the labelling
+static int color_mode   = 0;//5 would be the labelling
 static int shading_mode = 0;
 static bool disable_rendering = false;
 static bool force_destination_geometry = false;
@@ -144,7 +142,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
 		//shading mode 2 phong shading (requires normals)
 		//shading mode 3 put out the texture coordinates
 		if(shading_mode == 4) {
-			shading_mode=0;
+			shading_mode = 0;
 		}
 	}
 	if(key == GLFW_KEY_I && action == GLFW_PRESS) {
@@ -171,41 +169,36 @@ int main(int argc, const char *argv[]) {
 	string dataset_path =
 			"/home/simon/datasets/tum/rgbd_dataset_freiburg3_cabinet";
 
-
 	string graph_output_file =
 			"/home/simon/datasets/output/graph.txt";
 
 	string output_path;// =
 			//"/home/simon/datasets/tum/output/";
 
-
 	string coarse_output_file;// =
 			//"/home/simon/datasets/tum/output/coarse.ply";
 
-
 	string detailed_output_file;// =
 			//"/home/simon/datasets/tum/output/fine.ply";
-	//string datasetPath = "/home/simon/datasets/tumalike/track0";
 
 	float replay_speed = 0.1f;
 	#ifdef DEBUG
 	replay_speed = 0.1f;
 	#else
 	replay_speed = 1.0f;
-	#endif
+	#endif // DEBUG
 	bool use_dataset_trajectory = false;
 	float groundtruth_trajectory_scale = 1.0f;
 	bool invert_ground_truth_trajectory = false;
 
 	//seemingly i am getting memory segmentation errors
 	//https://stackoverflow.com/questions/9901803/cuda-error-message-unspecified-launch-failure
-	bool headless = false;
-	bool auto_quit = false;
-	bool multithreaded = false;//false
-	bool store_result = true;
-	int skip_initial_frames = 0;
-	bool hd = false;
-
+	bool headless      = false;
+	bool auto_quit     = false;
+	bool multithreaded = false;
+	bool store_result  = true;
+	bool hd            = false;
+	int  skip_initial_frames = 0;
 	float depth_scale = 1.0f;
 
 	//Manage the applications input parameters

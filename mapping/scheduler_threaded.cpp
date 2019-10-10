@@ -328,7 +328,8 @@ SchedulerThreaded::SchedulerThreaded(shared_ptr<MeshReconstruction> map,
 	{
 		GLFWwindow **context_for_worker = new GLFWwindow*;
 		update_active_set_worker_ = new Worker(bind(initializer, context, 
-		                                            context_for_worker), "updateSet",
+		                                            context_for_worker), 
+		                                       "updateSet",
 		                                       bind(cleaner, context_for_worker));
 	}
 
@@ -354,18 +355,18 @@ SchedulerThreaded::SchedulerThreaded(shared_ptr<MeshReconstruction> map,
 
 	pthread_setname_np(capture_thread_.native_handle(), "capture");
 
-	odometry_timer_.name = "odometry";
+	odometry_timer_.name          = "odometry";
 	update_active_set_timer_.name = "ActiveSet";
-	refine_rgb_timer_.name = "refineRgb";
-	refine_depth_timer_.name = "refineDepth";
-	expand_timer_.name = "expand";
+	refine_rgb_timer_.name        = "refineRgb";
+	refine_depth_timer_.name      = "refineDepth";
+	expand_timer_.name            = "expand";
 
 	#ifndef LOG_FRAMERATES
-	odometry_timer_.mute = true;
+	odometry_timer_.mute          = true;
 	update_active_set_timer_.mute = true;
-	refine_rgb_timer_.mute = true;
-	refine_depth_timer_.mute = true;
-	expand_timer_.mute = true;
+	refine_rgb_timer_.mute        = true;
+	refine_depth_timer_.mute      = true;
+	expand_timer_.mute            = true;
 	#endif
 }
 

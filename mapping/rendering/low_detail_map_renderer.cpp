@@ -40,12 +40,6 @@ const string debug_vert =
 weak_ptr<gfx::GLSLProgram> LowDetailRenderer::s_shader_;
 weak_ptr<gfx::GLSLProgram> LowDetailRenderer::s_geometry_shader_;
 
-LowDetailRenderer::LowDetailRenderer() {
-}
-
-LowDetailRenderer::~LowDetailRenderer() {
-}
-
 void LowDetailRenderer::initInGlContext() {
 	if(LowDetailRenderer::s_shader_.use_count()) {
 		shader_ = LowDetailRenderer::s_shader_.lock();
@@ -53,23 +47,23 @@ void LowDetailRenderer::initInGlContext() {
 		shader_ = make_shared<gfx::GLSLProgram>();
 		shader_->compileShader(low_detail_frag, 
 		                       gfx::GLSLShader::GLSLShaderType::FRAGMENT,
-		                      "lowDetail.frag");
+		                       "lowDetail.frag");
 		shader_->compileShader(low_detail_geom, 
 		                       gfx::GLSLShader::GLSLShaderType::GEOMETRY,
-		                      "lowDetail.geom");
+		                       "lowDetail.geom");
 		shader_->compileShader(low_detail_vert, 
 		                       gfx::GLSLShader::GLSLShaderType::VERTEX,
-		                      "lowDetail.vert");
+		                       "lowDetail.vert");
 		shader_->link();
 		s_shader_ = shader_;
 
 		debug_shader_ = make_shared<gfx::GLSLProgram>();
 		debug_shader_->compileShader(debug_frag, 
-		                       gfx::GLSLShader::GLSLShaderType::FRAGMENT,
-		                           "debug.frag");
+		                             gfx::GLSLShader::GLSLShaderType::FRAGMENT,
+		                             "debug.frag");
 		debug_shader_->compileShader(debug_vert, 
-		                       gfx::GLSLShader::GLSLShaderType::VERTEX,
-		                           "debug.vert");
+		                             gfx::GLSLShader::GLSLShaderType::VERTEX,
+		                             "debug.vert");
 		debug_shader_->link();
 	}
 
@@ -108,7 +102,6 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 		if(patch.vertices.size() == 1) {
 			cout << "this definitely should not be, "
 			        "patches with single vertices (or zero triangles)" << endl;
-			//assert(0);
 		}
 
 		//add this patch to our array
@@ -246,14 +239,14 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 
 	modifying_buffers_.lock();
 
-	shared_ptr<GlCudaBuffer<int>> ind_buf = index_buffer_;
+	shared_ptr<GlCudaBuffer<int>>             ind_buf  = index_buffer_;
 	shared_ptr<GlCudaBuffer<GpuCoarseVertex>> vert_buf = vertex_buffer_;
-	shared_ptr<GlCudaBuffer<int>> vis_buf = visibility_buffer_;
+	shared_ptr<GlCudaBuffer<int>>             vis_buf  = visibility_buffer_;
 	int nr_inds;
 	modifying_buffers_.unlock();
 
 	bool new_vertex_buffer = false;
-	bool new_index_buffer = false;
+	bool new_index_buffer  = false;
 	if(vert_buf == nullptr) {
 		new_vertex_buffer = true;
 		//create a whole new buffer
@@ -284,7 +277,7 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());
 
-	if(coarse_triangles.size() == 0) {
+	if(coarse_triangles.empty()) {
 		//cout << "DEUBG: i am not sure if this does invalidate the whole structure" << endl;
 		//return;
 	}
@@ -329,7 +322,7 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 	vector<CalcMeanColorDescriptor> descriptors;
 	for(size_t i = 0; i < patches_in.size(); i++) {
 		MeshPatch &patch = *(patches_in[i].get());
-		if(patch.tex_patches.size() == 0) {
+		if(patch.tex_patches.empty()) {
 			//if there is no color for the texture we don't update it.
 			continue;
 		}
@@ -345,14 +338,14 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 			continue;
 		}
 		cv::Rect2f rect = tex_gpu_handle->tex->getRect();
-		desc.color    = tex_gpu_handle->tex->getCudaSurfaceObject();
-		desc.scale    = 1.0f;
-		desc.hdr      = false;
-		desc.x        = rect.x;
-		desc.y        = rect.y;
-		desc.width    = rect.width;
-		desc.height   = rect.height;
-		desc.vert_ind = patch.index_within_coarse;
+		desc.color      = tex_gpu_handle->tex->getCudaSurfaceObject();
+		desc.scale      = 1.0f;
+		desc.hdr        = false;
+		desc.x          = rect.x;
+		desc.y          = rect.y;
+		desc.width      = rect.width;
+		desc.height     = rect.height;
+		desc.vert_ind   = patch.index_within_coarse;
 		descriptors.push_back(desc);
 	}
 
@@ -368,8 +361,8 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 	//set the buffer references for rendering
 	if(new_vertex_buffer || new_index_buffer) {
 		//but only do this if one of the buffers had to be resetted
-		index_buffer_ = ind_buf;
-		vertex_buffer_ = vert_buf;
+		index_buffer_      = ind_buf;
+		vertex_buffer_     = vert_buf;
 		visibility_buffer_ = vis_buf;
 
 		new_buffers_ = true;
@@ -454,14 +447,14 @@ void LowDetailRenderer::updateColorForPatches(
 			//want to prevent a crash
 		}
 		cv::Rect2f rect = tex_gpu_handle->tex->getRect();
-		desc.color    = tex_gpu_handle->tex->getCudaSurfaceObject();
-		desc.scale    = 1.0f;
-		desc.hdr      = false;
-		desc.x        = rect.x;
-		desc.y        = rect.y;
-		desc.width    = rect.width;
-		desc.height   = rect.height;
-		desc.vert_ind = patch.index_within_coarse;
+		desc.color      = tex_gpu_handle->tex->getCudaSurfaceObject();
+		desc.scale      = 1.0f;
+		desc.hdr        = false;
+		desc.x          = rect.x;
+		desc.y          = rect.y;
+		desc.width      = rect.width;
+		desc.height     = rect.height;
+		desc.vert_ind   = patch.index_within_coarse;
 		descriptors.push_back(desc);
 	}
 
@@ -484,9 +477,9 @@ void LowDetailRenderer::renderExceptForActiveSets(
 	modifying_buffers_.lock();
 
 	//prevent these buffers from beeing erased
-	shared_ptr<GlCudaBuffer<int>> ind_buf = index_buffer_;
+	shared_ptr<GlCudaBuffer<int>>             ind_buf  = index_buffer_;
 	shared_ptr<GlCudaBuffer<GpuCoarseVertex>> vert_buf = vertex_buffer_;
-	shared_ptr<GlCudaBuffer<int>> vis_buf = visibility_buffer_;
+	shared_ptr<GlCudaBuffer<int>>             vis_buf  = visibility_buffer_;
 	int nr_inds = nr_indices_;
 
 	if(new_buffers_) {
@@ -606,9 +599,9 @@ void LowDetailRenderer::renderColor(Matrix4f proj, Matrix4f cam_pose) {
 	modifying_buffers_.lock();
 
 	//prevent these buffers from being erased
-	shared_ptr<GlCudaBuffer<int>> ind_buf = index_buffer_;
+	shared_ptr<GlCudaBuffer<int>>             ind_buf  = index_buffer_;
 	shared_ptr<GlCudaBuffer<GpuCoarseVertex>> vert_buf = vertex_buffer_;
-	shared_ptr<GlCudaBuffer<int>> vis_buf = visibility_buffer_;
+	shared_ptr<GlCudaBuffer<int>>             vis_buf  = visibility_buffer_;
 	int nr_inds = nr_indices_;
 
 	modifying_buffers_.unlock();
@@ -644,9 +637,9 @@ void LowDetailRenderer::renderGeometry(Matrix4f proj, Matrix4f cam_pose) {
 
 
 	//prevent these buffers from beeing erased
-	shared_ptr<GlCudaBuffer<int>> ind_buf = index_buffer_;
+	shared_ptr<GlCudaBuffer<int>>             ind_buf  = index_buffer_;
 	shared_ptr<GlCudaBuffer<GpuCoarseVertex>> vert_buf = vertex_buffer_;
-	shared_ptr<GlCudaBuffer<int>> vis_buf = visibility_buffer_;
+	shared_ptr<GlCudaBuffer<int>>             vis_buf  = visibility_buffer_;
 	int nr_inds = nr_indices_;
 
 	modifying_buffers_.unlock();

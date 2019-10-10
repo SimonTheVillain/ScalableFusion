@@ -25,8 +25,8 @@ void copy_kernel(const cudaTextureObject_t texture,
 	if(x == 0) {
 		//printf("%d\n",y);
 	}
-	point.g= buff.y * 255.0;
-	point.b= buff.z * 255.0;
+	point.g = buff.y * 255.0;
+	point.b = buff.z * 255.0;
 
 	to(y, x) = point;
 }

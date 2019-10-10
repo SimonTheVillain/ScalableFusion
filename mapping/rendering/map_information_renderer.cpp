@@ -66,8 +66,8 @@ MapInformationRenderer::~MapInformationRenderer() {
 
 void MapInformationRenderer::initInContext(int width, int height, 
                                            MeshReconstruction *map) {
-	map_ = map;
-	width_ = width;
+	map_    = map;
+	width_  = width;
 	height_ = height;
 	initInContext();
 }
@@ -87,9 +87,9 @@ void MapInformationRenderer::initInContext() {
 		depth_program->compileShader(information_frag,
 		                             gfx::GLSLShader::GLSLShaderType::FRAGMENT,
 		                             "information.frag" );
-		depth_program->compileShader( information_vert,
-								 gfx::GLSLShader::GLSLShaderType::VERTEX,
-								 "information.vert" );
+		depth_program->compileShader(information_vert, 
+		                             gfx::GLSLShader::GLSLShaderType::VERTEX,
+		                             "information.vert" );
 		depth_program->link();
 		s_depth_program_ = depth_program;
 	}
@@ -103,7 +103,7 @@ void MapInformationRenderer::initInContext() {
 	 */
 
 	shader_mutex_.lock();
-	if(s_triangle_reference_program_.use_count()){
+	if(s_triangle_reference_program_.use_count()) {
 		triangle_reference_program_ = s_triangle_reference_program_.lock();
 	} else {
 		triangle_reference_program_ = shared_ptr<gfx::GLSLProgram>(new gfx::GLSLProgram());
@@ -120,7 +120,8 @@ void MapInformationRenderer::initInContext() {
 	}
 	shader_mutex_.unlock();
 
-	gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] after setting up coordinates shader");
+	gfx::GLUtils::checkForOpenGLError(
+			"[RenderMapInformations::initInContext] after setting up coordinates shader");
 
 	shader_mutex_.lock();
 
@@ -143,27 +144,32 @@ void MapInformationRenderer::initInContext() {
 	shader_mutex_.unlock();
 
 	//TODO: get rid of these overflowing error checks
-	gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] after setting up triangle Ref shader");
+	gfx::GLUtils::checkForOpenGLError(
+			"[RenderMapInformations::initInContext] after setting up triangle Ref shader");
 
 	unified_info_prog_ = make_shared<gfx::GLSLProgram>();
 
-	assert(gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] before setting up unified info shader") == GL_NO_ERROR);
+	assert(gfx::GLUtils::checkForOpenGLError(
+			"[RenderMapInformations::initInContext] before setting up unified info shader") == GL_NO_ERROR);
 
 	unified_info_prog_->compileShader(unified_info_frag,
-	                                 gfx::GLSLShader::GLSLShaderType::FRAGMENT,
-	                                 "unifiedInfo.frag");
+	                                  gfx::GLSLShader::GLSLShaderType::FRAGMENT,
+	                                  "unifiedInfo.frag");
 
-	assert(gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] during setting up unified info shader") == GL_NO_ERROR);
+	assert(gfx::GLUtils::checkForOpenGLError(
+			"[RenderMapInformations::initInContext] during setting up unified info shader") == GL_NO_ERROR);
 
 	unified_info_prog_->compileShader(unified_info_vert,
-	                                 gfx::GLSLShader::GLSLShaderType::VERTEX,
-	                                 "unifiedInfo.vert");
+	                                  gfx::GLSLShader::GLSLShaderType::VERTEX,
+	                                  "unifiedInfo.vert");
 
-	assert(gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] after setting up unified info shader") == GL_NO_ERROR);
+	assert(gfx::GLUtils::checkForOpenGLError(
+			"[RenderMapInformations::initInContext] after setting up unified info shader") == GL_NO_ERROR);
 
 	unified_info_prog_->link();
 
-	assert(gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] after linking up unified info shader")==GL_NO_ERROR);
+	assert(gfx::GLUtils::checkForOpenGLError(
+			"[RenderMapInformations::initInContext] after linking up unified info shader")==GL_NO_ERROR);
 
 	//after creating the shader which should only be done once we
 	//create the struct
@@ -246,8 +252,8 @@ void MapInformationRenderer::initInContext() {
 			glBindFramebuffer(GL_FRAMEBUFFER, pt.combined_FBO);
 
 			pt.z_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
-			                                         GL_R32F, GL_RED, GL_FLOAT,
-			                                         width_, height_, false);
+			                                          GL_R32F, GL_RED, GL_FLOAT,
+			                                 	        width_, height_, false);
 			pt.z_texture->name = "per thread zTexture";
 			pt.color_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
 			                                              GL_RGBA32F, GL_RGBA, 
@@ -429,7 +435,6 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(
 
 		gfx::GLUtils::checkForOpenGLError(
 				"[RenderMapInformations::renderTriangleReferencesForPatch]");
-
 
 		//Add the dependency of this central patch
 		MeshTextureGpuHandle::Dependency dependency;

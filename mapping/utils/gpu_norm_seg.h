@@ -14,7 +14,7 @@ using namespace Eigen;
 class GpuNormSeg {
 public:
 	
-	GpuNormSeg(GarbageCollector* garbage_collector, int width, int height);
+	GpuNormSeg(GarbageCollector *garbage_collector, int width, int height);
 
 	void calcNormals();
 	shared_ptr<gfx::GpuTex2D> getGpuNormals();

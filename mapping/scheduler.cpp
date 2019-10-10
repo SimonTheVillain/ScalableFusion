@@ -61,10 +61,10 @@ SchedulerLinear::~SchedulerLinear() {
 }
 
 void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map, 
-                                    Stream *stream, GLFWwindow *context) {
+                                     Stream *stream, GLFWwindow *context) {
 	//TODO: Check: creating a connected context might invalidate our efforts to properly destroy all of this threads resources
 
-	GLFWwindow* connected_context = createConnectedGlContext(context);
+	GLFWwindow *connected_context = createConnectedGlContext(context);
 	glfwMakeContextCurrent(connected_context);
 	//this has to be done once for every gl context or thread:
 	glewExperimental = GL_TRUE;
@@ -126,11 +126,10 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 		cv::Mat depthu16;
 		depth.convertTo(depthu16, CV_16UC1);//mm resolution needed needed vor ICPCUDA
 
-		odometry->initICP((unsigned short*)depthu16.data, depth_cutoff);
-
+		odometry->initICP((unsigned short*) depthu16.data, depth_cutoff);
 
 		if(first_lap) {
-			odometry->initICPModel((unsigned short*)depthu16.data, depth_cutoff);
+			odometry->initICPModel((unsigned short*) depthu16.data, depth_cutoff);
 
 		} else {
 			cv::Mat reprojected_depth = 
@@ -214,7 +213,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 		if(frame_count == expand_interval_ || first_lap) {
 
 			/************* SEMANTIC LABELLING ***********************/
-			if (!first_lap && false) {
+			if(!first_lap && false) {
 
 				//TODO: we actually always want to use the pose and active_set from the last expand step
 				//THIS IS VERY VALID!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -226,10 +225,10 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 
 				//render all the necessary info needed for labelling
 				Matrix4f proj = map->genDepthProjMat();
-				cv::Mat rendered_depth(depth.rows, depth.cols, CV_32FC1);
+				cv::Mat rendered_depth(  depth.rows, depth.cols, CV_32FC1);
 				cv::Mat rendered_normals(depth.rows, depth.cols, CV_32FC4);
-				cv::Mat rendered_labels(depth.rows, depth.cols, CV_32FC4);//SC1?
-				cv::Mat rendered_color(depth.rows, depth.cols, CV_32FC4);
+				cv::Mat rendered_labels( depth.rows, depth.cols, CV_32FC4);//SC1?
+				cv::Mat rendered_color(  depth.rows, depth.cols, CV_32FC4);
 				map->information_renderer.render(active_set.get(),//activeSetExpand
 				                                 proj, depth_pose_last_expand,
 				                                 &rendered_depth, &rendered_normals, 
@@ -242,10 +241,10 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 						                                             &rendered_labels);
 
 				//then we run the labelling
-				imshow("rendered_depth", rendered_depth * 0.25f);
+				imshow("rendered_depth",   rendered_depth * 0.25f);
 				imshow("rendered_normals", rendered_normals);
-				imshow("rendered_labels", rendered_labels);
-				imshow("rendered_color", rendered_color);
+				imshow("rendered_labels",  rendered_labels);
+				imshow("rendered_color",   rendered_color);
 				cout << rendered_labels.at<cv::Vec4i>(100, 100) << endl;
 
 				cv::waitKey();
@@ -260,7 +259,6 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 				                             depth_pose_last_expand);
 			}
 			/*********************************************************/
-
 
 			//expanding the existing geometry
 			map->geometry_update.extend(active_set, d_std_tex, d_std_mat, depth_pose,

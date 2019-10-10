@@ -146,7 +146,7 @@ void Stitching::genBorderList(vector<shared_ptr<MeshPatch>> &patches,
 
 	cv::Point2i pcv1_old;
 	cv::Point2i pcv2_old;
-	auto renderEdge = [&](Edge& edge) {
+	auto renderEdge = [&](Edge &edge) {
 		return;
 		if(border_list.size() != 49) {
 			return;
@@ -244,12 +244,12 @@ void Stitching::genBorderList(vector<shared_ptr<MeshPatch>> &patches,
 						cv::waitKey(1);
 						int debug_size = border_list.size();
 						Triangle *current_triangle = current_edge.triangle.get();
-						Triangle *last_triangle = debug_last_edge.triangle.get();
+						Triangle *last_triangle    = debug_last_edge.triangle.get();
 						Edge new_edge;
-						debug_last_edge.getOtherEdge(1,new_edge,border_list);
+						debug_last_edge.getOtherEdge(1, new_edge, border_list);
 
 						Edge new_edge2;
-						debug_last_edge.getOtherEdge(1,new_edge2,border_list);
+						debug_last_edge.getOtherEdge(1, new_edge2, border_list);
 
 						assert(0);// this should not happen!!!!!
 					} else {
@@ -366,7 +366,7 @@ void Stitching::reloadBorderGeometry(vector<vector<Edge>> &border_list) {
 		if(gpu == nullptr) {
 			#ifndef IGNORE_SERIOUS_BUG_2
 			assert(0);
-			#endif
+			#endif // IGNORE_SERIOUS_BUG_2
 			//all the vertices fetched here should be loaded to the gpu and
 			//and therefore also have vertices and a vertex buffer slot
 			continue;
@@ -405,15 +405,16 @@ void Stitching::stitchOnBorders(
 	MeshReconstruction *map = mesh_reconstruction;
 
 	Matrix4f view_inv = view.inverse();
-	Matrix4f p_v = proj * view_inv;
-	int width = geom_proj_m.cols;
+	Matrix4f p_v      = proj * view_inv;
+
+	int width  = geom_proj_m.cols;
 	int height = geom_proj_m.rows;
 
 	Vector2i debug_last_pix(0, 0);
 	auto isCW = [](Vector2f p1, Vector2f p2, Vector2f p3) {
 		Vector2f v1 = p2 - p1;
 		Vector2f v2 = p3 - p1;
-		return v1[0] * v2[1] - v1[1] * v2[0] > 0;
+		return (v1[0] * v2[1] - v1[1] * v2[0]) > 0;
 	};
 
 	auto isConnected = [](VertexReference p1, VertexReference p2) {
@@ -454,7 +455,7 @@ void Stitching::stitchOnBorders(
 		}
 		#ifdef SHOW_TEXT_STITCHING
 		cout << "DEBUG: these two points are not connected by any triangle at all." << endl;
-		#endif
+		#endif // SHOW_TEXT_STITCHING
 		return false;
 	};
 	//TODO implement and reduce overall file size
@@ -486,7 +487,7 @@ void Stitching::stitchOnBorders(
 
 	auto getNextOpenEdge = [](VertexReference p, 
 	                          Edge &resulting_unregistered_edge) {
-		if(p.get()->encompassed()){
+		if(p.get()->encompassed()) {
 			assert(0);
 		}
 		//To prevent this from outputting something of the existing geometry, this has to be called before stitching
@@ -548,9 +549,9 @@ void Stitching::stitchOnBorders(
 		return true;
 	};
 
-	for(int i = 0; i <borders.size(); i++) {
-
-		//depending on if the last edge had a triangle or not it can be pretty clear if we want to create a new triangle
+	for(int i = 0; i < borders.size(); i++) {
+		//depending on if the last edge had a triangle or not it can be pretty clear 
+		// if we want to create a new triangle
 		// or not
 		bool very_first_point = true;
 		VertexReference first_pr = borders[i][0].points(1);
@@ -561,7 +562,7 @@ void Stitching::stitchOnBorders(
 		//VertexReference debugLastPr1;
 		#ifdef SHOW_TEXT_STITCHING
 		cout << "running along new border" << endl;
-		#endif
+		#endif // SHOW_TEXT_STITCHING
 
 		//TODO: implement this sewing algorithm that follows edges on both sides of the seam!!!!
 		bool sewing_mode = false;
@@ -584,15 +585,15 @@ void Stitching::stitchOnBorders(
 					//if the other side of the stitch is not just a single vertex
 					#ifdef SHOW_TEXT_STITCHING
 					cout << "starting sewing process" << endl;
-					#endif
+					#endif // SHOW_TEXT_STITCHING
 					//Starting sewing process!!!!!
-					sewing_mode = true;
+					sewing_mode         = true;
 					current_sewing_edge = other_edge;
-					last_sewing_pr = current_sewing_edge.points(0);
-					last_sewing_p = last_sewing_pr.get();
-					current_sewing_pr = current_sewing_edge.points(1);
-					current_sewing_p = current_sewing_pr.get();
-					current_sewing_pix = project2i(current_sewing_p->p);
+					last_sewing_pr      = current_sewing_edge.points(0);
+					last_sewing_p       = last_sewing_pr.get();
+					current_sewing_pr   = current_sewing_edge.points(1);
+					current_sewing_p    = current_sewing_pr.get();
+					current_sewing_pix  = project2i(current_sewing_p->p);
 				}
 			}
 		};
@@ -600,7 +601,7 @@ void Stitching::stitchOnBorders(
 		for(int j = 0; j < borders[i].size(); j++) {
 			#ifdef SHOW_TEXT_STITCHING
 			cout << "starting new edge" << endl;
-			#endif
+			#endif // SHOW_TEXT_STITCHING
 
 			Edge &edge = borders[i][j];
 
@@ -612,28 +613,28 @@ void Stitching::stitchOnBorders(
 			}
 
 			VertexReference pr0 = edge.points(1);//these are mixed because we screwed up the order at one point
-			Vector4f P0 = pr0.get()->p;
-			Vector4f point0 = view_inv * P0;//transform the point into camera space
+			Vector4f P0         = pr0.get()->p;
+			Vector4f point0     = view_inv * P0;//transform the point into camera space
 			Vector4f projected0 = p_v * P0;
 			float w0 = projected0[3];
-			Vector2f pix0 = Vector2f(projected0[0] / w0, projected0[1] / w0);
-			Vector2i pix0i = Vector2i(round(pix0[0]), round(pix0[1]));
+			Vector2f pix0  = Vector2f(projected0[0] / w0, projected0[1] / w0);
+			Vector2i pix0i = Vector2i(    round(pix0[0]),      round(pix0[1]));
 
 			VertexReference pr1 = edge.points(0);//these are mixed because we screwed up the order at one point
-			Vector4f P1 = pr1.get()->p;
-			Vector4f point1 = view_inv * P1;
+			Vector4f P1         = pr1.get()->p;
+			Vector4f point1     = view_inv * P1;
 			Vector4f projected1 = p_v * P1;
 			float w1 = projected1[3];
-			Vector2f pix1 = Vector2f(projected1[0] / w1, projected1[1] / w1);
-			Vector2i pix1i = Vector2i(round(pix1[0]), round(pix1[1]));
+			Vector2f pix1  = Vector2f(projected1[0] / w1, projected1[1] / w1);
+			Vector2i pix1i = Vector2i(    round(pix1[0]),      round(pix1[1]));
 
 			VertexReference pr2 = edge.oppositePoint();//we need the third point of the triangle here!
-			Vector4f P2 = pr2.get()->p;
-			Vector4f point2 = view_inv * P2;
+			Vector4f P2         = pr2.get()->p;
+			Vector4f point2     = view_inv * P2;
 			Vector4f projected2 = p_v * P2;
 			float w2 = projected2[3];
-			Vector2f pix2 = Vector2f(projected2[0] / w2, projected2[1] / w2);
-			Vector2i pix2i = Vector2i(round(pix2[0]), round(pix2[1]));
+			Vector2f pix2  = Vector2f(projected2[0] / w2, projected2[1] / w2);
+			Vector2i pix2i = Vector2i(    round(pix2[0]),      round(pix2[1]));
 
 			Vector2f first_pix;
 
@@ -644,16 +645,13 @@ void Stitching::stitchOnBorders(
 			bool edge_made = false;
 			Edge last_edge;
 
-
 			bool first_point = true;
 			int nr_triangles_this_edge = 0;
-
-
 
 			auto func = [&](int x, int y, float t) {
 				#ifdef SHOW_TEXT_STITCHING
 				cout << "another pixel (" << x << ", " << y << ")" << endl;
-				#endif
+				#endif // SHOW_TEXT_STITCHING
 				//TODO: guarantee that lastPix always is set!!!!!!
 				if(sewing_mode) {
 					Vector4f frag_pos = interpolatePerspectific(point0, point1, w0, w1, t);
@@ -663,7 +661,7 @@ void Stitching::stitchOnBorders(
 					if(x == last_pix_i[0] && y == last_pix_i[1]) {
 						#ifdef SHOW_TEXT_STITCHING
 						cout << "this pixel was last pixel" << endl;
-						#endif
+						#endif // SHOW_TEXT_STITCHING
 						//we want at least one pixel to change
 						//if this is the first pixel of this edge then we want to give triangle creation another chance:
 						if(!edge_made) {
@@ -675,10 +673,10 @@ void Stitching::stitchOnBorders(
 							nr_triangles_this_edge++;
 							#ifdef SHOW_TEXT_STITCHING
 							cout << "e" << endl;
-							#endif
-							last_pr = last_sewing_pr;
-							edge_made=true;
-							sewing_edge_made=true;
+							#endif // SHOW_TEXT_STITCHING
+							last_pr          = last_sewing_pr;
+							edge_made        = true;
+							sewing_edge_made = true;
 						}
 						//maybe we also need other stuff
 						//at least we skip this pixel
@@ -693,7 +691,7 @@ void Stitching::stitchOnBorders(
 						sewing_mode = false;
 						#ifdef SHOW_TEXT_STITCHING
 						cout << "Exiting sewing mode since pixel are deviating too much" << endl;
-						#endif
+						#endif // SHOW_TEXT_STITCHING
 						//TODO: should there be a way to continue sewing for a little while?
 
 
@@ -706,7 +704,7 @@ void Stitching::stitchOnBorders(
 								cv::Vec4b(255, 0, 255, 0);
 						cv::imshow("stitch", debug_color_coded_new_segmentation);
 						cv::waitKey(1);
-						#endif
+						#endif // SHOW_WINDOW_STITCHING
 						//but this means we should run the logic coming afterwards.
 					} else {
 						//TODO:create one or two triangles depending on if the current edge already has one
@@ -724,14 +722,14 @@ void Stitching::stitchOnBorders(
 								current_sewing_edge.getOtherEdge(1, other_edge, borders);
 
 								VertexReference vr = other_edge.points(1);
-								Vertex *v = vr.get();
-								Vector2i pix = project2i(v->p);
+								Vertex          *v = vr.get();
+								Vector2i       pix = project2i(v->p);
 								//check if the pixel of the next edge point really belongs to new geometry:
 								MeshPatch *patch = new_seg_pm.at<MeshPatch*>(pix[1], pix[0]);
 								if(patch != vr.getPatch()) {
 									#ifdef SHOW_TEXT_STITCHING
 									cout << "quitting sewing because the next pixel would lie on wrong side" << endl;
-									#endif
+									#endif // SHOW_TEXT_STITCHING
 									sewing_mode = false;
 									break;
 								}
@@ -756,17 +754,17 @@ void Stitching::stitchOnBorders(
 
 								edge_made = true;
 								current_sewing_edge = other_edge;
-								last_sewing_pr = current_sewing_pr;
-								last_sewing_p = current_sewing_p;
-								current_sewing_pr = current_sewing_edge.points(1);
-								current_sewing_p = current_sewing_pr.get();
-								current_sewing_pix = project2i(current_sewing_p->p);
-								if(abs(pix[0] - x) > 1 || abs(pix[1] - y) > 1 ) {
+								last_sewing_pr      = current_sewing_pr;
+								last_sewing_p       = current_sewing_p;
+								current_sewing_pr   = current_sewing_edge.points(1);
+								current_sewing_p    = current_sewing_pr.get();
+								current_sewing_pix  = project2i(current_sewing_p->p);
+								if(abs(pix[0] - x) > 1 || abs(pix[1] - y) > 1) {
 									//boo yeah! create another triangle!!!
 									#ifdef SHOW_TEXT_STITCHING
 									cout << "the next pixel (" << pix[0] << ", " << pix[1] << 
 									        ") is too far away. wait for the next bresenham step" << endl;
-									#endif
+									#endif // SHOW_TEXT_STITCHING
 									break;
 								}
 							}
@@ -785,8 +783,7 @@ void Stitching::stitchOnBorders(
 							Vector2i p1 = project2i(last_sewing_p->p);
 							Vector2i p2 = project2i(current_sewing_p->p);
 
-							bool more = true;
-							while(more) {
+							while(true) {
 								if(!isTrianglePossible({current_sewing_pr, last_sewing_pr, pr1})){
 									sewing_mode = false;
 									return;
@@ -799,20 +796,18 @@ void Stitching::stitchOnBorders(
 								#endif
 								edge_made = true;
 								if(current_sewing_p->encompassed()) {
-									more = false;
 									sewing_mode = false;
-									continue;
+									break;
 								}
 								Edge other_edge;
 								current_sewing_edge.getOtherEdge(1, other_edge, borders);
 								VertexReference vr = other_edge.points(1);
-								Vertex *v = vr.get();
-								Vector2i pix = project2i(v->p);
+								Vertex          *v = vr.get();
+								Vector2i       pix = project2i(v->p);
 								if(isConnected(pr1, vr)) {
 									if(!isOpenEdge(pr1, vr)) {
-										more = false;
 										sewing_mode = false;
-										continue;
+										break;
 									}
 								}
 								MeshPatch *patch = new_seg_pm.at<MeshPatch*>(pix[1], pix[0]);
@@ -821,22 +816,18 @@ void Stitching::stitchOnBorders(
 									cout << "quitting sewing because the next pixel would lie on wrong side" << endl;
 									#endif
 									sewing_mode = false;
-									more = false;
-									continue;
+									break;
 								}
-
 								//TODO: this could potentially happen at the end of a loop
 								if(isConnected(current_sewing_pr, pr1)) {
 									if(!isOpenEdge(current_sewing_pr, pr1)) {
 										#ifdef SHOW_TEXT_STITCHING
 										cout << "quitting sewing because of pr1 and currentSewingPr are closed" << endl;
 										#endif
-										more = false;
 										sewing_mode = false;
-										continue;
+										break;
 									}
 								}
-
 								float new_depth = new_geom_m.at<cv::Vec4f>(pix[1], pix[0])[2]; //getting depth
 								float depth_threshold = 0.05f;//TODO: change this to something depth (standard deviation dependant)
 								if(abs(new_depth - depth_interpolated) > depth_threshold) {
@@ -844,8 +835,7 @@ void Stitching::stitchOnBorders(
 									cout << "quitting sewing because of bigger depth step" << endl;
 									#endif
 									sewing_mode = false;
-									more = false;
-									continue;
+									break;
 								}
 
 								current_sewing_edge = other_edge;
@@ -860,12 +850,11 @@ void Stitching::stitchOnBorders(
 									cout << "the next pixel (" << pix[0] << ", " << pix[1] << 
 									        ") is too far away. wait for the next bresenham step" << endl;
 									#endif
-									more = false;
+									break;
 								}
 							}
 							if(current_sewing_p->encompassed()) {
 								sewing_mode = false;
-								more = false;
 								return;
 							}
 							//get next edge
@@ -888,7 +877,7 @@ void Stitching::stitchOnBorders(
 					return;
 				}
 				//TODO: think why this block is necessary (and document it)
-				if(!very_first_point && first_point){
+				if(!very_first_point && first_point) {
 					first_point = false;
 					//return;//make this whole block useless
 				}
@@ -902,7 +891,7 @@ void Stitching::stitchOnBorders(
 						cv::Vec4b(255,255,255,0);
 				cv::imshow("stitch",debug_color_coded_new_segmentation);
 				cv::waitKey(1);
-				#endif
+				#endif // SHOW_WINDOW_STITCHING
 
 				Vector2i neighbours[] = {
 						Vector2i(x - 1,     y), Vector2i(x + 1,     y), 
@@ -957,7 +946,7 @@ void Stitching::stitchOnBorders(
 					//check if depth threshold is not exceeded
 					float new_depth = new_geom_m.at<cv::Vec4f>(yn, xn)[2]; //getting depth
 					float depth_threshold = 0.05f;//TODO: change this to something depth (standard deviation dependant)
-					if(abs(new_depth-depth_interpolated) > depth_threshold){
+					if(abs(new_depth-depth_interpolated) > depth_threshold) {
 						//don't create new geometry
 						continue;
 					}
@@ -969,7 +958,7 @@ void Stitching::stitchOnBorders(
 					}
 
 					//if there already is a stitch we also want to check if we are on the right side of the stitching triangle
-					if(edge_made){
+					if(edge_made) {
 						if(isOnSameSide(pix1, last_pix, pix0, new_pix)) {
 							continue;
 						}
@@ -1006,11 +995,11 @@ void Stitching::stitchOnBorders(
 							map->addTriangle_(this_pr, pr0, pr1, debug_list_new_edges);
 							#ifdef SHOW_TEXT_STITCHING
 							cout << "a" << endl;
-							#endif
+							#endif // SHOW_TEXT_STITCHING
 
 							if(!very_first_edge_made) {
 								very_first_edge_made = true;
-								first_pr = this_pr;
+								first_pr  = this_pr;
 								first_pix = new_pix;
 							}
 
@@ -1018,7 +1007,7 @@ void Stitching::stitchOnBorders(
 							if(sewing_mode) {
 								edge_made = true;
 
-								last_pr = this_pr;
+								last_pr  = this_pr;
 								last_pix = new_pix;
 								return;
 							}
@@ -1034,7 +1023,7 @@ void Stitching::stitchOnBorders(
 								map->addTriangle_(this_pr, pr0, pr1, debug_list_new_edges);
 								#ifdef SHOW_TEXT_STITCHING
 								cout << "b" << endl;
-								#endif
+								#endif // SHOW_TEXT_STITCHING
 
 							} else {
 								if(!isTrianglePossible({last_pr, pr0, pr1})) {
@@ -1051,22 +1040,22 @@ void Stitching::stitchOnBorders(
 										//if the other side of the stitch is not just a single vertex
 										#ifdef SHOW_TEXT_STITCHING
 										cout << "starting sewing process" << endl;
-										#endif
+										#endif // SHOW_TEXT_STITCHING
 										//Starting sewing process!!!!!
-										sewing_mode = true;
+										sewing_mode         = true;
 										current_sewing_edge = other_edge;
-										last_sewing_pr = current_sewing_edge.points(0);
-										last_sewing_p = last_sewing_pr.get();
-										current_sewing_pr = current_sewing_edge.points(1);
-										current_sewing_p = current_sewing_pr.get();
-										current_sewing_pix = project2i(current_sewing_p->p);
+										last_sewing_pr      = current_sewing_edge.points(0);
+										last_sewing_p       = last_sewing_pr.get();
+										current_sewing_pr   = current_sewing_edge.points(1);
+										current_sewing_p    = current_sewing_pr.get();
+										current_sewing_pix  = project2i(current_sewing_p->p);
 									}
 								}
 
 								map->addTriangle_(last_pr, pr0, pr1, debug_list_new_edges);//TODO: reinsert this
                 #ifdef SHOW_TEXT_STITCHING
 								cout << "c" << endl;
-                #endif
+                #endif // SHOW_TEXT_STITCHING
 								//TODO: reinsert this!!!!!
 
 								nr_triangles_this_edge++; // just so veryFirstEdgeMade will be set
@@ -1085,15 +1074,15 @@ void Stitching::stitchOnBorders(
 								map->addTriangle_(this_pr, last_pr, pr1, debug_list_new_edges);
 								#ifdef SHOW_TEXT_STITCHING
 								cout << "c" << endl;
-								#endif
+								#endif // SHOW_TEXT_STITCHING
 								if(need_to_connect_hole) {
 									//TODO: check if we can do another triangle:
 									cout << "fill hole!!!!" << endl;
 								}
 							}
 						}
-						last_pr = this_pr;
-						last_pix = new_pix;
+						last_pr   = this_pr;
+						last_pix  = new_pix;
 						edge_made = true;
 
 					} else {
@@ -1122,14 +1111,14 @@ void Stitching::stitchOnBorders(
 						map->addTriangle_(this_pr, last_pr, pr1, debug_list_new_edges);//third point is from last edge
 						#ifdef SHOW_TEXT_STITCHING
 						cout << "d" << endl;
-						#endif
+						#endif // SHOW_TEXT_STITCHING
 
 						if(need_to_connect_hole) {
 							#ifdef SHOW_TEXT_STITCHING
 							cout << "holefix" << endl;
-							#endif
+							#endif // SHOW_TEXT_STITCHING
 						}
-						last_pr = this_pr;
+						last_pr  = this_pr;
 						last_pix = new_pix;
 						if(!edge_made) {
 							assert(0);

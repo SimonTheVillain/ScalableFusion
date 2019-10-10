@@ -31,11 +31,11 @@ void generateXtionConfidenceImage_kernel(const cudaSurfaceObject_t raw_depth,
 		depth = NAN;//NAN means invalid!!!!!
 		//this automatically makes all the other calcultaions NAN as well.
 	}
-#ifdef OVERSIMPLIFY_CAM_MODEL
+	#ifdef OVERSIMPLIFY_CAM_MODEL
 	float4 fixed = make_float4(depth, 0.1, 0.05, 1);
 	surf2Dwrite(fixed, output, x * sizeof(float4), y);
 	return;
-#endif
+	#endif // OVERSIMPLIFY_CAM_MODEL
 	float delta = depth - min_dist;
 	float sigma_m = a0 + delta * a1 + delta * delta * a2;//minimum standard deviation
 	float sigma = c * sigma_m;
@@ -98,7 +98,7 @@ void generateXtionConfidenceImage16F_kernel(const cudaSurfaceObject_t raw_depth,
 	}
 	float delta = depth - min_dist;
 	float sigma_m = a0 + delta * a1 + delta * delta * a2;//minimum standard deviation
-	float sigma = c * sigma_m;
+	float sigma   = c * sigma_m;
 	//of course we could also look at the neighbouring pixel to make a decicion for the standard deviation
 	//and such
 

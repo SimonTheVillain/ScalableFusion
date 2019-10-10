@@ -13,7 +13,7 @@ void labelSurfaces_kernel(Labelling::SegProjTask* tasks,
                           const cudaSurfaceObject_t labelling,
                           const cudaSurfaceObject_t geom_buffer,//the depth and geometry at the current view
                           cv::Size2i resolution,
-                          Matrix4f _pose,
+                          Matrix4f pose,
                           Matrix4f proj_pose,
                           GpuVertex *vertices,
                           Vector2f *tex_pos,
@@ -68,7 +68,7 @@ void labelSurfaces_kernel(Labelling::SegProjTask* tasks,
 
 		if(k == 0) {
 			//debug
-			Vector4f p = _pose * point;
+			Vector4f p = pose * point;
 		}
 
 		//project point shizzle:
@@ -112,7 +112,7 @@ void labelSurfaces_kernel(Labelling::SegProjTask* tasks,
 				new_label = -2; // debug
 			} else {
 				float depth_threshold = 0.005f;//5mm should be enough (or we make it relative to the depth)
-				Vector4f pos_cam_frame = _pose * point;
+				Vector4f pos_cam_frame = pose * point;
 				if(fabs(pos_cam_frame[2] - depth) < depth_threshold) {
 					new_label = -1;
 					new_label = -3;//debug
@@ -138,7 +138,7 @@ void Labelling::labelSurfaces(vector<Labelling::SegProjTask> tasks,
                               const cudaSurfaceObject_t labelling,
                               const cudaSurfaceObject_t geom_buffer,//the depth and geometry at the current view
                               cv::Size2i resolution,
-                              Matrix4f _pose,
+                              Matrix4f pose,
                               Matrix4f proj_pose,
                               GpuVertex *vertices,
                               Vector2f *tex_pos,
@@ -157,7 +157,7 @@ void Labelling::labelSurfaces(vector<Labelling::SegProjTask> tasks,
 
 	//TODO: call the kernel
 	labelSurfaces_kernel<<<grid, block>>>(tasks_gpu, labelling, geom_buffer,
-	                                      resolution, _pose, proj_pose, vertices,
+	                                      resolution, pose, proj_pose, vertices,
 	                                      tex_pos, triangles, patch_infos);
 
 	cudaFree(tasks_gpu);

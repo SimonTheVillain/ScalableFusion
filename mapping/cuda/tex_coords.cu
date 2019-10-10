@@ -39,7 +39,6 @@ void genTexCoords_kernel(TexCoordGen::Task *tasks, Matrix4f proj_pose,
 	//ooh shit this also needs the bounds
 }
 
-
 void TexCoordGen::genTexCoords(vector<TexCoordGen::Task> tasks, 
                                Matrix4f proj_pose, GpuPatchInfo *patch_infos,
                                GpuVertex *gpu_vertices) {
@@ -105,8 +104,10 @@ void getTexCoordBounds_kernel(TexCoordGen::BoundTask *tasks,
 
 			if(tex_coord[0] < -6000) {
 				//TODO: find out why this tex coord is zero and handle any issues coming with this
-				printf("type = %d, p= %f %f %f %f \n uv= %f %f \n task index = %d, traingle %d\n [texCoords.cu]/whyever this fails\n",
-					task.debug_type, p[0], p[1], p[2], p[3], tex_coord[0], tex_coord[1], k, triangle.indices[j]);
+				printf("type = %d, p= %f %f %f %f \n uv= %f %f \n task index = %d, "
+				       "triangle %d\n [texCoords.cu]/whyever this fails\n",
+				       task.debug_type, p[0], p[1], p[2], p[3], tex_coord[0], 
+				       tex_coord[1], k, triangle.indices[j]);
 			}
 		}
 		i += blockDim.x;
@@ -189,9 +190,9 @@ vector<cv::Rect2f> TexCoordGen::getPotentialTexCoordBounds(
 
 	vector<cv::Rect2f> bounds(result_count);
 	for(size_t i = 0; i < bounds.size(); i++) {
-		bounds[i].x = results[i][0];
-		bounds[i].y = results[i][1];
-		bounds[i].width = results[i][2] - results[i][0];
+		bounds[i].x      = results[i][0];
+		bounds[i].y      = results[i][1];
+		bounds[i].width  = results[i][2] - results[i][0];
 		bounds[i].height = results[i][3] - results[i][1];
 	}
 	return bounds;

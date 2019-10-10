@@ -61,7 +61,6 @@ void gpu::GeometryUpdate::calcCenterAndRadius(
 	gpuErrchk(cudaPeekAtLastError());
 
 	for(size_t i = 0; i < tasks.size(); i++) {
-		//cout << "new center" << endl << centers[i] << endl;
 		//TODO: put this back in, because it is crashing
 
 		patches[i]->setSphere(centers[i].block<3, 1>(0, 0), sqrt(centers[i][3]));

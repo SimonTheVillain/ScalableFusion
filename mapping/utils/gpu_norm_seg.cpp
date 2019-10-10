@@ -40,7 +40,7 @@ GpuNormSeg::GpuNormSeg(GarbageCollector *garbage_collector, int width,
 }
 
 void GpuNormSeg::calcNormals() {
-	int width = points_->getWidth();
+	int width  = points_->getWidth();
 	int height = points_->getHeight();
 
 	cudaCalcNormals(d_std_max_std_->getCudaSurfaceObject(),
@@ -55,7 +55,7 @@ shared_ptr<gfx::GpuTex2D> GpuNormSeg::getGpuNormals() {
 }
 
 void GpuNormSeg::calcPoints() {
-	int width = d_std_max_std_->getWidth();
+	int width  = d_std_max_std_->getWidth();
 	int height = d_std_max_std_->getHeight();
 
 	cudaCalcPoints(d_std_max_std_->getCudaSurfaceObject(),
@@ -68,7 +68,7 @@ shared_ptr<gfx::GpuTex2D> GpuNormSeg::getGpuPoints() {
 }
 
 cv::Mat generateColorCodedTexture(cv::Mat segmentation) {
-	cv::Mat color_map(1, 64*48, CV_8UC4);
+	cv::Mat color_map(1, 64 * 48, CV_8UC4);
 
 	color_map.at<cv::Vec4b>(0)  = cv::Vec4b( 51,  51,   0, 0);
 	color_map.at<cv::Vec4b>(1)  = cv::Vec4b(  0,   0, 200, 0);
@@ -118,10 +118,10 @@ void GpuNormSeg::segment() {
 	float geometry_assign_threshold = 0.05;//5cm for instance
 	int max_seg_size = 400;//this should come from somewhere else but in the meantime this will do
 	float max_depth_step = 0.05;//50cm max depth step
-	float min_cos_angle = 0.9;//determines how much the normals could be apart from each other on the edge
-	int min_nr_points_per_segment = 10;//5;//the minimum amount of points to really generate a point
+	float min_cos_angle  = 0.9;//determines how much the normals could be apart from each other on the edge
+	int min_nr_points_per_segment = 10; //the minimum amount of points to really generate a point
 	int max_segment_extent = 30;
-	int width = d_std_max_std_->getWidth();
+	int width =  d_std_max_std_->getWidth();
 	int height = d_std_max_std_->getHeight();
 
 	Vector2i w[4] = {Vector2i( 0, -1), Vector2i(0, 1), 
@@ -213,7 +213,6 @@ void GpuNormSeg::segment() {
 	            float,//the distance of the parent pixel
 	            Vector3f//the normal of the parent pixel
 	            >> q;
-	//pixel position, segment id
 
 	//w window ( the neighborhood for this segmentation method)
 
@@ -354,9 +353,9 @@ void GpuNormSeg::segment() {
 
 	//imshow("pre filter segmentation",generateColorCodedTexture(seg));
 	//destroy the elements with only one or less than.... lets say 3 pixel
-	vector<int> new_inds(segment_size.size()+1);
+	vector<int> new_inds(segment_size.size() + 1);
 	new_inds[0] = -1;
-	seg_count_ = 0;
+	seg_count_  = 0;
 	for(size_t i = 0; i < segment_size.size(); i++) {
 		//only keep a segment when less than 80% are within a edge region
 		if(segment_size_within_border[i] * 10 > segment_size[i] * 8) {

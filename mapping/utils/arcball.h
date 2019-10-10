@@ -13,11 +13,15 @@ class Arcball {
 public:
 
 	Arcball()
-			: view_(Matrix4f::Identity()) {
+			: view_(Matrix4f::Identity()),
+			  last_x_(0),
+			  last_y_(0),
+			  width_(800),
+			  height_(600) {
 	}
 
 	void setFramebufferData(int width, int height) {
-		width_ = width;
+		width_  = width;
 		height_ = height;
 	}
 
@@ -45,17 +49,11 @@ public:
 
 private:
 
-	float last_x_ = 0;
-	float last_y_ = 0;
-	int width_ = 800;
-	int height_ = 600;
-
-	Vector3f last_;
-
 	Vector3f getArcballVec_(int x, int y) {
 		//normalized point on screen (y is inverted)
 		Vector3f P(  1.0 * x / width_  * 2 - 1.0, 
-		           -(1.0 * y / height_ * 2 - 1.0), 0);
+		           -(1.0 * y / height_ * 2 - 1.0), 
+		           0);
 		float length_2 = P[0] * P[0] + P[1] * P[1];
 		if(length_2 < 1.0) {
 			P[2] = sqrt(1.0f - length_2);
@@ -65,6 +63,14 @@ private:
 		length_2 = P[0] * P[0] + P[1] * P[1] + P[2] * P[2];
 		return P;
 	}
+
+	float last_x_;
+	float last_y_;
+	int width_;
+	int height_;
+
+	Vector3f last_;
+
 	Matrix4f view_;
 	
 };

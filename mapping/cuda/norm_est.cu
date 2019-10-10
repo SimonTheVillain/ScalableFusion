@@ -39,13 +39,13 @@ void cudaCalcNormals_kernel(cudaSurfaceObject_t d_std_min_std,
 
 	for(int i = 0; i < 3; i++) {
 		for(int j = 0; j < 3; j++) {
-			int _x = x + j - 1;
-			int _y = y + i - 1;
-			if(_x >= width || _y >= height || _x < 0 || _y < 0) {
+			int x_tmp = x + j - 1;
+			int y_tmp = y + i - 1;
+			if(x_tmp >= width || y_tmp >= height || x_tmp < 0 || y_tmp < 0) {
 				continue;
 			}
 			float4 point;
-			surf2Dread(&point, points, _x * sizeof(float4), _y);
+			surf2Dread(&point, points, x_tmp * sizeof(float4), y_tmp);
 
 			float w = gaussUnscaled(center.z - point.z, sigma);
 			float vw = w * weights[i][j];//vertical weights
@@ -102,7 +102,7 @@ void calcPoints_kernel(cudaSurfaceObject_t d_std_min_std,
 	float4 depth;
 	surf2Dread(&depth, d_std_min_std, x * sizeof(float4), y);
 
-	float z = depth.x;
+	float z  = depth.x;
 	float fx = fxycxy[0];
 	float fy = fxycxy[1];
 	float cx = fxycxy[2];
@@ -114,7 +114,6 @@ void calcPoints_kernel(cudaSurfaceObject_t d_std_min_std,
 	point.w = 1.0f;
 	surf2Dwrite(point, points, x * sizeof(float4), y);
 }
-
 
 void cudaCalcPoints(cudaSurfaceObject_t d_std_min_std, 
                     cudaSurfaceObject_t points,

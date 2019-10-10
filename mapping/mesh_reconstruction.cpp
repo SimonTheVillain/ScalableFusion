@@ -676,7 +676,7 @@ void MeshReconstruction::clearInvalidGeometry(shared_ptr<ActiveSet> set,
 		return;
 	}
 
-	int width = depth.cols;
+	int width  = depth.cols;
 	int height = depth.rows;
 
 	cv::Mat depthf;
@@ -721,8 +721,8 @@ void MeshReconstruction::clearInvalidGeometry(shared_ptr<ActiveSet> set,
 		gpu::GeometryValidityChecks::VertexTask task;
 
 		task.start_source = gpu_patch->vertices_source->getStartingIndex();
-		task.start_dest = gpu_patch->vertices_dest->getStartingIndex();
-		task.size = gpu_patch->vertices_source->getSize();
+		task.start_dest   = gpu_patch->vertices_dest->getStartingIndex();
+		task.size         = gpu_patch->vertices_source->getSize();
 		tasks.push_back(task);
 	}
 	gpu::GeometryValidityChecks::checkVertexValidity(
@@ -737,7 +737,7 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 			octree_.getObjects(depth_pose, params.depth_fxycxy, 
 			                   Vector2f(params.depth_res.width, 
 			                            params.depth_res.height), 
-			                   getMaxDistance(),//6.0f,
+			                   getMaxDistance(),
 			                   0.0f);//don't dilate the frustum in this case
 
 	for(shared_ptr<MeshPatch> patch : visible_shared_patches) {
@@ -824,8 +824,6 @@ void MeshReconstruction::initInGLRenderingContext() {
 		unique_lock<mutex> lk(condition_variable_mutex_);
 		condition_variable_.wait(lk);
 	}
-
-
 
 	render_presentation.initInContext(640, 480, this);
 

@@ -95,7 +95,7 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
 		sensor = readSensor(u, v, geometry_input, width, height, 0.05f);//5cm threshold
 
 		float4 surface_k;
-		if(descriptor.destination.width == descriptor.source.width &&
+		if(descriptor.destination.width  == descriptor.source.width &&
 		   descriptor.destination.height == descriptor.source.height) {
 			//if the source and the destRect
 			//texture have the same resolution we handle all of this differently
@@ -227,16 +227,16 @@ void updateGeomTexturesOfPatches(
 }
 
 __global__ 
-void dilateLookupTextures_kernel(const DilationDescriptor* descriptors) {
+void dilateLookupTextures_kernel(const DilationDescriptor *descriptors) {
 	unsigned int k = blockIdx.x;
 	const DilationDescriptor &descriptor = descriptors[k];
 	const unsigned int required_pixel = descriptor.height * descriptor.width;
 	unsigned int i = threadIdx.x;
 
 	const int2 direct[] = {make_int2(-1, 0), make_int2(1, 0), make_int2(0, -1), 
-	                       make_int2(0,1)};
+	                       make_int2(0, 1)};
 	const int2 indirect[] = {make_int2(-1, -1), make_int2(1, 1), make_int2(1, -1),
-	                         make_int2(-1,1)};
+	                         make_int2(-1, 1)};
 
 	while(i < required_pixel) {
 		int x = i % descriptor.width + descriptor.x;//derive the target pixel coordinates from k
@@ -245,7 +245,7 @@ void dilateLookupTextures_kernel(const DilationDescriptor* descriptors) {
 		surf2Dread(&center, descriptor.target, x * 4 * 4, y);
 		int index = *((int*) (&center.x));
 
-		if(index != -1){ //if the triangle index already is valid we don't do this
+		if(index != -1) { //if the triangle index already is valid we don't do this
 			i += blockDim.x;
 			continue;
 		}
@@ -330,7 +330,7 @@ void stdTexInit_kernel(const cudaTextureObject_t input,
                        GpuTriangle *triangles, GpuPatchInfo *patch_infos) {
 
 	unsigned int k = blockIdx.x;
-	const InitDescriptor &descriptor = descriptors[k];
+	const InitDescriptor &descriptor  = descriptors[k];
 	const unsigned int required_pixel = descriptor.height * descriptor.width;
 	unsigned int i = threadIdx.x;
 
@@ -397,7 +397,7 @@ void stdTexInit(const cudaTextureObject_t input,
                const vector<InitDescriptor> &descriptors,
                Matrix4f proj_pose,
                GpuVertex *vertices, Vector2f *tex_pos,
-               GpuTriangle *triangles, GpuPatchInfo *patch_infos){
+               GpuTriangle *triangles, GpuPatchInfo *patch_infos) {
 
 	InitDescriptor *descs = nullptr;
 	//create a buffer for all the commands:
@@ -429,9 +429,6 @@ void stdTexInit(const cudaTextureObject_t input,
 
 	cudaFree(descs);
 }
-
-
-
 
 //this was something i did for debugging purposes. it is supposed to shift the
 __global__ 

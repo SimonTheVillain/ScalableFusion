@@ -42,12 +42,11 @@ MapPresentationRenderer::~MapPresentationRenderer() {
 
 void MapPresentationRenderer::initInContext(int width, int height, 
                                             MeshReconstruction *map) {
-	map_ = map;
-	width_ = width;
+	map_    = map;
+	width_  = width;
 	height_ = height;
 	initInContext();
 }
-
 
 void MapPresentationRenderer::initInContext() {
 	gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::initInContext]");

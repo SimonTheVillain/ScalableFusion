@@ -16,7 +16,6 @@ IntermediateMap::IntermediateMap(int sensor_width, int sensor_height,
 	cudaMalloc(&in_depth_,     sizeof(uint16_t) * width_ * height_);
 	cudaMalloc(&out_depth_16_, sizeof(uint16_t) * width_ * height_);
 	cudaMalloc(&out_depth_32_, sizeof(uint32_t) * width_ * height_);
-
 }
 
 IntermediateMap::~IntermediateMap() {

@@ -26,9 +26,9 @@ void downloadVertices(vector<GpuVertex*> gpu_vertices, GpuVertex *data) {
 	gpuErrchk(cudaPeekAtLastError());
 
 	const int size = gpu_vertices.size();
-	GpuVertex* gpu_data;
+	GpuVertex *gpu_data;
 	cudaMalloc(&gpu_data, sizeof(GpuVertex) * size);
-	GpuVertex** gpu_ptrs;
+	GpuVertex **gpu_ptrs;
 	cudaMalloc(&gpu_ptrs, sizeof(GpuVertex*) * size);
 	cudaMemcpy(gpu_ptrs,&(gpu_vertices[0]), sizeof(GpuVertex*) * size,
 	           cudaMemcpyHostToDevice);

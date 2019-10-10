@@ -28,20 +28,20 @@ public:
 
 	void setMesh(vector<Vector4f> &vertices, vector<unsigned int> indices);
 
-	void render(Matrix4f &camProj);
+	void render(Matrix4f &cam_proj);
 
 	GLuint primitiveType = GL_LINES;
 
-	Matrix4f pose = Matrix4f::Identity();
+	Matrix4f pose  = Matrix4f::Identity();
 	Vector4f color = Vector4f(1, 0, 0, 1);
 
 private:
 
-	GLuint vertex_buffer_ = 0;
-	GLuint element_buffer_ = 0;
+	GLuint vertex_buffer_;
+	GLuint element_buffer_;
 	int count_;
 
-	GLuint VAO_ = 0;
+	GLuint VAO_;
 	static weak_ptr<gfx::GLSLProgram> s_flat_program_;
 	shared_ptr<gfx::GLSLProgram> unlit_program_;
 };
@@ -52,8 +52,7 @@ public:
 	                              Vector2f resolution, float near_clipping_plane, 
 	                              float far_clipping_plane);
 
-	~CameraFrustrumRenderableModel() {
-	}
+	~CameraFrustrumRenderableModel() { }
 };
 
 class WireSphereModel : public RenderVerySimpleModel {

@@ -62,7 +62,7 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 
 		//this tex coordinate still has to be adapted for the texture atlas
 		float2 tex_atlas_coord = make_float2(
-				tex_coord[0] * descriptor.source_n.width + descriptor.source_n.x,
+				tex_coord[0] * descriptor.source_n.width  + descriptor.source_n.x,
 				tex_coord[1] * descriptor.source_n.height + descriptor.source_n.y);
 
 		//TODO: we need a function that explicitely handles reading textures from this type of texture

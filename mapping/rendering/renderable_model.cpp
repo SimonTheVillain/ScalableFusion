@@ -15,7 +15,10 @@ const string unlit_vert =
 
 weak_ptr<gfx::GLSLProgram> RenderVerySimpleModel::s_flat_program_;
 
-RenderVerySimpleModel::RenderVerySimpleModel() {
+RenderVerySimpleModel::RenderVerySimpleModel() 
+		: vertex_buffer_(0),
+		  element_buffer_(0),
+		  VAO_ (0) {
 	if(s_flat_program_.use_count() == 0) {
 		unlit_program_ = shared_ptr<gfx::GLSLProgram>(new gfx::GLSLProgram());
 		unlit_program_->compileShader(unlit_frag,

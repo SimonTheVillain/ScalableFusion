@@ -29,10 +29,6 @@ RenderDebugInfo::RenderDebugInfo()
 	shader_->link();
 }
 
-RenderDebugInfo::~RenderDebugInfo() {
-
-}
-
 void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
 	if(rendered_patch == nullptr) {
 		//return;

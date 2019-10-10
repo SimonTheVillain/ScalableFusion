@@ -32,7 +32,8 @@ public:
 
 	void render(ActiveSet *active_set, Matrix4f projection, Matrix4f pose);
 
-	void renderInWindow(Matrix4f view, Matrix4f proj, bool render_visible_from_cam,
+	void renderInWindow(Matrix4f view, Matrix4f proj, 
+	                    bool render_visible_from_cam,
 	                    GLFWwindow *root_context);
 
 	// render an additional wireframe

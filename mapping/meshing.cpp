@@ -3,8 +3,8 @@
 #include <mesh_reconstruction.h>
 #include <cuda/xtion_camera_model.h>
 
-using namespace Eigen;
 using namespace std;
+using namespace Eigen;
 
 int debug_triangle_count = 0;
 
@@ -133,8 +133,8 @@ TriangleReference Meshing::addTriangle(const VertexReference &pr1,
 	// Double triangle stitch.
 	// I know this is quite involved for one triangle:
 	if(patch_1 != patch_2 || patch_2 != patch_3 || patch_1 != patch_3) {
-		MeshPatch* main_patch = patch_1;
-		MeshPatch* secondary_patch = nullptr;
+		MeshPatch *main_patch = patch_1;
+		MeshPatch *secondary_patch = nullptr;
 		// Find out the second segment
 		if(patch_1 == patch_2 && patch_2 == patch_3 && patch_1 == patch_3) {
 			assert(0); // TODO: Make this optional so it only checks this in debug mode
@@ -272,22 +272,22 @@ void Meshing::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 			// In each case the possible triangles are different
 
 			float zs[4]; // Storage for depth values
-			zs[0] = points.at<Vector4f>(i, j)[2];         // Upper left
+			zs[0] = points.at<Vector4f>(    i,     j)[2]; // Upper left
 			zs[2] = points.at<Vector4f>(i + 1, j + 1)[2]; // Bottom right
-			zs[1] = points.at<Vector4f>(i, j + 1)[2];     // Upper right
-			zs[3] = points.at<Vector4f>(i + 1, j)[2];     // Bottom left
+			zs[1] = points.at<Vector4f>(    i, j + 1)[2]; // Upper right
+			zs[3] = points.at<Vector4f>(i + 1,     j)[2]; // Bottom left
 			float distance_ul_br = fabs(zs[0] - zs[2]);
 			float distance_ur_bl = fabs(zs[1] - zs[3]);
 
 			VertexReference pr[4];
-			pr[0].set((MeshPatch*) mesh_pointers.at<uint64_t>(i, j),
-			          vertex_indices.at<int>(i,j));
+			pr[0].set((MeshPatch*) mesh_pointers.at<uint64_t>(    i,     j),
+			          vertex_indices.at<int>(    i,     j));
 			pr[2].set((MeshPatch*) mesh_pointers.at<uint64_t>(i + 1, j + 1),
 			          vertex_indices.at<int>(i + 1, j + 1));
-			pr[1].set((MeshPatch*) mesh_pointers.at<uint64_t>(i, j + 1),
-			          vertex_indices.at<int>(i, j + 1));
-			pr[3].set((MeshPatch*) mesh_pointers.at<uint64_t>(i + 1, j),
-			          vertex_indices.at<int>(i + 1, j));
+			pr[1].set((MeshPatch*) mesh_pointers.at<uint64_t>(    i, j + 1),
+			          vertex_indices.at<int>(    i, j + 1));
+			pr[3].set((MeshPatch*) mesh_pointers.at<uint64_t>(i + 1,     j),
+			          vertex_indices.at<int>(i + 1,     j));
 
 			float threshold = max_depth_step;
 
@@ -448,7 +448,7 @@ void Meshing::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 				}
 				nb_up[j] = nb_up_new;
 				nb_left = nb_left_new;
-				if(!debug_created){
+				if(!debug_created) {
 					//cout << "no Quad possible b" << j << endl;
 				}
 			}

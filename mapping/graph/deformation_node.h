@@ -69,8 +69,6 @@ public:
 
 	DeformationNode(MeshPatch *p) 
 			: patch(p) { }
-	
-	~DeformationNode() { }
 
 	void findNeighbours(const Vector3f &pos, const cv::Vec2f &pix_pos, 
 	                    const vector<NodePixPos> &nodes);

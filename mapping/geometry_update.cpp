@@ -85,7 +85,7 @@ void GeometryUpdate::extend(
 			                                     z, 1.0f);
 			if(isnan(z) || z == 0.0f) {
 				//actually we want this to be done in the segmentation method
-				points.at<Vector4f>(i,j)=Vector4f(NAN,NAN,NAN,NAN);
+				points.at<Vector4f>(i, j) = Vector4f(NAN, NAN, NAN, NAN);
 			}
 
 			float ex_z = ex_geom.at<Vector4f>(i, j)[2];
@@ -108,12 +108,12 @@ void GeometryUpdate::extend(
 
 	cv::Mat mesh_pointers(height, width, CV_32SC2); // Actually we store pointers in this
 
-	mesh->gpu_pre_seg_->fxycxy = mesh->params.depth_fxycxy;
+	mesh->gpu_pre_seg_->fxycxy       = mesh->params.depth_fxycxy;
 	mesh->gpu_pre_seg_->max_distance = mesh->getMaxDistance();
 	// Do a proper segmentation on all the pixel not part of the existing geometry
 	mesh->gpu_pre_seg_->segment(d_std_tex, proj_depth_std, ex_geom);
 
-	cv::Mat seg = mesh->gpu_pre_seg_->getSegmentation();
+	cv::Mat seg   = mesh->gpu_pre_seg_->getSegmentation();
 	int seg_count = mesh->gpu_pre_seg_->getSegCount();
 
 	//*****************************************TOOOOODOOOOOO*********************
@@ -188,11 +188,11 @@ void GeometryUpdate::extend(
 	time_end = chrono::system_clock::now();
 	time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
 	//present
-	cout << "[GeometryUpdate::Extend] time consumed by stitching: " 
-	     << time_elapsed.count() << "ms" << endl;
+	cout << "[GeometryUpdate::Extend] time consumed by stitching: " <<
+	        time_elapsed.count() << "ms" << endl;
 	#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
 	cv::imshow("project old standard deviation texture to new", exColor);
-	#endif
+	#endif // SHOW_SERIOUS_DEBUG_OUTPUTS
 
 	time_start = time_end;
 
@@ -249,8 +249,8 @@ void GeometryUpdate::extend(
 	time_end = chrono::system_clock::now();
 	time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
 	//present
-	cout << "[GeometryUpdate::Extend] time consumed by cleaning up the geometry " 
-	     << time_elapsed.count() << "ms" << endl;
+	cout << "[GeometryUpdate::Extend] time consumed by cleaning up the geometry " <<
+	        time_elapsed.count() << "ms" << endl;
 
 	time_start = time_end;
 
@@ -272,8 +272,8 @@ void GeometryUpdate::extend(
 	time_end = chrono::system_clock::now();
 	time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
 	//present
-	cout << "[GeometryUpdate::Extend] Time consumed loading the active set: " 
-	     << time_elapsed.count() << "ms" << endl;
+	cout << "[GeometryUpdate::Extend] Time consumed loading the active set: " <<
+	        time_elapsed.count() << "ms" << endl;
 
 	time_start = time_end;
 
@@ -303,7 +303,7 @@ void GeometryUpdate::extend(
 
 	// Add and fill new color patches to the surface
 	mesh->texturing.applyColorData(new_shared_mesh_patches, rgb_tex,
-	                              color_pose_in, proj_1_color, new_active_set);
+	                               color_pose_in, proj_1_color, new_active_set);
 
 	// After doing the textures and geometry we are supposed to be done with this
 	// Active set
@@ -312,14 +312,11 @@ void GeometryUpdate::extend(
 	// The apply new color data is supposed to create new texture coordinates as well as creating new textures
 	// this and the above function should replace the two steps below
 
-
-
-
-	time_end = chrono::system_clock::now();
+	time_end     = chrono::system_clock::now();
 	time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
 	//present
-	cout << "[GeometryUpdate::Extend] time consumed by applying new color data: " 
-	     << time_elapsed.count() << "ms" << endl;
+	cout << "[GeometryUpdate::Extend] time consumed by applying new color data: " <<
+	        time_elapsed.count() << "ms" << endl;
 
 	time_start = time_end;
 
@@ -329,15 +326,14 @@ void GeometryUpdate::extend(
 
 	// Now that we have the geometry on the cpu now do the texture for the geometrical textures:
 
-	time_end = chrono::system_clock::now();
+	time_end     = chrono::system_clock::now();
 	time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
 	//present
 	cout << "[GeometryUpdate::Extend] Time consumed by "
-	        "finalizing the new geom Tex patches: "
-		   << time_elapsed.count() << "ms" << endl;
+	        "finalizing the new geom Tex patches: " <<
+		      time_elapsed.count() << "ms" << endl;
 
 	time_start = time_end;
-
 
 	// Before putting the mesh patches into the octree we want to
 	// set the center points and the radii of the patches right
@@ -349,20 +345,20 @@ void GeometryUpdate::extend(
 	//add the objects to the low detail renderer
 	auto start_low_detail = chrono::system_clock::now();
 	mesh->low_detail_renderer.addPatches(new_shared_mesh_patches,
-	                                   -depth_pose_in.block<3, 1>(0, 3));
+	                                     -depth_pose_in.block<3, 1>(0, 3));
 	auto end_low_detail = chrono::system_clock::now();
 
-	cout << "[GeometryUpdate::Extend] Time consumed by generating the low detail update:"
-	     << chrono::duration_cast<chrono::milliseconds>(end_low_detail - start_low_detail).count() 
-	     << "ms" << endl;
+	cout << "[GeometryUpdate::Extend] Time consumed by generating the low detail update:" <<
+	        chrono::duration_cast<chrono::milliseconds>(end_low_detail - start_low_detail).count() << 
+	        "ms" << endl;
 
 	//at last we can add the newly created and filed mesh patches to the octree
 
 	time_end = chrono::system_clock::now();
 	time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
 	//present
-	cout << "[GeometryUpdate::Extend] Time consumed by projecting the geometry to the geometry texture:"
-	     << time_elapsed.count() << "ms" << endl;
+	cout << "[GeometryUpdate::Extend] Time consumed by projecting the geometry to the geometry texture:" <<
+	        time_elapsed.count() << "ms" << endl;
 
 	mesh->octree_.addObjects(new_shared_mesh_patches);
 
@@ -384,14 +380,11 @@ void GeometryUpdate::extend(
 		}
 	}
 
-
-
-
 	time_end = chrono::system_clock::now();
 	auto elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
 	cout << "[GeometryUpdate::Extend] Time consumed for adding new "
-	        "(novel) data took alltogether " 
-	     << elapsed.count() << "ms" << endl;
+	        "(novel) data took alltogether " <<
+	        elapsed.count() << "ms" << endl;
 	//warning: this are old values... i don't even know if they apply to
 	//on the initial frame it takes 1.2sec
 	//on every additional frame its about 300ms. Almost half of it is the
@@ -405,12 +398,12 @@ void GeometryUpdate::extend(
 		Vector4f pos4(pos[0], pos[1], pos[2], 1.0f);
 		pos4 = proj_pose * pos4;
 		pos4 *= 1.0f / pos4[3];
-		nodes[i].node   = patch->deformation_node;
+		nodes[i].node    = patch->deformation_node;
 		nodes[i].pix_pos = cv::Vec2f(pos4[0], pos4[1]);
-		nodes[i].pos    = pos;
+		nodes[i].pos     = pos;
 	}
 	for(auto &node : nodes) {
-		node.node->findNeighbours(node.pos ,node.pix_pos, nodes);
+		node.node->findNeighbours(node.pos, node.pix_pos, nodes);
 	}
 	/*********************************************************************************/
 }
@@ -428,7 +421,6 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 	int width  = d_std_tex->getWidth();
 	int height = d_std_tex->getHeight();
 
-
 	/**
 	 * weighting scheme:
 	 * o..... offset from triangulated surface
@@ -442,7 +434,6 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 	 * the update of the old offset is still done on the old wieghts.
 	 * ok=(o/s + ok-1/sk-1)/( (s * sk-1)/(s + sk-1))
 	 */
-
 
 	Matrix4f proj = Camera::genProjMatrix(mesh->params.depth_fxycxy);
 	Matrix4f pose = depth_pose_in;
@@ -481,7 +472,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		if(geom_tex_gpu_handle == nullptr) {
 			MeshTextureGpuHandle *debug_tex =
 					active_set->retained_mesh_patches[i]->geom_tex.get();
-			cout << "how come this is not initialized yet?"<< endl;
+			cout << "how come this is not initialized yet?" << endl;
 			assert(0);
 			continue;//actually this can happen in multithreaded mode
 			assert(0);
@@ -520,7 +511,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 			}
 			shared_ptr<TriangleBufConnector> dependence_tris = dependence_geom->getMostCurrentGpuTriangles();
 			int debug = dependence_tris->getStartingIndex();
-			if(dependence_tris->getStartingIndex() != dependency.triangle_position_on_gpu){
+			if(dependence_tris->getStartingIndex() != dependency.triangle_position_on_gpu) {
 				expired = true;
 				assert(0);
 			}
@@ -530,18 +521,6 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 			assert(0);
 		}
 
-		//check if the patch is ready to be used
-		/*
-		if(!patch->isGeometryFullyAllocated()){ //maybe ask the same for the neighbours
-			continue;
-		}
-		 */
-
-		//not run this if the cpu has content that is ahead of the gpu content
-		//propably because it is not uploaded
-		/*if(patch->geomTexPatch->cpuContentAhead){
-			continue;
-		}*/
 		//also not run this if the reference texture is not filled
 		if(!patch->geom_tex_patch->ref_tex_filled) {
 			assert(0);
@@ -572,7 +551,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		desc.vertex_count = gpu->vertices_source->getSize();
 		desc.vertex_destination_start_ind = gpu->vertices_dest->getStartingIndex();
 
-		desc.triangle_slot = gpu->triangles->getStartingIndex();
+		desc.triangle_slot  = gpu->triangles->getStartingIndex();
 		desc.triangle_count = gpu->triangles->getSize();
 
 		//now go for the destRect textures
@@ -612,7 +591,6 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		assert(0);
 	}
 
-
 	//desperate debug measure
 	for(auto patch : patches) {
 		shared_ptr<MeshPatchGpuHandle> gpuPatch = patch->gpu.lock();
@@ -633,10 +611,10 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 	int debug = updateGeometry(
 			d_std_tex->getCudaSurfaceObject(), width, height, descriptors, cam_pos, 
 			pose_tmp, proj_pose, 
-			(GpuVertex*)mesh->gpu_geom_storage_.vertex_buffer->getCudaPtr(),
-			(Vector2f*)mesh->gpu_geom_storage_.tex_pos_buffer->getCudaPtr(),
-			(GpuTriangle*)mesh->gpu_geom_storage_.triangle_buffer->getCudaPtr(),
-			(GpuPatchInfo*)mesh->gpu_geom_storage_.patch_info_buffer->getCudaPtr());
+			(GpuVertex*) mesh->gpu_geom_storage_.vertex_buffer->getCudaPtr(),
+			(Vector2f*) mesh->gpu_geom_storage_.tex_pos_buffer->getCudaPtr(),
+			(GpuTriangle*) mesh->gpu_geom_storage_.triangle_buffer->getCudaPtr(),
+			(GpuPatchInfo* )mesh->gpu_geom_storage_.patch_info_buffer->getCudaPtr());
 
 	//cout << "here we should first do the vertex update and then the std texture update" << endl;
 
@@ -661,7 +639,6 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 
 		//we trigger the reupload(update) of the patch header on the gpu
 		patch->cpu_tex_patch_ahead = true;//maybe we want to do this update with a separate kernel call
-
 
 		//TODO: get this swap to gpu header
 		//TODO: and instead of swapping

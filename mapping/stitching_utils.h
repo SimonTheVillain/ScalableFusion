@@ -86,10 +86,10 @@ void bresenham(Vector2f pix0, Vector2f pix1, T f) {
  */
 inline bool isOnSameSide(Vector2f line0, Vector2f line1, 
                          Vector2f point0, Vector2f point1) {
-	Vector2f line = line1 - line0;
-	Vector2f one = point0 - line0;
+	Vector2f line  = line1 - line0;
+	Vector2f one   = point0 - line0;
 	Vector2f other = point1 - line0;
-	float cross_one = line[0] * one[1] - one[0] * line[1];
+	float cross_one   = line[0] * one[1] - one[0] * line[1];
 	float cross_other = line[0] * other[1] - other[0] * line[1];
 
 	return sgn(cross_one) == sgn(cross_other);

@@ -17,8 +17,8 @@ private:
 
 	enum Properties_ {
 		HIGH_RES = 1,
-		LOW_RES = 2,
-		TEXTURE = 4
+		LOW_RES  = 2,
+		TEXTURE  = 4
 	};
 	
 public:
@@ -33,7 +33,7 @@ public:
 	static void storeCoarse(MeshReconstruction *map, string file_path);
 	static void storeFine(MeshReconstruction *map, string file_path);
 
-	static void storeGraph(MeshReconstruction *map,string file_path);
+	static void storeGraph(MeshReconstruction *map, string file_path);
 	static void storeDeformationGraph(MeshReconstruction *map, string file_path);
 };
 

@@ -103,7 +103,7 @@ void Texturing::generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
 			}
 
 			//render the neighbouring patches.
-			while(true){
+			while(true) {
 				// After setting up the debug rendering for this, we wait so the user can take a look at it
 				//cv::waitKey();
 			}
@@ -122,7 +122,7 @@ void Texturing::generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
 	mesh_patches_with_novel_tex.reserve(valid_mesh_patches.size());
 
 	for(size_t i = 0; i < valid_mesh_patches.size(); i++) {
-		shared_ptr<MeshPatch> patch = valid_mesh_patches[i];
+		shared_ptr<MeshPatch>              patch = valid_mesh_patches[i];
 		shared_ptr<MeshPatchGpuHandle> gpu_patch = patch->gpu.lock();
 
 		shared_ptr<MeshTextureGpuHandle> gpu_texture = gpu_patch->geom_tex;
@@ -156,14 +156,13 @@ void Texturing::generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
 		//allocate textures and coordinates if necessary.
 		//+ create new tasks
 		TexCoordGen::Task task;
-		task.offset_x = bounds[i].x - 0.5f / float(scale);
-		task.offset_y = bounds[i].y - 0.5f / float(scale);
-		task.scale_x = 1.0f / (bounds[i].width + 1.0f / float(scale));
-		task.scale_y = 1.0f / (bounds[i].height + 1.0f / float(scale));
-		task.coords = gpu_texture->coords->getStartingPtr();
+		task.offset_x       = bounds[i].x - 0.5f / float(scale);
+		task.offset_y       = bounds[i].y - 0.5f / float(scale);
+		task.scale_x        = 1.0f / (bounds[i].width  + 1.0f / float(scale));
+		task.scale_y        = 1.0f / (bounds[i].height + 1.0f / float(scale));
+		task.coords         = gpu_texture->coords->getStartingPtr();
 		task.triangle_count = gpu_patch->triangles->getSize();
-
-		task.triangles = gpu_patch->triangles->getStartingPtr();
+		task.triangles      = gpu_patch->triangles->getStartingPtr();
 		tex_gen_tasks.push_back(task);
 
 		//now do all the stitches and so on:
@@ -179,7 +178,7 @@ void Texturing::generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
 
 				#ifndef IGNORE_SERIOUS_BUG_5
 				assert(0);//This actually should not happen
-				#endif
+				#endif // IGNORE_SERIOUS_BUG_5
 				continue;
 			}
 			shared_ptr<TriangleBufConnector> gpu_stitch = stitch->triangles_gpu.lock();
@@ -189,7 +188,7 @@ void Texturing::generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
 			}
 
 			task.triangle_count = gpu_stitch->getSize();
-			task.triangles = gpu_stitch->getStartingPtr();
+			task.triangles      = gpu_stitch->getStartingPtr();
 			tex_gen_tasks.push_back(task);
 		}
 
@@ -210,7 +209,7 @@ void Texturing::generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
 			}
 
 			task.triangle_count = gpu_stitch->getSize();
-			task.triangles = gpu_stitch->getStartingPtr();
+			task.triangles      = gpu_stitch->getStartingPtr();
 			tex_gen_tasks.push_back(task);
 		}
 	}
@@ -270,7 +269,7 @@ void Texturing::projToGeomTex(ActiveSet* active_set,
 		command.out_offset = cv::Point2i(rect.x, rect.y);
 		rect = geom_tex_gpu_handle->ref_tex->getRect();
 		command.ref_offset = cv::Point2i(rect.x, rect.y);
-		command.width = rect.width;
+		command.width  = rect.width;
 		command.height = rect.height;
 
 		command.output = geom_tex_gpu_handle->tex->getCudaTextureObject();
@@ -293,9 +292,9 @@ void Texturing::projToGeomTex(ActiveSet* active_set,
 	stdTexInit(
 			geom_sensor_data->getCudaTextureObject(), commands, 
 			scale * pose_projected,
-			(GpuVertex*) active_set->gpu_geom_storage->vertex_buffer->getCudaPtr(),
-			(Vector2f*) active_set->gpu_geom_storage->tex_pos_buffer->getCudaPtr(),
-			(GpuTriangle*) active_set->gpu_geom_storage->triangle_buffer->getCudaPtr(),
+			(GpuVertex*)    active_set->gpu_geom_storage->vertex_buffer->getCudaPtr(),
+			(Vector2f*)     active_set->gpu_geom_storage->tex_pos_buffer->getCudaPtr(),
+			(GpuTriangle*)  active_set->gpu_geom_storage->triangle_buffer->getCudaPtr(),
 			(GpuPatchInfo*) active_set->gpu_geom_storage->patch_info_buffer->getCudaPtr());
 
 	//TODO: this is not fully filling the textures. Get to the root of this issue
@@ -345,8 +344,6 @@ void Texturing::colorTexUpdate(shared_ptr<gfx::GpuTex2D> rgba_tex,
 	mesh_reconstruction->cleanupGlStoragesThisThread_();
 }
 
-
-
 void Texturing::applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
                                shared_ptr<gfx::GpuTex2D> rgb_in,
                                Matrix4f &pose, Matrix4f &proj,
@@ -357,15 +354,15 @@ void Texturing::applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
 		return;
 	}
 
-	vector<cv::Rect2f> bounds =
-			mesh->genBoundsFromPatches(visible_patches, pose, proj, active_set);
+	vector<cv::Rect2f> bounds = mesh->genBoundsFromPatches(visible_patches, pose, 
+	                                                       proj, active_set);
 
 	Vector4f cam_pos4 = pose * Vector4f(0, 0, 0, 1);
 	Vector3f cam_pos(cam_pos4[0], cam_pos4[1], cam_pos4[2]);
 
-	int width = rgb_in->getWidth();
-	float width_inv = 1.0f / float(width);
-	int height = rgb_in->getHeight();
+	int width        = rgb_in->getWidth();
+	float width_inv  = 1.0f / float(width);
+	int height       = rgb_in->getHeight();
 	float height_inv = 1.0f / float(height);
 	Matrix4f mvp = proj * pose.inverse();;
 
@@ -388,14 +385,15 @@ void Texturing::applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
 
 	for(size_t i = 0; i < visible_patches.size(); i++) {
 		cv::Rect2f bound = bounds[i];
-		if(bound.x < 0 || bound.y < 0 || 
-		   bound.x + bound.width > (width - 1) || 
+		if(bound.x < 0 || 
+		   bound.y < 0 || 
+		   bound.x + bound.width  > (width - 1) || 
 		   bound.y + bound.height > (height - 1)) {
 			//if patch does not have valid points something went wrong
 			//most likely there are no triangles in said patch....
 			continue;
 		}
-		shared_ptr<MeshPatch> patch = visible_patches[i];
+		shared_ptr<MeshPatch>              patch = visible_patches[i];
 		shared_ptr<MeshPatchGpuHandle> gpu_patch = patch->gpu.lock();
 		vector<shared_ptr<MeshTexture>> tex_patches_to_delete;
 		patch->tex_patches_mutex.lock();
@@ -452,13 +450,13 @@ void Texturing::applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
 
 			//create a task for new texture coordinates
 			TexCoordGen::Task task;
-			task.offset_x = bounds[i].x - 0.5f;
-			task.offset_y = bounds[i].y - 0.5f;
-			task.scale_x = 1.0f / (bounds[i].width + 1.0f);
-			task.scale_y = 1.0f / (bounds[i].height + 1.0f);
-			task.coords = mesh_tex_gpu->coords->getStartingPtr();
+			task.offset_x       = bounds[i].x - 0.5f;
+			task.offset_y       = bounds[i].y - 0.5f;
+			task.scale_x        = 1.0f / (bounds[i].width + 1.0f);
+			task.scale_y        = 1.0f / (bounds[i].height + 1.0f);
+			task.coords         = mesh_tex_gpu->coords->getStartingPtr();
 			task.triangle_count = gpu_patch->triangles->getSize();
-			task.triangles = gpu_patch->triangles->getStartingPtr();
+			task.triangles      = gpu_patch->triangles->getStartingPtr();
 			tex_gen_tasks.push_back(task);
 
 			//oh and also do this for all the double stitches
@@ -478,7 +476,7 @@ void Texturing::applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
 					continue;
 				}
 				task.triangle_count = gpu_stitch->getSize();
-				task.triangles = gpu_stitch->getStartingPtr();
+				task.triangles      = gpu_stitch->getStartingPtr();
 				tex_gen_tasks.push_back(task);
 			}
 
@@ -504,16 +502,16 @@ void Texturing::applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
 
 			//and also for copying the texture where it belongs to:
 			CopyDescriptor copy;
-			copy.x = bounds[i].x * width_inv;
-			copy.y = bounds[i].y * height_inv;
-			copy.width = bounds[i].width * width_inv;
-			copy.height = bounds[i].height * height_inv;
-			copy.target_width = res_x;
-			copy.target_height = res_y;
+			copy.x              = bounds[i].x * width_inv;
+			copy.y              = bounds[i].y * height_inv;
+			copy.width          = bounds[i].width * width_inv;
+			copy.height         = bounds[i].height * height_inv;
+			copy.target_width   = res_x;
+			copy.target_height  = res_y;
 			cv::Rect2i out_rect = mesh_tex_gpu->tex->getRect();
-			copy.target_x = out_rect.x;
-			copy.target_y = out_rect.y;
-			copy.output = mesh_tex_gpu->tex->getCudaSurfaceObject();
+			copy.target_x       = out_rect.x;
+			copy.target_y       = out_rect.y;
+			copy.output         = mesh_tex_gpu->tex->getCudaSurfaceObject();
 
 			copies.push_back(copy);
 			patches_with_color_updates.push_back(patch);
@@ -576,8 +574,8 @@ void Texturing::genLookupTex(ActiveSet *active_set,
 	mesh_reconstruction->information_renderer.bindRenderTriangleReferenceProgram();
 
 	for(size_t i = 0; i < patches.size();i++) {
-		shared_ptr<MeshPatch> patch = patches[i];
-		shared_ptr<MeshTexture> texture = textures[i];
+		shared_ptr<MeshPatch>              patch = patches[i];
+		shared_ptr<MeshTexture>          texture = textures[i];
 		shared_ptr<MeshTextureGpuHandle> gpu_tex = texture->gpu.lock();
 		if(gpu_tex == nullptr) {
 			cout << "[ScaleableMap::generateLookupTexGeom] "

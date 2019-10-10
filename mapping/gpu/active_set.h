@@ -35,7 +35,6 @@ public:
 	void drawDoubleStitches();
 	void drawTripleStitches();
 	void drawPatches();
-
 	void drawEverything();
 
 	void reuploadHeaders();
@@ -68,8 +67,6 @@ private:
 	void uploadTexAndCoords_(vector<shared_ptr<MeshPatch>> &patches,
 	                         vector<shared_ptr<MeshPatchGpuHandle>> &patches_gpu,
 	                         const MeshReconstruction* map, bool initial = false);
-
-	//void UploadTex
 
 	void uploadTexAndCoords_(
 			MeshPatch *patch, MeshPatchGpuHandle *patch_gpu, //lets check if these are necessary

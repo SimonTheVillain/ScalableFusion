@@ -35,14 +35,11 @@ void Exporter::storeCoarse(MeshReconstruction *map, string file_path) {
 	scene.mMaterials = new aiMaterial * [1];
 	scene.mMaterials[0] = nullptr;
 	scene.mNumMaterials = 1;
-
-	scene.mMaterials[ 0 ] = new aiMaterial();
+	scene.mMaterials[0] = new aiMaterial();
 
 	scene.mMeshes = new aiMesh * [1];
 	scene.mMeshes[0] = nullptr;
 	scene.mNumMeshes = 1;
-
-
 	scene.mMeshes[0] = new aiMesh();
 	scene.mMeshes[0]->mMaterialIndex = 0;
 
@@ -55,7 +52,6 @@ void Exporter::storeCoarse(MeshReconstruction *map, string file_path) {
 	p_mesh->mVertices = new aiVector3D[vertices.size()];
 	p_mesh->mNumVertices = vertices.size();
 	p_mesh->mTextureCoords[0] = new aiVector3D[vertices.size()];
-
 	p_mesh->mNumUVComponents[0] = vertices.size();
 
 	for(size_t i = 0; i < vertices.size(); i++) {
@@ -75,7 +71,7 @@ void Exporter::storeCoarse(MeshReconstruction *map, string file_path) {
 
 	for(size_t i = 0; i < indices.size() / 3; i++) {
 		aiFace face;
-		face.mIndices = new unsigned int[3];
+		face.mIndices    = new unsigned int[3];
 		face.mNumIndices = 3;
 		face.mIndices[0] = indices[i * 3 + 0];
 		face.mIndices[1] = indices[i * 3 + 1];
@@ -88,9 +84,11 @@ void Exporter::storeCoarse(MeshReconstruction *map, string file_path) {
 	if(result == aiReturn_SUCCESS) {
 		cout << "file stored in " << file_path << endl;
 	} else if(result == aiReturn_OUTOFMEMORY) {
-		cout << "storing file " << file_path << " failed due to running out of memory" << endl;
+		cout << "storing file " << file_path << 
+		        " failed due to running out of memory" << endl;
 	} else if(result == aiReturn_FAILURE) {
-		cout << "storing file " << file_path << " failed" << exporter.GetErrorString() << endl;
+		cout << "storing file " << file_path << " failed" << 
+		        exporter.GetErrorString() << endl;
 	}
 }
 
@@ -139,20 +137,17 @@ void Exporter::storeFine(MeshReconstruction *map, string file_path) {
 	scene.mMaterials = new aiMaterial * [1];
 	scene.mMaterials[0] = nullptr;
 	scene.mNumMaterials = 1;
-
 	scene.mMaterials[0] = new aiMaterial();
 
 	scene.mMeshes = new aiMesh * [1];
 	scene.mMeshes[0] = nullptr;
 	scene.mNumMeshes = 1;
-
 	scene.mMeshes[0] = new aiMesh();
 	scene.mMeshes[0]->mMaterialIndex = 0;
 
 	scene.mRootNode->mMeshes = new unsigned int[1];
 	scene.mRootNode->mMeshes[0] = 0;
 	scene.mRootNode->mNumMeshes = 1;
-
 	auto p_mesh = scene.mMeshes[0];
 	//lets just try a quad
 	p_mesh->mVertices = new aiVector3D[vertex_count];
@@ -209,12 +204,14 @@ void Exporter::storeFine(MeshReconstruction *map, string file_path) {
 
 	Assimp::Exporter exporter;
 	aiReturn result = exporter.Export(&scene, "ply", file_path.c_str());
-	if(result == aiReturn_SUCCESS){
+	if(result == aiReturn_SUCCESS) {
 		cout << "file stored in " << file_path << endl;
-	}else if(result == aiReturn_OUTOFMEMORY){
-		cout << "storing file " << file_path << " failed due to running out of memory" << endl;
+	}else if(result == aiReturn_OUTOFMEMORY) {
+		cout << "storing file " << file_path << 
+		        " failed due to running out of memory" << endl;
 	}else if(result == aiReturn_FAILURE) {
-		cout << "storing file " << file_path << " failed" << exporter.GetErrorString() << endl;
+		cout << "storing file " << file_path << " failed" << 
+		        exporter.GetErrorString() << endl;
 	}
 }
 
@@ -239,13 +236,11 @@ void Exporter::exportMapTest(string file_path) {
 	scene.mMaterials = new aiMaterial * [1];
 	scene.mMaterials[0] = nullptr;
 	scene.mNumMaterials = 1;
-
 	scene.mMaterials[ 0 ] = new aiMaterial();
 
 	scene.mMeshes = new aiMesh * [1];
 	scene.mMeshes[0] = nullptr;
 	scene.mNumMeshes = 1;
-
 	scene.mMeshes[0] = new aiMesh();
 	scene.mMeshes[0]->mMaterialIndex = 0;
 
@@ -264,17 +259,16 @@ void Exporter::exportMapTest(string file_path) {
 	Vector3f points[] = {Vector3f(-1, -1, 0),
 	                     Vector3f( 1, -1, 0),
 	                     Vector3f( 1,  1, 0),
-	                     Vector3f(-1,  1, 0)
-	};
+	                     Vector3f(-1,  1, 0)};
 	for(size_t i = 0; i < 4; i++) {
 		aiVector3D vec;
 		vec.x = points[i][0];
 		vec.y = points[i][1];
 		vec.z = points[i][2];
 		p_mesh->mVertices[i] = vec;
-		vec.x =vec.x * 0.5f + 0.5f;
-		vec.y =vec.y * 0.5f + 0.5f;
-		vec.z =vec.z * 0.5f + 0.5f;
+		vec.x = vec.x * 0.5f + 0.5f;
+		vec.y = vec.y * 0.5f + 0.5f;
+		vec.z = vec.z * 0.5f + 0.5f;
 		p_mesh->mTextureCoords[0][i] = vec;
 	}
 
@@ -332,14 +326,11 @@ void Exporter::storeGraph(MeshReconstruction *map, string file_path) {
 
 void Exporter::storeDeformationGraph(MeshReconstruction *map, 
                                      string file_path) {
-	struct Edge {
-		MeshPatch *patch1;
-		MeshPatch *patch2;
-	};
+
 	unordered_map<MeshPatch*, unordered_set<MeshPatch*>> unique_edges;
-	unordered_map<MeshPatch*,int> index_map;
+	unordered_map<MeshPatch*, int> index_map;
 	int k = 0;
-	for(pair<int,shared_ptr<MeshPatch>> id_patch : map->patches_) {//of course auto would be valid here as well
+	for(pair<int, shared_ptr<MeshPatch>> id_patch : map->patches_) {//of course auto would be valid here as well
 		shared_ptr<MeshPatch> patch = id_patch.second;
 		index_map[patch.get()] = k;
 		k++;

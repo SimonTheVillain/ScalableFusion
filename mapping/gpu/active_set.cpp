@@ -6,10 +6,10 @@
 #include <Eigen/Core>
 
 #include "gpu_geom_storage.h"
-#include "../base/mesh_structure.h"
-#include "../cuda/gpu_errchk.h"
-#include "../cuda/float16_utils.h"
-#include "../mesh_reconstruction.h"
+#include <base/mesh_structure.h>
+#include <cuda/gpu_errchk.h>
+#include <cuda/float16_utils.h>
+#include <mesh_reconstruction.h>
 
 using namespace std;
 using namespace Eigen;
@@ -62,8 +62,8 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 			//triggering this update not only when the gpu resources are
 			//initially created
 			CoalescedGpuTransfer::Task task;
-			task.count = patch->vertices.size();
-			task.start = coalesced_vertices.size();
+			task.count  = patch->vertices.size();
+			task.start  = coalesced_vertices.size();
 			task.target = gpu_patch->vertices_source->getStartingPtr();
 			coalesced_vertex_tasks.push_back(task);
 
@@ -71,12 +71,6 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 			for(size_t j = 0; j < patch->vertices.size(); j++) {
 				coalesced_vertices.push_back(patch->vertices[j].genGpuVertex());
 			}
-
-			//when reuploading the geometry before it got downloaded
-			//we use these vertices to prevent the gpu content from being
-			//deleted
-			//patch->mostCurrentVertices = gpuPatch->verticesSource;
-			//patch->mostCurrentTriangles = gpuPatch->triangles;
 		}
 
 		if(gpu_patch == nullptr) {
@@ -239,7 +233,7 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 		//or when there is nothing uploaded yet
 		shared_ptr<TriangleBufConnector> gpu = stitch->triangles_gpu.lock();
 		if(gpu == nullptr) {
-			task.count = coalesced_triangles.size()-task.start;
+			task.count = coalesced_triangles.size() - task.start;
 			shared_ptr<TriangleBufConnector> gpu = 
 					storage->triangle_buffer->getBlock(task.count);
 			stitch->triangles_gpu = gpu;
@@ -338,7 +332,7 @@ ActiveSet::~ActiveSet() {
 			CoalescedGpuTransfer::DirectTask task;
 			int count = patch_gpu->vertices_dest->getSize();
 			task.src = patch_gpu->vertices_dest->getStartingPtr();
-			task.byteCount = sizeof(GpuVertex) * count;
+			task.byte_count = sizeof(GpuVertex) * count;
 			vector<GpuVertex> vertices(count);
 			task.dst = &vertices[0];
 			tuple<shared_ptr<MeshPatch>, vector<GpuVertex>> t = 
@@ -373,7 +367,7 @@ ActiveSet::~ActiveSet() {
 			CoalescedGpuTransfer::DirectTask task;
 			int count = tex_patch_gpu->coords->getSize();
 			task.src = tex_patch_gpu->coords->getStartingPtr();
-			task.byteCount = sizeof(Vector2f) * count;
+			task.byte_count = sizeof(Vector2f) * count;
 			vector<Vector2f> target(count);
 			task.dst = static_cast<void*>(&target[0]);
 			coalesced_download_tasks.push_back(task);
@@ -403,7 +397,7 @@ ActiveSet::~ActiveSet() {
 			CoalescedGpuTransfer::DirectTask task;
 			int count = tex_patch_gpu->coords->getSize();
 			task.src = tex_patch_gpu->coords->getStartingPtr();
-			task.byteCount = sizeof(Vector2f) * count;
+			task.byte_count = sizeof(Vector2f) * count;
 			vector<Vector2f> target(count);
 			task.dst = static_cast<void*>(&target[0]);
 			coalesced_download_tasks.push_back(task);
@@ -440,9 +434,6 @@ ActiveSet::~ActiveSet() {
 		//TODO: maybe mutex here
 
 		//TODO: secure this with a mutex!!!!
-	}
-	//texcoords
-	for(size_t i = 0; i < downloaded_tex_coords.size(); i++) {
 	}
 	for(auto t : downloaded_tex_coords) {
 		//TODO: maybe we also want to use mutexes here and stuff
@@ -502,9 +493,9 @@ void ActiveSet::uploadTexAndCoords_(
 				//or they are on cpu (in which case we wouldn't reach this assert.
 			}
 			CoalescedGpuTransfer::Task task;
-			task.count = tex_patch->tex_coords.size();
+			task.count  = tex_patch->tex_coords.size();
 			task.target = tex_patch_gpu->coords->getStartingPtr();
-			task.start = coalesced_tex_coords.size();
+			task.start  = coalesced_tex_coords.size();
 			coalesced_tex_coord_tasks.push_back(task);
 			coalesced_tex_coords.insert(coalesced_tex_coords.end(),
 			                            tex_patch->tex_coords.begin(),
@@ -530,7 +521,7 @@ void ActiveSet::uploadTexAndCoords_(
 				if(tex_patch->mat.empty()) {
 					assert(0);//this really should not be empty
 				}
-				int width = tex_patch->mat.cols;
+				int width  = tex_patch->mat.cols;
 				int height = tex_patch->mat.rows;
 				tex_patch_gpu = 
 						make_shared<MeshTextureGpuHandle>(gpu_geom_storage->tex_pos_buffer,
@@ -546,8 +537,8 @@ void ActiveSet::uploadTexAndCoords_(
 
 				//tex coordinate upload
 				CoalescedGpuTransfer::Task task;
-				task.count = tex_patch->tex_coords.size();
-				task.start = coalesced_tex_coords.size();
+				task.count  = tex_patch->tex_coords.size();
+				task.start  = coalesced_tex_coords.size();
 				task.target = tex_patch_gpu->coords->getStartingPtr();
 				coalesced_tex_coord_tasks.push_back(task);
 				coalesced_tex_coords.insert(coalesced_tex_coords.end(),
@@ -604,9 +595,8 @@ void ActiveSet::checkAndUpdateRefTextures_(
 void ActiveSet::drawDoubleStitches() {
 	for(size_t i = 0; i < retained_double_stitches.size(); i++) {
 		TriangleBufConnector &current_stitch = *retained_double_stitches[i];
-		int slot = static_cast<int>(current_stitch.getStartingIndex());
-		int count =
-				static_cast<int>(current_stitch.getSize());
+		int slot  = static_cast<int>(current_stitch.getStartingIndex());
+		int count = static_cast<int>(current_stitch.getSize());
 		glDrawArrays(GL_TRIANGLES, slot * 3, count * 3);
 	}
 }
@@ -616,7 +606,7 @@ void ActiveSet::drawTripleStitches() {
 		return;
 	}
 	TriangleBufConnector &current_stitch = *retained_triple_stitches_coalesced;
-	int slot = current_stitch.getStartingIndex();
+	int slot  = current_stitch.getStartingIndex();
 	int count = current_stitch.getSize();
 	glDrawArrays(GL_TRIANGLES, slot * 3, count * 3);
 }
@@ -637,7 +627,7 @@ void ActiveSet::drawPatches() {
 		}
 		//now do the real rendering:
 		//TODO: maybe put this code into the active set class.
-		int slot = current_patch.triangles->getStartingIndex();
+		int slot  = current_patch.triangles->getStartingIndex();
 		int count = current_patch.triangles->getSize();
 		glDrawArrays(GL_TRIANGLES, slot * 3, count * 3);
 	}
@@ -650,7 +640,7 @@ void ActiveSet::drawEverything() {
 }
 
 void ActiveSet::reuploadHeaders() {
-	vector<GpuPatchInfo> coalesced_infos;
+	vector<GpuPatchInfo>  coalesced_infos;
 	vector<GpuPatchInfo*> coalesced_info_pos;
 	for(shared_ptr<MeshPatch> patch : retained_mesh_patches_cpu) {
 		GpuPatchInfo info;

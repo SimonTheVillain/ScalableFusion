@@ -13,10 +13,10 @@
 
 using namespace std;
 
-template <void (*genFun)(GLsizei, GLuint*), void (*delFun)(GLsizei, GLuint*)>
+template <void (*genFun) (GLsizei, GLuint*), void (*delFun) (GLsizei, GLuint*)>
 class ThreadSafeGl;
 
-template<void (*genFun)(GLsizei, GLuint*), void (*delFun)(GLsizei, GLuint*)>
+template<void (*genFun) (GLsizei, GLuint*), void (*delFun) (GLsizei, GLuint*)>
 class ThreadSafeGlStorage {
 	friend ThreadSafeGl<genFun, delFun>;
 
@@ -110,11 +110,11 @@ private:
 };
 
 
-template<void (*genFun)(GLsizei, GLuint*), void (*delFun)(GLsizei, GLuint*)>
+template<void (*genFun) (GLsizei, GLuint*), void (*delFun) (GLsizei, GLuint*)>
 class ThreadSafeGl {
 public:
 
-	ThreadSafeGl(ThreadSafeGlStorage<genFun, delFun>* storage) 
+	ThreadSafeGl(ThreadSafeGlStorage<genFun, delFun> *storage) 
 			: thread_storage_(storage) {
 	}
 
@@ -168,7 +168,7 @@ private:
 	
 };
 
-template<void (*genFun)(GLsizei, GLuint*), void (*delFun)(GLsizei, GLuint*)>
+template<void (*genFun) (GLsizei, GLuint*), void (*delFun) (GLsizei, GLuint*)>
 inline ThreadSafeGl<genFun, delFun> *ThreadSafeGlStorage<genFun, delFun>::createGlObject() {
 	return new ThreadSafeGl<genFun, delFun>(this);
 }

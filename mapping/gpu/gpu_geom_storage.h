@@ -15,7 +15,7 @@
 
 #include <Eigen/Eigen>
 
-#include "../cuda/gpu_mesh_structure.h"
+#include <cuda/gpu_mesh_structure.h>
 #include "gpu_buffer.h"
 
 using namespace std;
@@ -83,7 +83,7 @@ public:
 	void resetTimers();
 
 	shared_ptr<ActiveSet> makeActiveSet(
-			vector<shared_ptr<MeshPatch> > patches = {}, 
+			vector<shared_ptr<MeshPatch> > patches = { }, 
 			MeshReconstruction *map = nullptr,
 			bool initial = false, //TODO: get rid of the debug and initial parameter
 			bool debug1 = false);//defaults to an empty element
@@ -103,11 +103,11 @@ public:
 	 * (the destructor would not have to remove pointers from this list)
 	 */
 
-	GpuBuffer<GpuVertex> *vertex_buffer = nullptr;
+	GpuBuffer<GpuVertex>       *vertex_buffer = nullptr;
 	GpuBuffer<Eigen::Vector2f> *tex_pos_buffer = nullptr;
-	GpuBuffer<GpuTriangle> *triangle_buffer = nullptr;
-	GpuBuffer<GpuPatchInfo> *patch_info_buffer = nullptr;
-	GpuBuffer<GLint> *patch_info_index = nullptr;
+	GpuBuffer<GpuTriangle>     *triangle_buffer = nullptr;
+	GpuBuffer<GpuPatchInfo>    *patch_info_buffer = nullptr;
+	GpuBuffer<GLint>           *patch_info_index = nullptr;
 
 	chrono::duration<double> time_spent_uploading_vertices;
 	chrono::duration<double> time_spent_uploading_triangles;

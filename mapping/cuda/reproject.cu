@@ -71,7 +71,7 @@ void reproject(uint16_t *depth_in, uint16_t *depth_out16, uint32_t *depth_out32,
                int width, int height, Matrix4f pose_transform, 
                Vector4f depth_intrinsics) {
 
-	dim3 block(32,32);
+	dim3 block(32, 32);
 	dim3 grid((width + block.x - 1) / block.x, (height + block.y - 1) / block.y);
 
 	reproject_kernel<<<grid, block>>>(depth_in, depth_out32, width, height,

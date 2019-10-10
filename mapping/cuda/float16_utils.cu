@@ -10,12 +10,12 @@ void castF16SurfaceToF32Buffer(cudaSurfaceObject_t surface, int x, int y,
                                int width, int height, float *buffer,
                                int channels) {
 	F16SurfBufCastDesc task;
-	task.x = x;
-	task.y = y;
-	task.width = width;
-	task.height = height;
+	task.x       = x;
+	task.y       = y;
+	task.width   = width;
+	task.height  = height;
 	task.surface = surface;
-	task.offset = 0;
+	task.offset  = 0;
 
 	vector<F16SurfBufCastDesc> tasks;
 	tasks.push_back(task);
@@ -27,9 +27,7 @@ void castF16SurfaceToF32Buffer(cudaSurfaceObject_t surface, int x, int y,
 template<int Channels> __global__
 void castF16SurfaceToF32Buffers_kernel(F16SurfBufCastDesc *tasks,
                                        float *targets) {
-	static_assert(Channels == 1 || 
-	              Channels == 2 || 
-	              Channels == 4,
+	static_assert(Channels == 1 ||  Channels == 2 ||  Channels == 4,
 	              "the texture has either to be 1, 2 or 4 channels\n");
 
 	const int k = blockIdx.x;
@@ -129,12 +127,12 @@ void castF32BufferToF16Surface(cudaSurfaceObject_t surface, int x, int y,
                                int channels) {
 
 	F16SurfBufCastDesc task;
-	task.x = x;
-	task.y = y;
-	task.width = width;
-	task.height = height;
+	task.x       = x;
+	task.y       = y;
+	task.width   = width;
+	task.height  = height;
 	task.surface = surface;
-	task.offset = 0;
+	task.offset  = 0;
 
 	vector<F16SurfBufCastDesc> tasks;
 	tasks.push_back(task);

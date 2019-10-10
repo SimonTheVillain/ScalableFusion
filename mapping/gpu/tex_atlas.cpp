@@ -35,7 +35,7 @@ shared_ptr<TexAtlasPatch> TexAtlas::getTexAtlasPatch(cv::Size2i size) {
 
 	#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
 	cout << "DEBUG: requested " << size <<", delivered " << pow(2, s) << endl;
-	cout << (int)ceil(log2(float(1024))) << endl;
+	cout << (int) ceil(log2(float(1024))) << endl;
 	#endif
 
 	int target_size = pow(2,s);
@@ -46,7 +46,7 @@ shared_ptr<TexAtlasPatch> TexAtlas::getTexAtlasPatch(cv::Size2i size) {
 			tex_this_size.tex.begin(), tex_this_size.tex.end(), 
 			[](weak_ptr<TexAtlasTex> unlocked){return unlocked.lock() == nullptr;}),
 			tex_this_size.tex.end());
-	for(size_t i = 0; i < tex_this_size.tex.size(); i++){
+	for(size_t i = 0; i < tex_this_size.tex.size(); i++) {
 		//check the existing textures if there is some place left to store data onto
 		//
 
@@ -185,7 +185,7 @@ void TexAtlasTex::showImage(string text) {
 void TexAtlasTex::showImage(string text, cv::Rect2i cut_out) {
 	cv::Mat image(cut_out.height, cut_out.width, cv_type_);//TODO: the opencv format is just a placeholder
 	tex_->downloadData(image.data, cut_out.x, cut_out.y, cut_out.width,
-	                  cut_out.height);
+	                   cut_out.height);
 	imshow(text, image);
 }
 
@@ -194,8 +194,8 @@ GLuint TexAtlasTex::getFBO() {
 		//making sure the texture really is created.... shit. i really hate this
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo_->get());
 		glBindTexture(GL_TEXTURE_2D, tex_->getGlName());//not necessary
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex_->getGlName(), 
-		                     0);
+		glFramebufferTexture(GL_FRAMEBUFFER, 
+		                     GL_COLOR_ATTACHMENT0, tex_->getGlName(), 0);
 		GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
 		glDrawBuffers(1, draw_buffers);
 
@@ -222,9 +222,9 @@ GLuint TexAtlasTex::getFBO() {
 		thread::id id = this_thread::get_id();
 		gfx::GLUtils::checkOpenGLFramebufferStatus("TexAtlasTex::getFBO");
 		if(id != debug_thread_id_tex_created_in_) {
-			cout << "this is notable! at least if this does not crash!," << endl 
-			     << "It means that FBO and textures can be created in different threads" 
-			     << endl;
+			cout << "this is notable! at least if this does not crash!," << endl << 
+		          "It means that FBO and textures can be created in different threads" << 
+		          endl;
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);//TODO: do we really need this?
 	}
@@ -268,29 +268,26 @@ void TexAtlasPatch::setViewport(cv::Size2i size) {
 }
 
 bool TexAtlasPatch::downloadData(void *data, cv::Rect2i rect) {
-	int width = tex_->tex_->getWidth();
-	int height = tex_->tex_->getWidth();
-
-	if(rect.x + rect.width >= width || rect.y + rect.height >= height) {
+	if(rect.x + rect.width  >= tex_->tex_->getWidth() || 
+	   rect.y + rect.height >= tex_->tex_->getHeight()) {
 		return false;
+	} else {
+		tex_->tex_->downloadData(data, rect.x, rect.y, rect.width, rect.height);
+		return true;
 	}
-
-	tex_->tex_->downloadData(data, rect.x, rect.y, rect.width, rect.height);
-
-	return true;
 }
 
 bool TexAtlasPatch::uploadData(void *data, cv::Rect2i rect) {
 	int width = tex_->tex_->getWidth();
-	int height = tex_->tex_->getWidth();
+	int height = tex_->tex_->getHeight();
 
-	if(rect.x + rect.width >= width || rect.y + rect.height >= height) {
+	if(rect.x + rect.width  >= tex_->tex_->getWidth() || 
+	   rect.y + rect.height >= tex_->tex_->getHeight()) {
 		return false;
+	} else {
+		tex_->tex_->uploadData(data, rect.x, rect.y, rect.width, rect.height);
+		return true;
 	}
-
-	tex_->tex_->uploadData(data, rect.x, rect.y, rect.width, rect.height);
-
-	return true;
 }
 
 void TexAtlasPatch::showImage(string text) {
@@ -309,10 +306,10 @@ GpuTextureInfo TexAtlasPatch::genTexInfo(cv::Size2i size,
 	GpuTextureInfo tex_info;
 	tex_info.tex_coord_start_ind = tex_coord_starting_index;
 	tex_info.gl_tex_pointer = tex_->tex_->getGlHandle();
-	tex_info.pos = Vector2f(float(pos_.x) / float(width), 
-	                        float(pos_.y) / float(height));
-	tex_info.size = Vector2f(float(size.width) / float(width), 
-	                         float(size.height) / float(height));
+	tex_info.pos   = Vector2f(float(pos_.x) / float(width), 
+	                          float(pos_.y) / float(height));
+	tex_info.size  = Vector2f(float(size.width) / float(width), 
+	                          float(size.height) / float(height));
 	tex_info._size = Vector2f(1.0f / tex_info.size[0], 
 	                          1.0f / tex_info.size[1]);
 	return tex_info;

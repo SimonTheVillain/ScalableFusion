@@ -19,6 +19,7 @@ namespace gfx {
 //there is the same class in the gpu namespace
 class Labelling {
 public:
+	
 	void projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 	                   shared_ptr<gfx::GpuTex2D> d_std_tex, Matrix4f pose);
 

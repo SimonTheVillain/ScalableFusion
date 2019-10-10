@@ -10,7 +10,7 @@
 #include <cuda.h>
 #include <cuda_gl_interop.h>
 
-#include "../cuda/gpu_mesh_structure.h"
+#include <cuda/gpu_mesh_structure.h>
 
 using namespace std;
 
@@ -30,7 +30,7 @@ public:
 		return index_;
 	}
 
-	T* getStartingPtr() {
+	T *getStartingPtr() {
 		return &(buffer_->getCudaPtr()[index_]);
 	}
 
@@ -117,7 +117,7 @@ private:
 	GLuint gl_buffer_;
 	cudaGraphicsResource_t cuda_graphics_resource_;
 	T *cuda_resource_ptr_;
-	bool debug_ = false;
+	bool debug_;
 	size_t debug_absolute_size_;//debug because it is unused
 
 };

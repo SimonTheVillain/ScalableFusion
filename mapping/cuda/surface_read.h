@@ -51,7 +51,7 @@ inline float4 readSensor(float x, float y, const cudaSurfaceObject_t surface,
 		x = x - 1.0f;
 	}
 
-	if(y_tmp == 0 && int(y) == height-1) {
+	if(y_tmp == 0 && int(y) == height - 1) {
 		y_tmp = 1.0f;
 		y = y - 1.0f;
 	}
@@ -239,7 +239,7 @@ inline float4 calcSurfaceUpdate(float4 surface_k,float4 sensor, //the vector of 
 	float s_s_ = s_s - s_m;
 	float s_k_ = s_k - s_m;
 
-	float s_k1_ = s_k_ * s_s_ / (s_k_ + s_s_);
+	float s_k1_ = (s_k_ * s_s_) / (s_k_ + s_s_);
 	if(s_k1_ < epsilon) {
 		s_k1_ = 0; //set the standard deviation update
 		           //to zero if it is too close to zero

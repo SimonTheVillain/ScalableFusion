@@ -18,8 +18,6 @@ public:
 
 	RenderDebugInfo();
 
-	~RenderDebugInfo();
-
 	void render(Eigen::Matrix4f proj, Eigen::Matrix4f cam_pose);
 	void setIndexCount(int index, int count);
 

@@ -55,7 +55,6 @@ GpuBuffer<T>::~GpuBuffer() {
 	glDeleteBuffers(1, &gl_buffer_);
 }
 
-
 template<typename T>
 shared_ptr<GpuBufferConnector<T>> GpuBuffer<T>::getBlock(size_t element_count) {
 
@@ -86,7 +85,7 @@ shared_ptr<GpuBufferConnector<T>> GpuBuffer<T>::getBlock(size_t element_count) {
 
 	//pointer to the first and last element of the chosen block
 	uint32_t first = *list_free_of_size.begin();
-	uint32_t last = first + size_of_free - 1;
+	uint32_t last  = first + size_of_free - 1;
 
 	//index, the adress of the block within the memory
 	uint32_t index = last - element_count + 1;

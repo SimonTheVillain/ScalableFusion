@@ -4,7 +4,7 @@
 
 #include <opencv2/core/cuda.hpp>
 
-#include "../gpu/active_set.h"
+#include <gpu/active_set.h>
 
 using namespace std;
 using namespace Eigen;
@@ -37,7 +37,6 @@ void GpuGeomStorage::unloadMeshPatch_(MeshPatch *patch) {
 }
 
 void GpuGeomStorage::unloadDoubleStitch_(DoubleStitch *stitch) {
-
 }
 
 /**
@@ -82,7 +81,7 @@ GpuGeomStorage::~GpuGeomStorage() {
 }
 
 shared_ptr<ActiveSet> GpuGeomStorage::makeActiveSet(
-		vector<shared_ptr<MeshPatch> > patches,
+		vector<shared_ptr<MeshPatch>> patches,
 		MeshReconstruction *map, bool initial, bool debug1) {
 
 	shared_ptr<ActiveSet> active_set =

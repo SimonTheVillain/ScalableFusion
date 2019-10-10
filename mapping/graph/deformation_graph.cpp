@@ -117,7 +117,7 @@ void DeformationGraph::generateJacobian() {
 	for(size_t i = 0; i < pin_constraints.size(); i++) {
 		PinConstraint constraint = pin_constraints[i];
 		int k = constraint.node;
-		triplet_list.push_back(T(ind + 0, k * 12 + 9, w));
+		triplet_list.push_back(T(ind + 0, k * 12 +  9, w));
 		triplet_list.push_back(T(ind + 1, k * 12 + 10, w));
 		triplet_list.push_back(T(ind + 2, k * 12 + 11, w));
 
@@ -125,7 +125,7 @@ void DeformationGraph::generateJacobian() {
 	}
 
 	w = sqrt(wrot);
-	for(size_t i = 0; i < nodes.size(); i++){
+	for(size_t i = 0; i < nodes.size(); i++) {
 		Matrix3f &Gr = G_rot[i];
 
 		triplet_list.push_back(T(ind + 0, i * 12 + 0, w * Gr(0, 1)));
@@ -172,13 +172,13 @@ void DeformationGraph::generateJacobian() {
 
 		for(size_t j = 0; j < indices.size(); j++) {
 			//Ereg^l,n derived by Gt^l
-			triplet_list.push_back(T(ind + 0, i * 12 + 9, w));
+			triplet_list.push_back(T(ind + 0, i * 12 +  9, w));
 			triplet_list.push_back(T(ind + 1, i * 12 + 10, w));
 			triplet_list.push_back(T(ind + 2, i * 12 + 11, w));
 
 			int k = indices[j];
 			//Ereg^l,n derived by Gt^n
-			triplet_list.push_back(T(ind + 0, k * 12 + 9, -w));
+			triplet_list.push_back(T(ind + 0, k * 12 +  9, -w));
 			triplet_list.push_back(T(ind + 1, k * 12 + 10, -w));
 			triplet_list.push_back(T(ind + 2, k * 12 + 11, -w));
 
@@ -201,7 +201,8 @@ void DeformationGraph::generateJacobian() {
 		}
 	}
 
-	cout << "jacobian rows" << jacobian.rows() << " cols " << jacobian.cols() << endl;
+	cout << "jacobian rows" << jacobian.rows() << " cols " << 
+	        jacobian.cols() << endl;
 	jacobian.setFromTriplets(triplet_list.begin(), triplet_list.end());
 }
 
@@ -226,23 +227,23 @@ void DeformationGraph::gaussNewtonStep() {
 	//applying step
 	for(int i = 0; i < nodes.size(); i++) {
 
-		G_rot[i](0,0) -= step(i * 12 + 0);
-		G_rot[i](0,1) -= step(i * 12 + 1);
-		G_rot[i](0,2) -= step(i * 12 + 2);
+		G_rot[i](0, 0) -= step(i * 12 + 0);
+		G_rot[i](0, 1) -= step(i * 12 + 1);
+		G_rot[i](0, 2) -= step(i * 12 + 2);
 
-		G_rot[i](1,0) -= step(i * 12 + 3);
-		G_rot[i](1,1) -= step(i * 12 + 4);
-		G_rot[i](1,2) -= step(i * 12 + 5);
+		G_rot[i](1, 0) -= step(i * 12 + 3);
+		G_rot[i](1, 1) -= step(i * 12 + 4);
+		G_rot[i](1, 2) -= step(i * 12 + 5);
 
-		G_rot[i](2,0) -= step(i * 12 + 6);
-		G_rot[i](2,1) -= step(i * 12 + 7);
-		G_rot[i](2,2) -= step(i * 12 + 8);
+		G_rot[i](2, 0) -= step(i * 12 + 6);
+		G_rot[i](2, 1) -= step(i * 12 + 7);
+		G_rot[i](2, 2) -= step(i * 12 + 8);
 
 		for(int j = 0; j < 9; j++) {
 			G_rot[i](j) -= step(i * 12 + j);
 		}
 		for(int j = 0; j < 3; j++) {
-			G_t[i](j) -= step(i*12 + 9 + j);
+			G_t[i](j) -= step(i * 12 + 9 + j);
 		}
 	}
 }

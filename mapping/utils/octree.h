@@ -94,7 +94,7 @@ public:
 	void setSphere(Vector3f new_pos, float new_radius) {
 
 		//set the values
-		pos_ = new_pos;
+		pos_    = new_pos;
 		radius_ = new_radius;
 
 		if(octree_ != nullptr && node_ != nullptr) {
@@ -550,7 +550,7 @@ void OctreeNode<T>::putInPlace(shared_ptr<T> object) {
 		//is not full we wan't to add the object directly here
 		if(!isFull()) {
 			//TODO: remove this debug shit
-			T* obj = object.get();
+			T *obj = object.get();
 			weak_ptr<T> wobj = object;
 			addObject(object);
 			return;

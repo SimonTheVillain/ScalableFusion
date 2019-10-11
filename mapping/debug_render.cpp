@@ -7,12 +7,12 @@ using namespace std;
 using namespace Eigen;
 
 const string debug_frag =
-#include <rendering/shader/debugGeometry.frag>
+#include <rendering/shader/debug_geometry.frag>
 ;
 
 const string debug_vert =
 #include <rendering/shader/datastructure.glsl>
-#include <rendering/shader/debugGeometry.vert>
+#include <rendering/shader/debug_geometry.vert>
 ;
 
 RenderDebugInfo *that_one_debug_rendering_thingy;
@@ -23,9 +23,9 @@ RenderDebugInfo::RenderDebugInfo()
 		  rendered_patch(nullptr) {
 	shader_ = make_shared<gfx::GLSLProgram>();
 	shader_->compileShader(debug_frag, gfx::GLSLShader::GLSLShaderType::FRAGMENT,
-	                       "debugGeometry.frag");
+	                       "debug_geometry.frag");
 	shader_->compileShader(debug_vert, gfx::GLSLShader::GLSLShaderType::VERTEX,
-	                       "debugGeometry.vert");
+	                       "debug_geometry.vert");
 	shader_->link();
 }
 

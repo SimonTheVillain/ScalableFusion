@@ -11,22 +11,22 @@ using namespace std;
 using namespace Eigen;
 
 const string low_detail_frag =
-#include "shader/lowDetail.frag"
+#include "shader/low_detail.frag"
 ;
 const string low_detail_vert =
-#include "shader/lowDetail.vert"
+#include "shader/low_detail.vert"
 ;
 const string low_detail_geom =
-#include "shader/lowDetail.geom"
+#include "shader/low_detail.geom"
 ;
 const string low_detail_ref_depth_frag =
-#include "shader/lowDetailRefDepth.frag"
+#include "shader/low_detail_ref_depth.frag"
 ;
 const string low_detail_ref_depth_vert =
-#include "shader/lowDetailRefDepth.vert"
+#include "shader/low_detail_ref_depth.vert"
 ;
 const string low_detail_ref_depth_geom =
-#include "shader/lowDetailRefDepth.geom"
+#include "shader/low_detail_ref_depth.geom"
 ;
 
 //the purpose of these should be obvious!!!!!
@@ -47,13 +47,13 @@ void LowDetailRenderer::initInGlContext() {
 		shader_ = make_shared<gfx::GLSLProgram>();
 		shader_->compileShader(low_detail_frag, 
 		                       gfx::GLSLShader::GLSLShaderType::FRAGMENT,
-		                       "lowDetail.frag");
+		                       "low_detail.frag");
 		shader_->compileShader(low_detail_geom, 
 		                       gfx::GLSLShader::GLSLShaderType::GEOMETRY,
-		                       "lowDetail.geom");
+		                       "low_detail.geom");
 		shader_->compileShader(low_detail_vert, 
 		                       gfx::GLSLShader::GLSLShaderType::VERTEX,
-		                       "lowDetail.vert");
+		                       "low_detail.vert");
 		shader_->link();
 		s_shader_ = shader_;
 
@@ -73,13 +73,13 @@ void LowDetailRenderer::initInGlContext() {
 		geometry_shader_ = make_shared<gfx::GLSLProgram>();
 		geometry_shader_->compileShader(low_detail_ref_depth_frag,
 		                                gfx::GLSLShader::GLSLShaderType::FRAGMENT,
-		                                "lowDetailRefDepth.frag");
+		                                "low_detail_ref_depth.frag");
 		geometry_shader_->compileShader(low_detail_ref_depth_geom,
 		                                gfx::GLSLShader::GLSLShaderType::GEOMETRY,
-		                                "lowDetailRefDepth.geom");
+		                                "low_detail_ref_depth.geom");
 		geometry_shader_->compileShader(low_detail_ref_depth_vert,
 		                                gfx::GLSLShader::GLSLShaderType::VERTEX,
-		                                "lowDetailRefDepth.vert");
+		                                "low_detail_ref_depth.vert");
 		geometry_shader_->link();
 
 		s_geometry_shader_ = geometry_shader_;

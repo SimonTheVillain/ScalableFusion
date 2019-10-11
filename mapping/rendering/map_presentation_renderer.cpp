@@ -21,10 +21,10 @@ const string presentation_vert =
 ;
 
 const string presentation_debug_frag =
-#include "shader/presentationDebug.frag"
+#include "shader/presentation_debug.frag"
 ;
 const string presentation_debug_vert =
-#include "shader/presentationDebug.vert"
+#include "shader/presentation_debug.vert"
 ;
 
 weak_ptr<gfx::GLSLProgram> MapPresentationRenderer::s_rgb_program_;
@@ -73,10 +73,10 @@ void MapPresentationRenderer::initInContext() {
 	debug_program_ = shared_ptr<gfx::GLSLProgram>(new gfx::GLSLProgram());
 	debug_program_->compileShader(presentation_debug_frag,
 	                              gfx::GLSLShader::GLSLShaderType::FRAGMENT,
-	                              "presentationDebug.frag" );
+	                              "presentation_debug.frag" );
 	debug_program_->compileShader(presentation_debug_vert,
 	                              gfx::GLSLShader::GLSLShaderType::VERTEX,
-	                              "presentationDebug.vert" );
+	                              "presentation_debug.vert" );
 	debug_program_->link();
 	glGenVertexArrays(1, &debug_VAO_);
 	glBindVertexArray(debug_VAO_);

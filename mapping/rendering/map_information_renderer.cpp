@@ -25,30 +25,30 @@ const string coordinates_vert =
 ;
 
 const string triangle_ref_depth_frag =
-#include "shader/triangleRefDepth.frag"
+#include "shader/triangle_ref_depth.frag"
 ;
 
 const string triangle_ref_depth_geom =
 #include "shader/datastructure.glsl"
-#include "shader/triangleRefDepth.geom"
+#include "shader/triangle_ref_depth.geom"
 ;
 
 const string triangle_ref_depth_vert =
 #include "shader/datastructure.glsl"
-#include "shader/triangleRefDepth.vert"
+#include "shader/triangle_ref_depth.vert"
 ;
 
 const string unified_info_frag =
-#include "shader/unifiedInfo.frag"
+#include "shader/unified_info.frag"
 ;
 
 const string unified_info_geom =
 #include "shader/datastructure.glsl"
-#include "shader/unifiedInfo.geom"
+#include "shader/unified_info.geom"
 ;
 const string unified_info_vert =
 #include "shader/datastructure.glsl"
-#include "shader/unifiedInfo.vert"
+#include "shader/unified_info.vert"
 ;
 
 mutex MapInformationRenderer::shader_mutex_;
@@ -133,11 +133,11 @@ void MapInformationRenderer::initInContext() {
 		triangle_ref_depth_prog_->compileShader(
 				triangle_ref_depth_frag,
 				gfx::GLSLShader::GLSLShaderType::FRAGMENT,
-				"triangleRefDepth.frag" );
+				"triangle_ref_depth.frag" );
 		triangle_ref_depth_prog_->compileShader(
 				triangle_ref_depth_vert,
 				gfx::GLSLShader::GLSLShaderType::VERTEX,
-				"triangleRefDepth.vert" );
+				"triangle_ref_depth.vert" );
 		triangle_ref_depth_prog_->link();
 		s_triangle_ref_depth_program_ = triangle_ref_depth_prog_;
 	}
@@ -154,14 +154,14 @@ void MapInformationRenderer::initInContext() {
 
 	unified_info_prog_->compileShader(unified_info_frag,
 	                                  gfx::GLSLShader::GLSLShaderType::FRAGMENT,
-	                                  "unifiedInfo.frag");
+	                                  "unified_info.frag");
 
 	assert(gfx::GLUtils::checkForOpenGLError(
 			"[RenderMapInformations::initInContext] during setting up unified info shader") == GL_NO_ERROR);
 
 	unified_info_prog_->compileShader(unified_info_vert,
 	                                  gfx::GLSLShader::GLSLShaderType::VERTEX,
-	                                  "unifiedInfo.vert");
+	                                  "unified_info.vert");
 
 	assert(gfx::GLUtils::checkForOpenGLError(
 			"[RenderMapInformations::initInContext] after setting up unified info shader") == GL_NO_ERROR);

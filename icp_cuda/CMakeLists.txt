@@ -51,10 +51,10 @@ file(GLOB CXX_SRCS
 	*.cpp 
 )
 file(GLOB CUDA_SRCS 
-	Cuda/*.cu
+	cuda/*.cu
 )
 file(GLOB CUDA_CONTAINERS 
-	Cuda/containers/*.cpp
+	cuda/containers/*.cpp
 )
 
 

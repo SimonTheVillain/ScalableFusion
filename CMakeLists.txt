@@ -26,7 +26,7 @@ set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_BUILD_TYPE Release)
 string(TOLOWER ${CMAKE_BUILD_TYPE} LOWERCASE_CMAKE_BUILD_TYPE)
 if(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
-    add_definitions(-DDEBUG)
+	add_definitions(-DDEBUG)
 endif(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
 
 #Don't throw away unused textures from the texture atlas,
@@ -49,9 +49,17 @@ add_definitions(-DIGNORE_SERIOUS_BUG_3)
 #add_definitions(-DIGNORE_SERIOUS_BUG_5)//invalid stitches
 
 
+# Includes
+include_directories(${CMAKE_SOURCE_DIR}/dataset_loader/)
+include_directories(${CMAKE_SOURCE_DIR}/gfx/)
+include_directories(${CMAKE_SOURCE_DIR}/icp_cuda/)
+include_directories(${CMAKE_SOURCE_DIR}/mapping/)
+include_directories(${CMAKE_SOURCE_DIR}/segmentation/)
+
+
 # Add subprojects
-add_subdirectory(datasetLoader)
+add_subdirectory(dataset_loader)
 add_subdirectory(gfx)
-add_subdirectory(icpCUDA)
+add_subdirectory(icp_cuda)
 add_subdirectory(mapping)
 add_subdirectory(segmentation)

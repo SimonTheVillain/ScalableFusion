@@ -6,12 +6,11 @@ layout(location = 1) in vec4 normal;
 layout(location = 2) in vec4 color;
 layout(location = 3) in int valid;
 
-
 out vec4 normals;
 out vec4 colors;
-out int valids;
+out int  valids;
 
-layout(location = 0) uniform mat4 proj_rans;
+layout(location = 0) uniform mat4 proj_trans;
 
 void main() {
 	gl_Position = proj_trans * pos;

@@ -7,7 +7,7 @@ layout(triangle_strip, max_vertices = 3) out;
 
 in vec4 colors[];
 in vec4 normals[];
-in int valids[];
+in int  valids[];
 
 out vec4 color_in;
 out vec4 normal_in;
@@ -18,8 +18,8 @@ void main() {
 		return; //debug
 	}
 	for(int i = 0; i < 3; i++) {
-		color_in  = colors[i];
-		normal_in = normals[i];
+		color_in    = colors[i];
+		normal_in   = normals[i];
 		gl_Position = gl_in[i].gl_Position;
 
 		EmitVertex();

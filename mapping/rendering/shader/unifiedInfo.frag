@@ -19,7 +19,7 @@ layout(location = 3) out vec4 label;
 
 //this location is asking for trouble!!!!!!
 //these should be in buffers not uniforms or even attributes??
-layout(location = 4) uniform mat4 _projMatrix;
+layout(location = 4) uniform mat4 proj_matrix;
 
 in vec4 interp_position;//TODO!!!! interpolation like this is not the right for geometry
 in vec4 interp_proj;//debug is this the same as gl_FragCoord?
@@ -41,7 +41,7 @@ void main(void) {
 
 	//COLOR:
 	sampler2D s = sampler2D(bindless_texture);
-	color   = texture(s,tex_pos_out); //scale the texPos to see a more dramatic effect
+	color   = texture(s, tex_pos_out); //scale the texPos to see a more dramatic effect
 	float r = color.z;// swap colors!!!!
 	color.z = color.x;
 	color.x = r;
@@ -58,7 +58,7 @@ void main(void) {
 		label = vec4(intBitsToFloat(-1), 1, 1, 1);//white for all the fails
 	} else {
 		sampler2D sampler = sampler2D(bindless_label_texture);
-		vec4 surface_labels = texture(sampler,label_pos_out);
+		vec4 surface_labels = texture(sampler, label_pos_out);
 		label = vec4(surface_labels.x, 1, 0, 1);
 	}
 	//rendering to 32 bit integers

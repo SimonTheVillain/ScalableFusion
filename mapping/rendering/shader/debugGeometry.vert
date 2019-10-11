@@ -3,7 +3,6 @@ R"(
 layout(std430, binding = 0) buffer VertexBuffer {
 	GpuVertex vertices[];
 };
-
 layout(std430, binding = 1) buffer TexCoordBuffer {
 	vec2 tex_coords[];
 };
@@ -16,7 +15,7 @@ layout(std430, binding = 3) buffer PatchBuffer {
 
 layout(location = 0) uniform mat4 view_matrix;//one matrix is taking up 4 locations
 layout(location = 1) uniform mat4 proj_matrix;
-layout(location = 3) uniform int overwrite_start_ind;
+layout(location = 3) uniform int  overwrite_start_ind;
 
 vec2 res = vec2(1280, 800);//this should be a uniform set outside of the shader
 out float distances[3];
@@ -46,7 +45,7 @@ void main(void) {
 	vec3 points[3];
 	for(int i = 0; i < 3; i++) {
 		GpuPatchInfo patch_info = patches[triangle.patch_info_inds[i]];
-		startInd = patch_info.vertex_source_start_ind = patch_info.vertex_source_start_ind;
+		start_ind = patch_info.vertex_source_start_ind = patch_info.vertex_source_start_ind;
 		if(overwrite_start_ind >= 0) {
 			start_ind = overwrite_start_ind;
 		}
@@ -79,7 +78,7 @@ void main(void) {
 		//if we are on point 0 the distance to line a would be non zero(=ha)
 		//but the distances to the lines b and c would be zero.
 		if(i != point_id) {
-			distances[i]=0;
+			distances[i] = 0;
 		}
 	}
 }

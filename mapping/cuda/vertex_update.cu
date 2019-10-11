@@ -89,7 +89,6 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 			                        __half2float(surface_data[2]),
 			                        __half2float(surface_data[3]));
 			//debug: i really think it is the readout here!!!!!
-
 		}
 
 		vert_out.n = Vector3f(0, 1, 0);
@@ -164,7 +163,7 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 		//the update also has to be done in here
 		if(surface_k.w == 2.0f) {
 			//TODO: think about depth dependant thresholding????
-			float d_up= d - dev_k1;
+			float d_up = d - dev_k1;
 			threshold = xtionStdToThresholdSeg(sensor.z);
 			if(abs(d_up) < threshold) {
 				break;

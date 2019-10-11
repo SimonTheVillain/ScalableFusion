@@ -24,9 +24,9 @@ flat in int patch_id;
 flat in int tex_coord_slot_out;//thats a debug thingy
 in float z;
 
-layout (location = 4) uniform int render_wireframe;
-layout (location = 5) uniform int color_mode;
-layout (location = 6) uniform int lighting_mode;
+layout (location = 4) uniform int  render_wireframe;
+layout (location = 5) uniform int  color_mode;
+layout (location = 6) uniform int  lighting_mode;
 layout (location = 7) uniform vec4 line_color;
 
 //this is needed for
@@ -73,22 +73,20 @@ void main(void) {
 		//presenting the standard deviation textures....
 		//multiplying with 10 is a good idea there
 		color.xyz = color.xyz * 10.0;
-	} else if(color_mode==3) {
+	} else if(color_mode == 3) {
 		color = -normal * 0.5 + vec4(0.5, 0.5, 0.5, 0.5);
 		color.w = 1.0;
 	} else if(color_mode == 4) {
-
 		if(floatBitsToInt(color.x) < 0) {
 			color.xyz = vec3(1, 0, 0);
 		} else {
 			color.xyz = color.yzw;
 		}
-
 		color.w = 1.0;
 	} else if(color_mode == 5) {
 		if(true) {
 			if(floatBitsToInt(color.x) < 0) {
-				color.xyz = vec3(1,0,0);
+				color.xyz = vec3(1, 0, 0);
 			} else {
 				color.xyz = color.yzw;
 			}

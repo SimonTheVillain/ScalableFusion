@@ -9,7 +9,7 @@ R"(
 
 //this guy is awesome:
 //https://www.youtube.com/watch?v=-bCeNzgiJ8I
-layout(location = 0) out vec4 texref;//triangle reference
+layout(location = 0) out vec4 tex_ref;//triangle reference
 layout(location = 1) out vec4 geometry;
 
 //this guy seems to have a good approach to uniforms:

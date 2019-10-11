@@ -33,7 +33,7 @@ struct GpuTriangle {
 //structure
 struct GpuTextureInfo {
 	uint64_t gl_ref_tex_ptr_debug;
-	vec2 ref_tex_pos_debug;
+	vec2     ref_tex_pos_debug;
 	uint64_t gl_tex_pointer;
 	uint32_t tex_coord_start_ind;//could also be 16 bit int
 	uint32_t placeholder;//could also be 16 bit int
@@ -47,7 +47,6 @@ struct GpuTextureInfo {
 	vec2 size;
 	vec2 _size;
 };
-
 
 //https://www.ibm.com/developerworks/aix/tutorials/au-memorymanager/
 /**

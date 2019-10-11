@@ -52,10 +52,10 @@ void MapPresentationRenderer::initInContext() {
 	gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::initInContext]");
 
 	//render depth shader
-	if(s_rgb_program_.use_count()){//if the shader exists already copy the reference
+	if(s_rgb_program_.use_count()) {//if the shader exists already copy the reference
 		rgb_program_ = s_rgb_program_.lock();
 
-	}else{//otherwise create a new shader
+	} else {//otherwise create a new shader
 
 		rgb_program_ = shared_ptr<gfx::GLSLProgram>(new gfx::GLSLProgram());
 		rgb_program_->compileShader(presentation_frag,

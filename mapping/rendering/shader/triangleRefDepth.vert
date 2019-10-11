@@ -29,7 +29,7 @@ void main(void) {
 	int triangle_id = id / 3;
 	const GpuTriangle triangle = triangles[triangle_id];
 	GpuPatchInfo main_patch_info = patches[triangle.patch_info_inds[0]];
-	patch_id = main_patch_info.patchId;
+	patch_id = main_patch_info.patch_id;
 	triangle_index = triangle_id - main_patch_info.triangle_start_ind;
 
 	GpuPatchInfo patch_info = patches[triangle.patch_info_inds[point_id]];
@@ -39,7 +39,7 @@ void main(void) {
 	point_world = point;
 	is_stitch = 10;
 
-	vec4 interp_position = view_matrix*point;  //the position of the vertex in space (gets interpolated for the fragments)
+	vec4 interp_position = view_matrix * point;  //the position of the vertex in space (gets interpolated for the fragments)
 	gl_Position = proj_matrix * interp_position;
 	gl_Position.y *= -1;
 }

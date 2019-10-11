@@ -68,7 +68,6 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 	return -1;
 }
 
-
 __global__
 void checkVertexValidity_kernel(const cudaSurfaceObject_t sensor_image,
                                 int width, int height,

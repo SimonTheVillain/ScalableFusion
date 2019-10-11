@@ -1,17 +1,15 @@
 R"(
 //The data is delivered in buffers
-layout(std430, binding = 0) buffer VertexBuffer{
+layout(std430, binding = 0) buffer VertexBuffer {
 	GpuVertex vertices[];
 };
-
-layout(std430, binding = 1) buffer TexCoordBuffer{
+layout(std430, binding = 1) buffer TexCoordBuffer {
 	vec2 tex_coords[];
 };
-layout(std430, binding = 2) buffer TriangleBuffer{
+layout(std430, binding = 2) buffer TriangleBuffer {
 	GpuTriangle triangles[];
 };
-
-layout(std430, binding = 3) buffer PatchBuffer{
+layout(std430, binding = 3) buffer PatchBuffer {
 	GpuPatchInfo patches[];
 };
 
@@ -33,8 +31,8 @@ out float distances[3];
 
 void main(void) {
 	//-------------new rendering----------------
-	int id = gl_VertexID;
-	int point_id = id % 3;
+	int id          = gl_VertexID;
+	int point_id    = id % 3;
 	int triangle_id = id / 3;
 	const GpuTriangle triangle = triangles[triangle_id];
 	GpuPatchInfo main_patch_info = patches[triangle.patch_info_inds[0]];
@@ -42,7 +40,7 @@ void main(void) {
 
 	GpuPatchInfo patch_info = patches[triangle.patch_info_inds[point_id]];
 	int vertex_id = triangle.pos_indices[point_id] +
-			patch_info.vertex_source_start_ind;
+	                patch_info.vertex_source_start_ind;
 	vec4 point = vertices[vertex_id].p;
 	GpuTextureInfo tex_info = main_patch_info.std_texture;
 	tex_coord_slot_out = int(tex_info.tex_coord_start_ind);//debug seems to be OK tough
@@ -51,12 +49,13 @@ void main(void) {
 	is_stitch = 1;//unfortunately as it is right now we can't tell if a triangle is stitching
 	//------------------------------------------
 
-	uint32_t tex_pos_ind = triangle.tex_indices[point_id] + tex_info.tex_coord_start_ind;
+	uint32_t tex_pos_ind = triangle.tex_indices[point_id] + 
+	                       tex_info.tex_coord_start_ind;
 
 	tex_pos_out = tex_coords[tex_pos_ind];
 	tex_pos_out = vec2(tex_pos_out.x * tex_info.size.x, 
 	                   tex_pos_out.y * tex_info.size.y);
-	tex_pos_out = tex_pos_out+tex_info.pos;
+	tex_pos_out = tex_pos_out + tex_info.pos;
 
 	interp_position = view_matrix * point;  //new rendering
 	interp_proj = proj_matrix * interp_position;

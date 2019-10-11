@@ -18,8 +18,8 @@ layout(location = 1) uniform int info_slot; //either from here or we again chang
 flat out int vertex_index;
 
 void main(void) {
-	int id = gl_VertexID;
-	vertex_index = id;
+	int id         = gl_VertexID;
+	vertex_index   = id;
 	GpuVertex vert = vertices[id];
 	//This shader might not have been a good idea since we would have to
 	//rebind a shader each time we switch from triangles to other stuff. + it is not done yet

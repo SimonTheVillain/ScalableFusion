@@ -10,9 +10,9 @@ R"(
 const int GPU_MAX_TEX_PER_PATCH = 100;
 
 struct GpuVertex {
- vec4 p;
- vec3 n;
- int tex_index; //the texture index within the texture associated with its patch
+	vec4 p;
+	vec3 n;
+	int  tex_index; //the texture index within the texture associated with its patch
 };
 
 struct GpuTriangle {
@@ -29,7 +29,6 @@ struct GpuTextureInfo {
 	vec2 pos;
 	vec2 size;
 	vec2 _size;
-
 };
 
 struct GpuPatchInfo {

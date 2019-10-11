@@ -1,24 +1,23 @@
 R"(
 //the new source of data!!!
-layout(std430, binding = 0) buffer VertexBuffer{
+layout(std430, binding = 0) buffer VertexBuffer {
 	GpuVertex vertices[];
 };
-
-layout(std430, binding = 1) buffer TexCoordBuffer{
+layout(std430, binding = 1) buffer TexCoordBuffer {
 	vec2 tex_coords[];
 };
-layout(std430, binding = 2) buffer TriangleBuffer{
+layout(std430, binding = 2) buffer TriangleBuffer {
 	GpuTriangle triangles[];
 };
-layout(std430, binding = 3) buffer PatchBuffer{
+layout(std430, binding = 3) buffer PatchBuffer {
 	GpuPatchInfo patches[];
 };
 
 layout (location = 0) uniform mat4 view_matrix;//one matrix is taking up 4 locations
 layout (location = 1) uniform mat4 proj_matrix;
-layout (location = 4) uniform int render_wireframe;
-layout (location = 5) uniform int color_mode;
-layout (location = 6) uniform int lighting_mode;
+layout (location = 4) uniform int  render_wireframe;
+layout (location = 5) uniform int  color_mode;
+layout (location = 6) uniform int  lighting_mode;
 
 //some funny varyings altough some are flat
 out vec2 tex_pos_out;

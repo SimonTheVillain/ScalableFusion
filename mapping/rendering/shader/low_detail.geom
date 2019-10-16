@@ -26,5 +26,5 @@ void main() {
 	}
 
 	EndPrimitive();
-
+}
 )"

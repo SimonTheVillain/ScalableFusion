@@ -32,9 +32,9 @@ struct GpuTriangle {
 //POSSIBILITY: Adding cuda surfaces and textures could increase utility of this
 //structure
 struct GpuTextureInfo {
-	uint64_t gl_ref_tex_ptr_debug;
+	uint64_t ref_tex_ptr_debug_gl;
 	vec2     ref_tex_pos_debug;
-	uint64_t gl_tex_pointer;
+	uint64_t tex_pointer_gl;
 	uint32_t tex_coord_start_ind;//could also be 16 bit int
 	uint32_t placeholder;//could also be 16 bit int
 

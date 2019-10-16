@@ -25,9 +25,9 @@ void main(void) {
 	int id          = gl_VertexID;
 	int point_id    = id % 3;
 	int triangle_id = id / 3;
-	const gpu_triangle triangle = triangles[triangle_id];
-	int patch_slot              = triangle.patch_info_inds[0];
-	GpuPatchInfo patch_info     = patches[patch_slot];
+	const GpuTriangle triangle = triangles[triangle_id];
+	int patch_slot             = triangle.patch_info_inds[0];
+	GpuPatchInfo patch_info    = patches[patch_slot];
 
 	vec4 point = vertices[triangle.pos_indices[point_id]].p;
 

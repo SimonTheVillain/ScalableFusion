@@ -44,7 +44,7 @@ void main(void) {
 	vec4 point = vertices[vertex_id].p;
 	GpuTextureInfo tex_info = main_patch_info.std_texture;
 	tex_coord_slot_out = int(tex_info.tex_coord_start_ind);//debug seems to be OK tough
-	bindless_texture = tex_info.gl_tex_pointer;
+	bindless_texture = tex_info.tex_pointer_gl;
 
 	is_stitch = 1;//unfortunately as it is right now we can't tell if a triangle is stitching
 	//------------------------------------------

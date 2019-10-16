@@ -59,7 +59,7 @@ void main(void) {
 	if(main_patch_info.tex_layers == 0 && color_mode == 0) {
 		bindless_texture = 0;
 	} else {
-		bindless_texture = tex_info.gl_tex_pointer;//take the texutre from first slot
+		bindless_texture = tex_info.tex_pointer_gl;//take the texutre from first slot
 	}
 
 	is_stitch = 1;//unfortunately as it is right now we can't tell if a triangle is stitching
@@ -75,7 +75,7 @@ void main(void) {
 	if(color_mode == 4) {
 		//in this case we put out the (COME ON WHY CAN'T YOU FINISH COMMENTS)
 		tex_info = main_patch_info.std_texture;
-		bindless_texture = tex_info.gl_ref_tex_ptr_debug;
+		bindless_texture = tex_info.ref_tex_ptr_debug_gl;
 		uint32_t tex_pos_ind = uint32_t(triangle.tex_indices[point_id]) +
 		                       tex_info.tex_coord_start_ind;
 		tex_pos_out = tex_coords[tex_pos_ind];
@@ -87,7 +87,7 @@ void main(void) {
 	if(color_mode == 5) {
 		//mode 5 is the output of the first layer of label textures
 		tex_info = main_patch_info.segmentation_texture;
-		bindless_texture = tex_info.gl_tex_pointer;
+		bindless_texture = tex_info.tex_pointer_gl;
 		uint32_t tex_pos_ind = uint32_t(triangle.tex_indices[point_id]) +
 		                       tex_info.tex_coord_start_ind;
 		tex_pos_out = tex_coords[tex_pos_ind];
@@ -96,7 +96,7 @@ void main(void) {
 		                   tex_pos_out.y * tex_info.size.y);
 		tex_pos_out = tex_pos_out + tex_info.ref_tex_pos_debug;
 
-		bindless_texture = tex_info.gl_ref_tex_ptr_debug;
+		bindless_texture = tex_info.ref_tex_ptr_debug_gl;
 	}
 
 	interp_position = view_matrix * point;  //the position of the vertex in space (gets interpolated for the fragments)

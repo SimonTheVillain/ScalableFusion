@@ -43,7 +43,7 @@ void main(void) {
 	vec4 point = vertices[vertex_id].p;
 
 	GpuTextureInfo tex_info = main_patch_info.texture_infos[0];
-	bindless_texture = tex_info.gl_tex_pointer;
+	bindless_texture = tex_info.tex_pointer_gl;
 
 	uint32_t tex_pos_ind = triangle.tex_indices[point_id] + 
 	                       tex_info.tex_coord_start_ind;
@@ -61,7 +61,7 @@ void main(void) {
 
 	//setup the readout for the label texture;
 	tex_info = main_patch_info.segmentation_texture;
-	bindless_label_texture = tex_info.gl_tex_pointer;
+	bindless_label_texture = tex_info.tex_pointer_gl;
 
 	tex_pos_ind = triangle.tex_indices[point_id] + tex_info.tex_coord_start_ind;
 	label_pos_out = tex_coords[tex_pos_ind];

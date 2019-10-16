@@ -15,7 +15,7 @@ struct GpuTriangle {
 	int16_t placeholder2[3];
 };
 struct GpuTextureInfo {
-	uint64_t gl_tex_pointer;
+	uint64_t tex_pointer_gl;
 	uint32_t tex_coord_slot;
 	uint32_t placeholder;
 
@@ -24,7 +24,7 @@ struct GpuTextureInfo {
 	vec2 _size;
 
 };
-struct GpuPatchInfo{
+struct GpuPatchInfo {
 	int32_t patch_id;
 	int32_t triangle_slot;
 	GpuTextureInfo std_texture;

@@ -17,7 +17,7 @@ layout(location = 1) out vec4 color;
 
 //this location is asking for trouble!!!!!!
 //these should be in buffers not uniforms or even attributes??
-layout(location = 4) uniform mat4 proj_matrix;
+layout(location = 4) uniform mat4 proj_matrix_;
 //use the inverted projection matrix to restore the unprojected point coordinates.
 
 in vec2 tex_pos_out;
@@ -27,7 +27,7 @@ flat in uint64_t bindless_texture;
 flat in int is_stitch;
 in float z;
 void main(void) {
-    position = proj_matrix * interp_proj;
+    position = proj_matrix_ * interp_proj;
     //bindless texture code:
     sampler2D s = sampler2D(bindless_texture);
     color = texture(s, tex_pos_out); //scale the texPos to see a more dramatic effect

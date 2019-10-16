@@ -19,7 +19,7 @@ layout(location = 3) out vec4 label;
 
 //this location is asking for trouble!!!!!!
 //these should be in buffers not uniforms or even attributes??
-layout(location = 4) uniform mat4 proj_matrix;
+layout(location = 4) uniform mat4 proj_matrix_;
 
 in vec4 interp_position;//TODO!!!! interpolation like this is not the right for geometry
 in vec4 interp_proj;//debug is this the same as gl_FragCoord?

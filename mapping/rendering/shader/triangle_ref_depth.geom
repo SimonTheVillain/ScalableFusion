@@ -22,7 +22,7 @@ struct GpuTriangle {
 };
 
 struct GpuTextureInfo {
-	uint64_t gl_tex_pointer;
+	uint64_t tex_pointer_gl;
 	uint32_t tex_coord_slot;
 	uint32_t placeholder;
 

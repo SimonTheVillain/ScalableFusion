@@ -44,7 +44,7 @@ private:
 	shared_ptr<gfx::GpuTex2D> normals_;
 	shared_ptr<gfx::GpuTex2D> gpu_segmentation_;
 	cv::Mat existing_geometry_;
-	cv::Mat sensor_stds_;
+	//cv::Mat sensor_stds_;
 	cv::Mat existing_stds_;
 	cv::Mat seg_result_;
 	int seg_count_;

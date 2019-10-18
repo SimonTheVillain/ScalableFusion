@@ -165,7 +165,7 @@ void GpuNormSeg::segment() {
 	mask.setTo(0);
 	for(size_t i = 0; i < existing_geometry_.rows; i++) {
 		for(size_t j = 0; j < existing_geometry_.cols; j++) {
-			float z = sensor_stds_.at<Vector4f>(i, j)[0];//depth
+			float z = sensor_stds.at<Vector4f>(i, j)[0];//depth
 			if(isnan(z) || z > max_dist) {
 				continue;
 			}
@@ -179,7 +179,7 @@ void GpuNormSeg::segment() {
 				//(if it is behind it we might want to delete geometry
 
 				float thresh = max(existing_stds_.at<cv::Vec4f>(i, j)[2], //standard deviation. TODO: WRONG DATA FORMAT!!!
-				                   sensor_stds_.at<cv::Vec4f>(i, j)[2]);//something not working here
+				                   sensor_stds.at<cv::Vec4f>(i, j)[2]);//something not working here
 				thresh = xtionStdToThresholdSeg(thresh);
 
 				if(z < (exZ - thresh)) {

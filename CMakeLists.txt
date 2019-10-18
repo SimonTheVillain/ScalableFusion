@@ -15,8 +15,8 @@ endif()
 
 # Project
 project(ScalableFusion
-	LANGUAGES CXX CUDA
-)
+		LANGUAGES CXX CUDA
+		)
 
 
 # Defintions

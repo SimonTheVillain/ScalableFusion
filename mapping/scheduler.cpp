@@ -60,8 +60,8 @@ SchedulerLinear::~SchedulerLinear() {
 	cout << "DEBUG: scheduler destroyed" << endl;
 }
 
-void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map, 
-                                     Stream *stream, GLFWwindow *context) {
+void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
+									 Stream *stream, GLFWwindow *context) {
 	//TODO: Check: creating a connected context might invalidate our efforts to properly destroy all of this threads resources
 
 	GLFWwindow *connected_context = createConnectedGlContext(context);
@@ -132,7 +132,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 			odometry->initICPModel((unsigned short*) depthu16.data, depth_cutoff);
 
 		} else {
-			cv::Mat reprojected_depth = 
+			cv::Mat reprojected_depth =
 					map->generateDepthFromView(640, 480, accu_pose.cast<float>().matrix());
 
 			odometry->initICPModel((unsigned short*) reprojected_depth.data, depth_cutoff);
@@ -160,10 +160,10 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 		cv::Mat rgba;
 		cv::cvtColor(rgb, rgba, cv::COLOR_BGR2RGBA);
 
-		shared_ptr<gfx::GpuTex2D> rgb_texture = 
-				make_shared<gfx::GpuTex2D>(garbage_collector_, GL_RGBA, GL_RGBA, 
-				                           GL_UNSIGNED_BYTE, rgba.cols, rgba.rows,
-				                           true, rgba.data);
+		shared_ptr<gfx::GpuTex2D> rgb_texture =
+				make_shared<gfx::GpuTex2D>(garbage_collector_, GL_RGBA, GL_RGBA,
+										   GL_UNSIGNED_BYTE, rgba.cols, rgba.rows,
+										   true, rgba.data);
 		rgb_texture->name = "[scheduler] rgb_texture";
 
 		//do the same for depth!
@@ -171,23 +171,23 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 		//the depth is in mm
 		depth.convertTo(depthf, CV_32FC1, 1.0f / 1000.0f);
 		//create the depth map and also the depth standardDeviation on the gpu. Further elements will use this
-		shared_ptr<gfx::GpuTex2D> depth_tex = 
+		shared_ptr<gfx::GpuTex2D> depth_tex =
 				make_shared<gfx::GpuTex2D>(garbage_collector_, GL_R32F, GL_RED, GL_FLOAT,
-				                           depth.cols, depth.rows, true, 
-				                           static_cast<void*>(depthf.data));
+										   depth.cols, depth.rows, true,
+										   static_cast<void*>(depthf.data));
 		depth_tex->name = "[scheduler] depth texture";
 
 		//upload the data to the depth tex.
-		shared_ptr<gfx::GpuTex2D> d_std_tex = 
-				make_shared<gfx::GpuTex2D>(garbage_collector_, GL_RGBA32F, GL_RGBA, 
-				                           GL_FLOAT, depth.cols, depth.rows, true,
-				                           nullptr);
+		shared_ptr<gfx::GpuTex2D> d_std_tex =
+				make_shared<gfx::GpuTex2D>(garbage_collector_, GL_RGBA32F, GL_RGBA,
+										   GL_FLOAT, depth.cols, depth.rows, true,
+										   nullptr);
 		d_std_tex->name = "[scheduler] d_std_tex";
 
 		//create the standard deviation Information:
-		generateXtionConfidenceImage(depth_tex->getCudaSurfaceObject(), 
-		                             d_std_tex->getCudaSurfaceObject(),
-		                             depth.cols, depth.rows);
+		generateXtionConfidenceImage(depth_tex->getCudaSurfaceObject(),
+									 d_std_tex->getCudaSurfaceObject(),
+									 depth.cols, depth.rows);
 
 		cv::Mat d_std_mat(depth.rows, depth.cols, CV_32FC4);
 		d_std_tex->downloadData(static_cast<void*>(d_std_mat.data));
@@ -219,7 +219,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 				//THIS IS VERY VALID!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 				//First we need to render the labels in all possible constellations
-				cv::Mat reprojected_depth = 
+				cv::Mat reprojected_depth =
 						map->generateDepthFromView(640, 480, depth_pose_last_expand);
 				imshow("reprojected depth", reprojected_depth);
 
@@ -230,15 +230,15 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 				cv::Mat rendered_labels( depth.rows, depth.cols, CV_32FC4);//SC1?
 				cv::Mat rendered_color(  depth.rows, depth.cols, CV_32FC4);
 				map->information_renderer.render(active_set.get(),//activeSetExpand
-				                                 proj, depth_pose_last_expand,
-				                                 &rendered_depth, &rendered_normals, 
-				                                 &rendered_color, &rendered_labels);
+												 proj, depth_pose_last_expand,
+												 &rendered_depth, &rendered_normals,
+												 &rendered_color, &rendered_labels);
 
 				cv::Mat novellabels =
 						incremental_segmentation_->generateNewLabels(&rendered_depth,
-						                                             &rendered_normals,
-						                                             &rendered_color,
-						                                             &rendered_labels);
+																	 &rendered_normals,
+																	 &rendered_color,
+																	 &rendered_labels);
 
 				//then we run the labelling
 				imshow("rendered_depth",   rendered_depth * 0.25f);
@@ -255,14 +255,14 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 				new_labels.setTo(cv::Scalar(100000, 1, 1));
 				cv::imshow("new_labels", new_labels);
 				//maybe instead of the dStdTex we use the new label texture
-				map->labelling.projectLabels(active_set, new_labels, d_std_tex, 
-				                             depth_pose_last_expand);
+				map->labelling.projectLabels(active_set, new_labels, d_std_tex,
+											 depth_pose_last_expand);
 			}
 			/*********************************************************/
 
 			//expanding the existing geometry
 			map->geometry_update.extend(active_set, d_std_tex, d_std_mat, depth_pose,
-			                            rgb_texture, rgb_pose);
+										rgb_texture, rgb_pose);
 
 			//setting the active set, which also gets rendered to
 			//the one updated in the expand method.
@@ -289,23 +289,23 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 		cv::waitKey(1);
 		//tons of debug output to find this fucking memory leak!!!!
 		int tex_count = map->tex_atlas_stds_->countTex() +
-		                map->tex_atlas_geom_lookup_->countTex() +
-		                map->tex_atlas_rgb_8_bit_->countTex() +
-		                map->tex_atlas_seg_labels_->countTex();
-		cout << "texCount overall: " << tex_count << " stds " << 
-		        map->tex_atlas_stds_->countTex() << " lookup " <<
-		        map->tex_atlas_geom_lookup_->countTex() << " rgb " << 
-		        map->tex_atlas_rgb_8_bit_->countTex() << endl;
+						map->tex_atlas_geom_lookup_->countTex() +
+						map->tex_atlas_rgb_8_bit_->countTex() +
+						map->tex_atlas_seg_labels_->countTex();
+		cout << "texCount overall: " << tex_count << " stds " <<
+			 map->tex_atlas_stds_->countTex() << " lookup " <<
+			 map->tex_atlas_geom_lookup_->countTex() << " rgb " <<
+			 map->tex_atlas_rgb_8_bit_->countTex() << endl;
 
 		int patch_count = map->tex_atlas_stds_->countPatches() +
-		                  map->tex_atlas_geom_lookup_->countPatches() +
-		                  map->tex_atlas_rgb_8_bit_->countPatches() +
-		                  map->tex_atlas_seg_labels_->countPatches();
+						  map->tex_atlas_geom_lookup_->countPatches() +
+						  map->tex_atlas_rgb_8_bit_->countPatches() +
+						  map->tex_atlas_seg_labels_->countPatches();
 
-		cout << "patchCount overall: " << patch_count << " stds " << 
-		        map->tex_atlas_stds_->countPatches() << " lookup " <<
-		        map->tex_atlas_geom_lookup_->countPatches() << " rgb " << 
-		        map->tex_atlas_rgb_8_bit_->countPatches() << endl;
+		cout << "patchCount overall: " << patch_count << " stds " <<
+			 map->tex_atlas_stds_->countPatches() << " lookup " <<
+			 map->tex_atlas_geom_lookup_->countPatches() << " rgb " <<
+			 map->tex_atlas_rgb_8_bit_->countPatches() << endl;
 
 		cout << "FBOs active " << map->getFboCountDebug_() << endl;
 	}

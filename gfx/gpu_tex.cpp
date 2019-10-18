@@ -292,7 +292,7 @@ void gfx::GpuTex2D::downloadData(void *data, int x, int y, int width,
 	cudaMemcpy2DFromArray(data, byte_count_ * channel_count_ * width,//dpitch (not sure about that) //step
 	                      cuda_array_reference_, x * byte_count_ * channel_count_, 
 	                      y,//x in bytes?
-	                      width * byte_count_ * channel_count_, height_,
+	                      width * byte_count_ * channel_count_, height,
 	                      cudaMemcpyDeviceToHost);
 	gpuErrchk(cudaPeekAtLastError());
 }

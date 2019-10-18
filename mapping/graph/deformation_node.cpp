@@ -55,7 +55,7 @@ void DeformationNode::findNeighbours(
 	int quadrants[4][2] = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
 	int max_edges = 2;
 	for(auto node : nodes) {
-		if(node.node.get() == this){
+		if(node.node.get() == this) {
 			continue;
 		}
 		cv::Vec2f delta = pix_pos - node.pix_pos;
@@ -64,7 +64,7 @@ void DeformationNode::findNeighbours(
 			if(sgn(delta[0]) == quadrants[i][0] &&
 			   sgn(delta[1]) == quadrants[i][1]) {
 				map<float, DeformationNode::WeakNodeDist> &neighbour_map = neighbours[i];
-				if(neighbour_map.size()>= max_edges){
+				if(neighbour_map.size()>= max_edges) {
 					auto last = --neighbour_map.end();
 					if(last->first > dist) {
 						//replace the element

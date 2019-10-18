@@ -50,7 +50,7 @@ target_link_libraries(${PROJECT_NAME}
 
 
 # Install
-install (TARGETS ${PROJECT_NAME} DESTINATION lib)
+install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 
 # Tests
@@ -61,6 +61,6 @@ target_link_libraries(${PROJECT_NAME}_test
 	${PROJECT_NAME}
 )
 set_target_properties(${PROJECT_NAME}_test
-    PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/../test/"
+	PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/../test/"
 )

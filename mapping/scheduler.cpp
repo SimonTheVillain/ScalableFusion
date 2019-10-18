@@ -105,7 +105,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 	Matrix4f depth_pose_last_expand;
 
 	while(stream->isRunning() && !end_threads_) {
-		if(paused_ && !take_next_step_){
+		if(paused_ && !take_next_step_) {
 			continue;
 		}
 		take_next_step_ = false;

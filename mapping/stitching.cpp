@@ -533,7 +533,7 @@ void Stitching::stitchOnBorders(
 						if(ind1 != 0) {
 							//cout << "this is astonishing" << endl;
 						}
-						if((ind1 > ind2 || (ind1 == 0 && ind2 == 2))){//this query is just plain wrong
+						if((ind1 > ind2 || (ind1 == 0 && ind2 == 2))) {//this query is just plain wrong
 							//return false;
 						}
 						if((ind2==1 && ind1==0) || 
@@ -784,7 +784,7 @@ void Stitching::stitchOnBorders(
 							Vector2i p2 = project2i(current_sewing_p->p);
 
 							while(true) {
-								if(!isTrianglePossible({current_sewing_pr, last_sewing_pr, pr1})){
+								if(!isTrianglePossible({current_sewing_pr, last_sewing_pr, pr1})) {
 									sewing_mode = false;
 									return;
 								}

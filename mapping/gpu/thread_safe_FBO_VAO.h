@@ -147,7 +147,7 @@ public:
 			thread_storage_->debugIncreaseCount();
 		} else {
 			bo = thread_map_.at(id).lock();
-			if(bo == nullptr){
+			if(bo == nullptr) {
 				// the element has been deleted due to ending the thread and calling force garbage collect.
 				assert(0); // this should only happen at the end of a thread.... so why is this happening then?
 				bo = make_shared<GLuint>();
@@ -187,7 +187,7 @@ typedef ThreadSafeGl<fboGenFun, fboDelFun> ThreadSafeFBO;
 typedef ThreadSafeGlStorage<fboGenFun, fboDelFun> ThreadSafeFBOStorage;
 
 //do the same for the VAOs
-inline void vaoGenFun(GLsizei count, GLuint *vaos){
+inline void vaoGenFun(GLsizei count, GLuint *vaos) {
 	glGenVertexArrays(count, vaos);
 }
 

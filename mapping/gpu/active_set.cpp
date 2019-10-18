@@ -89,7 +89,7 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 
 	//check if really all of the gpu patches are valid
 	for(size_t i = 0; i < retained_mesh_patches.size(); i++) {
-		if(retained_mesh_patches[i] == nullptr){
+		if(retained_mesh_patches[i] == nullptr) {
 			assert(0);
 		}
 	}
@@ -321,7 +321,7 @@ ActiveSet::~ActiveSet() {
 	vector<tuple<shared_ptr<MeshPatch>, vector<GpuVertex>>> downloaded_vertices;
 	vector<tuple<shared_ptr<MeshTexture>, vector<Vector2f>>> downloaded_tex_coords;
 	//for the beginning lets do the texture transfer uncoalesced
-	for(shared_ptr<MeshPatch> patch : patches_to_be_downloaded){
+	for(shared_ptr<MeshPatch> patch : patches_to_be_downloaded) {
 		//TODO: add a retain count to the gpu handle
 		//TODO: not so fast there is a active set list for each MeshPatch (remove these todos after implementation)
 		shared_ptr<MeshPatchGpuHandle> patch_gpu = patch->gpu.lock();
@@ -378,10 +378,10 @@ ActiveSet::~ActiveSet() {
 		for(size_t i = 0; i < patch->tex_patches.size(); i++) {
 			shared_ptr<MeshTexture> tex_patch = patch->tex_patches[i];
 			shared_ptr<MeshTextureGpuHandle> tex_patch_gpu = tex_patch->gpu.lock();
-			if(tex_patch == nullptr){
+			if(tex_patch == nullptr) {
 				assert(0); //the texture should exist if it is in this list
 			}
-			if(tex_patch_gpu == nullptr){
+			if(tex_patch_gpu == nullptr) {
 				assert(0);//the gpu texture should exist if it is in this list
 			}
 
@@ -667,7 +667,7 @@ void ActiveSet::reuploadHeaders() {
 		for(size_t i = 0; i < patch->tex_patches.size(); i++) {
 			shared_ptr<MeshTextureGpuHandle> gpu_tex_patch =
 					patch->tex_patches[i]->gpu.lock();
-			if(gpu_tex_patch == nullptr){
+			if(gpu_tex_patch == nullptr) {
 				//this really should not happen.... so why is this?
 				//TODO: place assert here and check
 				continue;

@@ -288,7 +288,7 @@ void dilateLookupTextures_kernel(const DilationDescriptor *descriptors) {
 			float4 neighbour;
 			surf2Dread(&neighbour, descriptor.target, x2 * 4 * 4, y2);
 			index = *((int*) (&neighbour.x));
-			if(index == -1){
+			if(index == -1) {
 				continue;
 			}
 			surf2Dwrite(neighbour, descriptor.target, x * 4 * 4, y);

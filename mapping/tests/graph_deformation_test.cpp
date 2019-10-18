@@ -84,7 +84,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 
 bool next_step = false;
 void key_callback(GLFWwindow *window, int key, int scancode, int action, 
-                  int mods){
+                  int mods) {
 	if(key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
 		next_step = true;
 	}

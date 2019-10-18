@@ -92,7 +92,7 @@ void SchedulerThreaded::captureWorker_(shared_ptr<MeshReconstruction> map,
 		map->active_set_update_mutex.unlock();
 
 		bool has_geometry = false;
-		if(map->hasGeometry() && active_set_capturing != nullptr){
+		if(map->hasGeometry() && active_set_capturing != nullptr) {
 			if(active_set_capturing->retained_mesh_patches.size() !=0 ) {
 				has_geometry = true;
 			}
@@ -229,7 +229,7 @@ void SchedulerThreaded::updateActiveSet_(cv::Mat d_std_mat,
 	map_->setActiveSetUpdate_(active_set);
 
 	//debug... check if the active set has all the geometry textures
-	for(shared_ptr<MeshPatch> patch : active_set->retained_mesh_patches_cpu){
+	for(shared_ptr<MeshPatch> patch : active_set->retained_mesh_patches_cpu) {
 		//TODO: test patch
 		if(!patch->isPartOfActiveSetWithNeighbours(active_set.get())) {
 			continue;

@@ -60,7 +60,7 @@ void MeshPatch::updatePrincipalPlaneAndCenter() {
 	principal_plane = accumulator.plane();
 	Vector4f center = accumulator.centerPoint();
 	setPos(Vector3f(center[0], center[1], center[2]));
-	if(isnan(center[0])){
+	if(isnan(center[0])) {
 		cout << "[MeshPatch::updatePrincipalPlaneAndCenter] why is this nan?" << endl;
 	}
 }
@@ -127,7 +127,7 @@ bool MeshPatch::isPartOfActiveSetWithNeighbours(const ActiveSet *active_set) {
 
 	double_stitch_mutex.lock();
 	for(shared_ptr<DoubleStitch> stitch : double_stitches) {
-		if(stitch->patches[0].lock().get() != this){
+		if(stitch->patches[0].lock().get() != this) {
 			continue;
 		}
 		if(!stitch->isPartOfActiveSet(active_set)) {
@@ -287,7 +287,7 @@ set<shared_ptr<MeshPatch> > MeshPatch::getNeighbours() {
 shared_ptr<DoubleStitch> MeshPatch::getDoubleStitchTo(shared_ptr<MeshPatch> patch) {
 	double_stitch_mutex.lock();
 	for(auto double_stitch : double_stitches) {
-		if(double_stitch->isConnectingPatch(patch)){
+		if(double_stitch->isConnectingPatch(patch)) {
 			double_stitch_mutex.unlock();
 			return double_stitch;
 		}
@@ -299,7 +299,7 @@ shared_ptr<DoubleStitch> MeshPatch::getDoubleStitchTo(shared_ptr<MeshPatch> patc
 shared_ptr<TripleStitch> MeshPatch::getTripleStitchTo(shared_ptr<MeshPatch> patch) {
 	triple_stitch_mutex.lock();
 	for(auto triple_stitch : triple_stitches) {
-		if(triple_stitch->isConnectingPatch(patch)){
+		if(triple_stitch->isConnectingPatch(patch)) {
 			triple_stitch_mutex.unlock();
 			return triple_stitch;
 		}
@@ -589,7 +589,7 @@ bool Vertex::encompassed() {
 			tri_ref = tri->neighbours[ind].ref;
 			ind = tri->neighbours[ind].pos;
 			tri = tri_ref.get();
-			if(tri == first_tri){
+			if(tri == first_tri) {
 				//we came back to the first triangle
 				return true;
 			}
@@ -780,7 +780,7 @@ void Triangle::registerTriangle(TriangleReference &triangle_to_register,
 			//TODO: it is ineficient to first check if it exists and afterwards retrieve it
 			int k = other_triangle->getPosInTriangle(triangle_to_register.get()->points[1],
 			                                         triangle_to_register.get()->points[2]);
-			if(other_triangle->neighbours[k].valid()){
+			if(other_triangle->neighbours[k].valid()) {
 				//it seems that we want to add another triangle to an edge that already has two
 				Triangle* debugTriangle = other_triangle->neighbours[k].ref.get();
 				assert(0);// when registering a triangle we hope that it already is valid

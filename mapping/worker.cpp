@@ -89,7 +89,7 @@ void QueuedWorker::method_() {
 		condition_var_.wait(l);
 
 		tasks_mutex_.lock();
-		if(end_thread_var_ && tasks_.empty()){
+		if(end_thread_var_ && tasks_.empty()) {
 			cout << "TODO: delete the opengl context and stuff here" << endl;
 			//maybe we also need to call some destructors (opengl contexts and stuff)
 			tasks_mutex_.unlock();

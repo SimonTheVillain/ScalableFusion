@@ -93,7 +93,7 @@ void DeformationGraph::generateResiduals() {
 
 void DeformationGraph::generateJacobian() {
 	int edge_con_count = 0;
-	for(int i=0;i<neighbours.size();i++){
+	for(int i=0;i<neighbours.size();i++) {
 		edge_con_count += neighbours[i].size();
 	}
 	int variable_count = nodes.size() * 12;

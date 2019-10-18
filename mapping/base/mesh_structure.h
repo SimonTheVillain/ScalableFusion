@@ -594,7 +594,7 @@ struct Triangle {
 	}
 
 	int getPointIndex(VertexReference& p) {
-		for(uint8_t i = 0; i < 3; i++){
+		for(uint8_t i = 0; i < 3; i++) {
 			if(p.isEqualTo(points[i])) {
 				return i;
 			}
@@ -934,9 +934,9 @@ struct Edge {
 		return triangle.get()->points[ind];
 	}
 
-	VertexReference oppositePoint(){
+	VertexReference oppositePoint() {
 		int ind = pos - 1;
-		if(ind == -1){
+		if(ind == -1) {
 			ind = 2;
 		}
 		return triangle.get()->points[ind];

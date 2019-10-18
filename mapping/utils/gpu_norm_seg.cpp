@@ -362,7 +362,7 @@ void GpuNormSeg::segment() {
 			new_inds[i + 1] = -1;
 			continue;
 		}
-		if(segment_size[i] < min_nr_points_per_segment){
+		if(segment_size[i] < min_nr_points_per_segment) {
 			new_inds[i + 1] = -1;
 			continue;
 			//TODO: actually in this case we have to check

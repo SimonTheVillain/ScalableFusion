@@ -104,7 +104,7 @@ shared_ptr<GpuBufferConnector<T>> GpuBuffer<T>::getBlock(size_t element_count) {
 		free_slots_.erase(it);
 	}
 
-	if(index != first){// if the block is not exactly the requested size
+	if(index != first) {// if the block is not exactly the requested size
 		//but also create new entries for the object we split apart
 		// (if necessary) and we are not taking a full block
 		uint32_t new_size = size_of_free - element_count;
@@ -277,7 +277,7 @@ void GpuBufferConnector<T>::upload(T *data, uint32_t offset, uint32_t count) {
 
 template<typename T>
 void GpuBufferConnector<T>::download(T *data, uint32_t offset, uint32_t count) {
-	if(count == 0){
+	if(count == 0) {
 		return;
 	}
 	buffer_->download(data, index_ + offset, count);

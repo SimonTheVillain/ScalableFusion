@@ -471,7 +471,7 @@ void OctreeNode<T>::appendVisibleObjects(vector<shared_ptr<T>> &visible,
                                          const Vector4f (&planes)[6],
                                          const Matrix4f &cam_pose,
                                          const float &max_dist,
-                                         const float &dilate_frustum){
+                                         const float &dilate_frustum) {
 	//first test if this node is visible
 	if(!OctreeMember<T>::checkVisibility(center_,
 	                                     half_width_ * sqrt(3) + dilate_frustum,
@@ -673,7 +673,7 @@ bool OctreeNode<T>::childrenAreSparseNoGrandchildren() {
 			if(!children_[i]->isSparse()) {
 				return false;
 			}
-			if(children_[i]->hasChildren()){
+			if(children_[i]->hasChildren()) {
 				return false;
 			}
 		}

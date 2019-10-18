@@ -61,7 +61,7 @@ void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
 		MeshPatch* p = patches[i].patch;
 		glUniform4f(2, patches[i].r, patches[i].g, patches[i].b, 1);
 		glUniform1i(3, -1);
-		if(p != nullptr){
+		if(p != nullptr) {
 			int start = p->gpu.lock()->triangles->getStartingIndex();
 			int nr = p->gpu.lock()->triangles->getSize();
 			if(i != 0 && force_dst_geom) {
@@ -88,7 +88,7 @@ void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
 					"[RenderMapPresentation::render] Binding texPosBuffer");
 			}
 
-			for(shared_ptr<TripleStitch> stitch : p->triple_stitches){
+			for(shared_ptr<TripleStitch> stitch : p->triple_stitches) {
 				shared_ptr<TriangleBufConnector> triangles = 
 					stitch->triangles_gpu.lock();
 				if(triangles == nullptr)

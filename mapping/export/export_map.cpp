@@ -194,7 +194,7 @@ void Exporter::storeFine(MeshReconstruction *map, string file_path) {
 
 	auto appendFaces = [&k, &start_indices, &p_mesh, &appendTrianglesAsFaces] (
 			set<shared_ptr<GeometryBase>> &geoms) {
-		for(auto geom : geoms){
+		for(auto geom : geoms) {
 			appendTrianglesAsFaces(geom->triangles);
 		}
 	};
@@ -344,7 +344,7 @@ void Exporter::storeDeformationGraph(MeshReconstruction *map,
 						assert(0);//this should not happen!!!! really!!!
 						continue;
 					}
-					if(p1 > p2){
+					if(p1 > p2) {
 						swap(p1, p2);
 					}
 					if(unique_edges.count(p1) == 0) {

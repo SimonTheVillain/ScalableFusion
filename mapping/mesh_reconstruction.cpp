@@ -632,7 +632,7 @@ vector<cv::Rect2f> MeshReconstruction::genBoundsFromPatches(
 				break;
 			}
 			shared_ptr<TriangleBufConnector> gpu_stitch = stitch->triangles_gpu.lock();
-			if(gpu_stitch == nullptr){
+			if(gpu_stitch == nullptr) {
 				assert(0);
 				valid = false;
 				break;

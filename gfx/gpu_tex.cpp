@@ -175,7 +175,7 @@ gfx::GpuTex2D::GpuTex2D(GarbageCollector *garbage_collector,
 		tex_desc.readMode   = cudaReadModeElementType;//somehow this tends to crash when variable is a float
 	} else {
 		tex_desc.filterMode = cudaFilterModePoint;
-		if(bit_depth == 32){
+		if(bit_depth == 32) {
 			tex_desc.readMode = cudaReadModeElementType;
 		}
 	}
@@ -215,11 +215,11 @@ gfx::GpuTex2D::~GpuTex2D() {
 	token_mutex_.lock();
 	for(auto token : resident_token_) {
 		thread::id id = token.first;
-		if(id != this_id){
+		if(id != this_id) {
 			shared_ptr<bool> sharedToken = token.second;
-			function<void()> cleanupTask = [sharedToken,handle](){
+			function<void()> cleanupTask = [sharedToken,handle]() {
 				if(!(*sharedToken)) {//when the token is set to true then the handle has been cleared already
-					if(glIsTextureHandleResidentARB(handle)){
+					if(glIsTextureHandleResidentARB(handle)) {
 						glMakeTextureHandleNonResidentARB(handle);
 					} else {
 						assert(0);//the token should already ensure that the object exists.

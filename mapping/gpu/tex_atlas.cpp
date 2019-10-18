@@ -44,7 +44,7 @@ shared_ptr<TexAtlasPatch> TexAtlas::getTexAtlasPatch(cv::Size2i size) {
 	tex_this_size.tex_mutex.lock();
 	tex_this_size.tex.erase(remove_if(
 			tex_this_size.tex.begin(), tex_this_size.tex.end(), 
-			[](weak_ptr<TexAtlasTex> unlocked){return unlocked.lock() == nullptr;}),
+			[](weak_ptr<TexAtlasTex> unlocked) {return unlocked.lock() == nullptr;}),
 			tex_this_size.tex.end());
 	for(size_t i = 0; i < tex_this_size.tex.size(); i++) {
 		//check the existing textures if there is some place left to store data onto
@@ -133,7 +133,7 @@ cv::Rect2i TexAtlasTex::posFromIndex_(int i) {
 shared_ptr<TexAtlasPatch> TexAtlasTex::getFreePatch_(
 		shared_ptr<TexAtlasTex> self) {
 	occupants_mutex_.lock();
-	if(free_slots_.empty()){
+	if(free_slots_.empty()) {
 		occupants_mutex_.unlock();
 		return nullptr;
 	}

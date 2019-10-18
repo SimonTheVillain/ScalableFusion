@@ -65,7 +65,7 @@ TumDataset::TumDataset(string folder, bool realtime, bool use_pose,
 		rgb_files_.push_back(rgb_file);
 	}
 
-	if(!rgb_files_.empty()){
+	if(!rgb_files_.empty()) {
 		running_ = true;
 	}	else {
 		cout << "Could not read frame associations" << endl;
@@ -181,7 +181,7 @@ TumDataset::TumDataset(string folder, bool realtime, bool use_pose,
 		if(has_high_res_) {
 			cv::FileStorage intrinsics_id_storage(folder + "/../calib_result_ids.yml", 
 			                                      cv::FileStorage::READ);
-			if(!intrinsics_id_storage.isOpened()){
+			if(!intrinsics_id_storage.isOpened()) {
 				assert(0);
 			}
 

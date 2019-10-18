@@ -74,7 +74,7 @@ public:
 
 	~GpuGeomStorage();
 
-	void init(MeshReconstruction *scaleable_map) {
+	void init(MeshReconstruction * scaleable_map) {
 		map_ = scaleable_map;
 	}
 
@@ -114,10 +114,10 @@ public:
 	chrono::duration<double> time_spent_uploading_patch_infos;
 	chrono::duration<double> time_spent_uploading_tex_pos;
 
-	int upload_calls_vertices = 0;
-	int upload_calls_triangles = 0;
+	int upload_calls_vertices    = 0;
+	int upload_calls_triangles   = 0;
 	int upload_calls_patch_infos = 0;
-	int upload_calls_tex_pos = 0;
+	int upload_calls_tex_pos     = 0;
 
 	bool debug_outputs = false;
 	uint32_t debug = 1;

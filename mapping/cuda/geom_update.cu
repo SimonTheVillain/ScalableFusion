@@ -162,7 +162,7 @@ void gpu::GeometryValidityChecks::checkTriangleValidity(
 		GpuPatchInfo *patch_infos) {
 
 	assert(0); //this is not a priority yet.
-	if(tasks.empty()){
+	if(tasks.empty()) {
 		return;
 	}
 	dim3 block(256);

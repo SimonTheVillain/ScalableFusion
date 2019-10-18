@@ -414,7 +414,7 @@ void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 
 	MeshReconstruction *mesh = mesh_reconstruction;
 
-	if(active_set == nullptr){
+	if(active_set == nullptr) {
 		return;
 	}
 

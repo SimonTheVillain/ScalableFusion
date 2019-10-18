@@ -270,7 +270,7 @@ void MapPresentationRenderer::renderInWindow(Matrix4f view, Matrix4f proj,
 
 	//set of patches excluded for the low detail render
 	vector<shared_ptr<ActiveSet>> sets;
-	if(render_visible_from_cam){
+	if(render_visible_from_cam) {
 		render(active_set_work.get(), proj, view);
 		sets.push_back(active_set_work);
 	}

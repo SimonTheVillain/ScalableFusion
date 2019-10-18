@@ -74,7 +74,7 @@ public:
 
 	~GpuGeomStorage();
 
-	void init(MeshReconstruction* scaleable_map) {
+	void init(MeshReconstruction *scaleable_map) {
 		map_ = scaleable_map;
 	}
 
@@ -120,7 +120,7 @@ public:
 	int upload_calls_tex_pos = 0;
 
 	bool debug_outputs = false;
-	uint32_t debug = 3;
+	uint32_t debug = 1;
 	//TODO: we should get this from the scaleableMap parameter structure
 	//the assumption is that the average patch has 400 triangles
 	uint32_t max_nr_patches = 1024 * 5 * 2  * debug;//5k patches is reasonable

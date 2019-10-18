@@ -295,4 +295,3 @@ template class GpuBuffer<Eigen::Vector2f>;
 template class GpuBuffer<GpuTriangle>;
 template class GpuBuffer<GpuPatchInfo>;
 template class GpuBuffer<GLint>;
-

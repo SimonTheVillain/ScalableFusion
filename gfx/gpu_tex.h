@@ -43,7 +43,7 @@ public:
 	int                      getHeight() {return height_;}
 
 	void uploadData(void *data); //if size == 0 we only load
-	void uploadData(void *data, int width_, int height_);
+	void uploadData(void *data, int width, int height);
 	void uploadData(void *data, int x, int y, int width, int height);
 
 	void downloadData(void *data);

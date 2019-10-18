@@ -198,6 +198,8 @@ gfx::GpuTex2D::GpuTex2D(GarbageCollector *garbage_collector,
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
+	gl_handle_ = glGetTextureHandleARB(gl_name_);
+
 	gfx::GLUtils::checkForOpenGLError("Error while obtaining the GL texture handle");
 }
 
@@ -209,7 +211,7 @@ gfx::GpuTex2D::~GpuTex2D() {
 	//https://github.com/ugovaretto/cuda-opengl-interop/blob/master/texture3d-write/simpleGL3DSurfaceWrite.cpp
 
 	uint64_t handle = getGlHandle();
-	std::thread::id this_id = this_thread::get_id();
+	thread::id this_id = this_thread::get_id();
 	token_mutex_.lock();
 	for(auto token : resident_token_) {
 		thread::id id = token.first;
@@ -305,7 +307,7 @@ void gfx::GpuTex2D::makeResidentInThisThread() {
 		resident_token_[id] = token;
 		token_mutex_.unlock();
 		weak_ptr<bool> weak_token = token;
-		std::function<void()> last_resort_delete = [weak_token, handle]() {
+		function<void()> lastResortDelete = [weak_token, handle]() {
 			if(!weak_token.expired()) {
 				*weak_token.lock() = true;
 				//make the handle non resident only if none of the token still exists for this thread
@@ -313,7 +315,7 @@ void gfx::GpuTex2D::makeResidentInThisThread() {
 				assert(!gfx::GLUtils::checkForOpenGLError("making a handle non resident in thread"));
 			}
 		};
-		garbage_collector_->addToForceCollect(last_resort_delete);
+		garbage_collector_->addToForceCollect(lastResortDelete);
 	}
 	assert(!gfx::GLUtils::checkForOpenGLError("Error at making the texture resident"));
 }

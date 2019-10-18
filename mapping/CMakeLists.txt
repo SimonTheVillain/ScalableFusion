@@ -15,30 +15,30 @@ endif()
 
 # Project
 project(mapping
-		LANGUAGES CXX CUDA
-		)
+	LANGUAGES CXX CUDA
+)
 
 
 # Definitions
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CUDA_STANDARD 11)
-set(CMAKE_CUDA_FLAGS
-		"${CMAKE_CUDA_FLAGS} \
+set(CMAKE_CUDA_FLAGS 
+	"${CMAKE_CUDA_FLAGS} \
 		--expt-relaxed-constexpr \
 	"
-		)
+)
 if(CMAKE_BUILD_TYPE MATCHES DEBUG)
-	set(CMAKE_CUDA_FLAGS
-			"${CMAKE_CUDA_FLAGS} \
+	set(CMAKE_CUDA_FLAGS 
+		"${CMAKE_CUDA_FLAGS} \
 			--generate-line-info \
 		"
-			) #--device-debug #everything fails at device-debug
+	) #--device-debug #everything fails at device-debug
 endif()
-set(CMAKE_CXX_FLAGS
-		"${CMAKE_CXX_FLAGS} \
+set(CMAKE_CXX_FLAGS 
+	"${CMAKE_CXX_FLAGS} \
 		--std=c++11 \
 	"
-		)
+)
 
 
 # Required packages
@@ -77,190 +77,190 @@ link_libraries(${GLEW_LIBRARIES})
 
 # Source files
 file(GLOB CXX_SRCS
-		base/mesh_structure.cpp
-		base/texture_structure.cpp
-		cuda/geom_update.cpp
-		export/export_map.cpp
-		gpu/active_set.cpp
-		gpu/gpu_buffer.cpp
-		gpu/gpu_geom_storage.cpp
-		gpu/tex_atlas.cpp
-		graph/deformation_graph.cpp
-		graph/deformation_node.cpp
-		rendering/low_detail_map_renderer.cpp
-		rendering/map_information_renderer.cpp
-		rendering/map_presentation_renderer.cpp
-		rendering/renderable_model.cpp
-		utils/gpu_norm_seg.cpp
-		utils/perf_meter.cpp
-		utils/principal_plane.cpp
-		debug_render.cpp
-		geometry_update.cpp
-		intermediate_depth_model.cpp
-		labelling.cpp
-		meshing.cpp
-		mesh_reconstruction.cpp
-		scheduler.cpp
-		scheduler_threaded.cpp
-		stitching.cpp
-		texturing.cpp
-		worker.cpp
-		)
+	base/mesh_structure.cpp
+	base/texture_structure.cpp
+	cuda/geom_update.cpp
+	export/export_map.cpp
+	gpu/active_set.cpp 
+	gpu/gpu_buffer.cpp
+	gpu/gpu_geom_storage.cpp
+	gpu/tex_atlas.cpp
+	graph/deformation_graph.cpp
+	graph/deformation_node.cpp
+	rendering/low_detail_map_renderer.cpp
+	rendering/map_information_renderer.cpp
+	rendering/map_presentation_renderer.cpp
+	rendering/renderable_model.cpp
+	utils/gpu_norm_seg.cpp
+	utils/perf_meter.cpp
+	utils/principal_plane.cpp
+	debug_render.cpp
+	geometry_update.cpp
+	intermediate_depth_model.cpp
+	labelling.cpp
+	meshing.cpp
+	mesh_reconstruction.cpp
+	scheduler.cpp
+	scheduler_threaded.cpp
+	stitching.cpp
+	texturing.cpp
+	worker.cpp 
+)
 file(GLOB CUDA_SRCS
-		cuda/coalesced_memory_transfer.cu
-		cuda/coarse_update.cu
-		cuda/float16_utils.cu
-		cuda/geom_update.cu
-		cuda/labelling_cuda.cu
-		cuda/norm_est.cu
-		cuda/reproject.cu
-		cuda/std_tex_update.cu
-		cuda/test.cu
-		cuda/tex_coords.cu
-		cuda/tex_patch_init.cu
-		cuda/vertex_update.cu
-		cuda/xtion_camera_model.cu
-		)
+	cuda/coalesced_memory_transfer.cu
+	cuda/coarse_update.cu
+	cuda/float16_utils.cu
+	cuda/geom_update.cu
+	cuda/labelling_cuda.cu
+	cuda/norm_est.cu
+	cuda/reproject.cu
+	cuda/std_tex_update.cu
+	cuda/test.cu
+	cuda/tex_coords.cu
+	cuda/tex_patch_init.cu
+	cuda/vertex_update.cu
+	cuda/xtion_camera_model.cu
+)
 file(GLOB SHADERS
-		rendering/shader/*.frag
-		rendering/shader/*.geom
-		rendering/shader/*.vert
-		)
+	rendering/shader/*.frag
+	rendering/shader/*.geom
+	rendering/shader/*.vert
+)
 
 
 # Build
 add_executable(${PROJECT_NAME}
-		main.cpp
-		${CXX_SRCS}
-		${CUDA_SRCS}
-		${SHADERS}
-		)
+	main.cpp
+	${CXX_SRCS}
+	${CUDA_SRCS} 
+	${SHADERS}
+)
 target_link_libraries(${PROJECT_NAME}
-		${ASSIMP_LIBRARIES}
-		${Boost_LIBRARIES}
-		dataset_loader
-		glfw
-		glog
-		gfx
-		icp_cuda
-		${OPENGL_gl_LIBRARY}
-		${OPENGL_glu_LIBRARY}
-		${OpenCV_LIBS}
-		radical
-		segmentation
-		)
+	${ASSIMP_LIBRARIES} 
+	${Boost_LIBRARIES}
+	dataset_loader 
+	glfw 
+	glog 
+	gfx 
+	icp_cuda 
+	${OPENGL_gl_LIBRARY} 
+	${OPENGL_glu_LIBRARY} 
+	${OpenCV_LIBS} 
+	radical
+	segmentation
+)
 
 
 # Tests
-add_executable(texture_mem_test
-		tests/texture_mem_test.cpp
-		${CXX_SRCS}
-		${CUDA_SRCS}
-		${SHADERS}
-		)
-target_link_libraries(texture_mem_test
-		${ASSIMP_LIBRARIES}
-		${Boost_LIBRARIES}
-		dataset_loader
-		glfw
-		glog
-		gfx
-		icp_cuda
-		${OPENGL_gl_LIBRARY}
-		${OPENGL_glu_LIBRARY}
-		${OpenCV_LIBS}
-		segmentation
-		)
+add_executable(texture_mem_test 
+	tests/texture_mem_test.cpp 
+	${CXX_SRCS} 
+	${CUDA_SRCS} 
+	${SHADERS}
+)
+target_link_libraries(texture_mem_test 
+	${ASSIMP_LIBRARIES} 
+	${Boost_LIBRARIES} 
+	dataset_loader 
+	glfw 
+	glog
+	gfx 
+	icp_cuda 
+	${OPENGL_gl_LIBRARY} 
+	${OPENGL_glu_LIBRARY} 
+	${OpenCV_LIBS} 
+	segmentation
+)
 
-add_executable(texture_mem_test_threaded
-		tests/texture_mem_test_threaded.cpp
-		${CXX_SRCS}
-		${CUDA_SRCS}
-		${SHADERS}
-		)
-target_link_libraries(texture_mem_test_threaded
-		${ASSIMP_LIBRARIES}
-		${Boost_LIBRARIES}
-		dataset_loader
-		glfw
-		glog
-		gfx
-		icp_cuda
-		${OPENGL_gl_LIBRARY}
-		${OPENGL_glu_LIBRARY}
-		${OpenCV_LIBS}
-		segmentation
-		)
+add_executable(texture_mem_test_threaded 
+	tests/texture_mem_test_threaded.cpp 
+	${CXX_SRCS} 
+	${CUDA_SRCS} 
+	${SHADERS}
+)
+target_link_libraries(texture_mem_test_threaded 
+	${ASSIMP_LIBRARIES} 
+	${Boost_LIBRARIES} 
+	dataset_loader 
+	glfw 
+	glog
+	gfx 
+	icp_cuda 
+	${OPENGL_gl_LIBRARY} 
+	${OPENGL_glu_LIBRARY} 
+	${OpenCV_LIBS} 
+	segmentation
+)
 
-add_executable(graph_deformation_test
-		tests/graph_deformation_test.cpp
-		${CXX_SRCS}
-		${CUDA_SRCS}
-		${SHADERS}
-		base/stack_vector.h
-		graph/deformation_graph.cpp
-		graph/deformation_graph.h
-		graph/deformation_node.cpp
-		graph/deformation_node.h
-		)
-target_link_libraries(graph_deformation_test
-		${ASSIMP_LIBRARIES}
-		${Boost_LIBRARIES}
-		dataset_loader
-		glfw
-		glog
-		gfx
-		icp_cuda
-		${OPENGL_gl_LIBRARY}
-		${OPENGL_glu_LIBRARY}
-		${OpenCV_LIBS}
-		segmentation
-		)
+add_executable(graph_deformation_test 
+	tests/graph_deformation_test.cpp 
+	${CXX_SRCS} 
+	${CUDA_SRCS} 
+	${SHADERS}
+	base/stack_vector.h 
+	graph/deformation_graph.cpp
+	graph/deformation_graph.h 
+	graph/deformation_node.cpp 
+	graph/deformation_node.h
+)
+target_link_libraries(graph_deformation_test 
+	${ASSIMP_LIBRARIES} 
+	${Boost_LIBRARIES} 
+	dataset_loader 
+	glfw 
+	glog
+	gfx 
+	icp_cuda 
+	${OPENGL_gl_LIBRARY} 
+	${OPENGL_glu_LIBRARY} 
+	${OpenCV_LIBS} 
+	segmentation
+)
 
-add_executable(label_cloud_viewer
-		tests/label_cloud_viewer.cpp
-		${CXX_SRCS}
-		${CUDA_SRCS}
-		${SHADERS}
-		base/stack_vector.h
-		graph/deformation_graph.cpp
-		graph/deformation_graph.h
-		graph/deformation_node.cpp
-		graph/deformation_node.h
-		)
-target_link_libraries(label_cloud_viewer
-		${ASSIMP_LIBRARIES}
-		${Boost_LIBRARIES}
-		dataset_loader
-		glfw
-		glog
-		gfx
-		icp_cuda
-		${OPENGL_gl_LIBRARY}
-		${OPENGL_glu_LIBRARY}
-		${OpenCV_LIBS}
-		segmentation
-		)
+add_executable(label_cloud_viewer 
+	tests/label_cloud_viewer.cpp 
+	${CXX_SRCS} 
+	${CUDA_SRCS} 
+	${SHADERS}
+	base/stack_vector.h 
+	graph/deformation_graph.cpp 
+	graph/deformation_graph.h 
+	graph/deformation_node.cpp 
+	graph/deformation_node.h
+)
+target_link_libraries(label_cloud_viewer 
+	${ASSIMP_LIBRARIES} 
+	${Boost_LIBRARIES} 
+	dataset_loader 
+	glfw 
+	glog
+	gfx 
+	icp_cuda 
+	${OPENGL_gl_LIBRARY} 
+	${OPENGL_glu_LIBRARY} 
+	${OpenCV_LIBS} 
+	segmentation
+)
 
-add_executable(simple_cloud_viewer
-		tests/simple_cloud_viewer.cpp
-		${CXX_SRCS}
-		${CUDA_SRCS}
-		${SHADERS}
-		)
-target_link_libraries(simple_cloud_viewer
-		${ASSIMP_LIBRARIES}
-		${Boost_LIBRARIES}
-		dataset_loader
-		glfw
-		glog
-		gfx
-		icp_cuda
-		${OPENGL_gl_LIBRARY}
-		${OPENGL_glu_LIBRARY}
-		${OpenCV_LIBS}
-		segmentation
-		)
+add_executable(simple_cloud_viewer 
+	tests/simple_cloud_viewer.cpp 
+	${CXX_SRCS} 
+	${CUDA_SRCS} 
+	${SHADERS}
+)
+target_link_libraries(simple_cloud_viewer 
+	${ASSIMP_LIBRARIES} 
+	${Boost_LIBRARIES} 
+	dataset_loader 
+	glfw 
+	glog
+	gfx 
+	icp_cuda 
+	${OPENGL_gl_LIBRARY} 
+	${OPENGL_glu_LIBRARY} 
+	${OpenCV_LIBS} 
+	segmentation
+)
 
 
 # Notes

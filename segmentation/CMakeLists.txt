@@ -12,8 +12,8 @@ cmake_minimum_required (VERSION 3.8)
 
 # Project
 project(segmentation
-		LANGUAGES CXX
-		)
+	LANGUAGES CXX
+)
 
 
 # Definitions
@@ -37,17 +37,17 @@ link_directories(${OpenCV_LIBRARY_DIRS})
 
 # Source files
 file(GLOB CXX_SRCS
-		*.cpp
-		)
+	*.cpp
+)
 
 
 # Build
 add_library(${PROJECT_NAME}
-		${CXX_SRCS}
-		)
-target_link_libraries(${PROJECT_NAME}
-		${OpenCV_LIBS}
-		)
+	${CXX_SRCS}
+)
+target_link_libraries(${PROJECT_NAME} 
+	${OpenCV_LIBS}
+)
 
 
 # Build

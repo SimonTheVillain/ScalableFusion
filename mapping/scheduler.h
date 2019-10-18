@@ -46,9 +46,9 @@ class SchedulerLinear : public SchedulerBase {
 public:
 
 	SchedulerLinear(shared_ptr<MeshReconstruction> map,
-					GarbageCollector *garbage_collector, Stream *capture,
-					GLFWwindow *context,
-					shared_ptr<IncrementalSegmentation> incremental_segmentation);
+	                GarbageCollector *garbage_collector, Stream *capture,
+	                GLFWwindow *context,
+	                shared_ptr<IncrementalSegmentation> incremental_segmentation);
 
 	~SchedulerLinear();
 
@@ -66,8 +66,8 @@ public:
 
 private:
 
-	void captureWorker_(shared_ptr<MeshReconstruction> map, Stream *stream,
-						GLFWwindow *context);
+	void captureWorker_(shared_ptr<MeshReconstruction> map, Stream *stream, 
+	                   GLFWwindow *context);
 
 	thread capture_thread_;
 

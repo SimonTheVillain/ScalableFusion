@@ -145,7 +145,7 @@ public:
     void resetTimers();
 
     bool debugOutputs=false;
-    uint32_t debug = 3;
+    uint32_t debug = 1;
     //TODO: we should get this from the scaleableMap parameter structure
     //the assumption is that the average patch has 400 triangles
     uint32_t m_maxNrPatches=1024*5 * 2  * debug;//5k patches is reasonable

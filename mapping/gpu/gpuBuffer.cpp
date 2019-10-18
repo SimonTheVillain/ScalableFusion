@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include <cuda_gl_interop.h>
+#include <opencv2/opencv.hpp>
 
 #include "../cuda/gpuErrchk.h"
 

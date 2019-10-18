@@ -534,10 +534,10 @@ cv::Mat MeshReconstruction::generateDepthFromView(int width, int height,
 	float cy = params.depth_fxycxy[3];
 
 	Matrix4f proj1;//one to do what has to be done anyway
-	proj1 << fx,  0, cx, 0,
-	          0, fy, cy, 0,
-	          0,  0,  0 -1,
-	          0,  0,  1, 0;
+	proj1 << fx,  0, cx,  0,
+	          0, fy, cy,  0,
+	          0,  0,  0, -1,
+	          0,  0,  1,  0;
 
 	float w = params.depth_res.width;
 	float h = params.depth_res.height;

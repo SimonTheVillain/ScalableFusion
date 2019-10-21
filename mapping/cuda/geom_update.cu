@@ -25,7 +25,7 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 		return-1;
 	}
 
-	dim3 block(1024);
+	dim3 block(256);// using 1024); works on desktops but it is killing the tegra
 	dim3 grid(descriptors.size());
 	gpu::UpdateDescriptor *descs;
 	cudaMalloc(&descs, descriptors.size() * sizeof(gpu::UpdateDescriptor));

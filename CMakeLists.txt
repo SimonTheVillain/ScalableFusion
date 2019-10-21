@@ -11,7 +11,7 @@ cmake_minimum_required (VERSION 3.8)
 if(NOT DEFINED CMAKE_CUDA_COMPILER)
 	set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
 endif()
-
+add_definitions(-DEIGEN_DONT_VECTORIZE)
 
 # Project
 project(ScalableFusion

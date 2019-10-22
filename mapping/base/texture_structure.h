@@ -186,12 +186,12 @@ public:
 
 	void  scaleAndShiftTexCoordsIntoRect(const cv::Rect2f rect);
 
-	static cv::Rect2f getBounds(const vector<Vector2f,aligned_allocator<Vector2f>> &list);
+	static cv::Rect2f getBounds(const vector<Vector2f> &list);
 
 
 	static void scaleAndShiftTexCoordsIntoRect(const cv::Rect2f rect,
-	                                           const vector<Vector2f,aligned_allocator<Vector2f>> &in,
-	                                           vector<Vector2f,aligned_allocator<Vector2f>> &out);
+	                                           const vector<Vector2f> &in,
+	                                           vector<Vector2f> &out);
 
 	//ACTUALLY THESE NEXT FEW FUNCTIONS ARE HARD TO IMPLEMENT
 	void isLookupTexFilled();
@@ -222,7 +222,7 @@ public:
 
 	bool gpu_tex_coords_uploading = false;
 	//TODO: get rid of this
-	vector<Vector2f,aligned_allocator<Vector2f>> tex_coords;
+	vector<Vector2f> tex_coords;
 
 	///TODO: might be needed for gpuGeomstorage !It is actually needed to check if the residency of this patch still is required.
 	MeshPatch *parent_patch = nullptr;

@@ -73,7 +73,7 @@ cv::Rect2i MeshTexture::getLookupRect() {
 	return data->ref_tex->getRect();
 }
 
-cv::Rect2f MeshTexture::getBounds(const vector<Vector2f,aligned_allocator<Vector2f>> &list) {
+cv::Rect2f MeshTexture::getBounds(const vector<Vector2f> &list) {
 	if(list.size() == 0) {
 		cout << "[MeshTexture::getBounds] this is not correct yet." << endl;
 		return cv::Rect2f(0, 0, 0, 0); // this is a very dirty workaround TODO: but why?
@@ -107,8 +107,8 @@ cv::Rect2f MeshTexture::getBounds() {
 }
 
 void MeshTexture::scaleAndShiftTexCoordsIntoRect(const cv::Rect2f rect, 
-                                                 const vector<Vector2f,aligned_allocator<Vector2f>> &in,
-                                                 vector<Vector2f,aligned_allocator<Vector2f>> &out) {
+                                                 const vector<Vector2f> &in,
+                                                 vector<Vector2f> &out) {
 	float width  = 1.0f / rect.width;
 	float height = 1.0f / rect.height;
 	for(size_t i = 0; i < in.size(); i++) {

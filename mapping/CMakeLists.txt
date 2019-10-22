@@ -34,11 +34,13 @@ if(CMAKE_BUILD_TYPE MATCHES DEBUG)
 		"
 	) #--device-debug #everything fails at device-debug
 endif()
-set(CMAKE_CXX_FLAGS 
-	"${CMAKE_CXX_FLAGS} \
-		--std=c++11 \
-	"
-)
+
+## this is necessary? isn't there set(CMAKE_CXX_STANDARD 11) up there?
+#set(CMAKE_CXX_FLAGS
+#	"${CMAKE_CXX_FLAGS} \
+#		--std=c++11 \
+#	"
+#)
 
 
 # Required packages

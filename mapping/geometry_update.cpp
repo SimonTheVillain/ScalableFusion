@@ -147,7 +147,7 @@ void GeometryUpdate::extend(
 	// After we have all the necessary points within each of the patches we can use the
 	// them to calculate the center points, bounding sphere and principal point.
 
-	auto time_start = chrono::system_clock::now();
+	auto time_start_all = chrono::system_clock::now();
 	//mesh that stuffcv:
 
 	cv::Mat vertex_indices(height, width, CV_32SC1);
@@ -163,12 +163,12 @@ void GeometryUpdate::extend(
 	}
 
 	auto time_end = chrono::system_clock::now();
-	auto time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
+	auto time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start_all);
 	//present
 	cout << "[GeometryUpdate::Extend] time consumed by meshing: " 
 	     << time_elapsed.count() << "ms" << endl;
 
-	time_start = chrono::system_clock::now();
+	auto time_start = chrono::system_clock::now();
 
 	/*********************************Initial Stitching!! NEW***************************/
 
@@ -381,7 +381,7 @@ void GeometryUpdate::extend(
 	}
 
 	time_end = chrono::system_clock::now();
-	auto elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
+	auto elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start_all);
 	cout << "[GeometryUpdate::Extend] Time consumed for adding new "
 	        "(novel) data took alltogether " <<
 	        elapsed.count() << "ms" << endl;

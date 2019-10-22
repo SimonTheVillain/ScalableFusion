@@ -266,7 +266,7 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 
 	//TODO: checkout what this is doing!!!
 	vector<CoalescedGpuTransfer::Task> coalesced_tex_coord_tasks;
-	vector<Vector2f> coalesced_tex_coords;
+	vector<Vector2f,Eigen::aligned_allocator<Vector2f>> coalesced_tex_coords;
 
 	uploadTexAndCoords_(new_mesh_patches_cpu, new_mesh_patches_gpu, map, initial);
 
@@ -319,7 +319,8 @@ ActiveSet::~ActiveSet() {
 	//TODO: download the textures and vertices (texCoords?) to the according cpu structures
 	vector<CoalescedGpuTransfer::DirectTask> coalesced_download_tasks;
 	vector<tuple<shared_ptr<MeshPatch>, vector<GpuVertex>>> downloaded_vertices;
-	vector<tuple<shared_ptr<MeshTexture>, vector<Vector2f>>> downloaded_tex_coords;
+	vector<tuple<shared_ptr<MeshTexture>, vector<Vector2f,aligned_allocator<Vector2f>>>> downloaded_tex_coords;
+	//vector<tuple<shared_ptr<MeshTexture>, vector<Vector2f>>> downloaded_tex_coords;
 	//for the beginning lets do the texture transfer uncoalesced
 	for(shared_ptr<MeshPatch> patch : patches_to_be_downloaded) {
 		//TODO: add a retain count to the gpu handle
@@ -368,7 +369,8 @@ ActiveSet::~ActiveSet() {
 			int count = tex_patch_gpu->coords->getSize();
 			task.src = tex_patch_gpu->coords->getStartingPtr();
 			task.byte_count = sizeof(Vector2f) * count;
-			vector<Vector2f> target(count);
+			vector<Vector2f,aligned_allocator<Vector2f>> target(count);
+			//vector<Vector2f> target(count);
 			task.dst = static_cast<void*>(&target[0]);
 			coalesced_download_tasks.push_back(task);
 			downloaded_tex_coords.push_back(make_tuple(tex_patch, move(target)));
@@ -398,7 +400,7 @@ ActiveSet::~ActiveSet() {
 			int count = tex_patch_gpu->coords->getSize();
 			task.src = tex_patch_gpu->coords->getStartingPtr();
 			task.byte_count = sizeof(Vector2f) * count;
-			vector<Vector2f> target(count);
+			vector<Vector2f,aligned_allocator<Vector2f>> target(count);
 			task.dst = static_cast<void*>(&target[0]);
 			coalesced_download_tasks.push_back(task);
 			downloaded_tex_coords.push_back(make_tuple(tex_patch, move(target)));

@@ -174,7 +174,7 @@ vector<cv::Rect2f> TexCoordGen::getPotentialTexCoordBounds(
 	cudaFree(gpu_tasks);
 	cudaFree(gpu_results);
 
-	vector<Vector4f> results(result_count, 
+	vector<Vector4f,aligned_allocator<Vector4f>> results(result_count,
 	                         Vector4f(FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX));
 
 	for(size_t i = 0; i < raw_res.size(); i++) {

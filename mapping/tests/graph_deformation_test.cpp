@@ -102,7 +102,7 @@ int main() {
 	cout << node_count << endl;
 	file >> edge_count;
 
-	vector<Vector4f> nodes(node_count);
+	vector<Vector4f,aligned_allocator<Vector4f>> nodes(node_count);
 	vector<Vector3f> nodes3(nodes.size());
 	for(size_t i = 0; i < node_count; i++) {
 		Vector4f p;
@@ -191,7 +191,7 @@ int main() {
 
 	RenderVerySimpleModel simple_model2;
 	simple_model2.color = Vector4f(1, 1, 0, 1);
-	vector<Vector4f> nodes2 = nodes;
+	vector<Vector4f,aligned_allocator<Vector4f>> nodes2 = nodes;
 
 	for(int i = 0; i < nodes.size(); i++) {
 		nodes2.push_back(nodes[i]);
@@ -233,7 +233,7 @@ int main() {
 			deformation_graph.generateJacobian();
 			deformation_graph.gaussNewtonStep();
 
-			vector<Vector4f> nodes2;
+			vector<Vector4f,aligned_allocator<Vector4f>> nodes2;
 			for(int i = 0; i < nodes.size(); i++) {
 				nodes2.push_back(nodes[i]);
 				nodes2[i](0) += deformation_graph.G_t[i](0);

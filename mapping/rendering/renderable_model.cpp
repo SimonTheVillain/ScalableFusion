@@ -41,7 +41,7 @@ RenderVerySimpleModel::~RenderVerySimpleModel() {
 	}
 }
 
-void RenderVerySimpleModel::setMesh(vector<Vector4f> &vertices,
+void RenderVerySimpleModel::setMesh(vector<Vector4f,aligned_allocator<Vector4f>> &vertices,
                                     vector<unsigned int> indices) {
 	unlit_program_->use();
 	glGenVertexArrays(1, &VAO_);
@@ -104,7 +104,7 @@ CameraFrustrumRenderableModel::CameraFrustrumRenderableModel(
 	                 Vector4f(-(rx - cx) / fx, -(ry - cy) / fy, 1, 0)};
 
 	Vector4f homo(0, 0, 0, 1);
-	vector<Vector4f> vertices = {p[0] * near_clipping_plane + homo,
+	vector<Vector4f,aligned_allocator<Vector4f>> vertices = {p[0] * near_clipping_plane + homo,
 	                             p[1] * near_clipping_plane + homo,
 	                             p[2] * near_clipping_plane + homo,
 	                             p[3] * near_clipping_plane + homo,
@@ -120,7 +120,7 @@ CameraFrustrumRenderableModel::CameraFrustrumRenderableModel(
 
 WireSphereModel::WireSphereModel(Vector4f color, Vector4f pos, float radius) {
 	int vertex_count = 100;
-	vector<Vector4f> vertices(vertex_count * 3);
+	vector<Vector4f,aligned_allocator<Vector4f>> vertices(vertex_count * 3);
 	vector<unsigned int> indices(vertex_count * 3 * 2);
 
 	for(int i = 0; i < vertex_count; i++) {

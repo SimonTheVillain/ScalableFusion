@@ -26,7 +26,7 @@ public:
 
 	~RenderVerySimpleModel();
 
-	void setMesh(vector<Vector4f> &vertices, vector<unsigned int> indices);
+	void setMesh(vector<Vector4f,aligned_allocator<Vector4f>> &vertices, vector<unsigned int> indices);
 
 	void render(Matrix4f &cam_proj);
 

@@ -7,6 +7,7 @@
 
 #define GPU_MAX_TEX_PER_PATCH 10
 
+//TODO: remove this using namespace... or is there a reason to use this in a HEADER?
 using namespace Eigen;
 
 // TODO: 
@@ -15,6 +16,7 @@ using namespace Eigen;
 //   the tex index in main patch..... if this would not be used it could half
 //   the space needed (forget it then!)
 struct GpuVertex {
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Vector4f p;
 	Vector3f n;
 
@@ -92,6 +94,7 @@ struct GpuPatchInfo {
 };
 
 struct GpuCoarseVertex {
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Vector4f p;
 	Vector4f n;
 	Vector4f c;

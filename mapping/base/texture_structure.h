@@ -206,6 +206,8 @@ public:
 
 	//TODO: use these at some point
 	//this camera pose and camera intrisic stuff is great.
+
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Matrix4f cam_pose;
 	Vector4f cam_intrinsics;
 	cv::Rect2i snippet;//since this texture is a cutout of a camera frame we use this

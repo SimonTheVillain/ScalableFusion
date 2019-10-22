@@ -155,7 +155,6 @@ struct TriangleReference {
 
 // TODO: Maybe let this vertex structure also replace the gpuvertex
 struct Vertex {
-
 	struct VertexInTriangle {
 		TriangleReference triangle;
 		int ind_in_triangle = -1;
@@ -202,6 +201,7 @@ struct Vertex {
 	 */
 	bool encompassed();
 
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Vector4f p;
 	Vector3f n; // TODO: start using this at some point
 
@@ -427,6 +427,7 @@ public:
 	 */
 	//Vector4f center;
 
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Vector4f principal_plane;
 
 	weak_ptr<MeshPatchGpuHandle> gpu;

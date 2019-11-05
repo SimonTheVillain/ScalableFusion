@@ -82,10 +82,15 @@ GpuGeomStorage::~GpuGeomStorage() {
 
 shared_ptr<ActiveSet> GpuGeomStorage::makeActiveSet(
 		vector<shared_ptr<MeshPatch>> patches,
-		MeshReconstruction *map, bool initial, bool debug1) {
+		MeshReconstruction *map,
+		LowDetailRenderer* low_detail_renderer,
+		TextureUpdater* texture_updater,
+		InformationRenderer* information_renderer,
+		bool initial, bool debug1) {
 
 	shared_ptr<ActiveSet> active_set =
-			shared_ptr<ActiveSet>(new ActiveSet(this, patches, map, initial, debug1));//instead of just patches
+			shared_ptr<ActiveSet>(
+					new ActiveSet(this, patches, map, low_detail_renderer, texture_updater, information_renderer, initial, debug1));//instead of just patches
 
 	return active_set;
 }

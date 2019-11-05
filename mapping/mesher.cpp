@@ -1,4 +1,4 @@
-#include "meshing.h"
+#include "mesher.h"
 
 #include <mesh_reconstruction.h>
 #include <cuda/xtion_camera_model.h>
@@ -8,13 +8,13 @@ using namespace Eigen;
 
 int debug_triangle_count = 0;
 
-TriangleReference Meshing::addTriangle(const VertexReference &pr1,
-                                       const VertexReference &pr2,
-                                       const VertexReference &pr3,
-                                       const Triangle::Neighbour &nr1,
-                                       const Triangle::Neighbour &nr2,
-                                       const Triangle::Neighbour &nr3,
-                                       int &rotated) {
+TriangleReference Mesher::addTriangle(const VertexReference &pr1,
+									  const VertexReference &pr2,
+									  const VertexReference &pr3,
+									  const Triangle::Neighbour &nr1,
+									  const Triangle::Neighbour &nr2,
+									  const Triangle::Neighbour &nr3,
+									  int &rotated) {
 
 	rotated = 0;
 	MeshPatch *patch_1 = pr1.getPatch();
@@ -220,9 +220,9 @@ TriangleReference Meshing::addTriangle(const VertexReference &pr1,
 	}
 }
 
-void Meshing::meshIt(cv::Mat points, cv::Mat mesh_pointers, 
-                     cv::Mat vertex_indices, cv::Mat sensor_std, 
-                     float max_depth_step, //deprecate this
+void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
+					cv::Mat vertex_indices, cv::Mat sensor_std,
+					float max_depth_step, //deprecate this
                      Matrix4f depth_pose) {
 	int width  = points.cols;
 	int height = points.rows;
@@ -482,7 +482,7 @@ inline bool operator==(const VertexTexConn &lhs, const VertexTexConn &rhs) {
 	return lhs.vert == rhs.vert;
 }
 
-void Meshing::genTexIndices(vector<shared_ptr<MeshPatch> > &patches) {
+void Mesher::genTexIndices(vector<shared_ptr<MeshPatch> > &patches) {
 
 	for(size_t i = 0; i < patches.size(); i++) {
 		set<VertexTexConn> vert_set;

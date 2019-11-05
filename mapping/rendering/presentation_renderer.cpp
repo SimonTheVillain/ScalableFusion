@@ -1,4 +1,4 @@
-#include "map_presentation_renderer.h"
+#include "presentation_renderer.h"
 
 #include <gfx/gl_utils.h>
 #include <mesh_reconstruction.h>
@@ -27,28 +27,28 @@ const string presentation_debug_vert =
 #include "shader/presentation_debug.vert"
 ;
 
-weak_ptr<gfx::GLSLProgram> MapPresentationRenderer::s_rgb_program_;
+weak_ptr<gfx::GLSLProgram> PresentationRenderer::s_rgb_program_;
 
-MapPresentationRenderer::MapPresentationRenderer(int width, int height)
+PresentationRenderer::PresentationRenderer(int width, int height)
 		: show_wireframe(true),
 		  color_mode(0),
 		  shading_mode(0),
 		  rendering_active_set_update_worker_(nullptr) {
 }
 
-MapPresentationRenderer::~MapPresentationRenderer() {
+PresentationRenderer::~PresentationRenderer() {
 
 }
 
-void MapPresentationRenderer::initInContext(int width, int height, 
-                                            MeshReconstruction *map) {
-	map_    = map;
+void PresentationRenderer::initInContext(int width, int height,
+										 MeshReconstruction *reconstruction) {
+	//map_    = map;
 	width_  = width;
 	height_ = height;
-	initInContext();
+	initInContext(reconstruction);
 }
 
-void MapPresentationRenderer::initInContext() {
+void PresentationRenderer::initInContext(MeshReconstruction* reconstruction) {
 	gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::initInContext]");
 
 	//render depth shader
@@ -82,8 +82,8 @@ void MapPresentationRenderer::initInContext() {
 	glBindVertexArray(debug_VAO_);
 }
 
-void MapPresentationRenderer::render(ActiveSet *active_set, Matrix4f projection, 
-                                     Matrix4f pose) {
+void PresentationRenderer::render(ActiveSet *active_set, Matrix4f projection,
+								  Matrix4f pose) {
 	gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] before doing anything.");
 
 	if(active_set == nullptr) {
@@ -167,9 +167,13 @@ void MapPresentationRenderer::render(ActiveSet *active_set, Matrix4f projection,
 			"[RenderMapPresentation::render] After doing everything.");
 }
 
-void MapPresentationRenderer::renderInWindow(Matrix4f view, Matrix4f proj,
-                                             bool render_visible_from_cam,
-                                             GLFWwindow *root_context) {
+void PresentationRenderer::renderInWindow(MeshReconstruction* reconstruction,
+										  Matrix4f view, Matrix4f proj,
+										  bool render_visible_from_cam,
+										  GLFWwindow *root_context,
+										  InformationRenderer* information_renderer,
+										  LowDetailRenderer* low_detail_renderer,
+										  TextureUpdater* texture_updater) {
 	//return;//TODO: remove this debug measure
 	//disgusting debug attempt
 	bool disable_render_of_user_camera=false; //false means we render stuff seen by the user camera
@@ -190,7 +194,9 @@ void MapPresentationRenderer::renderInWindow(Matrix4f view, Matrix4f proj,
 		   !disable_render_of_user_camera) {//DEBUG
 			GLFWwindow **context = new GLFWwindow*;
 			auto initializer = [&](GLFWwindow *parent_context, 
-			                       GLFWwindow **new_context) {
+			                       GLFWwindow **new_context,
+			                       InformationRenderer* information_renderer_local,
+			                       MeshReconstruction* reconstruction_local) {
 				//init opengl context here
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
@@ -202,33 +208,43 @@ void MapPresentationRenderer::renderInWindow(Matrix4f view, Matrix4f proj,
 				glewInit();
 				glGetError();
 				//TODO: it feels weird calling this method within this class
-				map_->information_renderer.initInContext(640, 480, map_);
+				information_renderer_local->initInContext(640, 480, reconstruction_local);//THIS CRASHES BECAUSE information renderer
 			};
-			auto cleaner = [&](GLFWwindow **context) {
-				map_->fbo_storage_.forceGarbageCollect();
-				map_->garbage_collector_->forceCollect();
+			auto cleaner = [&](GLFWwindow **context,
+								MeshReconstruction* reconstruction_local) {
+				reconstruction_local->fbo_storage_.forceGarbageCollect();
+				reconstruction_local->garbage_collector_->forceCollect();
 				glFinish();
 				glfwDestroyWindow(*context);
 				delete context;
 			};
-			function<void ()> init_function = bind(initializer, root_context, context);
-			function<void ()> cleanup_function = bind(cleaner, context);
+			function<void ()> init_function =
+					bind(initializer, root_context, context, information_renderer, reconstruction);
+			function<void ()> cleanup_function = bind(cleaner, context, reconstruction);
 			rendering_active_set_update_worker_ =
 					new Worker(init_function, "UpSetRend", cleanup_function);
 		}
 		auto task = [&](Matrix4f inv_cam_pose, Vector4f intrinsics,
-		                Vector2f res, float view_distance) {
+		                Vector2f res, float view_distance,
+						MeshReconstruction* reconstruction_local,
+		                LowDetailRenderer* low_detail_renderer_local,
+		                TextureUpdater* texture_updater_local,
+		                InformationRenderer* information_renderer_local) {
 			vector<shared_ptr<MeshPatch>> visible_patches =
-					map_->octree_.getObjects(inv_cam_pose, intrinsics, res, view_distance);
+					reconstruction->octree_.getObjects(inv_cam_pose, intrinsics, res, view_distance);
 
 			cudaDeviceSynchronize();
 			gpuErrchk(cudaPeekAtLastError());
 			shared_ptr<ActiveSet> active_set =
-					map_->gpu_geom_storage_.makeActiveSet(visible_patches, map_);
+					reconstruction_local->gpu_geom_storage_.makeActiveSet(visible_patches,
+							                                              reconstruction_local,
+							                                              low_detail_renderer_local,
+							                                              texture_updater_local,
+							                                              information_renderer_local);
 
 			//cleanup VBO and VAOs that are deleted but only used within this thread
-			map_->cleanupGlStoragesThisThread_();
-			map_->garbage_collector_->collect();
+			reconstruction_local->cleanupGlStoragesThisThread_();
+			reconstruction_local->garbage_collector_->collect();
 			glFinish();
 			cudaDeviceSynchronize();
 			gpuErrchk(cudaPeekAtLastError());
@@ -237,33 +253,37 @@ void MapPresentationRenderer::renderInWindow(Matrix4f view, Matrix4f proj,
 			//is this really needed?
 			//activeSet->securePatchTextures();
 			//store the active set
-			map_->active_set_rendering_mutex_.lock();
-			map_->active_set_rendering_ = active_set;
-			map_->active_set_rendering_mutex_.unlock();
+			reconstruction_local->active_set_rendering_mutex_.lock();
+			reconstruction_local->active_set_rendering_ = active_set;
+			reconstruction_local->active_set_rendering_mutex_.unlock();
 		};
 
 		//the update worker is not queuing the update tasks.
 		rendering_active_set_update_worker_->setNextTask(bind(task, cam_pose, 
 		                                                      intrinsics,
-		                                                      res, 1.0f));
+		                                                      res, 1.0f,
+		                                                      reconstruction,
+		                                                      low_detail_renderer,
+		                                                      texture_updater,
+		                                                      information_renderer));
 
 	} else {
-		map_->active_set_rendering_mutex_.lock();
-		map_->active_set_rendering_ = nullptr;
-		map_->active_set_rendering_mutex_.unlock();
+		reconstruction->active_set_rendering_mutex_.lock();
+		reconstruction->active_set_rendering_ = nullptr;
+		reconstruction->active_set_rendering_mutex_.unlock();
 	}
 
 	//at last we render the active set
-	map_->active_set_update_mutex.lock();
-	shared_ptr<ActiveSet> active_set_work = map_->active_set_update;
-	map_->active_set_update_mutex.unlock();
+	reconstruction->active_set_update_mutex.lock();
+	shared_ptr<ActiveSet> active_set_work = reconstruction->active_set_update;
+	reconstruction->active_set_update_mutex.unlock();
 
-	map_->active_set_rendering_mutex_.lock();
+	reconstruction->active_set_rendering_mutex_.lock();
 	shared_ptr<ActiveSet> active_set_display;
 	if(!disable_render_of_user_camera) {
-		active_set_display = map_->active_set_rendering_;
+		active_set_display = reconstruction->active_set_rendering_;
 	}
-	map_->active_set_rendering_mutex_.unlock();
+	reconstruction->active_set_rendering_mutex_.unlock();
 
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());
@@ -285,5 +305,5 @@ void MapPresentationRenderer::renderInWindow(Matrix4f view, Matrix4f proj,
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());
 
-	map_->low_detail_renderer.renderExceptForActiveSets(sets, proj, view);
+	low_detail_renderer->renderExceptForActiveSets(sets, proj, view);
 }

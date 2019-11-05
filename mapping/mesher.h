@@ -1,5 +1,5 @@
-#ifndef FILE_MESHING_H
-#define FILE_MESHING_H
+#ifndef FILE_MESHER_H
+#define FILE_MESHER_H
 
 #include <memory>
 
@@ -12,7 +12,7 @@ using namespace std;
 
 class MeshReconstruction;
 
-class Meshing {
+class Mesher {
 public:
 
 	void setup(MeshReconstruction* mesh_reconstruction) {
@@ -40,4 +40,4 @@ public:
 
 };
 
-#endif // FILE_MESHING_H
+#endif // FILE_MESHER_H

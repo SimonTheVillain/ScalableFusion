@@ -6,8 +6,9 @@
 using namespace std;
 
 class MeshReconstruction;
+class LowDetailRenderer;
 
-class Exporter {
+class MapExporter {
 private:
 	//texturing while reducing mesh resolution
 	//http://hhoppe.com/tmpm.pdf
@@ -30,7 +31,7 @@ public:
 	static void exportMesh(MeshReconstruction *map, string path,
 	                       Properties_ properties);
 
-	static void storeCoarse(MeshReconstruction *map, string file_path);
+	static void storeCoarse(MeshReconstruction *map,LowDetailRenderer* lowDetailRenderer, string file_path);
 	static void storeFine(MeshReconstruction *map, string file_path);
 
 	static void storeGraph(MeshReconstruction *map, string file_path);

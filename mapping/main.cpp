@@ -22,7 +22,7 @@
 #include <rendering/renderable_model.h>
 #include <debug_render.h>
 #include <gfx/garbage_collector.h>
-#include <export/export_map.h>
+#include <export/map_exporter.h>
 #include <segmentation/incremental_segmentation.h>
 #include <utils/perf_meter.h>
 
@@ -269,7 +269,7 @@ int main(int argc, const char *argv[]) {
 	GarbageCollector garbage_collector;
 
 	//create a map object that takes 640 by 480 sized depth images
-	shared_ptr<MeshReconstruction> scaleable_map = 
+	shared_ptr<MeshReconstruction> scalable_map =
 			make_shared<MeshReconstruction>(invisible_window, &garbage_collector,
 			                                multithreaded, 640, 480);
 
@@ -283,12 +283,15 @@ int main(int argc, const char *argv[]) {
 	shared_ptr<IncrementalSegmentation> incremental_segmentation = 
 			make_shared<EdithSegmentation>();
 
+	LowDetailRenderer low_detail_renderer;
 	SchedulerBase *scheduler = nullptr;
 	if(multithreaded) {
-		scheduler = new SchedulerThreaded(scaleable_map, &dataset, invisible_window);
+		scheduler = new SchedulerThreaded(scalable_map, &dataset, invisible_window);
 	} else {
-		scheduler = new SchedulerLinear(scaleable_map, &garbage_collector, &dataset, 
-		                                invisible_window, incremental_segmentation);
+		scheduler = new SchedulerLinear(scalable_map, &garbage_collector, &dataset,
+										invisible_window,
+										&low_detail_renderer,
+										incremental_segmentation);
 	}
 	scheduler->pause(paused);
 
@@ -309,7 +312,11 @@ int main(int argc, const char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	glfwMakeContextCurrent(window);
-	scaleable_map->initInGLRenderingContext();
+	scalable_map->initInGLRenderingContext();
+
+	PresentationRenderer presentation_renderer;
+	InformationRenderer information_renderer;//TODO: setup low detail renderer
+
 
 	//initialize the debug outputs
 	that_one_debug_rendering_thingy = new RenderDebugInfo();
@@ -349,25 +356,38 @@ int main(int argc, const char *argv[]) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
 
-		scaleable_map->render_presentation.show_wireframe = render_wireframe;
-		scaleable_map->render_presentation.color_mode = color_mode;
-		scaleable_map->render_presentation.shading_mode = shading_mode;
+		presentation_renderer.show_wireframe = render_wireframe;
+		presentation_renderer.color_mode = color_mode;
+		presentation_renderer.shading_mode = shading_mode;
+
+
+		presentation_renderer.initInContext(scalable_map.get());
+		presentation_renderer.initInContext(640, 480, scalable_map.get()); //TODO: is this the right resolution?
+
+		low_detail_renderer.initInGlContext();
 		if(!disable_rendering) {
-			scaleable_map->render_presentation.renderInWindow(view, proj, 
-			                                                  render_high_detail,
-			                                                  invisible_window);
+			presentation_renderer.renderInWindow(scalable_map.get(),
+												 view, proj,
+												 render_high_detail,
+												 invisible_window,
+												 &information_renderer,
+												 &low_detail_renderer,
+												 &texture_updater);
 		}
 		if(read_out_surface_info == true) {
 			cout << "Reading out the clicked patch to get further info" << endl;
 			int patch_ind;
 			int triangle_ind;
 			Vector4f clicked_point = 
-					scaleable_map->information_renderer.renderAndExtractInfo(
-							view, proj, render_high_detail, invisible_window, 1280, 800,
+					information_renderer.renderAndExtractInfo(
+							scalable_map.get(),
+							view, proj, &low_detail_renderer,
+							render_high_detail, // render stuff thats visible from camera perspective
+							invisible_window, 1280, 800,
 							static_cast<int>(xpos_old), static_cast<int>(ypos_old),
 							&patch_ind, &triangle_ind);
 			if(!isnan(clicked_point[0])) {
-				shared_ptr<MeshPatch> patch = scaleable_map->getPatchById(patch_ind);
+				shared_ptr<MeshPatch> patch = scalable_map->getPatchById(patch_ind);
 				if(patch != nullptr) {
 					wire_sphere_model.setPosition(patch->getPos());
 					wire_sphere_model.setRadius(patch->getRadius());
@@ -379,8 +399,11 @@ int main(int argc, const char *argv[]) {
 		if(center_camera == true) {
 			cout << "Reading out the clicked patch to get further info and center the camera" << endl;
 			Vector4f center = 
-					scaleable_map->information_renderer.renderAndExtractInfo(
-							view, proj, render_high_detail, invisible_window, 1280, 800,
+					information_renderer.renderAndExtractInfo(
+							scalable_map.get(),
+							view, proj,
+							&low_detail_renderer,
+							render_high_detail, invisible_window, 1280, 800,
 							static_cast<int>(xpos_old), static_cast<int>(ypos_old));
 			if(!isnan(center[0])) {
 				trans = -center.block<3, 1>(0, 0);
@@ -409,20 +432,20 @@ int main(int argc, const char *argv[]) {
 	}
 
 	if(!graph_output_file.empty()) {
-		//Exporter::storeDeformationGraph(scaleableMap.get(),graphOutputFile);
-		//Exporter::storeGraph(scaleableMap.get(),graphOutputFile);
+		//MapExporter::storeDeformationGraph(scaleableMap.get(),graphOutputFile);
+		//MapExporter::storeGraph(scaleableMap.get(),graphOutputFile);
 	}
 
 	if(!coarse_output_file.empty()) {
 		//TODO: make the exporter more of an integral part of the scaleableMap
-		//Exporter::ExportMap(map,"/home/simon/Documents/reconstruction_results/");
+		//MapExporter::ExportMap(map,"/home/simon/Documents/reconstruction_results/");
 		//store the stupid reconstruction somewhere
-		Exporter::storeCoarse(scaleable_map.get(), coarse_output_file);
+		MapExporter::storeCoarse(scalable_map.get(), &low_detail_renderer, coarse_output_file);
 	}
 
 	if(!detailed_output_file.empty()) {
 		//store the stupid reconstruction somewhere
-		Exporter::storeFine(scaleable_map.get(), detailed_output_file);
+		MapExporter::storeFine(scalable_map.get(), detailed_output_file);
 	}
 
 	close_request =  true;
@@ -432,9 +455,9 @@ int main(int argc, const char *argv[]) {
 	delete scheduler;
 
 	//erase active sets and patches so really nothing should be on the gpu
-	scaleable_map->erase();
+	scalable_map->erase();
 
-	scaleable_map.reset();
+	scalable_map.reset();
 
 	cout << "DEBUG:most resources should be freed here! look at nvidia-smi (but in fact nothing is freed)" << endl;
 

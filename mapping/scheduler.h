@@ -21,6 +21,8 @@ class Segmentation;
 
 class GarbageCollector;
 
+class LowDetailRenderer;
+
 namespace gfx {
 	class GpuTex2D;
 } // namespace gfx
@@ -48,6 +50,7 @@ public:
 	SchedulerLinear(shared_ptr<MeshReconstruction> map,
 	                GarbageCollector *garbage_collector, Stream *capture,
 	                GLFWwindow *context,
+	                LowDetailRenderer *low_detail_renderer,
 	                shared_ptr<IncrementalSegmentation> incremental_segmentation);
 
 	~SchedulerLinear();
@@ -81,6 +84,7 @@ private:
 
 	shared_ptr<IncrementalSegmentation> incremental_segmentation_;
 
+	LowDetailRenderer* low_detail_renderer_;
 	bool paused_;
 	bool take_next_step_;
 };

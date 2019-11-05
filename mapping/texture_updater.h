@@ -1,5 +1,5 @@
-#ifndef FILE_TEXTURING_H
-#define FILE_TEXTURING_H
+#ifndef FILE_TEXTURE_UPDATER_H
+#define FILE_TEXTURE_UPDATER_H
 
 #include <memory>
 
@@ -12,13 +12,15 @@ using namespace Eigen;
 
 class MeshReconstruction;
 
-class Texturing {
+class TextureUpdater {
 public:
 
-	void generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
-	                     Matrix4f pose, Matrix4f proj,
-	                     shared_ptr<gfx::GpuTex2D> geom_sensor_data,
-	                     shared_ptr<ActiveSet> active_set);
+	void generateGeomTex(MeshReconstruction* reconstruction,
+						 vector<shared_ptr<MeshPatch> > &new_patches,
+						 Matrix4f pose, Matrix4f proj,
+						 shared_ptr<gfx::GpuTex2D> geom_sensor_data,
+						 shared_ptr<ActiveSet> active_set,
+						 InformationRenderer* information_renderer);
 
 	void projToGeomTex(ActiveSet *active_set, 
 	                   vector<shared_ptr<MeshPatch> > &new_patches,
@@ -31,21 +33,27 @@ public:
 	                       shared_ptr<ActiveSet> &active_set);
 
 	void colorTexUpdate(shared_ptr<gfx::GpuTex2D> rgba_tex,
+	                    LowDetailRenderer* low_detail_renderer,
 	                    Matrix4f color_pose_in,
 	                    shared_ptr<ActiveSet> &active_set);
 
 	void applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
+						LowDetailRenderer* low_detail_renderer,
 	                    shared_ptr<gfx::GpuTex2D> rgb_in,
 	                    Matrix4f &pose, Matrix4f &proj, 
 	                    shared_ptr<ActiveSet> active_set);
 
-	void genLookupTexGeom(ActiveSet *active_set, 
-	                      vector<shared_ptr<MeshPatch> > &patches);
+	void genLookupTexGeom(MeshReconstruction* reconstruction,
+						  ActiveSet *active_set,
+						  vector<shared_ptr<MeshPatch> > &patches,
+						  InformationRenderer* information_renderer);
 
-	void genLookupTex(ActiveSet *active_set,
-	                  vector<shared_ptr<MeshPatch> > &patches,
-	                  vector<shared_ptr<MeshTexture>> &textures,
-	                  bool dilate = true);
+	void genLookupTex(MeshReconstruction* reconstruction,
+					  ActiveSet *active_set,
+					  vector<shared_ptr<MeshPatch> > &patches,
+					  vector<shared_ptr<MeshTexture>> &textures,
+					  InformationRenderer* information_renderer,
+					  bool dilate = true);
 
 	MeshReconstruction *mesh_reconstruction;
 };

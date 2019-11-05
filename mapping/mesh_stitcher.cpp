@@ -1,4 +1,4 @@
-#include "stitching.h"
+#include "mesh_stitcher.h"
 
 #include <Eigen/Eigen>
 
@@ -9,9 +9,9 @@
 using namespace std;
 using namespace Eigen;
 
-void Stitching::rasterBorderGeometry(vector<vector<Edge>> &borders, 
-                                     Matrix4f view, Matrix4f proj, 
-                                     cv::Mat geometry) {
+void MeshStitcher::rasterBorderGeometry(vector<vector<Edge>> &borders,
+										Matrix4f view, Matrix4f proj,
+										cv::Mat geometry) {
 
 	Matrix4f view_inv = view.inverse();
 	cv::Mat debug = geometry.clone(); //TODO: get rid of this
@@ -23,8 +23,8 @@ void Stitching::rasterBorderGeometry(vector<vector<Edge>> &borders,
 	}
 }
 
-void Stitching::rasterLineGeometry(Matrix4f view, Matrix4f proj, Edge *edge, 
-                                   cv::Mat geometry, cv::Mat debug) {
+void MeshStitcher::rasterLineGeometry(Matrix4f view, Matrix4f proj, Edge *edge,
+									  cv::Mat geometry, cv::Mat debug) {
 
 	//first of all calculate the two points in screen space
 	Matrix4f p_v = proj * view;
@@ -100,9 +100,9 @@ void Stitching::rasterLineGeometry(Matrix4f view, Matrix4f proj, Edge *edge,
 	bresenham(pix0, pix1, f);
 }
 
-void Stitching::genBorderList(vector<shared_ptr<MeshPatch>> &patches,
-                              vector<vector<Edge>> &border_list, 
-                              Matrix4f debug_proj_pose) {
+void MeshStitcher::genBorderList(vector<shared_ptr<MeshPatch>> &patches,
+								 vector<vector<Edge>> &border_list,
+								 Matrix4f debug_proj_pose) {
 	float s = 2.0f;
 	cv::Mat debug_mat(480 * (s + 1), 640 * (s + 1), CV_8UC3);
 	debug_mat.setTo(0);
@@ -340,7 +340,7 @@ void Stitching::genBorderList(vector<shared_ptr<MeshPatch>> &patches,
 	}
 }
 
-void Stitching::reloadBorderGeometry(vector<vector<Edge>> &border_list) {
+void MeshStitcher::reloadBorderGeometry(vector<vector<Edge>> &border_list) {
 	//i very much fear what happens when something here changes
 
 	MeshReconstruction *mesh = mesh_reconstruction;
@@ -385,7 +385,7 @@ void Stitching::reloadBorderGeometry(vector<vector<Edge>> &border_list) {
 }
 
 //TODO: also download the geometry of such list
-void Stitching::freeBorderList(vector<vector<Edge>> &border_list) {
+void MeshStitcher::freeBorderList(vector<vector<Edge>> &border_list) {
 	for(size_t i = 0; i < border_list.size(); i++) {
 		for(size_t j = 0; j < border_list[i].size(); j++) {
 			Edge &edge = border_list[i][j];
@@ -395,7 +395,7 @@ void Stitching::freeBorderList(vector<vector<Edge>> &border_list) {
 	border_list.clear();
 }
 
-void Stitching::stitchOnBorders(
+void MeshStitcher::stitchOnBorders(
 		vector<vector<Edge>> &borders, Matrix4f view, Matrix4f proj, 
 		cv::Mat std_proj, cv::Mat geom_proj_m, cv::Mat new_geom_m, cv::Mat new_std,
 		cv::Mat debug_color_coded_new_segmentation, cv::Mat new_seg_pm, 

@@ -8,15 +8,16 @@
 
 using namespace std;
 
-class MapInformationRenderer;
-class MapPresentationRenderer;
+class InformationRenderer;
+class PresentationRenderer;
 
 class MeshReconstruction;
 class MeshPatch;
 class MeshPatchGpuHandle;
 class MeshTextureGpuHandle;
 class GpuGeomStorage;
-
+class LowDetailRenderer;
+class TextureUpdater;
 class GpuTriangle;
 template <typename T>
 class GpuBufferConnector;
@@ -24,8 +25,8 @@ typedef GpuBufferConnector<GpuTriangle> TriangleBufConnector;
 
 class ActiveSet {
 	friend GpuGeomStorage;
-	friend MapInformationRenderer;
-	friend MapPresentationRenderer;
+	friend InformationRenderer;
+	friend PresentationRenderer;
 	friend MeshPatch;
 
 public:
@@ -59,8 +60,11 @@ public:
 private:
 
 	ActiveSet(GpuGeomStorage *storage, vector<shared_ptr<MeshPatch>> patches,
-	          MeshReconstruction *map,
-	          bool initial,//TODO: also get rid of these initial frames
+			  MeshReconstruction *map,
+			  LowDetailRenderer* low_detail_renderer,
+			  TextureUpdater* texture_updater,
+			  InformationRenderer* information_renderer,
+			  bool initial,//TODO: also get rid of these initial frames
 	          bool debug1 = false);
 
 	//TODO: these:
@@ -75,11 +79,14 @@ private:
 	//TODO: these, but this seems not to be elegant
 	void checkAndAppendTriangles_(
 			const vector<shared_ptr<MeshPatch>> &patches_to_check,
-			vector<shared_ptr<MeshPatch>> &append_to);
+			vector<shared_ptr<MeshPatch>> &append_to
+			);
 	void uploadTriangles_(vector<shared_ptr<MeshPatch>> &patches);
 	//TODO: these
 	void checkAndUpdateRefTextures_(const vector<shared_ptr<MeshPatch>> &patches,
-	                                MeshReconstruction *map);
+									MeshReconstruction *reconstruction,
+									TextureUpdater *texture_updater,
+									InformationRenderer* information_renderer);
 
 	//TODO: propably the same for download
 };

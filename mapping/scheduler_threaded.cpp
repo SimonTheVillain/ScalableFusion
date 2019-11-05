@@ -20,9 +20,9 @@ using namespace Eigen;
 
 void SchedulerThreaded::captureWorker_(shared_ptr<MeshReconstruction> map, 
                                        Stream *stream, GLFWwindow *context) {
-
+/*
 	//stuff that formerly has been in capture proc:
-	/**********************************/
+	//**********************************
 	GLFWwindow *new_context = createConnectedGlContext(context);
 	glfwMakeContextCurrent(new_context);
 
@@ -30,7 +30,7 @@ void SchedulerThreaded::captureWorker_(shared_ptr<MeshReconstruction> map,
 	glewExperimental = GL_TRUE;
 	glewInit();
 	glGetError();
-	/*********************************/
+	//*********************************
 
 	ofstream logMemory("/home/simon/Desktop/scalableLog.txt");
 
@@ -39,6 +39,17 @@ void SchedulerThreaded::captureWorker_(shared_ptr<MeshReconstruction> map,
 	int blocks = 16;
 
 	map->initInGlLogicContext();
+
+
+
+	InformationRenderer information_renderer;
+
+	information_renderer.initInContext();
+
+	information_renderer.initInContext(
+			640,// TODO: don't hardcode this!!!
+			480,
+			map.get());
 
 	Vector4f fc = stream->getDepthIntrinsics();
 
@@ -100,7 +111,7 @@ void SchedulerThreaded::captureWorker_(shared_ptr<MeshReconstruction> map,
 		if(has_geometry) {
 			//update the odometry when we already have geometry mapped
 			cv::Mat reprojected_depth =
-					map->generateDepthFromView(640, 480, accu_pose.cast<float>().matrix());
+					map->generateDepthFromView(640, 480,information_renderer, accu_pose.cast<float>().matrix());
 
 			odometry->initICPModel((unsigned short*) reprojected_depth.data,
 			                       depth_cutoff);
@@ -139,7 +150,7 @@ void SchedulerThreaded::captureWorker_(shared_ptr<MeshReconstruction> map,
 				                           GL_UNSIGNED_BYTE, rgba.cols, rgba.rows, 
 				                           true, rgba.data);
 
-		/************************************************/
+		//************************************************
 		//Prepare the sensor data
 
 		//do the same for depth!
@@ -165,7 +176,7 @@ void SchedulerThreaded::captureWorker_(shared_ptr<MeshReconstruction> map,
 		cv::Mat d_std_mat(depth.rows, depth.cols, CV_32FC4);
 		d_std_tex->downloadData(static_cast<void*>(d_std_mat.data));
 
-		/***************************************/
+		//***************************************
 		//lets integrate the new data
 		//get current active set:
 		map->active_set_update_mutex.lock();
@@ -210,6 +221,8 @@ void SchedulerThreaded::captureWorker_(shared_ptr<MeshReconstruction> map,
 
 	//Detroying the context which is only used in this thread
 	glfwDestroyWindow(new_context);
+
+*/
 }
 
 void SchedulerThreaded::updateActiveSet_(cv::Mat d_std_mat, 
@@ -217,14 +230,14 @@ void SchedulerThreaded::updateActiveSet_(cv::Mat d_std_mat,
                                          Matrix4f depth_pose, 
                                          shared_ptr<gfx::GpuTex2D> rgb_tex,
                                          Matrix4f rgb_pose) {
-
+	/*
 	bool do_expansion_update = false;
 	if(!currently_working_on_expansion_) {
 		currently_working_on_expansion_ = true;
 		do_expansion_update = true;
 	}
 
-	shared_ptr<ActiveSet> active_set = map_->genActiveSetFromPose(depth_pose);
+	shared_ptr<ActiveSet> active_set = map_->genActiveSetFromPose(depth_pose,);
 
 	map_->setActiveSetUpdate_(active_set);
 
@@ -253,19 +266,20 @@ void SchedulerThreaded::updateActiveSet_(cv::Mat d_std_mat,
 		                   rgb_pose, d_std_tex, d_std_mat, depth_pose);
 		expand_worker_->setNextTask(expand);
 	}
+	 */
 }
 
 void SchedulerThreaded::refineRgb_(shared_ptr<ActiveSet> active_set, 
                                    shared_ptr<gfx::GpuTex2D> rgb_tex,
                                    Matrix4f rgb_pose) {
-	map_->texturing.colorTexUpdate(rgb_tex, rgb_pose, active_set);
+	//map_->texturing.colorTexUpdate(rgb_tex, rgb_pose, active_set);
 	refine_rgb_timer_.click();
 }
 
 void SchedulerThreaded::refineDepth_(shared_ptr<ActiveSet> active_set, 
                                      shared_ptr<gfx::GpuTex2D> d_std_tex,
                                      Matrix4f depth_pose) {
-	map_->geometry_update.update(d_std_tex, depth_pose, active_set);
+	//map_->geometry_update.update(d_std_tex, depth_pose, active_set);
 	refine_depth_timer_.click();
 }
 
@@ -274,8 +288,8 @@ void SchedulerThreaded::expand_(shared_ptr<ActiveSet> active_set,
                                 Matrix4f rgb_pose, 
                                 shared_ptr<gfx::GpuTex2D> d_std_tex, 
                                 cv::Mat d_std_mat, Matrix4f depth_pose) {
-	map_->geometry_update.extend(active_set, d_std_tex,d_std_mat, depth_pose,
-	                            rgb_tex, rgb_pose);
+	//map_->geometry_update.extend(active_set, d_std_tex,d_std_mat, depth_pose,
+	//                            rgb_tex, rgb_pose);
 	currently_working_on_expansion_ = false;
 	frame_done_debug_synchronize_ = true;
 	expand_timer_.click();

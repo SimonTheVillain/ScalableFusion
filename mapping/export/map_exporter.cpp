@@ -1,4 +1,4 @@
-#include "export_map.h"
+#include "map_exporter.h"
 
 #include <unordered_map>
 #include <fstream>
@@ -14,19 +14,19 @@
 using namespace std;
 using namespace Eigen;
 
-void Exporter::exportMap(MeshReconstruction *map, string path,
-                         unsigned int properties) {
+void MapExporter::exportMap(MeshReconstruction *map, string path,
+							unsigned int properties) {
 }
 
 //only HighRes or LowRes is valid
-void Exporter::exportMesh(MeshReconstruction *map, string path,
-                          Exporter::Properties_ properties) {
+void MapExporter::exportMesh(MeshReconstruction *map, string path,
+							 MapExporter::Properties_ properties) {
 }
 
-void Exporter::storeCoarse(MeshReconstruction *map, string file_path) {
+void MapExporter::storeCoarse(MeshReconstruction *map, LowDetailRenderer* low_detail_renderer, string file_path) {
 	vector<GpuCoarseVertex> vertices;
 	vector<int> indices;
-	map->low_detail_renderer.downloadCurrentGeometry(vertices, indices);
+	low_detail_renderer->downloadCurrentGeometry(vertices, indices);
 
 	aiScene scene;
 
@@ -92,7 +92,7 @@ void Exporter::storeCoarse(MeshReconstruction *map, string file_path) {
 	}
 }
 
-void Exporter::storeFine(MeshReconstruction *map, string file_path) {
+void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 
 	//todo: iterate over all patches download their data from gpu to cpu
 
@@ -215,7 +215,7 @@ void Exporter::storeFine(MeshReconstruction *map, string file_path) {
 	}
 }
 
-void Exporter::exportMapTest(string file_path) {
+void MapExporter::exportMapTest(string file_path) {
 	cout << "Assimp " << aiGetVersionMajor() << "." << aiGetVersionMinor() << endl;
 
 	int format_count = aiGetExportFormatCount();
@@ -294,7 +294,7 @@ void Exporter::exportMapTest(string file_path) {
 	cout << "file stored in " << file_path << endl;
 }
 
-void Exporter::storeGraph(MeshReconstruction *map, string file_path) {
+void MapExporter::storeGraph(MeshReconstruction *map, string file_path) {
 	unordered_map<MeshPatch*, int> index_map;
 	unordered_set<shared_ptr<DoubleStitch>> unique_stitches;
 	int k = 0;
@@ -324,8 +324,8 @@ void Exporter::storeGraph(MeshReconstruction *map, string file_path) {
 	file.close();
 }
 
-void Exporter::storeDeformationGraph(MeshReconstruction *map, 
-                                     string file_path) {
+void MapExporter::storeDeformationGraph(MeshReconstruction *map,
+										string file_path) {
 
 	unordered_map<MeshPatch*, unordered_set<MeshPatch*>> unique_edges;
 	unordered_map<MeshPatch*, int> index_map;

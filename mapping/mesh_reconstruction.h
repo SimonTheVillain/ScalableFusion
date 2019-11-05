@@ -12,14 +12,14 @@
 #include <gpu/gpu_geom_storage.h>
 #include <utils/octree.h>
 #include <gpu/thread_safe_FBO_VAO.h>
-#include <rendering/map_information_renderer.h>
-#include <rendering/map_presentation_renderer.h>
-#include <rendering/low_detail_map_renderer.h>
+#include <rendering/information_renderer.h>
+#include <rendering/presentation_renderer.h>
+#include <rendering/low_detail_renderer.h>
 //TODO: migrate functionality to these new classes
-#include <texturing.h>
-#include <geometry_update.h>
-#include <meshing.h>
-#include <stitching.h>
+#include <texture_updater.h>
+#include <geometry_updater.h>
+#include <mesher.h>
+#include <mesh_stitcher.h>
 #include <labelling.h>
 
 using namespace std;
@@ -40,32 +40,33 @@ class SchedulerLinear;
 class SchedulerThreaded;;
 struct Edge;
 
-class MapInformationRenderer;
-class MapPresentationRenderer;
+class InformationRenderer;
+class PresentationRenderer;
 class LowDetailRenderer;
 
 class GarbageCollector;
-class Exporter;
+class MapExporter;
+
 
 /**
  *Thoughts about spanning work over threads:
  * https://stackoverflow.com/questions/21010932/c11-parallel-for-implementation
  */
 class MeshReconstruction {
-	friend MapInformationRenderer;
-	friend MapPresentationRenderer;
+	friend InformationRenderer;
+	friend PresentationRenderer;
 	friend LowDetailRenderer;
 	friend Scheduler; //maybe we don't want this one as friend
 	friend SchedulerLinear;
 	friend SchedulerThreaded;
 	friend ActiveSet;
 	friend MeshTexture;
-	friend Stitching;
-	friend GeometryUpdate;
-	friend Texturing;
+	friend MeshStitcher;
+	friend GeometryUpdater;
+	friend TextureUpdater;
 	friend Labelling;
-	friend Exporter;
-	friend Meshing;
+	friend MapExporter;
+	friend Mesher;
 
 public:
 
@@ -124,7 +125,9 @@ public:
 	void setRGBIntrinsics(Vector4f fxycxy);
 	void setDepthIntrinsics(Vector4f fxycxy);
 
-	cv::Mat generateDepthFromView(int width, int height, Matrix4f pose);
+	cv::Mat generateDepthFromView(int width, int height,
+								  InformationRenderer* renderer,
+								  Matrix4f pose);
 
 	Matrix4f genDepthProjMat();
 
@@ -141,7 +144,10 @@ public:
 	bool hasGeometry();
 
 	//pls describe these
-	shared_ptr<ActiveSet> genActiveSetFromPose(Matrix4f depth_pose);
+	shared_ptr<ActiveSet> genActiveSetFromPose(Matrix4f depth_pose,
+											   LowDetailRenderer* low_detail_renderer,
+											   TextureUpdater* texture_updater,
+											   InformationRenderer* information_renderer);
 	vector<cv::Rect2f> genBoundsFromPatches(
 			vector<shared_ptr<MeshPatch>> &patches, Matrix4f pose, 
 			Matrix4f proj, shared_ptr<ActiveSet> active_set);
@@ -152,13 +158,13 @@ public:
 	Parameters params;
 
 	//TODO: remove, just for debugging purpose
-	MapInformationRenderer information_renderer;
-	MapPresentationRenderer render_presentation;
-	LowDetailRenderer low_detail_renderer;
+	//InformationRenderer information_renderer;
+	//PresentationRenderer render_presentation;
+	//LowDetailRenderer low_detail_renderer;
 
-	GeometryUpdate geometry_update;
-	Texturing texturing;
-	Labelling labelling;
+	//GeometryUpdater geometry_update;
+	//TextureUpdater texturing;
+	//Labelling labelling;
 
 	mutex active_set_update_mutex;
 	shared_ptr<ActiveSet> active_set_update;

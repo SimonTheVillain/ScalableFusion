@@ -41,10 +41,12 @@ void SchedulerBase::initializeGlContextInThread(GLFWwindow *context) {
 SchedulerLinear::SchedulerLinear(
 		shared_ptr<MeshReconstruction> map,  GarbageCollector *garbage_collector,
 		Stream *stream, GLFWwindow *context,
+		LowDetailRenderer* low_detail_renderer,
 		shared_ptr<IncrementalSegmentation> incremental_segmentation)
 		: incremental_segmentation_(incremental_segmentation),
 		  last_known_depth_pose_(Matrix4f::Identity()),
 		  garbage_collector_(garbage_collector),
+		  low_detail_renderer_(low_detail_renderer),
 		  expand_interval_(30),
 		  end_threads_(false),
 		  paused_(false),
@@ -78,6 +80,22 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 	int frame_count = expand_interval_;
 
 	map->initInGlLogicContext();
+
+	InformationRenderer information_renderer;
+
+	information_renderer.initInContext(map.get());
+
+	information_renderer.initInContext(
+			640,// TODO: don't hardcode this!!!
+			480,
+			map.get());
+
+	GeometryUpdater geometry_updater;
+	TextureUpdater texture_updater;
+	texture_updater.mesh_reconstruction = map.get();
+	geometry_updater.setup(map.get());
+
+
 
 	incremental_segmentation_->initInThread();
 
@@ -133,7 +151,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 
 		} else {
 			cv::Mat reprojected_depth = 
-					map->generateDepthFromView(640, 480, accu_pose.cast<float>().matrix());
+					map->generateDepthFromView(640, 480,&information_renderer, accu_pose.cast<float>().matrix());
 
 			odometry->initICPModel((unsigned short*) reprojected_depth.data, depth_cutoff);
 
@@ -196,15 +214,19 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 		//now integrate everything new:
 		//Update the active set according to the current pose:
 		//map->debugCheckTriangleNeighbourConsistency(map->GetAllPatches());
-		shared_ptr<ActiveSet> active_set = map->genActiveSetFromPose(depth_pose);
+		shared_ptr<ActiveSet> active_set =
+				map->genActiveSetFromPose(depth_pose,
+						low_detail_renderer_, //that low detail renderer needs to be shared with
+						&texture_updater,
+						&information_renderer);
 		//map->debugCheckTriangleNeighbourConsistency(map->GetAllPatches());
 
 		//don't ask me what this is doing here!TODO: find out
 		map->clearInvalidGeometry(active_set, depth, depth_pose);
 
-		map->geometry_update.update(d_std_tex, depth_pose, active_set);
+		geometry_updater.update(d_std_tex, depth_pose, active_set);
 
-		map->texturing.colorTexUpdate(rgb_texture, rgb_pose, active_set);
+		texture_updater.colorTexUpdate(rgb_texture,low_detail_renderer_, rgb_pose, active_set);
 
 		//there definitely is a reason to keep the active set here!
 		map->setActiveSetUpdate_(active_set);
@@ -213,55 +235,13 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> map,
 		if(frame_count == expand_interval_ || first_lap) {
 
 			/************* SEMANTIC LABELLING ***********************/
-			if(!first_lap && false) {
 
-				//TODO: we actually always want to use the pose and active_set from the last expand step
-				//THIS IS VERY VALID!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-				//First we need to render the labels in all possible constellations
-				cv::Mat reprojected_depth = 
-						map->generateDepthFromView(640, 480, depth_pose_last_expand);
-				imshow("reprojected depth", reprojected_depth);
-
-				//render all the necessary info needed for labelling
-				Matrix4f proj = map->genDepthProjMat();
-				cv::Mat rendered_depth(  depth.rows, depth.cols, CV_32FC1);
-				cv::Mat rendered_normals(depth.rows, depth.cols, CV_32FC4);
-				cv::Mat rendered_labels( depth.rows, depth.cols, CV_32FC4);//SC1?
-				cv::Mat rendered_color(  depth.rows, depth.cols, CV_32FC4);
-				map->information_renderer.render(active_set.get(),//activeSetExpand
-				                                 proj, depth_pose_last_expand,
-				                                 &rendered_depth, &rendered_normals, 
-				                                 &rendered_color, &rendered_labels);
-
-				cv::Mat novellabels =
-						incremental_segmentation_->generateNewLabels(&rendered_depth,
-						                                             &rendered_normals,
-						                                             &rendered_color,
-						                                             &rendered_labels);
-
-				//then we run the labelling
-				imshow("rendered_depth",   rendered_depth * 0.25f);
-				imshow("rendered_normals", rendered_normals);
-				imshow("rendered_labels",  rendered_labels);
-				imshow("rendered_color",   rendered_color);
-				cout << rendered_labels.at<cv::Vec4i>(100, 100) << endl;
-
-				cv::waitKey();
-
-				//now we project the labels
-				//fake labels, best labes
-				cv::Mat new_labels(depth.rows, depth.cols, CV_32SC4);
-				new_labels.setTo(cv::Scalar(100000, 1, 1));
-				cv::imshow("new_labels", new_labels);
-				//maybe instead of the dStdTex we use the new label texture
-				map->labelling.projectLabels(active_set, new_labels, d_std_tex, 
-				                             depth_pose_last_expand);
-			}
 			/*********************************************************/
 
 			//expanding the existing geometry
-			map->geometry_update.extend(active_set, d_std_tex, d_std_mat, depth_pose,
+			geometry_updater.extend(
+					map.get(),&information_renderer,&texture_updater,low_detail_renderer_,
+					active_set, d_std_tex, d_std_mat, depth_pose,
 			                            rgb_texture, rgb_pose);
 
 			//setting the active set, which also gets rendered to

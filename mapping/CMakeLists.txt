@@ -60,7 +60,7 @@ find_package(radical CONFIG REQUIRED)
 
 # Includes
 include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/../)
+#include_directories(${CMAKE_SOURCE_DIR}/../)# this would make more sense with CMAKE_CURRENT_SOURCE_DIR
 include_directories(${ASSIMP_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIR})
 include_directories(${CUDA_INCLUDE_DIRS})
@@ -82,30 +82,30 @@ file(GLOB CXX_SRCS
 	base/mesh_structure.cpp
 	base/texture_structure.cpp
 	cuda/geom_update.cpp
-	export/export_map.cpp
+		export/map_exporter.cpp
 	gpu/active_set.cpp 
 	gpu/gpu_buffer.cpp
 	gpu/gpu_geom_storage.cpp
 	gpu/tex_atlas.cpp
 	graph/deformation_graph.cpp
 	graph/deformation_node.cpp
-	rendering/low_detail_map_renderer.cpp
-	rendering/map_information_renderer.cpp
-	rendering/map_presentation_renderer.cpp
+        rendering/low_detail_renderer.cpp
+        rendering/information_renderer.cpp
+        rendering/presentation_renderer.cpp
 	rendering/renderable_model.cpp
 	utils/gpu_norm_seg.cpp
 	utils/perf_meter.cpp
 	utils/principal_plane.cpp
 	debug_render.cpp
-	geometry_update.cpp
+		geometry_updater.cpp
 	intermediate_depth_model.cpp
 	labelling.cpp
-	meshing.cpp
+		mesher.cpp
 	mesh_reconstruction.cpp
 	scheduler.cpp
 	scheduler_threaded.cpp
-	stitching.cpp
-	texturing.cpp
+		mesh_stitcher.cpp
+		texture_updater.cpp
 	worker.cpp 
 )
 file(GLOB CUDA_SRCS

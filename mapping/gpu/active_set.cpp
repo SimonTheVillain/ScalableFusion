@@ -15,9 +15,13 @@ using namespace std;
 using namespace Eigen;
 
 ActiveSet::ActiveSet(GpuGeomStorage *storage,
-                     vector<shared_ptr<MeshPatch>> patches,
-                     MeshReconstruction *map, bool initial,
-                     bool debug1) {
+					 vector<shared_ptr<MeshPatch>> patches,
+					 MeshReconstruction *map,
+					 LowDetailRenderer* low_detail_renderer,
+					 TextureUpdater* texture_updater,
+					 InformationRenderer* information_renderer,
+					 bool initial,
+					 bool debug1) {
 	//TODO: for all the patches that needed to be reuploaded we also upload the
 	//textures!
 
@@ -277,7 +281,7 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 
 	//uploading the header so we can update the reference textures
 	reuploadHeaders();
-	checkAndUpdateRefTextures_(retained_mesh_patches_cpu, map);
+	checkAndUpdateRefTextures_(retained_mesh_patches_cpu, map,texture_updater,information_renderer);
 	//update the headers to show the new reference textures
 	reuploadHeaders();
 	//TODO: debug stupid bugs
@@ -572,7 +576,9 @@ void ActiveSet::uploadTexAndCoords_(
 
 void ActiveSet::checkAndUpdateRefTextures_(
 		const vector<shared_ptr<MeshPatch>> &patches,
-		MeshReconstruction *map) {
+		MeshReconstruction *reconstruction,
+		TextureUpdater *texture_updater,
+		InformationRenderer* information_renderer) {
 	vector<shared_ptr<MeshPatch>> dated_patches;
 	vector<shared_ptr<MeshTexture>> dated_textures;
 
@@ -591,7 +597,7 @@ void ActiveSet::checkAndUpdateRefTextures_(
 		}
 		//TODO: also update refTextures for the labelTextures if available
 	}
-	map->texturing.genLookupTex(this, dated_patches, dated_textures, true);//true: dilate the resulting textures
+	texture_updater->genLookupTex(reconstruction, this, dated_patches, dated_textures, information_renderer, true);//true: dilate the resulting textures
 }
 
 void ActiveSet::drawDoubleStitches() {

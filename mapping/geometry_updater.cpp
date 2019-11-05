@@ -1,4 +1,4 @@
-#include "geometry_update.h"
+#include "geometry_updater.h"
 
 #include <mesh_reconstruction.h>
 #include <gpu/active_set.h>
@@ -11,13 +11,17 @@
 using namespace std;
 using namespace Eigen;
 
-void GeometryUpdate::extend(
+void GeometryUpdater::extend(
+		MeshReconstruction* reconstruction,
+		InformationRenderer *information_renderer,
+		TextureUpdater* texture_updater,
+		LowDetailRenderer* low_detail_renderer,
 		shared_ptr<ActiveSet> active_set_of_formerly_visible_patches,
 		shared_ptr<gfx::GpuTex2D> d_std_tex, cv::Mat& d_std_mat,
 		Matrix4f depth_pose_in, shared_ptr<gfx::GpuTex2D> rgb_tex,
 		Matrix4f color_pose_in) {
 
-	MeshReconstruction *mesh = mesh_reconstruction;
+	//MeshReconstruction *reconstruction = mesh_reconstruction;
 	// TODO: add everything from meshReconstructionLogic.cpp here!!!!!
 	shared_ptr<ActiveSet> former_active_set = 
 		active_set_of_formerly_visible_patches;
@@ -26,30 +30,30 @@ void GeometryUpdate::extend(
 	int height = d_std_mat.rows;
 
 	// Prepare the intrinsic parameters of the depth cam
-	float fxd = mesh->params.depth_fxycxy[0];
-	float fyd = mesh->params.depth_fxycxy[1];
-	float cxd = mesh->params.depth_fxycxy[2];
-	float cyd = mesh->params.depth_fxycxy[3];
+	float fxd = reconstruction->params.depth_fxycxy[0];
+	float fyd = reconstruction->params.depth_fxycxy[1];
+	float cxd = reconstruction->params.depth_fxycxy[2];
+	float cyd = reconstruction->params.depth_fxycxy[3];
 
-	Matrix4f proj_depth   = Camera::genProjMatrix(mesh->params.depth_fxycxy);
-	Matrix4f proj_depth_n = Camera::genScaledProjMatrix(mesh->params.depth_fxycxy,
-	                                                    mesh->params.depth_res);
-	Matrix4f proj_1_color = Camera::genProjMatrix(mesh->params.rgb_fxycxy);
+	Matrix4f proj_depth   = Camera::genProjMatrix(reconstruction->params.depth_fxycxy);
+	Matrix4f proj_depth_n = Camera::genScaledProjMatrix(reconstruction->params.depth_fxycxy,
+														reconstruction->params.depth_res);
+	Matrix4f proj_1_color = Camera::genProjMatrix(reconstruction->params.rgb_fxycxy);
 
 	//extract the visible patches from the active set
 	vector<shared_ptr<MeshPatch>> visible_patches =
 			active_set_of_formerly_visible_patches->retained_mesh_patches_cpu;
 
 	//this might me more suitable for the beginning but lets do it here:
-	mesh->information_renderer.renderDepth(
+	information_renderer->renderDepth(
 			active_set_of_formerly_visible_patches.get(),
 			proj_depth_n, depth_pose_in);
 	cv::Mat ex_geom(height, width, CV_32FC4);//existing geometry
-	mesh->information_renderer.getDepthTexture()->downloadData(ex_geom.data);
+	information_renderer->getDepthTexture()->downloadData(ex_geom.data);
 
 	cv::Mat proj_depth_std(height, width, CV_32FC4);
 
-	mesh->information_renderer.getStdTexture()->downloadData(proj_depth_std.data);
+	information_renderer->getStdTexture()->downloadData(proj_depth_std.data);
 
 	//TODO: DEBUG: //check all the points if they have still edges assigned to them:
 
@@ -108,21 +112,21 @@ void GeometryUpdate::extend(
 
 	cv::Mat mesh_pointers(height, width, CV_32SC2); // Actually we store pointers in this
 
-	mesh->gpu_pre_seg_->fxycxy       = mesh->params.depth_fxycxy;
-	mesh->gpu_pre_seg_->max_distance = mesh->getMaxDistance();
+	reconstruction->gpu_pre_seg_->fxycxy       = reconstruction->params.depth_fxycxy;
+	reconstruction->gpu_pre_seg_->max_distance = reconstruction->getMaxDistance();
 	// Do a proper segmentation on all the pixel not part of the existing geometry
-	mesh->gpu_pre_seg_->segment(d_std_tex, proj_depth_std, ex_geom);
+	reconstruction->gpu_pre_seg_->segment(d_std_tex, proj_depth_std, ex_geom);
 
-	cv::Mat seg   = mesh->gpu_pre_seg_->getSegmentation();
-	int seg_count = mesh->gpu_pre_seg_->getSegCount();
+	cv::Mat seg   = reconstruction->gpu_pre_seg_->getSegmentation();
+	int seg_count = reconstruction->gpu_pre_seg_->getSegCount();
 
 	//*****************************************TOOOOODOOOOOO*********************
 	//TODO: put this piece of code into the meshIt part!!!!!
 	vector<shared_ptr<MeshPatch>> new_shared_mesh_patches;
 	//the same as the one above but with shared elements
 	for(int i = 0; i < seg_count; i++) {
-		shared_ptr<MeshPatch> mesh_patch = mesh->genMeshPatch();
-		new_shared_mesh_patches.push_back(mesh_patch);//storing all shared_ptr to the next mesh patch
+		shared_ptr<MeshPatch> mesh_patch = reconstruction->genMeshPatch();
+		new_shared_mesh_patches.push_back(mesh_patch);//storing all shared_ptr to the next reconstruction patch
 	}
 	for(int i = 0; i < seg.rows; i++) {
 		for(int j = 0; j < seg.cols; j++) {
@@ -148,13 +152,13 @@ void GeometryUpdate::extend(
 	// them to calculate the center points, bounding sphere and principal point.
 
 	auto time_start_all = chrono::system_clock::now();
-	//mesh that stuffcv:
+	//reconstruction that stuffcv:
 
 	cv::Mat vertex_indices(height, width, CV_32SC1);
 	vertex_indices.setTo(cv::Scalar(-1)); // TODO: remove this line, should not be necessary
 
 	meshing.meshIt(points, mesh_pointers, vertex_indices, d_std_mat,
-	               mesh->params.max_depth_step, depth_pose_in);
+				   reconstruction->params.max_depth_step, depth_pose_in);
 
 	for(size_t i = 0; i < new_shared_mesh_patches.size(); i++) {
 		//TODO: unify these functions and maybe do this at the very end of everything!!!!!
@@ -178,7 +182,7 @@ void GeometryUpdate::extend(
 	//debugCheckTriangleNeighbourConsistency(GetAllPatches());
 	stitching.stitchOnBorders(borders, depth_pose_in, proj_depth, proj_depth_std, 
 	                          ex_geom, points, d_std_mat, 
-	                          mesh->generateColorCodedTexture_(mesh_pointers),
+	                          reconstruction->generateColorCodedTexture_(mesh_pointers),
 	                          mesh_pointers, vertex_indices, stitch_list);
 
 	stitching.freeBorderList(borders);
@@ -242,7 +246,7 @@ void GeometryUpdate::extend(
 		// and therefore they would not get deleted until now.
 		// Any unconnected or deleted but empty (of triangle) patch
 		// gets deleted now.
-		mesh->removePatch(set_of_patches_to_be_removed[i]);
+		reconstruction->removePatch(set_of_patches_to_be_removed[i]);
 	}
 	set_of_patches_to_be_removed.clear();
 
@@ -264,7 +268,12 @@ void GeometryUpdate::extend(
 	                       new_shared_mesh_patches.begin(),
 	                       new_shared_mesh_patches.end());
 	shared_ptr<ActiveSet> new_active_set =
-			mesh->gpu_geom_storage_.makeActiveSet(visible_patches, mesh, true); // most of the members are initial
+			reconstruction->gpu_geom_storage_.makeActiveSet(
+					visible_patches,
+					reconstruction,
+					low_detail_renderer,
+					texture_updater,
+					information_renderer, true); // most of the members are initial
 	new_active_set->name = "createdInApplyNewData";
 
 	/*************************************TOOOODOOOOO************************/
@@ -278,8 +287,10 @@ void GeometryUpdate::extend(
 	time_start = time_end;
 
 	new_active_set->reuploadHeaders();
-	mesh->texturing.generateGeomTex(new_shared_mesh_patches, depth_pose_in, 
-	                                proj_depth, d_std_tex, new_active_set);
+	texture_updater->generateGeomTex(reconstruction,
+			                        new_shared_mesh_patches, depth_pose_in,
+	                                proj_depth, d_std_tex, new_active_set,
+	                                information_renderer);
 	for(shared_ptr<MeshPatch> patch : new_shared_mesh_patches) {
 		//TODO: test patch
 		if(!patch->isPartOfActiveSetWithNeighbours(new_active_set.get())) {
@@ -302,7 +313,9 @@ void GeometryUpdate::extend(
 	time_start = time_end;
 
 	// Add and fill new color patches to the surface
-	mesh->texturing.applyColorData(new_shared_mesh_patches, rgb_tex,
+	texture_updater->applyColorData(new_shared_mesh_patches,
+			                        low_detail_renderer,
+			                        rgb_tex,
 	                               color_pose_in, proj_1_color, new_active_set);
 
 	// After doing the textures and geometry we are supposed to be done with this
@@ -322,7 +335,7 @@ void GeometryUpdate::extend(
 
 	// We want to create a new active set that replaces the old one.
 	// The pointer to the active set should be secured by a mutex.
-	mesh->gpu_geom_storage_.delete_debug_tex_reference_ = rgb_tex->getGlHandle();
+	reconstruction->gpu_geom_storage_.delete_debug_tex_reference_ = rgb_tex->getGlHandle();
 
 	// Now that we have the geometry on the cpu now do the texture for the geometrical textures:
 
@@ -335,7 +348,7 @@ void GeometryUpdate::extend(
 
 	time_start = time_end;
 
-	// Before putting the mesh patches into the octree we want to
+	// Before putting the reconstruction patches into the octree we want to
 	// set the center points and the radii of the patches right
 	for(size_t i = 0; i < new_shared_mesh_patches.size(); i++) {
 		new_shared_mesh_patches[i]->updateCenterPoint();
@@ -344,7 +357,7 @@ void GeometryUpdate::extend(
 
 	//add the objects to the low detail renderer
 	auto start_low_detail = chrono::system_clock::now();
-	mesh->low_detail_renderer.addPatches(new_shared_mesh_patches,
+	low_detail_renderer->addPatches(new_shared_mesh_patches,
 	                                     -depth_pose_in.block<3, 1>(0, 3));
 	auto end_low_detail = chrono::system_clock::now();
 
@@ -352,7 +365,7 @@ void GeometryUpdate::extend(
 	        chrono::duration_cast<chrono::milliseconds>(end_low_detail - start_low_detail).count() << 
 	        "ms" << endl;
 
-	//at last we can add the newly created and filed mesh patches to the octree
+	//at last we can add the newly created and filed reconstruction patches to the octree
 
 	time_end = chrono::system_clock::now();
 	time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
@@ -360,12 +373,12 @@ void GeometryUpdate::extend(
 	cout << "[GeometryUpdate::Extend] Time consumed by projecting the geometry to the geometry texture:" <<
 	        time_elapsed.count() << "ms" << endl;
 
-	mesh->octree_.addObjects(new_shared_mesh_patches);
+	reconstruction->octree_.addObjects(new_shared_mesh_patches);
 
 	//TODO: remove
 	//check if the newly created active set is completely loaded
 	new_active_set->checkForCompleteGeometry();
-	mesh->active_set_expand = new_active_set;
+	reconstruction->active_set_expand = new_active_set;
 
 	//debug... check if the active set has all the geometry textures
 	for(auto patch : new_active_set->retained_mesh_patches_cpu) {
@@ -408,9 +421,9 @@ void GeometryUpdate::extend(
 	/*********************************************************************************/
 }
 
-void GeometryUpdate::update(shared_ptr<gfx::GpuTex2D> d_std_tex, 
-                            Matrix4f depth_pose_in, 
-                            shared_ptr<ActiveSet> &active_set) {
+void GeometryUpdater::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
+							 Matrix4f depth_pose_in,
+							 shared_ptr<ActiveSet> &active_set) {
 
 	MeshReconstruction *mesh = mesh_reconstruction;
 

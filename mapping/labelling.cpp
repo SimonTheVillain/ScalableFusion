@@ -160,10 +160,11 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 	//now we do the lookup textures
 	cout << "DEBUG: some of these textures are missing?, but why?" << endl;
 
+	/*
 	mesh->texturing.genLookupTex(active_set.get(), patches_update_lookup,
 	                             textures_update_lookup, false); // no dilation of lookup
-
-	int minuseins = -1; // TODO: wth?
+	*/
+	int minuseins = -1; // TODO: wth? (simon) Yeah this was me!
 	Vector4f initial_value(*((float*) &minuseins), 0, 0, 0);
 	gpu::Labelling::initializeSurfaces<Vector4f>(initialization_tasks, 
 	                                             initial_value);

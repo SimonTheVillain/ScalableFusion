@@ -12,7 +12,7 @@
 #include "stack_vector.h"
 #include <gpu/gpu_geom_storage.h>
 #include <utils/octree.h>
-#include <rendering/low_detail_map_renderer.h>
+#include <rendering/low_detail_renderer.h>
 
 using namespace std;
 using namespace Eigen;

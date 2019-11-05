@@ -1,4 +1,4 @@
-#include "texturing.h"
+#include "texture_updater.h"
 
 #include <cuda/tex_coords.h>
 #include <cuda/tex_patch_init.h>
@@ -11,10 +11,12 @@
 using namespace std;
 using namespace Eigen;
 
-void Texturing::generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
-                                Matrix4f pose, Matrix4f proj,
-                                shared_ptr<gfx::GpuTex2D> geom_sensor_data,
-                                shared_ptr<ActiveSet> active_set) {
+void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
+									 vector<shared_ptr<MeshPatch> > &new_patches,
+									 Matrix4f pose, Matrix4f proj,
+									 shared_ptr<gfx::GpuTex2D> geom_sensor_data,
+									 shared_ptr<ActiveSet> active_set,
+									 InformationRenderer* information_renderer) {
 
 	MeshReconstruction *mesh = mesh_reconstruction;
 	//TODO: even though commented out this still holds true
@@ -224,7 +226,7 @@ void Texturing::generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
 	active_set->reuploadHeaders();
 
 	//this seems to have worked perfectly
-	genLookupTexGeom(active_set.get(), valid_mesh_patches);
+	genLookupTexGeom(reconstruction, active_set.get(), valid_mesh_patches,information_renderer);
 
 	projToGeomTex(active_set.get(), valid_mesh_patches, geom_sensor_data, pose, 
 	              proj);
@@ -251,10 +253,10 @@ void Texturing::generateGeomTex(vector<shared_ptr<MeshPatch> > &new_patches,
 }
 
 
-void Texturing::projToGeomTex(ActiveSet* active_set, 
-                              vector<shared_ptr<MeshPatch>> &new_patches,
-                              shared_ptr<gfx::GpuTex2D> geom_sensor_data,
-                              Matrix4f pose, Matrix4f proj) {
+void TextureUpdater::projToGeomTex(ActiveSet* active_set,
+								   vector<shared_ptr<MeshPatch>> &new_patches,
+								   shared_ptr<gfx::GpuTex2D> geom_sensor_data,
+								   Matrix4f pose, Matrix4f proj) {
 
 	//we create a list of commands for the gpu to follow to update the textures.
 	vector<InitDescriptor> commands;
@@ -302,9 +304,10 @@ void Texturing::projToGeomTex(ActiveSet* active_set,
 	return;
 }
 
-void Texturing::colorTexUpdate(shared_ptr<gfx::GpuTex2D> rgba_tex, 
-                               Matrix4f color_pose_in, 
-                               shared_ptr<ActiveSet> &active_set) {
+void TextureUpdater::colorTexUpdate(shared_ptr<gfx::GpuTex2D> rgba_tex,
+									LowDetailRenderer* low_detail_renderer,
+									Matrix4f color_pose_in,
+									shared_ptr<ActiveSet> &active_set) {
 	int width = rgba_tex->getWidth();
 	int height = rgba_tex->getHeight();
 
@@ -338,16 +341,17 @@ void Texturing::colorTexUpdate(shared_ptr<gfx::GpuTex2D> rgba_tex,
 		}
 	}
 
-	applyColorData(fully_loaded_visible_patches, rgba_tex, color_pose_in, proj,
+	applyColorData(fully_loaded_visible_patches,low_detail_renderer, rgba_tex, color_pose_in, proj,
 	               active_set);//the active set all the newly created textures will be attached to
 
 	mesh_reconstruction->cleanupGlStoragesThisThread_();
 }
 
-void Texturing::applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
-                               shared_ptr<gfx::GpuTex2D> rgb_in,
-                               Matrix4f &pose, Matrix4f &proj,
-                               shared_ptr<ActiveSet> active_set) {
+void TextureUpdater::applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
+									LowDetailRenderer* low_detail_renderer,
+									shared_ptr<gfx::GpuTex2D> rgb_in,
+									Matrix4f &pose, Matrix4f &proj,
+									shared_ptr<ActiveSet> active_set) {
 
 	MeshReconstruction *mesh = mesh_reconstruction;
 	if(active_set == nullptr) {
@@ -544,7 +548,7 @@ void Texturing::applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
 	active_set->reuploadHeaders();
 
 	//also update the low detail map:
-	mesh->low_detail_renderer.updateColorForPatches(patches_with_color_updates);
+	low_detail_renderer->updateColorForPatches(patches_with_color_updates);
 
 	//TODO: download these textures!
 	for(GpuCpuTexPair update : updated_textures) {
@@ -554,24 +558,29 @@ void Texturing::applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
 	return;
 }
 
-void Texturing::genLookupTexGeom(ActiveSet *active_set,
-                                 vector<shared_ptr<MeshPatch>> &patches) {
+void TextureUpdater::genLookupTexGeom(MeshReconstruction* reconstruction,
+									  ActiveSet *active_set,
+									  vector<shared_ptr<MeshPatch>> &patches,
+									  InformationRenderer* information_renderer) {
 	vector<shared_ptr<MeshTexture>> textures;
 	for(size_t i = 0; i < patches.size(); i++) {
 		textures.push_back(patches[i]->geom_tex_patch);
 	}
-	genLookupTex(active_set, patches, textures);
+	genLookupTex(reconstruction,active_set, patches, textures,information_renderer);
 }
 
 //TODO: maybe relocate this function into another class?
 //also maybe directly operate on the patch
-void Texturing::genLookupTex(ActiveSet *active_set,
-                             vector<shared_ptr<MeshPatch>> &patches,
-                             vector<shared_ptr<MeshTexture>> &textures,
-                             bool dilate) {
+void TextureUpdater::genLookupTex(
+		MeshReconstruction* reconstruction,
+		ActiveSet *active_set,
+		vector<shared_ptr<MeshPatch>> &patches,
+		vector<shared_ptr<MeshTexture>> &textures,
+		InformationRenderer *information_renderer,
+		bool dilate) {
 	vector<DilationDescriptor> dilations;
 	dilations.reserve(patches.size());
-	mesh_reconstruction->information_renderer.bindRenderTriangleReferenceProgram();
+	information_renderer->bindRenderTriangleReferenceProgram(reconstruction);
 
 	for(size_t i = 0; i < patches.size();i++) {
 		shared_ptr<MeshPatch>              patch = patches[i];
@@ -587,7 +596,7 @@ void Texturing::genLookupTex(ActiveSet *active_set,
 		//TODO: the scissor test probably is a little wasteful (a quad would be way better)
 
 		//to solve this we might want to draw a quad
-		mesh_reconstruction->information_renderer.renderTriangleReferencesForPatch(
+		information_renderer->renderTriangleReferencesForPatch(
 				active_set, patches[i], texture);
 		//how about imshowing the result
 

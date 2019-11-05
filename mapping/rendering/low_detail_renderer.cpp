@@ -1,4 +1,4 @@
-#include "low_detail_map_renderer.h"
+#include "low_detail_renderer.h"
 
 #include <iostream>
 

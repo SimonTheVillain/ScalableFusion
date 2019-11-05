@@ -28,7 +28,7 @@ void MeshReconstruction::initInGlLogicContext() {
 		}
 
 		//if completed we initialize the informationRenderer in this thread
-		information_renderer.initInContext();
+		//information_renderer.initInContext();
 
 		//since all the remaining stuff is alredy initialized wo do only the stuff
 		//that is needs thread dependant initialization
@@ -43,8 +43,10 @@ void MeshReconstruction::initInGlLogicContext() {
 	gpu_geom_storage_.initialize();
 
 	//this requires the geometry storage to be initialized.
+	/*
 	information_renderer.initInContext(params.depth_res.width, 
 	                                   params.depth_res.height, this);
+	                                   */
 
 	//Generating the active sets for rendering and capturing TODO?
 
@@ -200,10 +202,10 @@ MeshReconstruction::MeshReconstruction(GLFWwindow *context,
 	params.depth_res.height = depth_height;
 	params.rgb_res.width = rgb_width;
 	params.rgb_res.height = rgb_height;
-	texturing.mesh_reconstruction = this;
+	//texturing.mesh_reconstruction = this;
 
 	//TODO: name these setup functions consistently
-	geometry_update.setup(this);
+	//geometry_update.setup(this);
 	gpu_geom_storage_.init(this);
 }
 
@@ -511,8 +513,9 @@ bool isOnRightSideOfLine(Vector2f point_in_question, Vector2f p1, Vector2f p2,
 	return !same_as_wrong;
 }
 
-cv::Mat MeshReconstruction::generateDepthFromView(int width, int height, 
-                                                  Matrix4f pose) {
+cv::Mat MeshReconstruction::generateDepthFromView(int width, int height,
+												  InformationRenderer *information_renderer,
+												  Matrix4f pose) {
 
 	//because i don't know where else to put it: add a texture here:
 	//gfx::GpuTex2D texture3(GL_RGBA,GL_RGBA,GL_UNSIGNED_BYTE,640,480,false,test.data);
@@ -556,9 +559,9 @@ cv::Mat MeshReconstruction::generateDepthFromView(int width, int height,
 	shared_ptr<ActiveSet> active_set = active_set_update;
 	active_set_update_mutex.unlock();
 	//TODO: maybe update the active set
-	information_renderer.renderDepth(active_set.get(), proj, pose);
+	information_renderer->renderDepth(active_set.get(), proj, pose);
 	cv::Mat ex_geom(height, width, CV_32FC4);
-	information_renderer.getDepthTexture()->downloadData(ex_geom.data);
+	information_renderer->getDepthTexture()->downloadData(ex_geom.data);
 	cv::Mat int_depth(height,width,CV_16UC1);//store the geometry back to a depthmap
 	for(int i = 0; i < height * width; i++) {
 		int_depth.at<unsigned short>(i) = ex_geom.at<Vector4f>(i)[2] * 1000.0f;
@@ -731,7 +734,11 @@ void MeshReconstruction::clearInvalidGeometry(shared_ptr<ActiveSet> set,
 }
 
 shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
-		Matrix4f depth_pose) {
+		Matrix4f depth_pose,
+		LowDetailRenderer *low_detail_renderer,
+		TextureUpdater *texture_updater,
+		InformationRenderer* information_renderer
+		) {
 
 	vector<shared_ptr<MeshPatch>> visible_shared_patches = 
 			octree_.getObjects(depth_pose, params.depth_fxycxy, 
@@ -787,7 +794,13 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 			patches_including_neighbours.end());
 
 	shared_ptr<ActiveSet> new_active_set = 
-			gpu_geom_storage_.makeActiveSet(patches_with_neighbours, this, true);
+			gpu_geom_storage_.makeActiveSet(
+					patches_with_neighbours,
+					this,
+					low_detail_renderer,
+					texture_updater,
+					information_renderer,
+					true);
 
 	//if it fails down here even though it doesn't fail up there....
 	//you are doing something wrong
@@ -825,7 +838,7 @@ void MeshReconstruction::initInGLRenderingContext() {
 		condition_variable_.wait(lk);
 	}
 
-	render_presentation.initInContext(640, 480, this);
+	//render_presentation.initInContext(640, 480, this);
 
 	gpu_pre_seg_ = make_shared<GpuNormSeg>(garbage_collector_, 
 	                                       params.depth_res.width, 
@@ -834,7 +847,7 @@ void MeshReconstruction::initInGLRenderingContext() {
 	gfx::GLUtils::checkForOpenGLError(
 			"[ScaleableMap::initInGLRenderingContex] Initialization of presentation object.");
 
-	low_detail_renderer.initInGlContext();
+	//low_detail_renderer.initInGlContext();
 
 	gfx::GLUtils::checkForOpenGLError("[ScaleableMap::initInGLRenderingContex] end");
 }

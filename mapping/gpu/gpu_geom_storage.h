@@ -30,8 +30,8 @@ class UnsecuredTriangleCollection;
 class MeshTexture;
 
 class GpuGeomStorage;
-class MapInformationRenderer;
-class MapPresentationRenderer;
+class InformationRenderer;
+class PresentationRenderer;
 
 class MeshPatchGpuHandle;
 
@@ -42,7 +42,10 @@ class FBOConnector;
 class Scheduler;
 
 class ActiveSet;
-class GeometryUpdate;
+class GeometryUpdater;
+
+class TextureUpdater;
+class LowDetailRenderer;
 
 /**
  * @brief The GpuGeomStorage class
@@ -64,11 +67,11 @@ class GeometryUpdate;
 class GpuGeomStorage {
 	friend ActiveSet;
 	friend MeshReconstruction;
-	friend MapInformationRenderer;
-	friend MapPresentationRenderer;
+	friend InformationRenderer;
+	friend PresentationRenderer;
 	friend Scheduler;
 	friend MeshTexture;
-	friend GeometryUpdate;
+	friend GeometryUpdater;
 	
 public:
 
@@ -83,8 +86,11 @@ public:
 	void resetTimers();
 
 	shared_ptr<ActiveSet> makeActiveSet(
-			vector<shared_ptr<MeshPatch> > patches = { }, 
-			MeshReconstruction *map = nullptr,
+			vector<shared_ptr<MeshPatch> > patches,
+			MeshReconstruction *map,
+			LowDetailRenderer* low_detail_renderer,
+			TextureUpdater* texture_updater,
+			InformationRenderer* information_renderer, //TODO: no default nullptr till here
 			bool initial = false, //TODO: get rid of the debug and initial parameter
 			bool debug1 = false);//defaults to an empty element
 

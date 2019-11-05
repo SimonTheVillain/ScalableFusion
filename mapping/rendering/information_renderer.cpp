@@ -1,4 +1,4 @@
-#include "map_information_renderer.h"
+#include "information_renderer.h"
 
 #include <gfx/gl_utils.h>
 #include <mesh_reconstruction.h>
@@ -51,28 +51,28 @@ const string unified_info_vert =
 #include "shader/unified_info.vert"
 ;
 
-mutex MapInformationRenderer::shader_mutex_;
-weak_ptr<gfx::GLSLProgram> MapInformationRenderer::s_depth_program_;
-weak_ptr<gfx::GLSLProgram> MapInformationRenderer::s_triangle_reference_program_;
-weak_ptr<gfx::GLSLProgram> MapInformationRenderer::s_triangle_ref_depth_program_;
+mutex InformationRenderer::shader_mutex_;
+weak_ptr<gfx::GLSLProgram> InformationRenderer::s_depth_program_;
+weak_ptr<gfx::GLSLProgram> InformationRenderer::s_triangle_reference_program_;
+weak_ptr<gfx::GLSLProgram> InformationRenderer::s_triangle_ref_depth_program_;
 
-MapInformationRenderer::MapInformationRenderer(int width, int height)
+InformationRenderer::InformationRenderer(int width, int height)
 		: width_(width), 
 		  height_(height) { 
 }
 
-MapInformationRenderer::~MapInformationRenderer() {
+InformationRenderer::~InformationRenderer() {
 }
 
-void MapInformationRenderer::initInContext(int width, int height, 
-                                           MeshReconstruction *map) {
-	map_    = map;
+void InformationRenderer::initInContext(int width, int height,
+										MeshReconstruction *map) {
+	//map_    = map;
 	width_  = width;
 	height_ = height;
-	initInContext();
+	initInContext(map);
 }
 
-void MapInformationRenderer::initInContext() {
+void InformationRenderer::initInContext(MeshReconstruction* reconstruction) {
 	//assert(0); //make this multithreading capable: (it depends on the VAO i think)
 	//but also on the texture..... both of them need to be thread specific
 	gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] start");
@@ -190,13 +190,13 @@ void MapInformationRenderer::initInContext() {
 
 			//texture creation
 			//depth:
-			pt.depth_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
+			pt.depth_texture = make_shared<gfx::GpuTex2D>(reconstruction->garbage_collector_,
 			                                              GL_RGBA32F,GL_RGBA,
 			                                              GL_FLOAT,
 			                                              width_, height_, false);
 			pt.depth_texture->name = "perThread depth texture";
 			//debug:
-			pt.std_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
+			pt.std_texture = make_shared<gfx::GpuTex2D>(reconstruction->garbage_collector_,
 			                                            GL_RGBA32F,
 			                                            GL_RGBA,
 			                                            GL_FLOAT,
@@ -251,22 +251,22 @@ void MapInformationRenderer::initInContext() {
 			glGenFramebuffers(1, &pt.combined_FBO);
 			glBindFramebuffer(GL_FRAMEBUFFER, pt.combined_FBO);
 
-			pt.z_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
+			pt.z_texture = make_shared<gfx::GpuTex2D>(reconstruction->garbage_collector_,
 			                                          GL_R32F, GL_RED, GL_FLOAT,
 			                                 	        width_, height_, false);
 			pt.z_texture->name = "per thread zTexture";
-			pt.color_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
+			pt.color_texture = make_shared<gfx::GpuTex2D>(reconstruction->garbage_collector_,
 			                                              GL_RGBA32F, GL_RGBA, 
 			                                              GL_FLOAT, 
 			                                              width_, height_, false);
 			pt.color_texture->name = "per thread colorTexture";
-			pt.normal_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
+			pt.normal_texture = make_shared<gfx::GpuTex2D>(reconstruction->garbage_collector_,
 			                                              GL_RGBA32F, GL_RGBA, 
 			                                              GL_FLOAT, width_, height_, 
 			                                              false);
 			pt.normal_texture->name = "per thread normalTexture";
 			//make this an int32.... this is going to be hard enough
-			pt.label_texture = make_shared<gfx::GpuTex2D>(map_->garbage_collector_,
+			pt.label_texture = make_shared<gfx::GpuTex2D>(reconstruction->garbage_collector_,
 			                                              GL_RGBA32F, GL_RGBA, 
 			                                              GL_FLOAT, width_, height_,
 			                                              false);
@@ -295,16 +295,16 @@ void MapInformationRenderer::initInContext() {
 	return;
 }
 
-shared_ptr<gfx::GpuTex2D> MapInformationRenderer::getDepthTexture() {
+shared_ptr<gfx::GpuTex2D> InformationRenderer::getDepthTexture() {
 	return per_thread_gl_objects_[this_thread::get_id()].depth_texture;
 }
 
-shared_ptr<gfx::GpuTex2D> MapInformationRenderer::getStdTexture() {
+shared_ptr<gfx::GpuTex2D> InformationRenderer::getStdTexture() {
 	return per_thread_gl_objects_[this_thread::get_id()].std_texture;
 }
 
-void MapInformationRenderer::renderDepth(ActiveSet *active_set, 
-                                         Matrix4f projection, Matrix4f pose) {
+void InformationRenderer::renderDepth(ActiveSet *active_set,
+									  Matrix4f projection, Matrix4f pose) {
 
 	PerThread_ pt = per_thread_gl_objects_[this_thread::get_id()];
 	//activate VBO
@@ -347,46 +347,46 @@ void MapInformationRenderer::renderDepth(ActiveSet *active_set,
 	                 active_set->gpu_geom_storage->patch_info_buffer->getGlName());
 
 	active_set->drawEverything();
-	gfx::GLUtils::checkForOpenGLError("[MapInformationRenderer::renderDepth] "
+	gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderDepth] "
 	                                  "after issuing all render commands");
 
 	glFinish();
 }
 
-void MapInformationRenderer::bindRenderTriangleReferenceProgram() {
+void InformationRenderer::bindRenderTriangleReferenceProgram(MeshReconstruction* reconstruction) {
 	triangle_reference_program_->use();
 	gfx::GLUtils::checkForOpenGLError(
-			"[MapInformationRenderer::bindRenderTriangleReferenceProgram] "
+			"[InformationRenderer::bindRenderTriangleReferenceProgram] "
 			"Initializing the triangle reference program..");
 
 	//the vertex buffer
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
-	                 map_->gpu_geom_storage_.vertex_buffer->getGlName());
+					 reconstruction->gpu_geom_storage_.vertex_buffer->getGlName());
 
 	//bind texture coordinates
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
-	                 map_->gpu_geom_storage_.tex_pos_buffer->getGlName());
+					 reconstruction->gpu_geom_storage_.tex_pos_buffer->getGlName());
 
 	//the triangle buffer
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
-	                 map_->gpu_geom_storage_.triangle_buffer->getGlName());
+					 reconstruction->gpu_geom_storage_.triangle_buffer->getGlName());
 
 	//the patch information
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
-	                 map_->gpu_geom_storage_.patch_info_buffer->getGlName());
+					 reconstruction->gpu_geom_storage_.patch_info_buffer->getGlName());
 
 	gfx::GLUtils::checkForOpenGLError(
-			"[MapInformationRenderer::bindRenderTriangleReferenceProgram] "
+			"[InformationRenderer::bindRenderTriangleReferenceProgram] "
 			"Binding the buffers.");
 }
 
-void MapInformationRenderer::renderTriangleReferencesForPatch(
+void InformationRenderer::renderTriangleReferencesForPatch(
 		ActiveSet *active_set, shared_ptr<MeshPatch> &patch,
 		shared_ptr<MeshTexture> &target_texture) {
 
 	shared_ptr<MeshTextureGpuHandle> gpu_tex = target_texture->gpu.lock();
 	if(gpu_tex == nullptr) {
-		cout << "[MapInformationRenderer::renderTriangleReferencesForPatch] "
+		cout << "[InformationRenderer::renderTriangleReferencesForPatch] "
 		        "There is no texture on the gpu" << endl;
 		assert(0);
 	}
@@ -418,7 +418,7 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(
 		shared_ptr<MeshPatchGpuHandle> patch_gpu = patch->gpu.lock();
 
 		if(patch_gpu == nullptr) {
-			cout << "[MapInformationRenderer::renderTriangleReferencesForPatch]"
+			cout << "[InformationRenderer::renderTriangleReferencesForPatch]"
 			        " This should not happen when this is invoked for a patch"
 			        " which is part of an active set" << endl;
 			assert(0);
@@ -450,7 +450,7 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(
 				//only render when patch is main patch
 				shared_ptr<TriangleBufConnector> stitch_gpu = stitch.triangles_gpu.lock();
 				if(stitch_gpu == nullptr) {
-					cout << "[MapInformationRenderer::renderTriangleReferencesForPatch]"
+					cout << "[InformationRenderer::renderTriangleReferencesForPatch]"
 					        " This should not happen when this is invoked for a patch"
 					        " which is part of an active set" << endl;
 					assert(0);
@@ -482,7 +482,7 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(
 			}
 			shared_ptr<TriangleBufConnector> stitch_gpu = stitch.triangles_gpu.lock();
 			if(stitch_gpu == nullptr) {
-				cout << "[MapInformationRenderer::renderTriangleReferencesForPatch]"
+				cout << "[InformationRenderer::renderTriangleReferencesForPatch]"
 				        " This should not happen when this is invoked for a patch"
 				        " which is part of an active set" << endl;
 				assert(0);
@@ -505,7 +505,7 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(
 		patch->triple_stitch_mutex.unlock();
 
 	} else {
-		cout << "[MapInformationRenderer::renderTriangleReferencesForPatch] "
+		cout << "[InformationRenderer::renderTriangleReferencesForPatch] "
 		        "Can't render lookup texture since stitches and neighbouring "
 		        "points are not part of active set!" << endl;
 		assert(0);
@@ -516,7 +516,7 @@ void MapInformationRenderer::renderTriangleReferencesForPatch(
 	glDisable(GL_SCISSOR_TEST);
 }
 
-void MapInformationRenderer::renderTriangleReferencesAndDepth(
+void InformationRenderer::renderTriangleReferencesAndDepth(
 		ActiveSet *active_set, Matrix4f projection, Matrix4f pose) {
 	gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::renderTriangleReferencesAndDepth] Before rendering");
 
@@ -547,14 +547,14 @@ void MapInformationRenderer::renderTriangleReferencesAndDepth(
 
 	active_set->drawEverything();
 	gfx::GLUtils::checkForOpenGLError(
-			"[MapInformationRenderer::renderTriangleReferencesAndDepth] Right after issuing render commands.");
+			"[InformationRenderer::renderTriangleReferencesAndDepth] Right after issuing render commands.");
 
 	glFinish();
 }
 
-void MapInformationRenderer::render(ActiveSet *active_set, Matrix4f projection, 
-                                    Matrix4f pose, cv::Mat *depth, cv::Mat *normals, 
-                                    cv::Mat *color, cv::Mat *labels) {
+void InformationRenderer::render(ActiveSet *active_set, Matrix4f projection,
+								 Matrix4f pose, cv::Mat *depth, cv::Mat *normals,
+								 cv::Mat *color, cv::Mat *labels) {
 
 	PerThread_ pt = per_thread_gl_objects_[this_thread::get_id()];
 	//activate VBO
@@ -602,11 +602,11 @@ void MapInformationRenderer::render(ActiveSet *active_set, Matrix4f projection,
 	                 active_set->gpu_geom_storage->patch_info_buffer->getGlName());
 
 	gfx::GLUtils::checkForOpenGLError(
-			"[MapInformationRenderer::render] Right before issuing render commands.");
+			"[InformationRenderer::render] Right before issuing render commands.");
 
 	active_set->drawEverything();
 
-	gfx::GLUtils::checkForOpenGLError("[MapInformationRenderer::render] Right after issuing render commands.");
+	gfx::GLUtils::checkForOpenGLError("[InformationRenderer::render] Right after issuing render commands.");
 
 	glFinish();
 	pt.z_texture->downloadData(depth->data);
@@ -616,21 +616,22 @@ void MapInformationRenderer::render(ActiveSet *active_set, Matrix4f projection,
 	glFinish();
 }
 
-Vector4f MapInformationRenderer::renderAndExtractInfo(
-		Matrix4f view, Matrix4f proj, bool render_visible_from_cam, 
+Vector4f InformationRenderer::renderAndExtractInfo(
+		MeshReconstruction* reconstruction,
+		Matrix4f view, Matrix4f proj, LowDetailRenderer* low_detail_renderer, bool render_visible_from_cam,
 		GLFWwindow *root_context, int width, int height, int x, int y, 
 		int *patch_ind, int *triangle_ind) {
 
 	gfx::GLUtils::checkForOpenGLError(
-		"[MapInformationRenderer::renderInfo] Before rendering");
+		"[InformationRenderer::renderInfo] Before rendering");
 
-	map_->active_set_update_mutex.lock();
-	shared_ptr<ActiveSet> active_set1 = map_->active_set_update;
-	map_->active_set_update_mutex.unlock();
+	reconstruction->active_set_update_mutex.lock();
+	shared_ptr<ActiveSet> active_set1 = reconstruction->active_set_update;
+	reconstruction->active_set_update_mutex.unlock();
 
-	map_->active_set_rendering_mutex_.lock();
-	shared_ptr<ActiveSet> active_set2 = map_->active_set_rendering_;
-	map_->active_set_rendering_mutex_.unlock();
+	reconstruction->active_set_rendering_mutex_.lock();
+	shared_ptr<ActiveSet> active_set2 = reconstruction->active_set_rendering_;
+	reconstruction->active_set_rendering_mutex_.unlock();
 
 	GLuint screen_FBO;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*) &screen_FBO);
@@ -686,16 +687,16 @@ Vector4f MapInformationRenderer::renderAndExtractInfo(
 
 	if(render_visible_from_cam) {
 		if(active_set1 != nullptr) {
-			map_->information_renderer.renderTriangleReferencesAndDepth(
+			renderTriangleReferencesAndDepth(
 					active_set1.get(), proj, view);
 		}
 		if(active_set2 != nullptr) {
-			map_->information_renderer.renderTriangleReferencesAndDepth(
+			renderTriangleReferencesAndDepth(
 					active_set2.get(), proj, view);
 		}
 	}
 	//TODO: also render the low detail stuff... at least do it for the
-	map_->low_detail_renderer.renderGeometry(proj, view);
+	low_detail_renderer->renderGeometry(proj, view);
 
 	glFinish();
 

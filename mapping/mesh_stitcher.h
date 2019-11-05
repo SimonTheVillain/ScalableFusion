@@ -1,5 +1,5 @@
-#ifndef FILE_STITCHING_H
-#define FILE_STITCHING_H
+#ifndef FILE_MESH_STITCHER_H
+#define FILE_MESH_STITCHER_H
 
 #include <vector>
 
@@ -12,7 +12,7 @@ using namespace Eigen;
 
 class MeshReconstruction;
 
-class Stitching {
+class MeshStitcher {
 public:
 
 	void setup(MeshReconstruction *reconstruction) {
@@ -47,4 +47,4 @@ public:
 
 };
 
-#endif // FILE_STITCHING_H
+#endif // FILE_MESH_STITCHER_H

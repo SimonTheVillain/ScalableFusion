@@ -1,5 +1,5 @@
-#ifndef FILE_MAP_INFORMATION_RENDERER_H
-#define FILE_MAP_INFORMATION_RENDERER_H
+#ifndef FILE_INFORMATION_RENDERER_H
+#define FILE_INFORMATION_RENDERER_H
 
 //TODO: rename this to InformationRenderer (better Name, as i think)
 
@@ -22,6 +22,7 @@ class MeshReconstruction;
 class MeshPatch;
 class MeshTexture;
 class ActiveSet;
+class LowDetailRenderer;
 
 class GLFWwindow;
 /**
@@ -46,18 +47,18 @@ class GLFWwindow;
  * or this: (who knows!)
  * http://stackoverflow.com/questions/31768783/get-element-id-in-vertex-shader-in-opengl
  */
-class MapInformationRenderer { //TODO: maybe split this up
+class InformationRenderer { //TODO: maybe split this up
 	friend MeshReconstruction;
 
 public:
 
-	MapInformationRenderer(int width = 640, int height = 480);
+	InformationRenderer(int width = 640, int height = 480);
 
-	~MapInformationRenderer();
+	~InformationRenderer();
 
 	void initInContext(int width, int height, MeshReconstruction *map);
 
-	void initInContext();
+	void initInContext(MeshReconstruction* reconstruction);
 
 	shared_ptr<gfx::GpuTex2D> getDepthTexture();
 
@@ -68,7 +69,7 @@ public:
 	///TODO: create a renderer for which patch is used in which image!!!
 	//L.G. Debugging tool
 
-	void bindRenderTriangleReferenceProgram();
+	void bindRenderTriangleReferenceProgram(MeshReconstruction* reconstruction);
 
 	void renderTriangleReferencesForPatch(ActiveSet *active_set, 
 	                                      shared_ptr<MeshPatch> &patch,
@@ -84,7 +85,9 @@ public:
 	            cv::Mat *depth = nullptr, cv::Mat *normals = nullptr, 
 	            cv::Mat *color = nullptr, cv::Mat *labels = nullptr);
 
-	Vector4f renderAndExtractInfo(Matrix4f view, Matrix4f proj, 
+	Vector4f renderAndExtractInfo(MeshReconstruction* reconstruction,
+			                      Matrix4f view, Matrix4f proj,
+								  LowDetailRenderer* low_detail_renderer,
 	                              bool render_visible_from_cam,
 	                              GLFWwindow *root_context, 
 	                              int width, int height,
@@ -128,7 +131,7 @@ private:
 	static mutex shader_mutex_;
 	static weak_ptr<gfx::GLSLProgram> s_depth_program_;
 
-	MeshReconstruction *map_;
+	//MeshReconstruction *map_;
 
 	static weak_ptr<gfx::GLSLProgram> s_triangle_reference_program_;
 	shared_ptr<gfx::GLSLProgram> triangle_reference_program_;
@@ -141,4 +144,4 @@ private:
 
 };
 
-#endif // FILE_MAP_INFORMATION_RENDERER_H
+#endif // FILE_INFORMATION_RENDERER_H

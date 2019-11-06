@@ -32,12 +32,14 @@ public:
 	                       Matrix4f depth_pose_in,
 	                       shared_ptr<ActiveSet> &active_set);
 
-	void colorTexUpdate(shared_ptr<gfx::GpuTex2D> rgba_tex,
+	void colorTexUpdate(MeshReconstruction* reconstruction,
+						shared_ptr<gfx::GpuTex2D> rgba_tex,
 	                    LowDetailRenderer* low_detail_renderer,
 	                    Matrix4f color_pose_in,
 	                    shared_ptr<ActiveSet> &active_set);
 
-	void applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
+	void applyColorData(MeshReconstruction* reconstruction,
+						vector<shared_ptr<MeshPatch>> &visible_patches,
 						LowDetailRenderer* low_detail_renderer,
 	                    shared_ptr<gfx::GpuTex2D> rgb_in,
 	                    Matrix4f &pose, Matrix4f &proj, 
@@ -55,7 +57,7 @@ public:
 					  InformationRenderer* information_renderer,
 					  bool dilate = true);
 
-	MeshReconstruction *mesh_reconstruction;
+	//MeshReconstruction *mesh_reconstruction;//TODO: remove this
 };
 
 #endif // FILE_TEXTURING_H

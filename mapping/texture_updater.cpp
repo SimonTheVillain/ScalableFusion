@@ -18,7 +18,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 									 shared_ptr<ActiveSet> active_set,
 									 InformationRenderer* information_renderer) {
 
-	MeshReconstruction *mesh = mesh_reconstruction;
+	MeshReconstruction *mesh = reconstruction;
 	//TODO: even though commented out this still holds true
 	/*
 	cout << "[ScaleableMap::generateGeomTexForNovelPatches] "
@@ -304,7 +304,8 @@ void TextureUpdater::projToGeomTex(ActiveSet* active_set,
 	return;
 }
 
-void TextureUpdater::colorTexUpdate(shared_ptr<gfx::GpuTex2D> rgba_tex,
+void TextureUpdater::colorTexUpdate(MeshReconstruction* reconstruction,
+									shared_ptr<gfx::GpuTex2D> rgba_tex,
 									LowDetailRenderer* low_detail_renderer,
 									Matrix4f color_pose_in,
 									shared_ptr<ActiveSet> &active_set) {
@@ -314,7 +315,7 @@ void TextureUpdater::colorTexUpdate(shared_ptr<gfx::GpuTex2D> rgba_tex,
 	uint64_t tex_ptr = rgba_tex->getGlHandle();
 	rgba_tex->makeResidentInThisThread();
 	//2. Step should be the incorporation of new sensor data into the already existing map.
-	Matrix4f proj = Camera::genProjMatrix(mesh_reconstruction->params.rgb_fxycxy);
+	Matrix4f proj = Camera::genProjMatrix(reconstruction->params.rgb_fxycxy);
 
 	/**
 	 * TODO:
@@ -341,19 +342,20 @@ void TextureUpdater::colorTexUpdate(shared_ptr<gfx::GpuTex2D> rgba_tex,
 		}
 	}
 
-	applyColorData(fully_loaded_visible_patches,low_detail_renderer, rgba_tex, color_pose_in, proj,
+	applyColorData(reconstruction,fully_loaded_visible_patches,low_detail_renderer, rgba_tex, color_pose_in, proj,
 	               active_set);//the active set all the newly created textures will be attached to
 
-	mesh_reconstruction->cleanupGlStoragesThisThread_();
+	reconstruction->cleanupGlStoragesThisThread_();
 }
 
-void TextureUpdater::applyColorData(vector<shared_ptr<MeshPatch>> &visible_patches,
+void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
+									vector<shared_ptr<MeshPatch>> &visible_patches,
 									LowDetailRenderer* low_detail_renderer,
 									shared_ptr<gfx::GpuTex2D> rgb_in,
 									Matrix4f &pose, Matrix4f &proj,
 									shared_ptr<ActiveSet> active_set) {
 
-	MeshReconstruction *mesh = mesh_reconstruction;
+	MeshReconstruction *mesh = reconstruction;
 	if(active_set == nullptr) {
 		return;
 	}

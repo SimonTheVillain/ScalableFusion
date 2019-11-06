@@ -69,8 +69,8 @@ public:
 
 private:
 
-	void captureWorker_(shared_ptr<MeshReconstruction> map, Stream *stream, 
-	                   GLFWwindow *context);
+	void captureWorker_(shared_ptr<MeshReconstruction> reconstruction, Stream *stream,
+						GLFWwindow *context);
 
 	thread capture_thread_;
 

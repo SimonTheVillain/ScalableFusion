@@ -284,6 +284,8 @@ int main(int argc, const char *argv[]) {
 			make_shared<EdithSegmentation>();
 
 	LowDetailRenderer low_detail_renderer;
+
+	TextureUpdater texture_updater;
 	SchedulerBase *scheduler = nullptr;
 	if(multithreaded) {
 		scheduler = new SchedulerThreaded(scalable_map, &dataset, invisible_window);

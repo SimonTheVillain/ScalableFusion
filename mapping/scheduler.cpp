@@ -81,19 +81,22 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 	reconstruction->initInGlLogicContext();
 
-	InformationRenderer information_renderer;
+	InformationRenderer* information_renderer =
+		new InformationRenderer();
 
-	information_renderer.initInContext(reconstruction.get());
+	information_renderer->initInContext(reconstruction.get());
 
-	information_renderer.initInContext(
+	information_renderer->initInContext(
 			640,// TODO: don't hardcode this!!!
 			480,
 			reconstruction.get());
 
-	GeometryUpdater geometry_updater;
-	TextureUpdater texture_updater;
+	GeometryUpdater* geometry_updater =
+			new GeometryUpdater();
+	TextureUpdater* texture_updater =
+			new TextureUpdater();
 	//texture_updater.mesh_reconstruction = map.get();
-	geometry_updater.setup(reconstruction.get());
+	geometry_updater->setup(reconstruction.get());
 
 
 
@@ -151,7 +154,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 		} else {
 			cv::Mat reprojected_depth = 
-					reconstruction->generateDepthFromView(640, 480, &information_renderer, accu_pose.cast<float>().matrix());
+					reconstruction->generateDepthFromView(640, 480, information_renderer, accu_pose.cast<float>().matrix());
 
 			odometry->initICPModel((unsigned short*) reprojected_depth.data, depth_cutoff);
 
@@ -217,16 +220,16 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		shared_ptr<ActiveSet> active_set =
 				reconstruction->genActiveSetFromPose(depth_pose,
 													 low_detail_renderer_, //that low detail renderer needs to be shared with
-						&texture_updater,
-													 &information_renderer);
+						                             texture_updater,
+													 information_renderer);
 		//map->debugCheckTriangleNeighbourConsistency(map->GetAllPatches());
 
 		//don't ask me what this is doing here!TODO: find out
 		reconstruction->clearInvalidGeometry(active_set, depth, depth_pose);
 
-		geometry_updater.update(d_std_tex, depth_pose, active_set);
+		geometry_updater->update(d_std_tex, depth_pose, active_set);
 
-		texture_updater.colorTexUpdate(reconstruction.get(),rgb_texture,low_detail_renderer_, rgb_pose, active_set);
+		texture_updater->colorTexUpdate(reconstruction.get(),rgb_texture,low_detail_renderer_, rgb_pose, active_set);
 
 		//there definitely is a reason to keep the active set here!
 		reconstruction->setActiveSetUpdate_(active_set);
@@ -239,8 +242,8 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 			/*********************************************************/
 
 			//expanding the existing geometry
-			geometry_updater.extend(
-					reconstruction.get(), &information_renderer, &texture_updater, low_detail_renderer_,
+			geometry_updater->extend(
+					reconstruction.get(), information_renderer, texture_updater, low_detail_renderer_,
 					active_set, d_std_tex, d_std_mat, depth_pose,
 					rgb_texture, rgb_pose);
 
@@ -290,10 +293,15 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		cout << "FBOs active " << reconstruction->getFboCountDebug_() << endl;
 	}
 
+	delete information_renderer;
+	delete geometry_updater;
+	delete texture_updater;
 	//delete everything for the fbo
 	reconstruction->fbo_storage_.forceGarbageCollect();
 	garbage_collector_->forceCollect();
 	glFinish();
+
+
 
 	glfwDestroyWindow(connected_context);
 	delete odometry;

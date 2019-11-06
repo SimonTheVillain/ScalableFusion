@@ -231,7 +231,7 @@ void PresentationRenderer::renderInWindow(MeshReconstruction* reconstruction,
 		                TextureUpdater* texture_updater_local,
 		                InformationRenderer* information_renderer_local) {
 			vector<shared_ptr<MeshPatch>> visible_patches =
-					reconstruction->octree_.getObjects(inv_cam_pose, intrinsics, res, view_distance);
+					reconstruction_local->octree_.getObjects(inv_cam_pose, intrinsics, res, view_distance);
 
 			cudaDeviceSynchronize();
 			gpuErrchk(cudaPeekAtLastError());

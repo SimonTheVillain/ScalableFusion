@@ -63,7 +63,7 @@ find_package(OpenGL REQUIRED)
 find_package(radical CONFIG REQUIRED)
 find_package(CUDA REQUIRED)
 
-list(APPEND SCALFU_INCLUDE_DIRS
+set(SCALFU_INCLUDE_DIRS
 		${CMAKE_SOURCE_DIR}
 		${CUDA_INCLUDE_DIRS}
 		${EIGEN3_INCLUDE_DIRS}
@@ -72,7 +72,7 @@ list(APPEND SCALFU_INCLUDE_DIRS
 		${OpenCV_INCLUDE_DIRS}
 		${OPENGL_INCLUDE_DIR}
 		)
-list(APPEND SCALFU_LIBRARIES
+set(SCALFU_LIBRARIES
 		scalable_fusion
 		glfw
 		gfx
@@ -87,7 +87,7 @@ list(APPEND SCALFU_LIBRARIES
 		${OPENGL_gl_LIBRARY}
 		${OPENGL_glu_LIBRARY}
 		${OpenCV_LIBS})
-list(APPEND SCALFU_LIBRARY_DIRS
+set(SCALFU_LIBRARY_DIRS
 		${ASSIMP_LIBRARY_DIRS}
 		${GLEW_LIBRARY_DIRS}
 		${OpenCV_LIBRARY_DIRS}
@@ -115,3 +115,6 @@ add_subdirectory(mapping)
 add_subdirectory(segmentation)
 add_subdirectory(applications)
 add_subdirectory(tests)
+
+
+#TODO: https://foonathan.net/2016/03/cmake-install/

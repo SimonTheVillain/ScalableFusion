@@ -6,7 +6,7 @@
 
 #include <boost/program_options.hpp>
 //TODO: remove this
-#include <cuda.h>
+//#include <cuda.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glog/logging.h>
@@ -55,8 +55,8 @@ static Arcball arcball;
 static bool capture_left = false;
 static bool capture_right = false;
 static double xpos_old = 0, ypos_old = 0;
-static void cursor_position_callback(GLFWwindow *window, double xpos, 
-                                     double ypos) {
+static void cursor_position_callback(GLFWwindow *window, double xpos,
+									 double ypos) {
 	float dx = static_cast<float>(xpos_old - xpos);
 	float dy = static_cast<float>(ypos_old - ypos);
 	if(capture_left) {
@@ -75,8 +75,8 @@ static void cursor_position_callback(GLFWwindow *window, double xpos,
 
 static bool read_out_surface_info = false;
 static bool center_camera = false;
-void mouse_button_callback(GLFWwindow *window, int button, int action, 
-                           int mods) {
+void mouse_button_callback(GLFWwindow *window, int button, int action,
+						   int mods) {
 	if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
 		capture_left = true;
 	}
@@ -86,7 +86,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action,
 	if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		capture_right = true;
 		arcball.clickBegin(static_cast<float>(xpos_old),
-		                   static_cast<float>(ypos_old));
+						   static_cast<float>(ypos_old));
 	}
 	if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
 		capture_right = false;
@@ -115,7 +115,7 @@ static bool force_destination_geometry = false;
 static bool next_single_step = false;
 bool paused = false;
 void key_callback(GLFWwindow *window, int key, int scancode, int action,
-                  int mods) {
+				  int mods) {
 	if(key == GLFW_KEY_W && action == GLFW_PRESS) {
 		render_wireframe = !render_wireframe;
 	}
@@ -173,20 +173,20 @@ int main(int argc, const char *argv[]) {
 			"/home/simon/datasets/output/graph.txt";
 
 	string output_path;// =
-			//"/home/simon/datasets/tum/output/";
+	//"/home/simon/datasets/tum/output/";
 
 	string coarse_output_file;// =
-			//"/home/simon/datasets/tum/output/coarse.ply";
+	//"/home/simon/datasets/tum/output/coarse.ply";
 
 	string detailed_output_file;// =
-			//"/home/simon/datasets/tum/output/fine.ply";
+	//"/home/simon/datasets/tum/output/fine.ply";
 
 	float replay_speed = 0.1f;
-	#ifdef DEBUG
+#ifdef DEBUG
 	replay_speed = 0.1f;
-	#else
+#else
 	replay_speed = 1.0f;
-	#endif // DEBUG
+#endif // DEBUG
 	bool use_dataset_trajectory = false;
 	float groundtruth_trajectory_scale = 1.0f;
 	bool invert_ground_truth_trajectory = false;
@@ -254,8 +254,8 @@ int main(int argc, const char *argv[]) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_VISIBLE, 0);
-	invisible_window = glfwCreateWindow(640, 480, "HOPE U NO VISIBLE", nullptr, 
-	                                    nullptr);
+	invisible_window = glfwCreateWindow(640, 480, "HOPE U NO VISIBLE", nullptr,
+										nullptr);
 	if(!invisible_window) {
 		glfwTerminate();
 		exit(EXIT_FAILURE);
@@ -271,16 +271,16 @@ int main(int argc, const char *argv[]) {
 	//create a map object that takes 640 by 480 sized depth images
 	shared_ptr<MeshReconstruction> scalable_map =
 			make_shared<MeshReconstruction>(invisible_window, &garbage_collector,
-			                                multithreaded, 640, 480);
+											multithreaded, 640, 480);
 
-	TumDataset dataset(dataset_path, true, use_dataset_trajectory, true, 
-	                   skip_initial_frames, depth_scale, 
-	                   groundtruth_trajectory_scale, 
-	                   invert_ground_truth_trajectory);
+	TumDataset dataset(dataset_path, true, use_dataset_trajectory, true,
+					   skip_initial_frames, depth_scale,
+					   groundtruth_trajectory_scale,
+					   invert_ground_truth_trajectory);
 	dataset.skip_count = 0;
 	dataset.replay_speed = replay_speed;
 
-	shared_ptr<IncrementalSegmentation> incremental_segmentation = 
+	shared_ptr<IncrementalSegmentation> incremental_segmentation =
 			make_shared<EdithSegmentation>();
 
 	LowDetailRenderer low_detail_renderer;
@@ -325,10 +325,10 @@ int main(int argc, const char *argv[]) {
 
 	//TODO: implement proper destructor for these and destroy before cloing opengl context
 	CameraFrustrumRenderableModel cam_model(Vector4f(0, 1, 0, 1),//color is red
-	                                        Vector4f(535.4f, 539.2f,
-	                                                 320.1f, 247.6f),//this is just about right
-	                                        Vector2f(640, 480),
-	                                        0.1f, 2.0f);
+											Vector4f(535.4f, 539.2f,
+													 320.1f, 247.6f),//this is just about right
+											Vector2f(640, 480),
+											0.1f, 2.0f);
 	WireSphereModel wire_sphere_model(Vector4f(0, 1, 0, 1), Vector4f(0, 0, 0, 1), 1);
 
 	//set the callback functions for the different inputs
@@ -347,7 +347,7 @@ int main(int argc, const char *argv[]) {
 		}
 		//generate the view matrix
 		Matrix4f proj = Camera::projection(static_cast<float>(M_PI) * 0.3f,
-		                                   800.0f / 600.0f);
+										   800.0f / 600.0f);
 		Matrix4f translation = Matrix4f::Identity();
 		translation.block<3, 1>(0, 3) = trans;
 		Matrix4f trans_from_arcball = Matrix4f::Identity();
@@ -380,7 +380,7 @@ int main(int argc, const char *argv[]) {
 			cout << "Reading out the clicked patch to get further info" << endl;
 			int patch_ind;
 			int triangle_ind;
-			Vector4f clicked_point = 
+			Vector4f clicked_point =
 					information_renderer.renderAndExtractInfo(
 							scalable_map.get(),
 							view, proj, &low_detail_renderer,
@@ -400,7 +400,7 @@ int main(int argc, const char *argv[]) {
 
 		if(center_camera == true) {
 			cout << "Reading out the clicked patch to get further info and center the camera" << endl;
-			Vector4f center = 
+			Vector4f center =
 					information_renderer.renderAndExtractInfo(
 							scalable_map.get(),
 							view, proj,

@@ -6,17 +6,17 @@
 ################################################################################
 
 
-# Prerequisites
-cmake_minimum_required (VERSION 3.8)
-if(NOT DEFINED CMAKE_CUDA_COMPILER)
-	set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
-endif()
+# Prerequisites (SIMON: not really though)
+#cmake_minimum_required (VERSION 3.8)
+#if(NOT DEFINED CMAKE_CUDA_COMPILER)
+#	set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
+#endif()
 
 
 # Project
-project(mapping
-	LANGUAGES CXX CUDA
-)
+#project(scalable_fusion
+#	LANGUAGES CXX CUDA
+#)
 
 
 # Definitions
@@ -130,139 +130,11 @@ file(GLOB SHADERS
 )
 
 
-# Build
-add_executable(${PROJECT_NAME}
-	main.cpp
-	${CXX_SRCS}
-	${CUDA_SRCS} 
-	${SHADERS}
-)
-target_link_libraries(${PROJECT_NAME}
-	${ASSIMP_LIBRARIES} 
-	${Boost_LIBRARIES}
-	dataset_loader 
-	glfw 
-	glog 
-	gfx 
-	icp_cuda 
-	${OPENGL_gl_LIBRARY} 
-	${OPENGL_glu_LIBRARY} 
-	${OpenCV_LIBS} 
-	radical
-	segmentation
-)
 
-
-# Tests
-add_executable(texture_mem_test 
-	tests/texture_mem_test.cpp 
-	${CXX_SRCS} 
-	${CUDA_SRCS} 
-	${SHADERS}
-)
-target_link_libraries(texture_mem_test 
-	${ASSIMP_LIBRARIES} 
-	${Boost_LIBRARIES} 
-	dataset_loader 
-	glfw 
-	glog
-	gfx 
-	icp_cuda 
-	${OPENGL_gl_LIBRARY} 
-	${OPENGL_glu_LIBRARY} 
-	${OpenCV_LIBS} 
-	segmentation
-)
-
-add_executable(texture_mem_test_threaded 
-	tests/texture_mem_test_threaded.cpp 
-	${CXX_SRCS} 
-	${CUDA_SRCS} 
-	${SHADERS}
-)
-target_link_libraries(texture_mem_test_threaded 
-	${ASSIMP_LIBRARIES} 
-	${Boost_LIBRARIES} 
-	dataset_loader 
-	glfw 
-	glog
-	gfx 
-	icp_cuda 
-	${OPENGL_gl_LIBRARY} 
-	${OPENGL_glu_LIBRARY} 
-	${OpenCV_LIBS} 
-	segmentation
-)
-
-add_executable(graph_deformation_test 
-	tests/graph_deformation_test.cpp 
-	${CXX_SRCS} 
-	${CUDA_SRCS} 
-	${SHADERS}
-	base/stack_vector.h 
-	graph/deformation_graph.cpp
-	graph/deformation_graph.h 
-	graph/deformation_node.cpp 
-	graph/deformation_node.h
-)
-target_link_libraries(graph_deformation_test 
-	${ASSIMP_LIBRARIES} 
-	${Boost_LIBRARIES} 
-	dataset_loader 
-	glfw 
-	glog
-	gfx 
-	icp_cuda 
-	${OPENGL_gl_LIBRARY} 
-	${OPENGL_glu_LIBRARY} 
-	${OpenCV_LIBS} 
-	segmentation
-)
-
-add_executable(label_cloud_viewer 
-	tests/label_cloud_viewer.cpp 
-	${CXX_SRCS} 
-	${CUDA_SRCS} 
-	${SHADERS}
-	base/stack_vector.h 
-	graph/deformation_graph.cpp 
-	graph/deformation_graph.h 
-	graph/deformation_node.cpp 
-	graph/deformation_node.h
-)
-target_link_libraries(label_cloud_viewer 
-	${ASSIMP_LIBRARIES} 
-	${Boost_LIBRARIES} 
-	dataset_loader 
-	glfw 
-	glog
-	gfx 
-	icp_cuda 
-	${OPENGL_gl_LIBRARY} 
-	${OPENGL_glu_LIBRARY} 
-	${OpenCV_LIBS} 
-	segmentation
-)
-
-add_executable(simple_cloud_viewer 
-	tests/simple_cloud_viewer.cpp 
-	${CXX_SRCS} 
-	${CUDA_SRCS} 
-	${SHADERS}
-)
-target_link_libraries(simple_cloud_viewer 
-	${ASSIMP_LIBRARIES} 
-	${Boost_LIBRARIES} 
-	dataset_loader 
-	glfw 
-	glog
-	gfx 
-	icp_cuda 
-	${OPENGL_gl_LIBRARY} 
-	${OPENGL_glu_LIBRARY} 
-	${OpenCV_LIBS} 
-	segmentation
-)
+add_library(scalable_fusion
+		${CXX_SRCS}
+		${CUDA_SRCS}
+		${SHADERS})
 
 
 # Notes

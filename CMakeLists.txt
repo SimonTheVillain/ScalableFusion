@@ -18,6 +18,10 @@ project(ScalableFusion
 	LANGUAGES CXX CUDA
 )
 
+#define library version:
+set(SCALFU_VERSION_MAJOR 0 CACHE STRING "major version" FORCE)
+set(SCALFU_VERSION_MINOR 1 CACHE STRING "minor version" FORCE)
+set(SCALFU_VERSION ${MY_LIBRARY_VERSION_MAJOR}.${MY_LIBRARY_VERSION_MINOR} CACHE STRING "version" FORCE)
 
 # Defintions
 set(CMAKE_CXX_STANDARD 11)
@@ -64,6 +68,7 @@ find_package(radical CONFIG REQUIRED)
 find_package(CUDA REQUIRED)
 
 set(SCALFU_INCLUDE_DIRS
+		"${CMAKE_SOURCE_DIR}/mapping"
 		${CMAKE_SOURCE_DIR}
 		${CUDA_INCLUDE_DIRS}
 		${EIGEN3_INCLUDE_DIRS}
@@ -77,7 +82,6 @@ set(SCALFU_LIBRARIES
 		glfw
 		gfx
 		glog
-		gfx
 		icp_cuda
 		radical
 		segmentation
@@ -95,26 +99,31 @@ set(SCALFU_LIBRARY_DIRS
 
 
 #list(APPEND scafu_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
-
-
+message("LISTEN UP YOU FUCK")
+message("${SCALFU_LIBRARIES}")
 
 
 # Includes
-include_directories(${CMAKE_SOURCE_DIR}/dataset_loader/)
-include_directories(${CMAKE_SOURCE_DIR}/gfx/)
-include_directories(${CMAKE_SOURCE_DIR}/icp_cuda/)
-include_directories(${CMAKE_SOURCE_DIR}/mapping/)
-include_directories(${CMAKE_SOURCE_DIR}/segmentation/)
+#include_directories(${CMAKE_SOURCE_DIR}/dataset_loader/)
+#include_directories(${CMAKE_SOURCE_DIR}/gfx/)
+#include_directories(${CMAKE_SOURCE_DIR}/icp_cuda/)
+#include_directories(${CMAKE_SOURCE_DIR}/mapping/)
+#include_directories(${CMAKE_SOURCE_DIR}/segmentation/)
 
 
 # Add subprojects
 add_subdirectory(dataset_loader)
-add_subdirectory(gfx)
+add_subdirectory(mapping/gfx)
 add_subdirectory(icp_cuda)
 add_subdirectory(mapping)
-add_subdirectory(segmentation)
+add_subdirectory(mapping/segmentation)
 add_subdirectory(applications)
 add_subdirectory(tests)
 
 
+
+
 #TODO: https://foonathan.net/2016/03/cmake-install/
+set(tool_dest "bin")
+set(include_dest "include/scalfu-${SCALFU_VERSION}")
+set(main_lib_dest "lib/scalfu-${SCALFU_VERSION}")

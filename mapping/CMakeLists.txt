@@ -59,8 +59,6 @@ find_package(radical CONFIG REQUIRED)
 
 
 # Includes
-include_directories(${CMAKE_SOURCE_DIR})
-#include_directories(${CMAKE_SOURCE_DIR}/../)# this would make more sense with CMAKE_CURRENT_SOURCE_DIR
 include_directories(${ASSIMP_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIR})
 include_directories(${CUDA_INCLUDE_DIRS})
@@ -69,6 +67,8 @@ include_directories(${GLEW_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${OPENGL_INCLUDE_DIR})
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../)#for icp_cuda and dataset_loader
 
 # Links
 link_directories(${ASSIMP_LIBRARY_DIRS})

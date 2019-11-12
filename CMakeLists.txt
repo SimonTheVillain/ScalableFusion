@@ -68,7 +68,7 @@ find_package(radical CONFIG REQUIRED)
 find_package(CUDA REQUIRED)
 
 set(SCALFU_INCLUDE_DIRS
-		"${CMAKE_SOURCE_DIR}/mapping"
+		"${CMAKE_SOURCE_DIR}/include"
 		${CMAKE_SOURCE_DIR}
 		${CUDA_INCLUDE_DIRS}
 		${EIGEN3_INCLUDE_DIRS}
@@ -113,10 +113,8 @@ message("${SCALFU_LIBRARIES}")
 
 # Add subprojects
 add_subdirectory(dataset_loader)
-add_subdirectory(mapping/gfx)
 add_subdirectory(icp_cuda)
-add_subdirectory(mapping)
-add_subdirectory(mapping/segmentation)
+add_subdirectory(src)
 add_subdirectory(applications)
 add_subdirectory(tests)
 

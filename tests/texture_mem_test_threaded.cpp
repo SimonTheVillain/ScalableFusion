@@ -8,10 +8,11 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "gpu_tex.h"
-#include "garbage_collector.h"
-#include "gl_utils.h"
-#include "gpu/thread_safe_FBO_VAO.h"
+#include <gfx/gpu_tex.h>
+#include <gpu/thread_safe_FBO_VAO.h>
+#include <gfx/garbage_collector.h>
+#include <gfx/gl_utils.h>
+#include <gpu/thread_safe_FBO_VAO.h>
 
 using namespace std;
 

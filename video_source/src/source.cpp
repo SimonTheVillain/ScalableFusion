@@ -3,9 +3,9 @@
  *  Provides the tools for accessing various video sources like
  *  cameras and datasets.
  *
- * \file    source.h
- * \author  Nikolaus Wagner
- * \date    13. 11. 2019
+ * \file   source.cpp
+ * \author Nikolaus Wagner
+ * \date   13. 11. 2019
  *
  */
 
@@ -59,7 +59,7 @@ bool video::Dataset::readFrame() {
 		return false;
 	}
 	// Do generic reading operations
-	if(!readFrame_()) {
+	if(!readFrame()) {
 		return false;
 	}
 	// Do dataset specific reading operations

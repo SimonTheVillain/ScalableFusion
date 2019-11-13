@@ -11,7 +11,7 @@
 #include <GLFW/glfw3.h>
 #include <glog/logging.h>
 
-#include <dataset_loader/dataset_loader.h>
+#include <video_source/include/source.h>
 #include <gfx/camera.h>
 #include <mesh_reconstruction.h>
 #include <gfx/gpu_tex.h>
@@ -273,12 +273,7 @@ int main(int argc, const char *argv[]) {
 			make_shared<MeshReconstruction>(invisible_window, &garbage_collector,
 											multithreaded, 640, 480);
 
-	TumDataset dataset(dataset_path, true, use_dataset_trajectory, true,
-					   skip_initial_frames, depth_scale,
-					   groundtruth_trajectory_scale,
-					   invert_ground_truth_trajectory);
-	dataset.skip_count = 0;
-	dataset.replay_speed = replay_speed;
+	video::TuwDataset dataset(dataset_path, true);
 
 	shared_ptr<IncrementalSegmentation> incremental_segmentation =
 			make_shared<EdithSegmentation>();

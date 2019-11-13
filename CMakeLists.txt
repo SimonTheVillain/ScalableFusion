@@ -90,6 +90,7 @@ set(SCALFU_LIBRARIES
 		radical
 		segmentation
 		dataset_loader
+		video_source
 		${ASSIMP_LIBRARIES}
 		${Boost_LIBRARIES}
 		${OPENGL_gl_LIBRARY}

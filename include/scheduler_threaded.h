@@ -13,7 +13,7 @@ class SchedulerThreaded : public SchedulerBase {
 public:
 
 	SchedulerThreaded(shared_ptr<MeshReconstruction> map,
-	                  Stream *stream, GLFWwindow *context);
+	                  video::Source *source, GLFWwindow *context);
 
 	~SchedulerThreaded();
 
@@ -62,7 +62,7 @@ private:
 	                   cv::Mat depth, shared_ptr<gfx::GpuTex2D> d_std_tex,
 	                   Matrix4f pose);
 
-	void captureWorker_(shared_ptr<MeshReconstruction> map, Stream *stream, 
+	void captureWorker_(shared_ptr<MeshReconstruction> map, video::Source *source, 
 	                    GLFWwindow *context);
 
 	//TODO: this

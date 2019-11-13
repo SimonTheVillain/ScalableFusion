@@ -9,7 +9,9 @@ using namespace std;
 using namespace Eigen;
 
 class MeshReconstruction;
-class Stream;
+namespace video {
+	class Source;
+}
 struct GLFWwindow;
 class ActiveSet;
 
@@ -48,7 +50,7 @@ class SchedulerLinear : public SchedulerBase {
 public:
 
 	SchedulerLinear(shared_ptr<MeshReconstruction> map,
-	                GarbageCollector *garbage_collector, Stream *capture,
+	                GarbageCollector *garbage_collector, video::Source *source,
 	                GLFWwindow *context,
 	                LowDetailRenderer *low_detail_renderer,
 	                shared_ptr<IncrementalSegmentation> incremental_segmentation);
@@ -69,8 +71,8 @@ public:
 
 private:
 
-	void captureWorker_(shared_ptr<MeshReconstruction> reconstruction, Stream *stream,
-						GLFWwindow *context);
+	void captureWorker_(shared_ptr<MeshReconstruction> reconstruction, 
+	                    video::Source *source, GLFWwindow *context);
 
 	thread capture_thread_;
 

@@ -8,7 +8,7 @@
 
 #include <mesh_reconstruction.h>
 #include <intermediate_depth_model.h>
-#include <dataset_loader/dataset_loader.h>
+#include <video_source/include/source.h>
 #include <icp_cuda/icp_odometry.h>
 #include <gpu/active_set.h>
 #include <cuda/xtion_camera_model.h>
@@ -19,7 +19,7 @@ using namespace std;
 using namespace Eigen;
 
 void SchedulerThreaded::captureWorker_(shared_ptr<MeshReconstruction> map, 
-                                       Stream *stream, GLFWwindow *context) {
+                                       video::Source *source, GLFWwindow *context) {
 /*
 	//stuff that formerly has been in capture proc:
 	//**********************************
@@ -296,7 +296,7 @@ void SchedulerThreaded::expand_(shared_ptr<ActiveSet> active_set,
 }
 
 SchedulerThreaded::SchedulerThreaded(shared_ptr<MeshReconstruction> map, 
-                                     Stream *stream, GLFWwindow *context)
+                                     video::Source *source, GLFWwindow *context)
 		: last_known_depth_pose_(Matrix4f::Identity()),
 		  map_(map),
 		  step_trough_(true),
@@ -365,7 +365,7 @@ SchedulerThreaded::SchedulerThreaded(shared_ptr<MeshReconstruction> map,
 
 	//if we are running non multithreaded this is the only thing thats running
 	capture_thread_ = thread(&SchedulerThreaded::captureWorker_, this, map, 
-	                         stream, context);
+	                         source, context);
 
 	pthread_setname_np(capture_thread_.native_handle(), "capture");
 

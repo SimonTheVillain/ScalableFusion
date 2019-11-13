@@ -14,7 +14,7 @@
 #include <intermediate_depth_model.h>
 #include <segmentation/incremental_segmentation.h>
 #include <cuda/xtion_camera_model.h>
-#include <dataset_loader/dataset_loader.h>
+#include <video_source/include/source.h>
 #include <gfx/garbage_collector.h>
 #include <mesh_reconstruction.h>
 #include <gpu/active_set.h>
@@ -40,7 +40,7 @@ void SchedulerBase::initializeGlContextInThread(GLFWwindow *context) {
 
 SchedulerLinear::SchedulerLinear(
 		shared_ptr<MeshReconstruction> map,  GarbageCollector *garbage_collector,
-		Stream *stream, GLFWwindow *context,
+		video::Source *source, GLFWwindow *context,
 		LowDetailRenderer* low_detail_renderer,
 		shared_ptr<IncrementalSegmentation> incremental_segmentation)
 		: incremental_segmentation_(incremental_segmentation),
@@ -52,7 +52,7 @@ SchedulerLinear::SchedulerLinear(
 		  paused_(false),
 		  take_next_step_(false) {
 
-	capture_thread_ = thread(&SchedulerLinear::captureWorker_, this, map, stream, context);
+	capture_thread_ = thread(&SchedulerLinear::captureWorker_, this, map, source, context);
 	pthread_setname_np(capture_thread_.native_handle(),"capture");
 }
 
@@ -63,7 +63,7 @@ SchedulerLinear::~SchedulerLinear() {
 }
 
 void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstruction,
-                                     Stream *stream, GLFWwindow *context) {
+                                     video::Source *source, GLFWwindow *context) {
 	//TODO: Check: creating a connected context might invalidate our efforts to properly destroy all of this threads resources
 
 	GLFWwindow *connected_context = createConnectedGlContext(context);
@@ -102,15 +102,15 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 	incremental_segmentation_->initInThread();
 
-	Vector4f fc = stream->getDepthIntrinsics();
+	Vector4f fc = source->intrinsicsDepth();
 
 	//Camera tracking via cuda icp
 	ICPOdometry *odometry = new ICPOdometry(640, 480, fc[2], fc[3], fc[0], fc[1]);
 
 	IntermediateMap intermediate_map(640, 480, fc);
 
-	reconstruction->setDepthIntrinsics(stream->getDepthIntrinsics());
-	reconstruction->setRGBIntrinsics(stream->getRgbIntrinsics());
+	reconstruction->setDepthIntrinsics(source->intrinsicsDepth());
+	reconstruction->setRGBIntrinsics(source->intrinsicsRgb());
 
 	//this is a replacement for a proper test if there already is something added to the map
 	bool first_lap = true;
@@ -120,25 +120,23 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 	accu_pose.setRotationMatrix(Matrix3d::Identity());
 	accu_pose.translation() = Vector3d(0, 0, 0);
 
-	Matrix4f rel_depth_to_color = stream->getDepth2RgbRegistration();
+	Matrix4f rel_depth_to_color = source->depthToRgb();
 
 	shared_ptr<ActiveSet> active_set_last_expand;
 	Matrix4f depth_pose_last_expand;
 
-	while(stream->isRunning() && !end_threads_) {
+	while(source->isRunning() && !end_threads_) {
 		if(paused_ && !take_next_step_) {
 			continue;
 		}
 		take_next_step_ = false;
-		stream->readNewSetOfImages();
-		if(!stream->isRunning()) {
+		if(!source->readFrame()) {
 			break; // end this loop if there is no new image
-			//This could be written more efficiently (but who cares about beautiful code?)
+			//This could be written more efficiently (but who cares about beautiful code?) Niko does.
 		}
 
-		cv::Mat depth = stream->getDepthFrame(); // 16 bit 1mm resolution
-		cv::Mat rgb   = stream->getRgbFrame(); // 8 bit 3 channels (usually)
-		Matrix4f pose = stream->getDepthPose();
+		cv::Mat depth = source->frame.depth; // 16 bit 1mm resolution
+		cv::Mat rgb   = source->frame.rgb; // 8 bit 3 channels (usually)
 
 		if(depth.type() != CV_16UC1) {
 			assert(0);
@@ -171,9 +169,9 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		Matrix4f rgb_pose   = rel_depth_to_color * depth_pose;
 
 		//If there is groundtruth trajectory loaded, we will use it!!!
-		if(stream->hasGroundTruth()) {
-			depth_pose = stream->getDepthPose();
-			rgb_pose   = stream->getRgbPose();
+		if(source->providesOdom()) {
+			depth_pose = source->odom.pose;
+			rgb_pose   = source->odom.pose; // TODO derive this from depthToRgb()
 		}
 		last_known_depth_pose_ = depth_pose;
 

@@ -1,6 +1,46 @@
 @PACKAGE_INIT@
 
 find_package(OpenCV @OpenCV_VERSION@ REQUIRED)
+find_package(ASSIMP REQUIRED)
+find_package(Boost @Boost_VERSION_STRING@ @TEST@ COMPONENTS program_options REQUIRED)
+find_package(CUDA REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(glfw3 @glfw3_VERSION@ REQUIRED)
+
+
+
+set(@LIB_NAME@_INCLUDE_DIRS /usr/local/eigen3
+    @CMAKE_INSTALL_PREFIX@/include/@LIB_NAME@/
+    @CMAKE_INSTALL_PREFIX@/include/dataset_loader/
+    @CMAKE_INSTALL_PREFIX@/include/icp_cuda/
+    @CUDA_INCLUDE_DIRS@
+    @EIGEN3_INCLUDE_DIRS@
+    @Boost_INCLUDE_DIR@
+    @GLEW_INCLUDE_DIRS@
+    @OpenCV_INCLUDE_DIRS@
+    @OPENGL_INCLUDE_DIR@
+    )
+set(@LIB_NAME@_LIBRARY_DIRS
+    @ASSIMP_LIBRARY_DIRS@
+    @GLEW_LIBRARY_DIRS@
+    @OpenCV_LIBRARY_DIRS@)
+set(@LIB_NAME@_LIBRARIES
+    @LIB_NAME@
+    glfw
+    gfx
+    glog
+    icp_cuda
+    radical
+    segmentation
+    dataset_loader
+    @ASSIMP_LIBRARIES@
+    @Boost_LIBRARIES@
+    @OPENGL_gl_LIBRARY@
+    @OPENGL_glu_LIBRARY@
+    @GLEW_LIBRARIES@
+    @OpenCV_LIBS@
+    @CUDA_LIBRARIES@)
 
 include("${CMAKE_CURRENT_LIST_DIR}/@_targets_export_name@.cmake")
 check_required_components("@PROJECT_NAME@")

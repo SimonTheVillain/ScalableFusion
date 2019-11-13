@@ -45,7 +45,8 @@ endif()
 
 # Required packages
 find_package(ASSIMP REQUIRED)
-find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
+find_package(Boost COMPONENTS program_options REQUIRED)
+set(Boost_VERSION_STRING "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
 find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GLEW REQUIRED)
@@ -66,6 +67,11 @@ include_directories(${EIGEN3_INCLUDE_DIRS})
 include_directories(${GLEW_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${OPENGL_INCLUDE_DIR})
+
+message("LISTEN UP YOU FUCK2")
+message(${CUDA_INCLUDE_DIRS})
+message(${CUDA_LIBRARIES})
+
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR})#for icp_cuda and dataset_loader
@@ -173,7 +179,6 @@ set(_project_config_file "${_generated_dir}/${PROJECT_NAME}-config.cmake")
 set(_targets_export_name "${PROJECT_NAME}-targets")
 
 ## Create scalfu-config-version.cmake
-
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
 		"${_version_config_file}"

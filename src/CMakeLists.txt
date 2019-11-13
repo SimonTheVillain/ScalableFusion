@@ -68,10 +68,6 @@ include_directories(${GLEW_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${OPENGL_INCLUDE_DIR})
 
-message("LISTEN UP YOU FUCK2")
-message(${CUDA_INCLUDE_DIRS})
-message(${CUDA_LIBRARIES})
-
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR})#for icp_cuda and dataset_loader
@@ -230,12 +226,12 @@ install(
 
 ## Uninstall target
 
-configure_file(
-		"../cmake/Uninstall.cmake.in"
-		"${_generated_dir}/uninstall.cmake"
-		IMMEDIATE @ONLY
-)
-
-add_custom_target(uninstall
-		COMMAND ${CMAKE_COMMAND} -P ${_generated_dir}/uninstall.cmake
-		)
+#configure_file(
+#		"../cmake/Uninstall.cmake.in"
+#		"${_generated_dir}/uninstall.cmake"
+#		IMMEDIATE @ONLY
+#)
+#
+#add_custom_target(uninstall
+#		COMMAND ${CMAKE_COMMAND} -P ${_generated_dir}/uninstall.cmake
+#		)

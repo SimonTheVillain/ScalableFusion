@@ -130,5 +130,21 @@ add_subdirectory(tests)
 #set(include_dest "include/scalfu-${SCALFU_VERSION}")
 #set(main_lib_dest "lib/scalfu-${SCALFU_VERSION}")
 
+#---------------------------------------------------------------------#
+#                            Uninstallation                             #
+#---------------------------------------------------------------------#
 
+
+message("HERE")
+message(${CMAKE_CURRENT_BINARY_DIR})
+
+if(NOT TARGET uninstall)
+	configure_file(
+			"${CMAKE_CURRENT_SOURCE_DIR}/cmake/Uninstall.cmake.in"
+			"${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+			IMMEDIATE @ONLY)
+
+	add_custom_target(uninstall
+			COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+endif()
 

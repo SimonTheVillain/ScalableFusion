@@ -59,7 +59,7 @@ file(GLOB CUDA_CONTAINERS
 
 
 # Build
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
 	${CXX_SRCS}
 	${CUDA_SRCS}
 	${CUDA_CONTAINERS}

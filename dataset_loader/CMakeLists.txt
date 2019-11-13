@@ -40,7 +40,7 @@ file(GLOB CXX_SRCS
 
 
 # Build
-add_library(${PROJECT_NAME} 
+add_library(${PROJECT_NAME} SHARED
 	${CXX_SRCS}
 )
 target_link_libraries(${PROJECT_NAME}
@@ -48,19 +48,57 @@ target_link_libraries(${PROJECT_NAME}
 	radical
 )
 
+#---------------------------------------------------------------------#
+#                                 Tests                               #
+#---------------------------------------------------------------------#
+add_executable(${PROJECT_NAME}_test
+		test/dataset_loader_test.cpp
+		)
+target_link_libraries(${PROJECT_NAME}_test
+		${PROJECT_NAME}
+		)
+set_target_properties(${PROJECT_NAME}_test
+		PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/../test/"
+		)
 
-# Install
+
+
+#---------------------------------------------------------------------#
+#                            Installation                             #
+#---------------------------------------------------------------------#
+
+
+
+#set(_config_install_dir "lib/cmake/${PROJECT_NAME}")
+#set(_include_install_dir "include/${LIB_NAME}")
+#set(_generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
+#set(_version_config_file "${_generated_dir}/${PROJECT_NAME}-config-version.cmake")
+#set(_project_config_file "${_generated_dir}/${PROJECT_NAME}-config.cmake")
+#set(_targets_export_name "${PROJECT_NAME}-targets")
+
+## Install
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
+## Install headers
 
-# Tests
-add_executable(${PROJECT_NAME}_test
-	test/dataset_loader_test.cpp
-)
-target_link_libraries(${PROJECT_NAME}_test
-	${PROJECT_NAME}
-)
-set_target_properties(${PROJECT_NAME}_test
-	PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/../test/"
-)
+#install(
+#		DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+#		DESTINATION ${_include_install_dir}
+#		FILES_MATCHING PATTERN "*.h"
+#)
+
+## Instal config files
+
+#install(
+#		FILES ${_project_config_file} ${_version_config_file}
+#		DESTINATION "${_config_install_dir}"
+#)
+
+#install(
+#		EXPORT "${_targets_export_name}"
+#		DESTINATION "${_config_install_dir}"
+#)
+
+

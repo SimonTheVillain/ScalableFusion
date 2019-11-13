@@ -14,7 +14,7 @@ endif()
 add_definitions(-DEIGEN_DONT_VECTORIZE)
 
 # Project
-project(ScalableFusion
+project(scalable_fusion
 	LANGUAGES CXX CUDA
 )
 

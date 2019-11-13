@@ -120,7 +120,7 @@ public:
 	 *
 	 *  \return Whether or not reading the frame was successful
 	 */
-	bool readFrame();
+	virtual bool readFrame() = 0;
 
 	//! Whether or not the video source is currently providing frames
 	inline bool isRunning() const {
@@ -147,6 +147,25 @@ public:
 		return provides_odom_;
 	}
 
+	//! Getter function for RGB camera intrinsics
+	inline Vector4f intrinsicsRgb() const {
+		Vector4f v;
+		v << intrinsics_rgb_.fx, intrinsics_rgb_.fy, 
+		     intrinsics_rgb_.cx, intrinsics_rgb_.cy;
+		return v;
+	}
+	//! Getter function for depth camera intrinsics
+	inline Vector4f intrinsicsDepth() const {
+		Vector4f v;
+		v << intrinsics_depth_.fx, intrinsics_depth_.fy, 
+		     intrinsics_depth_.cx, intrinsics_depth_.cy;
+		return v;
+	}
+	//! Getter function for geometric depth to RGB transformation matrix
+	inline Matrix4f depthToRgb() const { 
+		return depth_to_rgb_;
+	}
+
 	Frame frame; //!< The most recent image data
 	Odometry odom; //!< The most recent odometry data
 
@@ -171,6 +190,9 @@ protected:
 		delete radiometric_response_;
 		delete vignetting_response_;
 	}
+
+	//! Generic functionalities used by all sources when calling readFrame()
+	bool readFrame_();
 
 	//! Read the RGB data for a frame
 	/*!
@@ -278,7 +300,7 @@ protected:
 	}
 	//! Implementation of Source::readDepth_()
 	bool readDepth_() {
-		frame.depth = cv::imread(filenames_depth_[frame_idx_]);
+		frame.depth = cv::imread(filenames_depth_[frame_idx_], cv::IMREAD_UNCHANGED);
 		return (frame.depth.data == nullptr) ? false : true;
 	}
 	//! Implementation of Source::readExposure_()

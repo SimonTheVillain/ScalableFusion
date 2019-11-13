@@ -18,7 +18,7 @@
 using namespace std;
 using namespace Eigen;
 
-bool video::Source::readFrame() {
+bool video::Source::readFrame_() {
 	if(!is_running_) {
 		return false;
 	}
@@ -59,7 +59,7 @@ bool video::Dataset::readFrame() {
 		return false;
 	}
 	// Do generic reading operations
-	if(!Source::readFrame()) {
+	if(!readFrame_()) {
 		return false;
 	}
 	// Do dataset specific reading operations

@@ -18,11 +18,15 @@ project(ScalableFusion
 	LANGUAGES CXX CUDA
 )
 
-#define library version:
-set(SCALFU_VERSION_MAJOR 0 CACHE STRING "major version" FORCE)
-set(SCALFU_VERSION_MINOR 1 CACHE STRING "minor version" FORCE)
-set(SCALFU_VERSION ${MY_LIBRARY_VERSION_MAJOR}.${MY_LIBRARY_VERSION_MINOR} CACHE STRING "version" FORCE)
+set(LIB_NAME scalfu)
 
+#define library version:
+set(SCALFU_VERSION_MAJOR 0)
+set(SCALFU_VERSION_MINOR 7)
+set(SCALFU_VERSION_PATCH 0)
+set(SCALFU_VERSION ${SCALFU_VERSION_MAJOR}.${SCALFU_VERSION_MINOR}.${SCALFU_VERSION_PATCH})
+set(SCALFU_VERSION_SO "${SCALFU_VERSION_MAJOR}.${SCALFU_VERSION_MINOR}")
+set(SCALFU_VERSION_LIB "${SCALFU_VERSION_MAJOR}.${SCALFU_VERSION_MINOR}.${SCALFU_VERSION_PATCH}")
 # Defintions
 set(CMAKE_CXX_STANDARD 11)
 
@@ -78,7 +82,7 @@ set(SCALFU_INCLUDE_DIRS
 		${OPENGL_INCLUDE_DIR}
 		)
 set(SCALFU_LIBRARIES
-		scalable_fusion
+		${LIB_NAME}
 		glfw
 		gfx
 		glog
@@ -99,29 +103,31 @@ set(SCALFU_LIBRARY_DIRS
 
 
 #list(APPEND scafu_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
-message("LISTEN UP YOU FUCK")
-message("${SCALFU_LIBRARIES}")
 
-
-# Includes
-#include_directories(${CMAKE_SOURCE_DIR}/dataset_loader/)
-#include_directories(${CMAKE_SOURCE_DIR}/gfx/)
-#include_directories(${CMAKE_SOURCE_DIR}/icp_cuda/)
-#include_directories(${CMAKE_SOURCE_DIR}/mapping/)
-#include_directories(${CMAKE_SOURCE_DIR}/segmentation/)
 
 
 # Add subprojects
 add_subdirectory(dataset_loader)
+add_subdirectory(video_source)
 add_subdirectory(icp_cuda)
 add_subdirectory(src)
 add_subdirectory(applications)
 add_subdirectory(tests)
 
 
+# setup package file
+#include(CMakePackageConfigHelpers)
+#write_basic_package_version_file(
+#		"${_version_config_file}"
+#		VERSION ${SCALFU_VERSION}
+#		COMPATIBILITY AnyNewerVersion
+#)
 
 
 #TODO: https://foonathan.net/2016/03/cmake-install/
-set(tool_dest "bin")
-set(include_dest "include/scalfu-${SCALFU_VERSION}")
-set(main_lib_dest "lib/scalfu-${SCALFU_VERSION}")
+#set(tool_dest "bin")
+#set(include_dest "include/scalfu-${SCALFU_VERSION}")
+#set(main_lib_dest "lib/scalfu-${SCALFU_VERSION}")
+
+
+

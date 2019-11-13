@@ -18,6 +18,7 @@ project(icp_cuda
 	LANGUAGES CXX CUDA
 )
 
+set(LIB_NAME ${PROJECT_NAME})
 
 # Definitions
 set(CMAKE_CXX_STANDARD 11)
@@ -59,7 +60,7 @@ file(GLOB CUDA_CONTAINERS
 
 
 # Build
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
 	${CXX_SRCS}
 	${CUDA_SRCS}
 	${CUDA_CONTAINERS}
@@ -71,5 +72,18 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 
-# Install
+#---------------------------------------------------------------------#
+#                            Installation                             #
+#---------------------------------------------------------------------#
+
+
+set(_include_install_dir "include/${LIB_NAME}")
+## Install
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+
+## Install headers
+install(
+		DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+		DESTINATION ${_include_install_dir}
+		FILES_MATCHING PATTERN "*.h"
+)

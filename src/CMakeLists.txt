@@ -131,7 +131,7 @@ file(GLOB SHADERS
 
 
 
-add_library(scalable_fusion
+add_library(${LIB_NAME} SHARED
 		${CXX_SRCS}
 		${CUDA_SRCS}
 		${SHADERS})
@@ -139,8 +139,6 @@ add_library(scalable_fusion
 
 # Notes
 
-#for better cuda support 3.8.2 would be nice!!!!! (wait for ubuntu 18.04)
-#https://stackoverflow.com/questions/36551469/triggering-c11-support-in-nvcc-with-cmake
 
 #vertex decimation.... somewhere page 35
 #ask how to do it if hole will not be convex
@@ -150,6 +148,89 @@ add_library(scalable_fusion
 #http://graphics.stanford.edu/courses/cs468-10-fall/LectureSlides/08_Simplification.pdf
 
 
-#Note on adding new points to patches:
-#only do it on border. points on top that are too far apart should not be added.
-#mark the border by drawing border pixel of the patches
+
+#---------------------------------------------------------------------#
+#                            Installation                             #
+#---------------------------------------------------------------------#
+
+## Layout:
+#
+#   <prefix>
+#   ├── include
+#   │   ├── base
+#	|	├── cuda
+#	|	├── export
+#   └── lib
+#       └── cmake
+#           └── scalable_fusion
+
+set(_config_install_dir "lib/cmake/${PROJECT_NAME}")
+set(_include_install_dir "include/${LIB_NAME}")
+set(_generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
+set(_version_config_file "${_generated_dir}/${PROJECT_NAME}-config-version.cmake")
+set(_project_config_file "${_generated_dir}/${PROJECT_NAME}-config.cmake")
+set(_targets_export_name "${PROJECT_NAME}-targets")
+
+## Create scalfu-config-version.cmake
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+		"${_version_config_file}"
+		VERSION ${SCALFU_VERSION}
+		COMPATIBILITY AnyNewerVersion
+)
+
+## Create scalfu-config.cmake
+
+configure_package_config_file(
+		"../cmake/Config.cmake.in"
+		"${_project_config_file}"
+		INSTALL_DESTINATION "${_config_install_dir}"
+)
+
+## Install targets
+
+install(TARGETS ${LIB_NAME}
+		EXPORT "${_targets_export_name}"
+		LIBRARY DESTINATION lib
+		ARCHIVE DESTINATION lib
+		RUNTIME DESTINATION bin
+		INCLUDES DESTINATION ${_include_install_dir}
+		)
+
+## Install headers
+
+install(
+		DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+		DESTINATION ${_include_install_dir}
+		FILES_MATCHING PATTERN "*.h"
+)
+
+## Instal config files
+
+install(
+		FILES ${_project_config_file} ${_version_config_file}
+		DESTINATION "${_config_install_dir}"
+)
+
+install(
+		EXPORT "${_targets_export_name}"
+		DESTINATION "${_config_install_dir}"
+)
+
+#---------------------------------------------------------------------#
+#                           Uninstallation                            #
+#---------------------------------------------------------------------#
+
+## Uninstall target
+
+configure_file(
+		"../cmake/Uninstall.cmake.in"
+		"${_generated_dir}/uninstall.cmake"
+		IMMEDIATE @ONLY
+)
+
+add_custom_target(uninstall
+		COMMAND ${CMAKE_COMMAND} -P ${_generated_dir}/uninstall.cmake
+		)

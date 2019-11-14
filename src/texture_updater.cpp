@@ -239,7 +239,6 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 			assert(0);
 		}
 		tex->gpu_data_changed = true;
-		patch->geom_tex_patch->debug_is_uninitialized = false;
 	}
 	//TODO: now initialize that stuff
 

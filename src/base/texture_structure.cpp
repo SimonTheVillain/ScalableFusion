@@ -58,14 +58,7 @@ shared_ptr<MeshTextureGpuHandle> MeshTexture::genGpuResource(size_t nr_coords,
 
 }
 
-bool MeshTexture::isGpuResidencyRequired() {
-	if(parent_patch != NULL) {
-		return parent_patch->isGpuResidencyRequired();
-	} else {
-		cout << "[MeshTexture::isGpuResidencyRequired] The parentPatch unfortunately is not set, therefore this function fails" << endl;
-	}
-	return false;
-}
+
 
 cv::Rect2i MeshTexture::getLookupRect() {
 	//TODO: get rid of this, Since it is locking a weak pointer this would create a false sense of safety

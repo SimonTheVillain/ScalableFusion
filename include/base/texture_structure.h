@@ -176,8 +176,6 @@ public:
 	shared_ptr<MeshTextureGpuHandle> genGpuResource(size_t nr_coords, 
 	                                                cv::Size2i size);
 
-	bool isGpuResidencyRequired();
-
 	cv::Rect2i getLookupRect();
 	//TODO: logic to determine when said lookup is valid
 	//also the tex coords are not valid in any circumstances
@@ -201,28 +199,13 @@ public:
 
 	void isLookupSecuredAndUpToDate(MeshPatch* patch,shared_ptr<ActiveSet>* set);
 
-	//TODO: implement this weakSelf thingy
-	weak_ptr<MeshTexture> weak_self;
 
-	//TODO: use these at some point
-	//this camera pose and camera intrisic stuff is great.
 
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	Matrix4f cam_pose;
-	Vector4f cam_intrinsics;
-	cv::Rect2i snippet;//since this texture is a cutout of a camera frame we use this
-
-	//TODO: Delete this if this relly proves too useless (probably it is so we comment it out)
-	//weak_ptr<TexAtlasPatch> textureMostCurrent;
-
-	//TODO: implement another way of retaining the location of the most current geometry
+	//EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	alignas(32) Matrix4f cam_pose;
 
 	bool ref_tex_filled = false;
 
-	///TODO: when this object gets destroyed this reference should be removed from the list.
-	//The slot on which the texture coordinates are.
-
-	bool gpu_tex_coords_uploading = false;
 	//TODO: get rid of this
 	vector<Vector2f> tex_coords;
 
@@ -234,7 +217,6 @@ public:
 
 	weak_ptr<MeshTextureGpuHandle> gpu;
 
-	bool debug_is_uninitialized = true;
 
 	string name;
 

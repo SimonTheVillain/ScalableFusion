@@ -225,6 +225,16 @@ void PresentationRenderer::renderInWindow(MeshReconstruction* reconstruction,
 			rendering_active_set_update_worker_ =
 					new Worker(init_function, "UpSetRend", cleanup_function);
 		}
+		struct TaskInfo{
+			Matrix4f inv_cam_pose;
+			Vector4f intrinsics;
+			Vector2f res;
+			float view_distance;
+			MeshReconstruction* reconstruction;
+			LowDetailRenderer* low_detail_renderer;
+			TextureUpdater* texture_updater;
+			InformationRenderer* information_renderer;
+		};
 		auto task = [&](Matrix4f inv_cam_pose, Vector4f intrinsics,
 		                Vector2f res, float view_distance,
 						MeshReconstruction* reconstruction_local,
@@ -249,17 +259,13 @@ void PresentationRenderer::renderInWindow(MeshReconstruction* reconstruction,
 			glFinish();
 			cudaDeviceSynchronize();
 			gpuErrchk(cudaPeekAtLastError());
-			//This might be obsolete when the makeActiveSet is changed to append all
-			//the references
-			//is this really needed?
-			//activeSet->securePatchTextures();
-			//store the active set
 			reconstruction_local->active_set_rendering_mutex_.lock();
 			reconstruction_local->active_set_rendering_ = active_set;
 			reconstruction_local->active_set_rendering_mutex_.unlock();
 		};
 
 		//the update worker is not queuing the update tasks.
+		/*
 		rendering_active_set_update_worker_->setNextTask(bind(task, cam_pose, 
 		                                                      intrinsics,
 		                                                      res, 1.0f,
@@ -267,6 +273,7 @@ void PresentationRenderer::renderInWindow(MeshReconstruction* reconstruction,
 		                                                      low_detail_renderer,
 		                                                      texture_updater,
 		                                                      information_renderer));
+		                                                      */
 
 	} else {
 		reconstruction->active_set_rendering_mutex_.lock();

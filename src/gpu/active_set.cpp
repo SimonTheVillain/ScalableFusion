@@ -447,6 +447,7 @@ ActiveSet::~ActiveSet() {
 	}
 }
 
+
 //ideally this method only got patches with newly generated gpuPatches but probably it doesn't have any gpuTextures
 void ActiveSet::uploadTexAndCoords_(
 		vector<shared_ptr<MeshPatch>> &patches,
@@ -574,6 +575,8 @@ void ActiveSet::uploadTexAndCoords_(
 	CoalescedGpuTransfer::upload(coalesced_tex_coords, coalesced_tex_coord_tasks);
 }
 
+
+
 void ActiveSet::checkAndUpdateRefTextures_(
 		const vector<shared_ptr<MeshPatch>> &patches,
 		MeshReconstruction *reconstruction,
@@ -638,6 +641,7 @@ void ActiveSet::drawPatches() {
 		int slot  = current_patch.triangles->getStartingIndex();
 		int count = current_patch.triangles->getSize();
 		glDrawArrays(GL_TRIANGLES, slot * 3, count * 3);
+		//TODO: assemble list for draw arrays instanced in base arrays
 	}
 }
 

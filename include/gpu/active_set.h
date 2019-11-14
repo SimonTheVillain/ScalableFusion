@@ -67,28 +67,17 @@ private:
 			  bool initial,//TODO: also get rid of these initial frames
 	          bool debug1 = false);
 
-	//TODO: these:
+
 	void uploadTexAndCoords_(vector<shared_ptr<MeshPatch>> &patches,
 	                         vector<shared_ptr<MeshPatchGpuHandle>> &patches_gpu,
 	                         const MeshReconstruction* map, bool initial = false);
 
-	void uploadTexAndCoords_(
-			MeshPatch *patch, MeshPatchGpuHandle *patch_gpu, //lets check if these are necessary
-			vector<CoalescedGpuTransfer::Task> &coalesced_tex_coord_tasks);
 
-	//TODO: these, but this seems not to be elegant
-	void checkAndAppendTriangles_(
-			const vector<shared_ptr<MeshPatch>> &patches_to_check,
-			vector<shared_ptr<MeshPatch>> &append_to
-			);
-	void uploadTriangles_(vector<shared_ptr<MeshPatch>> &patches);
-	//TODO: these
 	void checkAndUpdateRefTextures_(const vector<shared_ptr<MeshPatch>> &patches,
 									MeshReconstruction *reconstruction,
 									TextureUpdater *texture_updater,
 									InformationRenderer* information_renderer);
 
-	//TODO: propably the same for download
 };
 
 #endif // FILE_ACTIVE_SET_H

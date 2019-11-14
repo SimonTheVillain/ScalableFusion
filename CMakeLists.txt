@@ -22,7 +22,7 @@ set(LIB_NAME scalfu)
 set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_BUILD_TYPE Debug)
-#set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Release)
 string(TOLOWER ${CMAKE_BUILD_TYPE} LOWERCASE_CMAKE_BUILD_TYPE)
 if(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
 	add_definitions(-DDEBUG)
@@ -159,9 +159,6 @@ add_subdirectory(tests)
 #                            Uninstallation                             #
 #---------------------------------------------------------------------#
 
-
-message("HERE")
-message(${CMAKE_CURRENT_BINARY_DIR})
 
 if(NOT TARGET uninstall)
 	configure_file(

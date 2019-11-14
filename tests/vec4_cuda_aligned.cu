@@ -11,7 +11,7 @@ using namespace Eigen;
 int main(int argc,char *varg[]){
 	int size = 100;
 	for(int i=0;i<10;i++){
-		vector<Vector4,aligned_allocator<Vector4f>> test(size);
+		vector<Vector4f,aligned_allocator<Vector4f>> test(size);
 
 		for(int j=0;j<size;j++){
 			test[j] = Vector4f(1,1,1,1);

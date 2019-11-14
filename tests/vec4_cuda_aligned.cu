@@ -25,5 +25,6 @@ int main(int argc,char *varg[]){
 			(*test)[j] = Vector4f(1,1,1,1);
 		}
 	}
+
 	return 0;
 }

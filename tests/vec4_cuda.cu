@@ -18,7 +18,7 @@ int main(int argc,char *varg[]){
 	cout << t << endl;
 	cout << &t->blabla << endl;
 	cout << "dist " << (unsigned long)&t->blabla - (unsigned long)t << endl;
-	t.blabla = Vector4(1,1,1,1);
+	t->blabla = Vector4f(1,1,1,1);
 	for(int i=0;i<10;i++){
 		vector<Vector4f> *test = new vector<Vector4f>(size);
 		cout << &test[0] << endl;

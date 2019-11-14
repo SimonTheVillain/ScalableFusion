@@ -59,7 +59,7 @@ bool video::Dataset::readFrame() {
 		return false;
 	}
 	// Do generic reading operations
-	if(!readFrame()) {
+	if(!readFrame_()) {
 		return false;
 	}
 	// Do dataset specific reading operations

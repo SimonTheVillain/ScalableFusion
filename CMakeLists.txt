@@ -11,7 +11,7 @@ cmake_minimum_required (VERSION 3.8)
 if(NOT DEFINED CMAKE_CUDA_COMPILER)
 	set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
 endif()
-add_definitions(-DEIGEN_DONT_VECTORIZE)
+#add_definitions(-DEIGEN_DONT_VECTORIZE)
 
 # Project
 project(scalable_fusion
@@ -73,6 +73,7 @@ find_package(CUDA REQUIRED)
 
 set(SCALFU_INCLUDE_DIRS
 		"${CMAKE_SOURCE_DIR}/include"
+		#"${CMAKE_SOURCE_DIR}/videl_source/include"
 		${CMAKE_SOURCE_DIR}
 		${CUDA_INCLUDE_DIRS}
 		${EIGEN3_INCLUDE_DIRS}

@@ -91,7 +91,7 @@ public:
 		Vector4f rgb_fxycxy;
 		Vector4f depth_fxycxy;
 		Matrix4f cam_position;//maybe this should not be in here!!!
-
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	};
 
 	MeshReconstruction(GLFWwindow *context, GarbageCollector *garbage_collector,

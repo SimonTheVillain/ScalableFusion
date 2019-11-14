@@ -46,3 +46,30 @@ target_link_libraries(texture_mem_test_threaded
 
 
 
+add_executable(vec4
+		vec4.cpp
+		)
+target_link_libraries(vec4
+		${SCALFU_LIBRARIES})
+
+
+add_executable(vec4_aligned
+		vec4_aligned.cpp
+		)
+target_link_libraries(vec4_aligned
+		${SCALFU_LIBRARIES})
+
+add_executable(vec4_cuda
+		vec4_cuda.cu
+		)
+target_link_libraries(vec4_cuda
+		${SCALFU_LIBRARIES})
+
+
+add_executable(vec4_cuda_aligned
+		vec4_cuda_aligned.cu
+		)
+target_link_libraries(vec4_cuda_aligned
+		${SCALFU_LIBRARIES})
+
+

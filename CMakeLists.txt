@@ -138,7 +138,7 @@ add_subdirectory(video_source)
 add_subdirectory(icp_cuda)
 add_subdirectory(src)
 add_subdirectory(applications)
-add_subdirectory(tests)
+add_subdirectory(test)
 
 
 # setup package file

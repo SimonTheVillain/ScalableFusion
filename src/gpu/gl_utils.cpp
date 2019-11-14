@@ -6,7 +6,7 @@
 //  Copyright (c) 2015 Simon Schreiberhuber. All rights reserved.
 //
 
-#include <gfx/gl_utils.h>
+#include <gpu/gl_utils.h>
 
 #include <cstdio>
 #include <string>

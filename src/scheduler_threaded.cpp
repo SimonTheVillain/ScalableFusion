@@ -12,7 +12,7 @@
 #include <icp_cuda/icp_odometry.h>
 #include <gpu/active_set.h>
 #include <cuda/xtion_camera_model.h>
-#include <gfx/garbage_collector.h>
+#include <gpu/garbage_collector.h>
 #include <worker.h>
 
 using namespace std;

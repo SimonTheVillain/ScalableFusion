@@ -1,4 +1,4 @@
-#include <gpu/gpu_geom_storage.h>
+#include <gpu/gpu_storage.h>
 
 #include <iostream>
 
@@ -20,7 +20,7 @@ using namespace Eigen;
 
 void copy(cudaTextureObject_t texture, cv::cuda::GpuMat &to);
 
-void GpuGeomStorage::resetTimers() {
+void GpuStorage::resetTimers() {
 	time_spent_uploading_vertices = chrono::duration<double>::zero();
 	upload_calls_vertices = 0;
 	time_spent_uploading_tex_pos = chrono::duration<double>::zero();
@@ -31,12 +31,12 @@ void GpuGeomStorage::resetTimers() {
 	upload_calls_patch_infos = 0;
 }
 
-void GpuGeomStorage::unloadMeshPatch_(MeshPatch *patch) {
+void GpuStorage::unloadMeshPatch_(MeshPatch *patch) {
 	cout << "the mechanism for unloading a mesh patch is not implemented yet" <<  endl;
 	assert(0);
 }
 
-void GpuGeomStorage::unloadDoubleStitch_(DoubleStitch *stitch) {
+void GpuStorage::unloadDoubleStitch_(DoubleStitch *stitch) {
 }
 
 /**
@@ -47,13 +47,13 @@ void GpuGeomStorage::unloadDoubleStitch_(DoubleStitch *stitch) {
  * becomes invalid, the slot should be refilled with the remaining valid triangles.
  * TODO: implement this! or maybe not? Probably not!!! (don't know anymore.... think about it
  */
-void GpuGeomStorage::uploadTripleStitches_(
+void GpuStorage::uploadTripleStitches_(
 		vector<TripleStitch*> triple_stitches) {
-	cout << "[GpuGeomStorage::uploadTripleStitches] for using this unimplemented method i sentence you to crash" << endl;
+	cout << "[GpuStorage::uploadTripleStitches] for using this unimplemented method i sentence you to crash" << endl;
 	assert(0);
 }
 
-void GpuGeomStorage::initialize() {
+void GpuStorage::initialize() {
 	//TODO: delete these 2 lines from here,
 	//this 1) is not necessary with only one gpu
 	//and 2) it should happen way earlier in the code
@@ -68,9 +68,53 @@ void GpuGeomStorage::initialize() {
 	patch_info_index  = new GpuBuffer<GLint>(max_nr_loaded_patch_infos, 
 	                                         GL_ATOMIC_COUNTER_BUFFER);
 
+
+
+	//the garbage collector is missing here
+	/*
+	tex_atlas_geom_lookup_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA32F,
+												   GL_FLOAT,GL_RGBA,CV_32FC4,
+												   1024, &fbo_storage_);
+	tex_atlas_stds_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA16F,
+											GL_FLOAT, GL_RGBA, CV_32FC4,
+											1024, &fbo_storage_);
+	tex_atlas_rgb_8_bit_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA,
+												 GL_UNSIGNED_BYTE, GL_RGBA,
+												 CV_8UC4, 1024, &fbo_storage_);
+												 */
+
 }
 
-GpuGeomStorage::~GpuGeomStorage() {
+GpuStorage::GpuStorage(GarbageCollector *garbage_collector) {
+	//TODO: delete these 2 lines from here,
+	//this 1) is not necessary with only one gpu
+	//and 2) it should happen way earlier in the code
+	cudaSetDevice(0);
+
+	//create the buffers that contain slots for our data (vertices, triangles, references to textures
+	// and texture coordinates)
+	vertex_buffer     = new GpuBuffer<GpuVertex>(max_nr_vertices);
+	tex_pos_buffer    = new GpuBuffer<Vector2f>(max_nr_tex_coordinates);
+	triangle_buffer   = new GpuBuffer<GpuTriangle>(max_nr_triangles);
+	patch_info_buffer = new GpuBuffer<GpuPatchInfo>(max_nr_loaded_patch_infos);
+	patch_info_index  = new GpuBuffer<GLint>(max_nr_loaded_patch_infos,
+											 GL_ATOMIC_COUNTER_BUFFER);
+
+
+
+	//the garbage collector is missing here
+
+	tex_atlas_geom_lookup_ = make_shared<TexAtlas>(garbage_collector, GL_RGBA32F,
+												   GL_FLOAT,GL_RGBA,CV_32FC4,
+												   1024, &fbo_storage_);
+	tex_atlas_stds_ = make_shared<TexAtlas>(garbage_collector, GL_RGBA16F,
+											GL_FLOAT, GL_RGBA, CV_32FC4,
+											1024, &fbo_storage_);
+	tex_atlas_rgb_8_bit_ = make_shared<TexAtlas>(garbage_collector, GL_RGBA,
+												 GL_UNSIGNED_BYTE, GL_RGBA,
+												 CV_8UC4, 1024, &fbo_storage_);
+}
+GpuStorage::~GpuStorage() {
 	if(vertex_buffer != nullptr) {
 		delete vertex_buffer;
 		delete tex_pos_buffer;
@@ -80,7 +124,7 @@ GpuGeomStorage::~GpuGeomStorage() {
 	}
 }
 
-shared_ptr<ActiveSet> GpuGeomStorage::makeActiveSet(
+shared_ptr<ActiveSet> GpuStorage::makeActiveSet(
 		vector<shared_ptr<MeshPatch>> patches,
 		MeshReconstruction *map,
 		LowDetailRenderer* low_detail_renderer,

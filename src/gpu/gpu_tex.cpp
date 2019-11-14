@@ -1,4 +1,4 @@
-#include <gfx/gpu_tex.h>
+#include <gpu/gpu_tex.h>
 
 #include <iostream>
 #include <cstring>
@@ -7,8 +7,8 @@
 #include <cuda.h>
 #include <cuda_gl_interop.h>
 
-#include "gl_utils.h"
-#include "garbage_collector.h"
+#include "gpu/gl_utils.h"
+#include "gpu/garbage_collector.h"
 
 using namespace std;
 

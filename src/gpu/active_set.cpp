@@ -5,7 +5,7 @@
 
 #include <Eigen/Core>
 
-#include <gpu/gpu_geom_storage.h>
+#include <gpu/gpu_storage.h>
 #include <base/mesh_structure.h>
 #include <cuda/gpu_errchk.h>
 #include <cuda/float16_utils.h>
@@ -14,7 +14,7 @@
 using namespace std;
 using namespace Eigen;
 
-ActiveSet::ActiveSet(GpuGeomStorage *storage,
+ActiveSet::ActiveSet(GpuStorage *storage,
 					 vector<shared_ptr<MeshPatch>> patches,
 					 MeshReconstruction *map,
 					 LowDetailRenderer* low_detail_renderer,

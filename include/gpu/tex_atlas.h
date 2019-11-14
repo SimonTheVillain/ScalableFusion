@@ -11,7 +11,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <gfx/gpu_tex.h>
+#include <gpu/gpu_tex.h>
 #include <cuda/gpu_mesh_structure.h>
 #include <gpu/thread_safe_FBO_VAO.h>
 

@@ -7,7 +7,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <gfx/camera.h>
+#include <gpu/camera.h>
 #include <utils/arcball.h>
 #include <rendering/renderable_model.h>
 #include <graph/deformation_graph.h>

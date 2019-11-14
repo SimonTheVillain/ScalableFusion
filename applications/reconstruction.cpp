@@ -12,16 +12,17 @@
 #include <glog/logging.h>
 
 #include <video_source/include/source.h>
-#include <gfx/camera.h>
+#include <gpu/camera.h>
 #include <mesh_reconstruction.h>
-#include <gfx/gpu_tex.h>
+#include <gpu/gpu_tex.h>
 #include <cuda/test.h>
 #include <scheduler.h>
 #include <scheduler_threaded.h>
 #include <utils/arcball.h>
 #include <rendering/renderable_model.h>
 #include <debug_render.h>
-#include <gfx/garbage_collector.h>
+#include <gpu/garbage_collector.h>
+#include <gpu/gpu_storage.h>
 #include <export/map_exporter.h>
 #include <segmentation/incremental_segmentation.h>
 #include <utils/perf_meter.h>
@@ -267,6 +268,7 @@ int main(int argc, const char *argv[]) {
 	//from here on we have opengl
 
 	GarbageCollector garbage_collector;
+	GpuStorage *gpustorage = new GpuStorage();
 
 	//create a map object that takes 640 by 480 sized depth images
 	shared_ptr<MeshReconstruction> scalable_map =

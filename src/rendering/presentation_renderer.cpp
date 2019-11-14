@@ -1,9 +1,9 @@
 #include <rendering/presentation_renderer.h>
 
-#include <gfx/gl_utils.h>
+#include <gpu/gl_utils.h>
 #include <mesh_reconstruction.h>
 #include <worker.h>
-#include <gfx/garbage_collector.h>
+#include <gpu/garbage_collector.h>
 #include <gpu/active_set.h>
 #include <cuda/gpu_errchk.h>
 

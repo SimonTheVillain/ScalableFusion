@@ -6,7 +6,7 @@
 //  Copyright (c) 2015 Simon Schreiberhuber. All rights reserved.
 //
 
-#include <gfx/shader.h>
+#include <gpu/shader.h>
 
 #include <fstream>
 #include <sys/stat.h>

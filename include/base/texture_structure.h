@@ -6,7 +6,7 @@
 #include <Eigen/Core>
 #include <opencv2/core.hpp>
 
-#include <gfx/gpu_tex.h>
+#include <gpu/gpu_tex.h>
 #include <gpu/tex_atlas.h>
 #include <gpu/gpu_buffer.h>
 

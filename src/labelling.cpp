@@ -1,6 +1,6 @@
 #include <labelling.h>
 
-#include <gfx/camera.h>
+#include <gpu/camera.h>
 #include <mesh_reconstruction.h>
 #include <cuda/labelling_cuda.h>
 #include <gpu/active_set.h>

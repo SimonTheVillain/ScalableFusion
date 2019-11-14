@@ -2,7 +2,7 @@
 
 #include <mesh_reconstruction.h>
 #include <gpu/active_set.h>
-#include <gfx/camera.h>
+#include <gpu/camera.h>
 #include <cuda/std_tex_update.h>
 #include <utils/gpu_norm_seg.h>
 #include <graph/deformation_node.h>

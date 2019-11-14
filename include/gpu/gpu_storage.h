@@ -1,5 +1,5 @@
-#ifndef FILE_GPU_GEOM_STORAGE_H
-#define FILE_GPU_GEOM_STORAGE_H
+#ifndef FILE_GPU_STORAGE_H
+#define FILE_GPU_STORAGE_H
 
 ///TODO: think about a ringbuffer idea for this purpose.
 /// Propably a ringbuffer is not the right thing.
@@ -29,7 +29,7 @@ struct TripleStitch;
 class UnsecuredTriangleCollection;
 class MeshTexture;
 
-class GpuGeomStorage;
+class GpuStorage;
 class InformationRenderer;
 class PresentationRenderer;
 
@@ -37,6 +37,7 @@ class MeshPatchGpuHandle;
 
 class GpuSlottedBuffer;
 
+class TexAtlas;
 class TexAtlasPatch;
 class FBOConnector;
 class Scheduler;
@@ -46,6 +47,7 @@ class GeometryUpdater;
 
 class TextureUpdater;
 class LowDetailRenderer;
+class GarbageCollector;
 
 /**
  * @brief The GpuGeomStorage class
@@ -64,7 +66,7 @@ class LowDetailRenderer;
 /**
  * @brief The GpuGeomStorage class
  */
-class GpuGeomStorage {
+class GpuStorage {
 	friend ActiveSet;
 	friend MeshReconstruction;
 	friend InformationRenderer;
@@ -75,7 +77,9 @@ class GpuGeomStorage {
 	
 public:
 
-	~GpuGeomStorage();
+	GpuStorage(GarbageCollector *garbage_collector);
+
+	~GpuStorage();
 
 	void init(MeshReconstruction * scaleable_map) {
 		map_ = scaleable_map;
@@ -120,6 +124,14 @@ public:
 	chrono::duration<double> time_spent_uploading_patch_infos;
 	chrono::duration<double> time_spent_uploading_tex_pos;
 
+
+	//references between pixel and the according triangles / vertices
+	shared_ptr<TexAtlas> tex_atlas_geom_lookup_;
+	//Standard deviations of the surfaces
+	shared_ptr<TexAtlas> tex_atlas_stds_;//[2];
+	//at the moment we only store the SDR versions of the textures
+	shared_ptr<TexAtlas> tex_atlas_rgb_8_bit_;
+
 	int upload_calls_vertices    = 0;
 	int upload_calls_triangles   = 0;
 	int upload_calls_patch_infos = 0;
@@ -161,8 +173,8 @@ private:
 	void uploadTripleStitches_(vector<TripleStitch*> triple_stitches);
 
 	uint64_t delete_debug_tex_reference_;
-	MeshReconstruction *map_;
+	MeshReconstruction *map_;//TODO: get rid of this
 
 };
 
-#endif // FILE_GPU_GEOM_STORAGE_H
+#endif // FILE_GPU_STORAGE_H

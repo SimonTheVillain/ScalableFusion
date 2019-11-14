@@ -15,7 +15,7 @@
 #include <segmentation/incremental_segmentation.h>
 #include <cuda/xtion_camera_model.h>
 #include <video_source/include/source.h>
-#include <gfx/garbage_collector.h>
+#include <gpu/garbage_collector.h>
 #include <mesh_reconstruction.h>
 #include <gpu/active_set.h>
 

@@ -8,8 +8,8 @@
 #include <cublas.h>
 #include <Eigen/Eigen>
 
-#include <gfx/gl_utils.h>
-#include <gfx/shader.h>
+#include <gpu/gl_utils.h>
+#include <gpu/shader.h>
 #include <cuda/gpu_mesh_structure.h>
 
 using namespace std;

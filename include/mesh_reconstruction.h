@@ -9,7 +9,7 @@
 #include <Eigen/Eigen>
 #include <opencv2/core.hpp>
 
-#include <gpu/gpu_geom_storage.h>
+#include <gpu/gpu_storage.h>
 #include <utils/octree.h>
 #include <gpu/thread_safe_FBO_VAO.h>
 #include <rendering/information_renderer.h>
@@ -206,8 +206,7 @@ private:
 	 * @brief preSeg
 	 * This is supposed to be an interface for interchangeable pre segmentation
 	 */
-	shared_ptr<PreSegmentation> pre_seg_;
-	shared_ptr<GpuNormSeg> gpu_pre_seg_;
+	shared_ptr<GpuNormSeg> gpu_pre_seg_;//TODO: move this to the geometry updater class
 
 	/****************THIS IS A VALID COMMENT THINK ABOUT IT******************/
 	//
@@ -234,7 +233,7 @@ private:
 	//16 bit (float) weights
 	shared_ptr<TexAtlas> tex_atlas_sem_seg_labels_weights_;
 
-	GpuGeomStorage gpu_geom_storage_;
+	GpuStorage gpu_geom_storage_;
 
 	//condition variable used to synchronize generation of the gpu buffer:
 	//http://en.cppreference.com/w/cpp/thread/condition_variable/wait

@@ -10,7 +10,7 @@
 
 #include "texture_structure.h"
 #include "stack_vector.h"
-#include <gpu/gpu_geom_storage.h>
+#include <gpu/gpu_storage.h>
 #include <utils/octree.h>
 #include <rendering/low_detail_renderer.h>
 
@@ -214,8 +214,8 @@ struct Vertex {
 class MeshPatchGpuHandle {
 public:
 
-	MeshPatchGpuHandle(GpuGeomStorage* gpu_geom_storage, int nr_vertices, 
-	                   int nr_triangles);
+	MeshPatchGpuHandle(GpuStorage* gpu_geom_storage, int nr_vertices,
+					   int nr_triangles);
 
 	~MeshPatchGpuHandle();
 

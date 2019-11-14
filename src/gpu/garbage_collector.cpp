@@ -1,4 +1,4 @@
-#include <gfx/garbage_collector.h>
+#include <gpu/garbage_collector.h>
 
 using namespace std;
 

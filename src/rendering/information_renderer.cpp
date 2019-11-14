@@ -1,6 +1,6 @@
 #include <rendering/information_renderer.h>
 
-#include <gfx/gl_utils.h>
+#include <gpu/gl_utils.h>
 #include <mesh_reconstruction.h>
 #include <gpu/active_set.h>
 

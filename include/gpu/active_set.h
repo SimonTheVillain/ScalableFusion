@@ -15,7 +15,7 @@ class MeshReconstruction;
 class MeshPatch;
 class MeshPatchGpuHandle;
 class MeshTextureGpuHandle;
-class GpuGeomStorage;
+class GpuStorage;
 class LowDetailRenderer;
 class TextureUpdater;
 class GpuTriangle;
@@ -24,7 +24,7 @@ class GpuBufferConnector;
 typedef GpuBufferConnector<GpuTriangle> TriangleBufConnector;
 
 class ActiveSet {
-	friend GpuGeomStorage;
+	friend GpuStorage;
 	friend InformationRenderer;
 	friend PresentationRenderer;
 	friend MeshPatch;
@@ -44,7 +44,7 @@ public:
 
 	string name;
 
-	GpuGeomStorage *gpu_geom_storage;
+	GpuStorage *gpu_geom_storage;
 
 	vector<shared_ptr<MeshPatch>> retained_mesh_patches_cpu;
 
@@ -59,7 +59,7 @@ public:
 
 private:
 
-	ActiveSet(GpuGeomStorage *storage, vector<shared_ptr<MeshPatch>> patches,
+	ActiveSet(GpuStorage *storage, vector<shared_ptr<MeshPatch>> patches,
 			  MeshReconstruction *map,
 			  LowDetailRenderer* low_detail_renderer,
 			  TextureUpdater* texture_updater,

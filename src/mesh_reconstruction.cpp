@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include <gfx/gpu_tex.h>
+#include <gpu/gpu_tex.h>
 #include <cuda/xtion_camera_model.h>
 #include <cuda/tex_coords.h>
 #include <cuda/geom_update.h>

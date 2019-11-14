@@ -603,8 +603,8 @@ bool Vertex::encompassed() {
 
 vector<shared_ptr<VertexBufConnector>> debug_retain_vertices;
 vector<shared_ptr<TriangleBufConnector>> debug_retain_triangle_buf;
-MeshPatchGpuHandle::MeshPatchGpuHandle(GpuGeomStorage *gpu_geom_storage,
-                                       int nr_vertices, int nr_triangles) 
+MeshPatchGpuHandle::MeshPatchGpuHandle(GpuStorage *gpu_geom_storage,
+									   int nr_vertices, int nr_triangles)
 		: vertices_dest(gpu_geom_storage->vertex_buffer->getBlock(nr_vertices)),
 		  vertices_source(gpu_geom_storage->vertex_buffer->getBlock(nr_vertices)),
 		  patch_infos(gpu_geom_storage->patch_info_buffer->getBlock(1)),

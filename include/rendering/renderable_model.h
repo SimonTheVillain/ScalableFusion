@@ -5,7 +5,7 @@
 
 #include <Eigen/Eigen>
 
-#include <gfx/shader.h>
+#include <gpu/shader.h>
 
 using namespace std;
 using namespace Eigen;

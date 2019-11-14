@@ -17,6 +17,7 @@ using namespace Eigen;
 class MeshReconstruction;
 class ActiveSet;
 class TextureUpdater;
+class GpuNormSeg;
 
 namespace gfx {
 
@@ -52,6 +53,9 @@ public:
 	MeshReconstruction *mesh_reconstruction;
 	Mesher meshing;
 	MeshStitcher stitching;
+
+	//TODO: integrate this here!
+	shared_ptr<GpuNormSeg> gpu_pre_seg_;
 
 };
 

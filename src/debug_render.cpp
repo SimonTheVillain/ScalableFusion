@@ -1,6 +1,6 @@
 #include "debug_render.h"
 
-#include <gfx/gl_utils.h>
+#include <gpu/gl_utils.h>
 #include <base/mesh_structure.h>
 
 using namespace std;

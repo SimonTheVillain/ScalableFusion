@@ -6,7 +6,7 @@
 #include <gpu/active_set.h>
 #include <debug_render.h>
 #include <mesh_reconstruction.h>
-#include <gfx/camera.h>
+#include <gpu/camera.h>
 
 using namespace std;
 using namespace Eigen;

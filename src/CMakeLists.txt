@@ -53,7 +53,7 @@ file(GLOB CXX_SRCS
 		export/map_exporter.cpp
 		gpu/active_set.cpp
 		gpu/gpu_buffer.cpp
-		gpu/gpu_geom_storage.cpp
+		gpu/gpu_storage.cpp
 		gpu/tex_atlas.cpp
 		graph/deformation_graph.cpp
 		graph/deformation_node.cpp
@@ -65,11 +65,11 @@ file(GLOB CXX_SRCS
 		utils/perf_meter.cpp
 		utils/principal_plane.cpp
 		segmentation/incremental_segmentation.cpp
-		gfx/gl_utils.cpp
-		gfx/garbage_collector.cpp
-		gfx/camera.cpp
-		gfx/gpu_tex.cpp
-		gfx/shader.cpp
+		gpu/gl_utils.cpp
+		gpu/garbage_collector.cpp
+		gpu/camera.cpp
+		gpu/gpu_tex.cpp
+		gpu/shader.cpp
 		debug_render.cpp
 		geometry_updater.cpp
 		intermediate_depth_model.cpp

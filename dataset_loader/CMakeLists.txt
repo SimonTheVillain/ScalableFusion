@@ -18,7 +18,7 @@ project(dataset_loader
 set(LIB_NAME ${PROJECT_NAME})
 
 # Required packages
-find_package(OpenCV 3 QUIET)
+find_package(OpenCV ${PREFERRED_OPENCV_VERSION} QUIET)
 if(NOT OpenCV_FOUND)
 	find_package(OpenCV 4 REQUIRED)
 endif()

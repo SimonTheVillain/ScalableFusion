@@ -6,41 +6,6 @@
 ################################################################################
 
 
-# Prerequisites (SIMON: not really though)
-#cmake_minimum_required (VERSION 3.8)
-#if(NOT DEFINED CMAKE_CUDA_COMPILER)
-#	set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
-#endif()
-
-
-# Project
-#project(scalable_fusion
-#	LANGUAGES CXX CUDA
-#)
-
-
-# Definitions
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CUDA_STANDARD 11)
-set(CMAKE_CUDA_FLAGS 
-	"${CMAKE_CUDA_FLAGS} \
-		--expt-relaxed-constexpr \
-	"
-)
-if(CMAKE_BUILD_TYPE MATCHES DEBUG)
-	set(CMAKE_CUDA_FLAGS 
-		"${CMAKE_CUDA_FLAGS} \
-			--generate-line-info \
-		"
-	) #--device-debug #everything fails at device-debug
-endif()
-
-## this is necessary? isn't there set(CMAKE_CXX_STANDARD 11) up there?
-#set(CMAKE_CXX_FLAGS
-#	"${CMAKE_CXX_FLAGS} \
-#		--std=c++11 \
-#	"
-#)
 
 
 # Required packages
@@ -51,7 +16,7 @@ find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 3.1 REQUIRED)
-find_package(OpenCV 3 QUIET)
+find_package(OpenCV ${PREFERRED_OPENCV_VERSION} QUIET)
 if(NOT OpenCV_FOUND)
 	find_package(OpenCV 4 REQUIRED)
 endif()

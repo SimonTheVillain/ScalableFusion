@@ -28,6 +28,8 @@ public:
 	Matrix4f getLastKnownDepthPose() {
 		return last_known_depth_pose_;
 	}
+	//TODO:this only overwrites the basic constructor.... is this a solution?
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
 

@@ -72,6 +72,7 @@ private:
 	Vector3f last_;
 
 	Matrix4f view_;
+
 	
 };
 

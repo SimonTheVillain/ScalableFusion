@@ -35,7 +35,7 @@ private:
 	Vector4f d_intrinsics_;
 
 	Matrix4f cam_pose_at_capture_;
-
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 #endif // FILE_INTERMEDIATE_DEPTH_MODEL_H

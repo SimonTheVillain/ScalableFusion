@@ -17,8 +17,38 @@ endif()
 project(scalable_fusion
 	LANGUAGES CXX CUDA
 )
-
 set(LIB_NAME scalfu)
+
+set(CMAKE_CXX_STANDARD 11)
+
+set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Release)
+string(TOLOWER ${CMAKE_BUILD_TYPE} LOWERCASE_CMAKE_BUILD_TYPE)
+if(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
+	add_definitions(-DDEBUG)
+endif(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O3")#O3 should only be in release mode.
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
+# Definitions
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CUDA_STANDARD 11)
+set(CMAKE_CUDA_FLAGS
+		"${CMAKE_CUDA_FLAGS} \
+		--expt-relaxed-constexpr \
+	"
+		)
+if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+	set(CMAKE_CUDA_FLAGS
+			"${CMAKE_CUDA_FLAGS} \
+			--generate-line-info \
+			-O3 \
+		"
+			) #--device-debug #everything fails at device-debug
+endif()
+
 
 #define library version:
 set(SCALFU_VERSION_MAJOR 0)
@@ -28,14 +58,7 @@ set(SCALFU_VERSION ${SCALFU_VERSION_MAJOR}.${SCALFU_VERSION_MINOR}.${SCALFU_VERS
 set(SCALFU_VERSION_SO "${SCALFU_VERSION_MAJOR}.${SCALFU_VERSION_MINOR}")
 set(SCALFU_VERSION_LIB "${SCALFU_VERSION_MAJOR}.${SCALFU_VERSION_MINOR}.${SCALFU_VERSION_PATCH}")
 # Defintions
-set(CMAKE_CXX_STANDARD 11)
 
-set(CMAKE_BUILD_TYPE Debug)
-#set(CMAKE_BUILD_TYPE Release)
-string(TOLOWER ${CMAKE_BUILD_TYPE} LOWERCASE_CMAKE_BUILD_TYPE)
-if(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
-	add_definitions(-DDEBUG)
-endif(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
 
 #Don't throw away unused textures from the texture atlas,
 #this is a speedup but could also mean a increased memory usage most of the time.
@@ -63,9 +86,12 @@ find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 3.1 REQUIRED)
-find_package(OpenCV 3 QUIET)
+find_package(OpenCV 4 QUIET)
 if(NOT OpenCV_FOUND)
-	find_package(OpenCV 4 REQUIRED)
+	find_package(OpenCV 3 REQUIRED)
+	set(PREFERRED_OPENCV_VERSION 3)
+else()
+	set(PREFERRED_OPENCV_VERSION 4)
 endif()
 find_package(OpenGL REQUIRED)
 find_package(radical CONFIG REQUIRED)

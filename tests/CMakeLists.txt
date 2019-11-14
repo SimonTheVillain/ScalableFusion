@@ -25,8 +25,6 @@ add_executable(simple_cloud_viewer
 
 target_link_libraries(simple_cloud_viewer
         ${SCALFU_LIBRARIES})
-message("LISTEN UP YOU FUCK")
-message(${SCALFU_LIBRARIES})
 
 
 add_executable(texture_mem_test

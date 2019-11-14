@@ -29,8 +29,8 @@ if(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
 endif(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O3")#O3 should only be in release mode.
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O3 -march=native")#O3 should only be in release mode.
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
 
 # Definitions
 set(CMAKE_CXX_STANDARD 11)

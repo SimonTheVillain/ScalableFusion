@@ -6,6 +6,8 @@
 #include <Eigen/Eigen>
 using namespace std;
 using namespace Eigen;
+
+#pragma pack(16)
 struct Test{
 	float bla;
 	Vector4f blabla;

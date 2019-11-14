@@ -51,7 +51,7 @@ add_executable(vec4
 		)
 target_link_libraries(vec4
 		${SCALFU_LIBRARIES})
-
+set_target_properties(vec4 PROPERTIES COMPILE_FLAGS -save-temps) 
 
 add_executable(vec4_aligned
 		vec4_aligned.cpp

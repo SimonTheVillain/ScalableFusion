@@ -63,7 +63,7 @@ find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 3.1 REQUIRED)
-find_package(OpenCV 3.4.4 QUIET)
+find_package(OpenCV 3 QUIET)
 if(NOT OpenCV_FOUND)
 	find_package(OpenCV 4 REQUIRED)
 endif()
@@ -85,11 +85,9 @@ set(SCALFU_INCLUDE_DIRS
 set(SCALFU_LIBRARIES
 		${LIB_NAME}
 		glfw
-		gfx
 		glog
 		icp_cuda
 		radical
-		segmentation
 		dataset_loader
 		video_source
 		${ASSIMP_LIBRARIES}

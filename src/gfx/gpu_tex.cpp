@@ -1,4 +1,4 @@
-#include "gpu_tex.h"
+#include <gfx/gpu_tex.h>
 
 #include <iostream>
 #include <cstring>

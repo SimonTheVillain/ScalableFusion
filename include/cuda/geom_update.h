@@ -2,6 +2,7 @@
 #define FILE_GEOM_UPDATE_H
 
 #include <vector>
+#include <memory>
 
 #include <opencv2/core.hpp>
 #include <Eigen/Eigen>

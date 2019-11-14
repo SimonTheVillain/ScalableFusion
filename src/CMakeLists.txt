@@ -51,7 +51,7 @@ find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 3.1 REQUIRED)
-find_package(OpenCV 3.4.4 QUIET)
+find_package(OpenCV 3 QUIET)
 if(NOT OpenCV_FOUND)
 	find_package(OpenCV 4 REQUIRED)
 endif()
@@ -70,6 +70,7 @@ include_directories(${OPENGL_INCLUDE_DIR})
 
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/include/gfx)
 include_directories(${CMAKE_SOURCE_DIR})#for icp_cuda and dataset_loader
 
 # Links
@@ -98,6 +99,12 @@ file(GLOB CXX_SRCS
 		utils/gpu_norm_seg.cpp
 		utils/perf_meter.cpp
 		utils/principal_plane.cpp
+		segmentation/incremental_segmentation.cpp
+		gfx/gl_utils.cpp
+		gfx/garbage_collector.cpp
+		gfx/camera.cpp
+		gfx/gpu_tex.cpp
+		gfx/shader.cpp
 		debug_render.cpp
 		geometry_updater.cpp
 		intermediate_depth_model.cpp

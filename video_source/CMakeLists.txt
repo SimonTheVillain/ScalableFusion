@@ -20,7 +20,7 @@ set(LIB_NAME ${PROJECT_NAME})
 
 # Required packages
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV 3.4.4 QUIET)
+find_package(OpenCV 3 QUIET)
 if(NOT OpenCV_FOUND)
 	find_package(OpenCV 4 REQUIRED)
 endif()

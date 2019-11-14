@@ -1,4 +1,4 @@
-#include "camera.h"
+#include <gfx/camera.h>
 
 using namespace std;
 using namespace Eigen;

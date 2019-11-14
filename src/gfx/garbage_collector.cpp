@@ -1,4 +1,4 @@
-#include "garbage_collector.h"
+#include <gfx/garbage_collector.h>
 
 using namespace std;
 

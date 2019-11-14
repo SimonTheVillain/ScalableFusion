@@ -1,4 +1,4 @@
-#include "incremental_segmentation.h"
+#include <segmentation/incremental_segmentation.h>
 
 using namespace std;
 using namespace cv;

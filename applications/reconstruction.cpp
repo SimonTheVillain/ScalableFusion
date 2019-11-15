@@ -262,6 +262,7 @@ int main(int argc, const char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
+	glfwMakeContextCurrent(invisible_window);
 	glewExperimental = GL_TRUE;
 	glewInit();
 	glGetError();//just to get rid of that one error glew introduces at initialization
@@ -280,7 +281,6 @@ int main(int argc, const char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	glfwMakeContextCurrent(window);
-
 
 	GarbageCollector garbage_collector;
 
@@ -303,9 +303,9 @@ int main(int argc, const char *argv[]) {
 		assert(0);//DON't use the threaded scheduler since it is completely broken
 		scheduler = new SchedulerThreaded(scalable_map, &dataset, invisible_window);
 	} else {
-		scheduler; /*= new SchedulerLinear(scalable_map, gpustorage, &dataset,
+		scheduler = new SchedulerLinear(scalable_map, gpu_storage, &dataset,
 										invisible_window,
-										&low_detail_renderer);*/
+										&low_detail_renderer);
 	}
 	scheduler->pause(paused);
 

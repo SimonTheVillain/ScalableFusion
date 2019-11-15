@@ -266,8 +266,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		//tons of debug output to find this fucking memory leak!!!!
 		int tex_count = reconstruction->tex_atlas_stds_->countTex() +
 						reconstruction->tex_atlas_geom_lookup_->countTex() +
-						reconstruction->tex_atlas_rgb_8_bit_->countTex() +
-						reconstruction->tex_atlas_seg_labels_->countTex();
+						reconstruction->tex_atlas_rgb_8_bit_->countTex();
 		cout << "texCount overall: " << tex_count << " stds " <<
 			 reconstruction->tex_atlas_stds_->countTex() << " lookup " <<
 			 reconstruction->tex_atlas_geom_lookup_->countTex() << " rgb " <<
@@ -275,8 +274,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 		int patch_count = reconstruction->tex_atlas_stds_->countPatches() +
 						  reconstruction->tex_atlas_geom_lookup_->countPatches() +
-						  reconstruction->tex_atlas_rgb_8_bit_->countPatches() +
-						  reconstruction->tex_atlas_seg_labels_->countPatches();
+						  reconstruction->tex_atlas_rgb_8_bit_->countPatches();
 
 		cout << "patchCount overall: " << patch_count << " stds " <<
 			 reconstruction->tex_atlas_stds_->countPatches() << " lookup " <<

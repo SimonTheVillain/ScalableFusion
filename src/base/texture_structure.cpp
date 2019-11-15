@@ -33,10 +33,12 @@ shared_ptr<MeshTextureGpuHandle> MeshTexture::genGpuResource(size_t nr_coords,
 			ref_atlas = nullptr;//TODO: remove this when we finally have a better way of updating the color texture
 			break;
 		case MeshTexture::Type::INTEGER_LABELS:
-			data_atlas = map_->tex_atlas_seg_labels_.get();
+			assert(0);
+			//data_atlas = map_->tex_atlas_seg_labels_.get();
 			break;
 		case MeshTexture::Type::WEIGHTED_INTEGER_LABELS:
-			data_atlas = map_->tex_atlas_sem_seg_labels_weights_.get();
+			assert(0);
+			//data_atlas = map_->tex_atlas_sem_seg_labels_weights_.get();
 			break;
 		case MeshTexture::Type::STANDARD_DEVIATION:
 			data_atlas = map_->tex_atlas_stds_.get();

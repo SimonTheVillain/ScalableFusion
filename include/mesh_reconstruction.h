@@ -226,12 +226,6 @@ private:
 	shared_ptr<TexAtlas> tex_atlas_rgb_8_bit_;
 
 
-	//TODO check which is best for our task
-	//pure 32 bit integers
-	shared_ptr<TexAtlas> tex_atlas_seg_labels_;
-	//int32 x 4 but interpreted as pairs of 16bit integers and
-	//16 bit (float) weights
-	shared_ptr<TexAtlas> tex_atlas_sem_seg_labels_weights_;
 
 	GpuStorage gpu_geom_storage_;
 

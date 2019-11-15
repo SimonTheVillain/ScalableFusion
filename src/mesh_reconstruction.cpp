@@ -60,26 +60,12 @@ void MeshReconstruction::initInGlLogicContext() {
 	                                             GL_UNSIGNED_BYTE, GL_RGBA, 
 	                                             CV_8UC4, 1024, &fbo_storage_);
 
-	cout << "TODO: SETUP THE TEXTURES TO BE NON_INTERPOLATED" << endl;
-	tex_atlas_seg_labels_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA32F,
-	                                              GL_FLOAT, GL_RGBA, CV_32FC4,
-	                                              1024, &fbo_storage_);
-
-	//maybe in opengl it still is better ineterpreting these as floats
-	//and doing a reinterpret cast
-	tex_atlas_sem_seg_labels_weights_ = make_shared<TexAtlas>(garbage_collector_,
-	                                                          GL_RGBA32I,
-	                                                          GL_INT,
-	                                                          GL_RGBA_INTEGER,
-	                                                          CV_32SC4, 1024,
-	                                                          &fbo_storage_);
-
-	GLuint test;
+	/*
 	glGenTextures(1, &test);
 	glBindTexture(GL_TEXTURE_2D, test);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32I, 1024, 1024, 0, GL_RGBA_INTEGER,
 	             GL_INT, nullptr);
-
+	*/
 	gfx::GLUtils::checkForOpenGLError("Error while creating glTexture");
 
 	//afterwards send message to other thread:
@@ -281,8 +267,7 @@ void MeshReconstruction::erase() {
 	//check how many textures are left now:
 	int tex_count = tex_atlas_stds_->countTex() + 
 	                tex_atlas_geom_lookup_->countTex() +
-	                tex_atlas_rgb_8_bit_->countTex() +
-	                tex_atlas_seg_labels_->countTex();
+	                tex_atlas_rgb_8_bit_->countTex();
 	cout << "texCount overall: " << tex_count << " stds " << 
 	        tex_atlas_stds_->countTex() << " lookup " << 
 	        tex_atlas_geom_lookup_->countTex() << " rgb " << 
@@ -290,8 +275,7 @@ void MeshReconstruction::erase() {
 
 	int patch_count = tex_atlas_stds_->countPatches() + 
 	                  tex_atlas_geom_lookup_->countPatches() +
-	                  tex_atlas_rgb_8_bit_->countPatches() +
-	                  tex_atlas_seg_labels_->countPatches();
+	                  tex_atlas_rgb_8_bit_->countPatches();
 	cout << "patchCount overall: " << patch_count << " stds " << 
 	        tex_atlas_stds_->countPatches() << " lookup " << 
 	        tex_atlas_geom_lookup_->countPatches() << " rgb " << 

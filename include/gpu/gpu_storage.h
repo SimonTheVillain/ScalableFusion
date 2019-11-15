@@ -17,6 +17,7 @@
 
 #include <cuda/gpu_mesh_structure.h>
 #include "gpu_buffer.h"
+#include "thread_safe_FBO_VAO.h"
 
 using namespace std;
 
@@ -77,7 +78,7 @@ class GpuStorage {
 	
 public:
 
-	GpuStorage(GarbageCollector *garbage_collector);
+	GpuStorage();
 
 	~GpuStorage();
 
@@ -124,13 +125,14 @@ public:
 	chrono::duration<double> time_spent_uploading_patch_infos;
 	chrono::duration<double> time_spent_uploading_tex_pos;
 
-
+	GarbageCollector *garbage_collector_;
+	ThreadSafeFBOStorage *fbo_storage_;
 	//references between pixel and the according triangles / vertices
-	shared_ptr<TexAtlas> tex_atlas_geom_lookup_;
+	TexAtlas* tex_atlas_geom_lookup_;
 	//Standard deviations of the surfaces
-	shared_ptr<TexAtlas> tex_atlas_stds_;//[2];
+	TexAtlas* tex_atlas_stds_;//[2];
 	//at the moment we only store the SDR versions of the textures
-	shared_ptr<TexAtlas> tex_atlas_rgb_8_bit_;
+	TexAtlas* tex_atlas_rgb_8_bit_;
 
 	int upload_calls_vertices    = 0;
 	int upload_calls_triangles   = 0;

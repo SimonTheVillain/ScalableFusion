@@ -16,8 +16,8 @@ struct GLFWwindow;
 class ActiveSet;
 
 class Worker;
+class GpuStorage;
 
-class IncrementalSegmentation;
 
 class Segmentation;
 
@@ -50,10 +50,9 @@ class SchedulerLinear : public SchedulerBase {
 public:
 
 	SchedulerLinear(shared_ptr<MeshReconstruction> map,
-	                GarbageCollector *garbage_collector, video::Source *source,
+					GpuStorage* gpu_storage, video::Source *source,
 	                GLFWwindow *context,
-	                LowDetailRenderer *low_detail_renderer,
-	                shared_ptr<IncrementalSegmentation> incremental_segmentation);
+	                LowDetailRenderer *low_detail_renderer);
 
 	~SchedulerLinear();
 
@@ -81,10 +80,9 @@ private:
 	Matrix4f last_known_depth_pose_;
 
 	bool end_threads_;
-	GarbageCollector *garbage_collector_;
+	GpuStorage *gpu_storage_;
 
 
-	shared_ptr<IncrementalSegmentation> incremental_segmentation_;
 
 	LowDetailRenderer* low_detail_renderer_;
 	bool paused_;

@@ -12,7 +12,6 @@
 #include <icp_cuda/icp_odometry.h>
 //TODO: remove since it is not needed in this class
 #include <intermediate_depth_model.h>
-#include <segmentation/incremental_segmentation.h>
 #include <cuda/xtion_camera_model.h>
 #include <video_source/include/source.h>
 #include <gpu/garbage_collector.h>
@@ -39,13 +38,11 @@ void SchedulerBase::initializeGlContextInThread(GLFWwindow *context) {
 }
 
 SchedulerLinear::SchedulerLinear(
-		shared_ptr<MeshReconstruction> map,  GarbageCollector *garbage_collector,
+		shared_ptr<MeshReconstruction> map,  GpuStorage *gpu_storage,
 		video::Source *source, GLFWwindow *context,
-		LowDetailRenderer* low_detail_renderer,
-		shared_ptr<IncrementalSegmentation> incremental_segmentation)
-		: incremental_segmentation_(incremental_segmentation),
-		  last_known_depth_pose_(Matrix4f::Identity()),
-		  garbage_collector_(garbage_collector),
+		LowDetailRenderer* low_detail_renderer)
+		: last_known_depth_pose_(Matrix4f::Identity()),
+		  gpu_storage_(gpu_storage),
 		  low_detail_renderer_(low_detail_renderer),
 		  expand_interval_(30),
 		  end_threads_(false),
@@ -99,8 +96,6 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 	geometry_updater->setup(reconstruction.get());
 
 
-
-	incremental_segmentation_->initInThread();
 
 	Vector4f fc = source->intrinsicsDepth();
 
@@ -180,7 +175,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		cv::cvtColor(rgb, rgba, cv::COLOR_BGR2RGBA);
 
 		shared_ptr<gfx::GpuTex2D> rgb_texture = 
-				make_shared<gfx::GpuTex2D>(garbage_collector_, GL_RGBA, GL_RGBA, 
+				make_shared<gfx::GpuTex2D>(gpu_storage_->garbage_collector_, GL_RGBA, GL_RGBA,
 				                           GL_UNSIGNED_BYTE, rgba.cols, rgba.rows,
 				                           true, rgba.data);
 		rgb_texture->name = "[scheduler] rgb_texture";
@@ -191,14 +186,14 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		depth.convertTo(depthf, CV_32FC1, 1.0f / 1000.0f);
 		//create the depth map and also the depth standardDeviation on the gpu. Further elements will use this
 		shared_ptr<gfx::GpuTex2D> depth_tex = 
-				make_shared<gfx::GpuTex2D>(garbage_collector_, GL_R32F, GL_RED, GL_FLOAT,
+				make_shared<gfx::GpuTex2D>(gpu_storage_->garbage_collector_, GL_R32F, GL_RED, GL_FLOAT,
 				                           depth.cols, depth.rows, true, 
 				                           static_cast<void*>(depthf.data));
 		depth_tex->name = "[scheduler] depth texture";
 
 		//upload the data to the depth tex.
 		shared_ptr<gfx::GpuTex2D> d_std_tex = 
-				make_shared<gfx::GpuTex2D>(garbage_collector_, GL_RGBA32F, GL_RGBA, 
+				make_shared<gfx::GpuTex2D>(gpu_storage_->garbage_collector_, GL_RGBA32F, GL_RGBA,
 				                           GL_FLOAT, depth.cols, depth.rows, true,
 				                           nullptr);
 		d_std_tex->name = "[scheduler] d_std_tex";
@@ -264,7 +259,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 		//cleanup VBO and VAOs that are deleted but only used within this thread
 		reconstruction->cleanupGlStoragesThisThread_();
-		garbage_collector_->collect();
+		gpu_storage_->garbage_collector_->collect();
 
 		cv::imshow("rgb", rgb);
 		cv::waitKey(1);
@@ -296,7 +291,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 	delete texture_updater;
 	//delete everything for the fbo
 	reconstruction->fbo_storage_.forceGarbageCollect();
-	garbage_collector_->forceCollect();
+	gpu_storage_->garbage_collector_->forceCollect();
 	glFinish();
 
 

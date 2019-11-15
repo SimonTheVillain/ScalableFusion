@@ -1,4 +1,7 @@
 #include <gpu/gpu_storage.h>
+#include <gpu/garbage_collector.h>
+#include <gpu/thread_safe_FBO_VAO.h>
+#include <gpu/tex_atlas.h>
 
 #include <iostream>
 
@@ -85,7 +88,7 @@ void GpuStorage::initialize() {
 
 }
 
-GpuStorage::GpuStorage(GarbageCollector *garbage_collector) {
+GpuStorage::GpuStorage() {
 	//TODO: delete these 2 lines from here,
 	//this 1) is not necessary with only one gpu
 	//and 2) it should happen way earlier in the code
@@ -100,19 +103,21 @@ GpuStorage::GpuStorage(GarbageCollector *garbage_collector) {
 	patch_info_index  = new GpuBuffer<GLint>(max_nr_loaded_patch_infos,
 											 GL_ATOMIC_COUNTER_BUFFER);
 
+	//setting up everything garbag ecollector related
+	garbage_collector_ = new GarbageCollector();
+	fbo_storage_ = new ThreadSafeFBOStorage();
 
-
+	//setting up textures at this position
 	//the garbage collector is missing here
-
-	tex_atlas_geom_lookup_ = make_shared<TexAtlas>(garbage_collector, GL_RGBA32F,
-												   GL_FLOAT,GL_RGBA,CV_32FC4,
-												   1024, &fbo_storage_);
-	tex_atlas_stds_ = make_shared<TexAtlas>(garbage_collector, GL_RGBA16F,
+	tex_atlas_geom_lookup_ = new TexAtlas(garbage_collector_, GL_RGBA32F,
+										  GL_FLOAT, GL_RGBA, CV_32FC4,
+										  1024, fbo_storage_);
+	tex_atlas_stds_ = new TexAtlas(garbage_collector_, GL_RGBA16F,
 											GL_FLOAT, GL_RGBA, CV_32FC4,
-											1024, &fbo_storage_);
-	tex_atlas_rgb_8_bit_ = make_shared<TexAtlas>(garbage_collector, GL_RGBA,
+											1024, fbo_storage_);
+	tex_atlas_rgb_8_bit_ = new TexAtlas(garbage_collector_, GL_RGBA,
 												 GL_UNSIGNED_BYTE, GL_RGBA,
-												 CV_8UC4, 1024, &fbo_storage_);
+												 CV_8UC4, 1024, fbo_storage_);
 }
 GpuStorage::~GpuStorage() {
 	if(vertex_buffer != nullptr) {
@@ -122,6 +127,12 @@ GpuStorage::~GpuStorage() {
 		delete patch_info_buffer;
 		delete patch_info_index;
 	}
+	delete tex_atlas_geom_lookup_;
+	delete tex_atlas_stds_;
+	delete tex_atlas_rgb_8_bit_;
+
+	delete garbage_collector_;
+	delete fbo_storage_;
 }
 
 shared_ptr<ActiveSet> GpuStorage::makeActiveSet(

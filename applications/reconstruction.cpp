@@ -255,7 +255,7 @@ int main(int argc, const char *argv[]) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_VISIBLE, 0);
-	invisible_window = glfwCreateWindow(640, 480, "HOPE U NO VISIBLE", nullptr,
+	invisible_window = glfwCreateWindow(640, 480, "Invisible Window", nullptr,
 										nullptr);
 	if(!invisible_window) {
 		glfwTerminate();
@@ -267,8 +267,24 @@ int main(int argc, const char *argv[]) {
 	glGetError();//just to get rid of that one error glew introduces at initialization
 	//from here on we have opengl
 
+	//now create the visible context for the visible window
+	GLFWwindow *window;
+	glfwWindowHint(GLFW_VISIBLE, 1);
+	if(headless) {
+		glfwWindowHint(GLFW_VISIBLE, 0);
+	}
+	window = glfwCreateWindow(1280, 800, "Scalable Fusion", nullptr, invisible_window);
+
+	if(!window) {
+		glfwTerminate();
+		exit(EXIT_FAILURE);
+	}
+	glfwMakeContextCurrent(window);
+
+
 	GarbageCollector garbage_collector;
-	GpuStorage *gpustorage = new GpuStorage();
+
+	GpuStorage *gpu_storage = new GpuStorage();
 
 	//create a map object that takes 640 by 480 sized depth images
 	shared_ptr<MeshReconstruction> scalable_map =
@@ -277,40 +293,24 @@ int main(int argc, const char *argv[]) {
 
 	video::TuwDataset dataset(dataset_path, true);
 
-	shared_ptr<IncrementalSegmentation> incremental_segmentation =
-			make_shared<EdithSegmentation>();
+
 
 	LowDetailRenderer low_detail_renderer;
 
 	TextureUpdater texture_updater;
 	SchedulerBase *scheduler = nullptr;
 	if(multithreaded) {
+		assert(0);//DON't use the threaded scheduler since it is completely broken
 		scheduler = new SchedulerThreaded(scalable_map, &dataset, invisible_window);
 	} else {
-		scheduler = new SchedulerLinear(scalable_map, &garbage_collector, &dataset,
+		scheduler; /*= new SchedulerLinear(scalable_map, gpustorage, &dataset,
 										invisible_window,
-										&low_detail_renderer,
-										incremental_segmentation);
+										&low_detail_renderer);*/
 	}
 	scheduler->pause(paused);
 
 	//create an window with the necessary opengl context
-	GLFWwindow *window;
-	if(!glfwInit())
-		exit(EXIT_FAILURE);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_VISIBLE, 1);
-	if(headless) {
-		glfwWindowHint(GLFW_VISIBLE, 0);
-	}
-	window = glfwCreateWindow(1280, 800, "SUPERMAPPING", nullptr, invisible_window);
 
-	if(!window) {
-		glfwTerminate();
-		exit(EXIT_FAILURE);
-	}
-	glfwMakeContextCurrent(window);
 	scalable_map->initInGLRenderingContext();
 
 	PresentationRenderer presentation_renderer;
@@ -450,13 +450,15 @@ int main(int argc, const char *argv[]) {
 	close_request =  true;
 
 	cout << "[main] DEBUG everything should be deleted" << endl;
-	garbage_collector.forceCollect();
+	gpu_storage->garbage_collector_->forceCollect();
 	delete scheduler;
 
 	//erase active sets and patches so really nothing should be on the gpu
 	scalable_map->erase();
 
 	scalable_map.reset();
+
+	delete gpu_storage;
 
 	cout << "DEBUG:most resources should be freed here! look at nvidia-smi (but in fact nothing is freed)" << endl;
 

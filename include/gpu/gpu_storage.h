@@ -82,12 +82,6 @@ public:
 
 	~GpuStorage();
 
-	void init(MeshReconstruction * scaleable_map) {
-		map_ = scaleable_map;
-	}
-
-	void initialize();
-
 	void resetTimers();
 
 	shared_ptr<ActiveSet> makeActiveSet(
@@ -175,7 +169,7 @@ private:
 	void uploadTripleStitches_(vector<TripleStitch*> triple_stitches);
 
 	uint64_t delete_debug_tex_reference_;
-	MeshReconstruction *map_;//TODO: get rid of this
+	//MeshReconstruction *map_;//TODO: get rid of this
 
 };
 

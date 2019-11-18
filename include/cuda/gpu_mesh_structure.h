@@ -33,7 +33,8 @@ struct GpuTriangle {
 
 	//TODO: transition from absolute indices to relative indices and
 	//references to the patch itself.
-	int16_t patch_info_inds[3];//patch info indices for the triangle
+	//NOT NEEDED ANYMORE
+	//int16_t patch_info_inds[3];//patch info indices for the triangle
 
 	int16_t indices[3];//these are absolute indices for the vertex buffer.
 
@@ -48,13 +49,14 @@ struct GpuTriangle {
 
 ///TODO: maybe we add slots for CUDA surfaces and stuff like that.
 struct GpuTextureInfo {
-	uint64_t gl_ref_tex_ptr_DEBUG;
-	Vector2f ref_tex_pos_DEBUG;
+	uint64_t gl_ref_tex_ptr_DEBUG; // only used for rendering a debug view
+	Vector2f ref_tex_pos_DEBUG; // same
+
+
 	uint64_t gl_tex_pointer;
 	uint32_t tex_coord_start_ind;//could also be 16 bit int
-	uint32_t placeholder;//could also be 16 bit int
+	uint32_t padding;
 
-	//TOIMPLEMENT
 	/**
 	 * Since the texture itself is shared with multiple other patches
 	 * we also need to store where the texture is on this
@@ -76,21 +78,14 @@ struct GpuTextureInfo {
  * storing vertex indices in a ringbuffer)
  */
 struct GpuPatchInfo {
-	int32_t patch_id;
+	//int32_t patch_id;//only for information rendering i presume
 	int32_t triangle_start_ind;
-	int32_t vertex_source_start_ind;
-	int32_t vertex_destination_start_ind;
+	int32_t vertex_start_ind;
 	GpuTextureInfo std_texture;
 	GpuTextureInfo texture_infos[GPU_MAX_TEX_PER_PATCH];
-	static const int max_sem_tex_cnt = 3;//shouldn't take space
-	GpuTextureInfo semantic_textures[max_sem_tex_cnt];
-
-	GpuTextureInfo segmentation_texture; //TODO add a bool to show this actually exists
 	int32_t tex_layers;
-	int32_t semantic_tex_count;
-	int32_t segmentation_tex_valid;
 
-	int32_t debug1 = 0;
+	//int32_t debug1 = 0;
 };
 
 struct GpuCoarseVertex {

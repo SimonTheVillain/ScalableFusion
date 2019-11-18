@@ -176,10 +176,6 @@ private:
 
 	void cleanupGlStoragesThisThread_();
 
-	int getFboCountDebug_() {
-		return fbo_storage_.getTotalFboCount();
-	}
-
 	cv::Mat generateColorCodedTexture_(cv::Mat segmentation);
 
 	void setActiveSetUpdate_(shared_ptr<ActiveSet> set);
@@ -199,14 +195,14 @@ private:
 	int current_max_patch_id_ = 0;//this basically is the number of patches currently in use
 
 	//TODO: completely get rid of the concept of recycler
-	ThreadSafeFBOStorage fbo_storage_;
+	//ThreadSafeFBOStorage fbo_storage_;
 
 
 	/**
 	 * @brief preSeg
 	 * This is supposed to be an interface for interchangeable pre segmentation
 	 */
-	shared_ptr<GpuNormSeg> gpu_pre_seg_;//TODO: move this to the geometry updater class
+	//shared_ptr<GpuNormSeg> gpu_pre_seg_;//TODO: move this to the geometry updater class
 
 	/****************THIS IS A VALID COMMENT THINK ABOUT IT******************/
 	//
@@ -217,6 +213,7 @@ private:
 	//1,2: combined they are one 32Bit integer
 	//3,4: 2 parts of the barycentric coordinate.
 	//the third one is obtained by 1 - byrycentric1 -barycentric2
+	/*
 	shared_ptr<TexAtlas> tex_atlas_geom_lookup_;
 
 	//Standard deviations of the surfaces
@@ -224,13 +221,14 @@ private:
 
 	//at the moment we only store the SDR versions of the textures
 	shared_ptr<TexAtlas> tex_atlas_rgb_8_bit_;
+	*/
 
 
-
-	GpuStorage gpu_geom_storage_;
+	//GpuStorage gpu_geom_storage_;
 
 	//condition variable used to synchronize generation of the gpu buffer:
 	//http://en.cppreference.com/w/cpp/thread/condition_variable/wait
+	/*
 	bool gl_logic_initialized_ = false;
 	condition_variable condition_variable_;
 	mutex condition_variable_mutex_;
@@ -238,7 +236,7 @@ private:
 	Worker *rendering_active_set_update_worker_ = nullptr;
 	mutex active_set_rendering_mutex_;
 	shared_ptr<ActiveSet> active_set_rendering_;
-
+	*/
 };
 
 #endif // FILE_MESH_RECONSTRUCTION_H

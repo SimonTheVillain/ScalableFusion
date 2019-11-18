@@ -16,6 +16,7 @@ void GeometryUpdater::extend(
 		InformationRenderer *information_renderer,
 		TextureUpdater* texture_updater,
 		LowDetailRenderer* low_detail_renderer,
+		GpuStorage* gpu_storage,
 		shared_ptr<ActiveSet> active_set_of_formerly_visible_patches,
 		shared_ptr<gfx::GpuTex2D> d_std_tex, cv::Mat& d_std_mat,
 		Matrix4f depth_pose_in, shared_ptr<gfx::GpuTex2D> rgb_tex,
@@ -112,13 +113,13 @@ void GeometryUpdater::extend(
 
 	cv::Mat mesh_pointers(height, width, CV_32SC2); // Actually we store pointers in this
 
-	reconstruction->gpu_pre_seg_->fxycxy       = reconstruction->params.depth_fxycxy;
-	reconstruction->gpu_pre_seg_->max_distance = reconstruction->getMaxDistance();
+	gpu_pre_seg_.fxycxy       = reconstruction->params.depth_fxycxy;
+	gpu_pre_seg_.max_distance = reconstruction->getMaxDistance();
 	// Do a proper segmentation on all the pixel not part of the existing geometry
-	reconstruction->gpu_pre_seg_->segment(d_std_tex, proj_depth_std, ex_geom);
+	gpu_pre_seg_.segment(d_std_tex, proj_depth_std, ex_geom);
 
-	cv::Mat seg   = reconstruction->gpu_pre_seg_->getSegmentation();
-	int seg_count = reconstruction->gpu_pre_seg_->getSegCount();
+	cv::Mat seg   = gpu_pre_seg_.getSegmentation();
+	int seg_count = gpu_pre_seg_.getSegCount();
 
 	//*****************************************TOOOOODOOOOOO*********************
 	//TODO: put this piece of code into the meshIt part!!!!!
@@ -268,7 +269,7 @@ void GeometryUpdater::extend(
 	                       new_shared_mesh_patches.begin(),
 	                       new_shared_mesh_patches.end());
 	shared_ptr<ActiveSet> new_active_set =
-			reconstruction->gpu_geom_storage_.makeActiveSet(
+			gpu_storage->makeActiveSet(
 					visible_patches,
 					reconstruction,
 					low_detail_renderer,
@@ -336,7 +337,7 @@ void GeometryUpdater::extend(
 
 	// We want to create a new active set that replaces the old one.
 	// The pointer to the active set should be secured by a mutex.
-	reconstruction->gpu_geom_storage_.delete_debug_tex_reference_ = rgb_tex->getGlHandle();
+	gpu_storage->delete_debug_tex_reference_ = rgb_tex->getGlHandle();
 
 	// Now that we have the geometry on the cpu now do the texture for the geometrical textures:
 
@@ -422,9 +423,11 @@ void GeometryUpdater::extend(
 	/*********************************************************************************/
 }
 
-void GeometryUpdater::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
-							 Matrix4f depth_pose_in,
-							 shared_ptr<ActiveSet> &active_set) {
+void GeometryUpdater::update(	GpuStorage* gpu_storage,
+								shared_ptr<gfx::GpuTex2D> d_std_tex,
+							 	Matrix4f depth_pose_in,
+							 	shared_ptr<ActiveSet> &active_set
+							 ) {
 
 	MeshReconstruction *mesh = mesh_reconstruction;
 
@@ -570,7 +573,7 @@ void GeometryUpdater::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 
 		//now go for the destRect textures
 		shared_ptr<TexAtlasPatch> dest_tex = 
-				mesh->tex_atlas_stds_->getTexAtlasPatch(rect.size());
+				gpu_storage->tex_atlas_stds_->getTexAtlasPatch(rect.size());
 		//assert(0); // TODO: also copy over the  dependencies belonging to the referenceTexture if we are really copying
 
 		tex  = dest_tex->getTex();
@@ -625,10 +628,10 @@ void GeometryUpdater::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 	int debug = updateGeometry(
 			d_std_tex->getCudaSurfaceObject(), width, height, descriptors, cam_pos, 
 			pose_tmp, proj_pose, 
-			(GpuVertex*) mesh->gpu_geom_storage_.vertex_buffer->getCudaPtr(),
-			(Vector2f*) mesh->gpu_geom_storage_.tex_pos_buffer->getCudaPtr(),
-			(GpuTriangle*) mesh->gpu_geom_storage_.triangle_buffer->getCudaPtr(),
-			(GpuPatchInfo* )mesh->gpu_geom_storage_.patch_info_buffer->getCudaPtr());
+			(GpuVertex*) gpu_storage->vertex_buffer->getCudaPtr(),
+			(Vector2f*) gpu_storage->tex_pos_buffer->getCudaPtr(),
+			(GpuTriangle*) gpu_storage->triangle_buffer->getCudaPtr(),
+			(GpuPatchInfo* )gpu_storage->patch_info_buffer->getCudaPtr());
 
 	//cout << "here we should first do the vertex update and then the std texture update" << endl;
 

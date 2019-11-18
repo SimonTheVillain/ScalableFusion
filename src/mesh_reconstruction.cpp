@@ -19,58 +19,6 @@ using namespace Eigen;
 
 void MeshReconstruction::initInGlLogicContext() {
 
-	if(initializing_logic.exchange(true)) {
-		//Apparently the logic already is beeing initialized somewhere
-		//therefore we wait for this to complete:
-		while(!gl_logic_initialized_) {
-			unique_lock<mutex> lk(condition_variable_mutex_);
-			condition_variable_.wait(lk);
-		}
-
-		//if completed we initialize the informationRenderer in this thread
-		//information_renderer.initInContext();
-
-		//since all the remaining stuff is alredy initialized wo do only the stuff
-		//that is needs thread dependant initialization
-		return;
-	}
-
-	//after the buffers are created we can initialize the rendering stuff:
-
-	//initializing the render logic of some other stuff
-
-	///New  New functionality that gets rid of all the preveous initialization stuff
-	gpu_geom_storage_.initialize();
-
-	//this requires the geometry storage to be initialized.
-	/*
-	information_renderer.initInContext(params.depth_res.width, 
-	                                   params.depth_res.height, this);
-	                                   */
-
-	//Generating the active sets for rendering and capturing TODO?
-
-	tex_atlas_geom_lookup_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA32F, 
-	                                               GL_FLOAT,GL_RGBA,CV_32FC4,
-	                                               1024, &fbo_storage_);
-	tex_atlas_stds_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA16F, 
-	                                        GL_FLOAT, GL_RGBA, CV_32FC4,
-	                                        1024, &fbo_storage_);
-	tex_atlas_rgb_8_bit_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA,
-	                                             GL_UNSIGNED_BYTE, GL_RGBA, 
-	                                             CV_8UC4, 1024, &fbo_storage_);
-
-	/*
-	glGenTextures(1, &test);
-	glBindTexture(GL_TEXTURE_2D, test);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32I, 1024, 1024, 0, GL_RGBA_INTEGER,
-	             GL_INT, nullptr);
-	*/
-	gfx::GLUtils::checkForOpenGLError("Error while creating glTexture");
-
-	//afterwards send message to other thread:
-	gl_logic_initialized_ = true;
-	condition_variable_.notify_all();
 }
 
 void MeshReconstruction::cleanupGlStoragesThisThread_() {
@@ -192,7 +140,6 @@ MeshReconstruction::MeshReconstruction(GLFWwindow *context,
 
 	//TODO: name these setup functions consistently
 	//geometry_update.setup(this);
-	gpu_geom_storage_.init(this);
 }
 
 
@@ -264,22 +211,6 @@ void MeshReconstruction::erase() {
 	//TODO: follow down the octree ( objects don't seem to be deleted accordingly)
 	//and then find who is holding references to the gpu structures
 
-	//check how many textures are left now:
-	int tex_count = tex_atlas_stds_->countTex() + 
-	                tex_atlas_geom_lookup_->countTex() +
-	                tex_atlas_rgb_8_bit_->countTex();
-	cout << "texCount overall: " << tex_count << " stds " << 
-	        tex_atlas_stds_->countTex() << " lookup " << 
-	        tex_atlas_geom_lookup_->countTex() << " rgb " << 
-	        tex_atlas_rgb_8_bit_->countTex() << endl;
-
-	int patch_count = tex_atlas_stds_->countPatches() + 
-	                  tex_atlas_geom_lookup_->countPatches() +
-	                  tex_atlas_rgb_8_bit_->countPatches();
-	cout << "patchCount overall: " << patch_count << " stds " << 
-	        tex_atlas_stds_->countPatches() << " lookup " << 
-	        tex_atlas_geom_lookup_->countPatches() << " rgb " << 
-	        tex_atlas_rgb_8_bit_->countPatches() << endl;
 
 	for(int i = 0; i < patches.size(); i++) {
 		assert(patches[i].expired());
@@ -295,14 +226,7 @@ void MeshReconstruction::erase() {
 	vector<gfx::GpuTex2D*> textures = gfx::GpuTex2D::getTexList();
 
 	//TODO: mechanism to delete all fbos that are used in thread
-	cout << "FBOs active " << getFboCountDebug_() << endl; // should be zero
-	cout << "GpuPatches active" << active_gpu_patches << endl;
-	cout << "GpuTextures active" << active_gpu_textures << endl;
-	cout << "overall tex count" << gfx::GpuTex2D::getTexCount() << endl;
-	glFinish();//wait until all the commands are executed.
-	tex_atlas_stds_->countPatches();
-	tex_atlas_stds_->countTex();//Why is this bigger 0 in this case????????
-	cout << "end of this analysis" << endl;
+	glFinish();
 }
 
 vector<shared_ptr<MeshPatch>> MeshReconstruction::GetAllPatches() {

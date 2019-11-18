@@ -10,6 +10,7 @@
 
 #include <mesher.h>
 #include <mesh_stitcher.h>
+#include <utils/gpu_norm_seg.h>
 
 using namespace std;
 using namespace Eigen;
@@ -17,7 +18,6 @@ using namespace Eigen;
 class MeshReconstruction;
 class ActiveSet;
 class TextureUpdater;
-class GpuNormSeg;
 
 namespace gfx {
 
@@ -39,6 +39,7 @@ public:
 			InformationRenderer *information_renderer,
 			TextureUpdater* texture_updater,
 			LowDetailRenderer* low_detail_renderer,
+			GpuStorage* gpu_storage,
 			shared_ptr<ActiveSet> active_set_of_formerly_visible_patches,
 			shared_ptr<gfx::GpuTex2D> d_std_tex,
 			cv::Mat &d_std_mat, Matrix4f depth_pose_in,
@@ -46,7 +47,8 @@ public:
 			Matrix4f color_pose_in);
 
 	//TODO: this!!!!
-	void update(shared_ptr<gfx::GpuTex2D> d_std_tex,
+	void update(GpuStorage* gpu_storage,
+				shared_ptr<gfx::GpuTex2D> d_std_tex,
 	            Matrix4f depth_pose_in,
 	            shared_ptr<ActiveSet> &active_set);
 	
@@ -55,7 +57,7 @@ public:
 	MeshStitcher stitching;
 
 	//TODO: integrate this here!
-	shared_ptr<GpuNormSeg> gpu_pre_seg_;
+	GpuNormSeg gpu_pre_seg_;
 
 };
 

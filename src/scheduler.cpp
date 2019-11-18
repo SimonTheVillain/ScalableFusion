@@ -264,22 +264,22 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		cv::imshow("rgb", rgb);
 		cv::waitKey(1);
 		//tons of debug output to find this fucking memory leak!!!!
-		int tex_count = reconstruction->tex_atlas_stds_->countTex() +
-						reconstruction->tex_atlas_geom_lookup_->countTex() +
-						reconstruction->tex_atlas_rgb_8_bit_->countTex();
+		int tex_count = gpu_storage_->tex_atlas_stds_->countTex() +
+						gpu_storage_->tex_atlas_geom_lookup_->countTex() +
+						gpu_storage_->tex_atlas_rgb_8_bit_->countTex();
 		cout << "texCount overall: " << tex_count << " stds " <<
-			 reconstruction->tex_atlas_stds_->countTex() << " lookup " <<
-			 reconstruction->tex_atlas_geom_lookup_->countTex() << " rgb " <<
-			 reconstruction->tex_atlas_rgb_8_bit_->countTex() << endl;
+				gpu_storage_->tex_atlas_stds_->countTex() << " lookup " <<
+				gpu_storage_->tex_atlas_geom_lookup_->countTex() << " rgb " <<
+				gpu_storage_->tex_atlas_rgb_8_bit_->countTex() << endl;
 
-		int patch_count = reconstruction->tex_atlas_stds_->countPatches() +
-						  reconstruction->tex_atlas_geom_lookup_->countPatches() +
-						  reconstruction->tex_atlas_rgb_8_bit_->countPatches();
+		int patch_count = 	gpu_storage_->tex_atlas_stds_->countPatches() +
+							gpu_storage_->tex_atlas_geom_lookup_->countPatches() +
+							gpu_storage_->tex_atlas_rgb_8_bit_->countPatches();
 
 		cout << "patchCount overall: " << patch_count << " stds " <<
-			 reconstruction->tex_atlas_stds_->countPatches() << " lookup " <<
-			 reconstruction->tex_atlas_geom_lookup_->countPatches() << " rgb " <<
-			 reconstruction->tex_atlas_rgb_8_bit_->countPatches() << endl;
+				gpu_storage_->tex_atlas_stds_->countPatches() << " lookup " <<
+				gpu_storage_->tex_atlas_geom_lookup_->countPatches() << " rgb " <<
+				gpu_storage_->tex_atlas_rgb_8_bit_->countPatches() << endl;
 
 		cout << "FBOs active " << reconstruction->getFboCountDebug_() << endl;
 	}

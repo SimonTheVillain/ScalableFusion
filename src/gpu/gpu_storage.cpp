@@ -56,37 +56,6 @@ void GpuStorage::uploadTripleStitches_(
 	assert(0);
 }
 
-void GpuStorage::initialize() {
-	//TODO: delete these 2 lines from here,
-	//this 1) is not necessary with only one gpu
-	//and 2) it should happen way earlier in the code
-	cudaSetDevice(0);
-
-	//create the buffers that contain slots for our data (vertices, triangles, references to textures
-	// and texture coordinates)
-	vertex_buffer     = new GpuBuffer<GpuVertex>(max_nr_vertices);
-	tex_pos_buffer    = new GpuBuffer<Vector2f>(max_nr_tex_coordinates);
-	triangle_buffer   = new GpuBuffer<GpuTriangle>(max_nr_triangles);
-	patch_info_buffer = new GpuBuffer<GpuPatchInfo>(max_nr_loaded_patch_infos);
-	patch_info_index  = new GpuBuffer<GLint>(max_nr_loaded_patch_infos, 
-	                                         GL_ATOMIC_COUNTER_BUFFER);
-
-
-
-	//the garbage collector is missing here
-	/*
-	tex_atlas_geom_lookup_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA32F,
-												   GL_FLOAT,GL_RGBA,CV_32FC4,
-												   1024, &fbo_storage_);
-	tex_atlas_stds_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA16F,
-											GL_FLOAT, GL_RGBA, CV_32FC4,
-											1024, &fbo_storage_);
-	tex_atlas_rgb_8_bit_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA,
-												 GL_UNSIGNED_BYTE, GL_RGBA,
-												 CV_8UC4, 1024, &fbo_storage_);
-												 */
-
-}
 
 GpuStorage::GpuStorage() {
 	//TODO: delete these 2 lines from here,

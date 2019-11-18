@@ -17,7 +17,6 @@ struct GpuVertex {
 };
 
 struct GpuTriangle {
-	int16_t patch_info_inds[3];
 	int16_t pos_indices[3];
 	int16_t tex_indices[3];
 
@@ -36,7 +35,7 @@ struct GpuTextureInfo {
 	vec2     ref_tex_pos_debug;
 	uint64_t tex_pointer_gl;
 	uint32_t tex_coord_start_ind;//could also be 16 bit int
-	uint32_t placeholder;//could also be 16 bit int
+	uint32_t padding;
 
 	/**
 	 * Since the texture itself is shared with multiple other patches
@@ -57,21 +56,16 @@ struct GpuTextureInfo {
  * storing vertex indices in a ringbuffer)
  */
 struct GpuPatchInfo {
-	int32_t patch_id;
+	//int32_t patch_id; //only for information rendering i presume
 	int32_t triangle_start_ind;
-	int32_t vertex_source_start_ind;
-	int32_t vertex_destination_start_ind;
+	int32_t vertexe_start_ind;
 	GpuTextureInfo std_texture;
 	GpuTextureInfo texture_infos[GPU_MAX_TEX_PER_PATCH];
-	GpuTextureInfo semantic_textures[3];
-	GpuTextureInfo segmentation_texture;
 	int32_t tex_layers;
-	int32_t semantic_tex_count;
-	int32_t segmentation_tex_count;
 
 	//TODO!!
 
-	int32_t debug1;
+	//int32_t debug1;
 	///maybe we should add some flags for cases that one of the cuda kernels updated some of the
 	/// geometry. This could easily be detected and give the chance to download updated geometry to the
 	/// cpu.

@@ -102,8 +102,6 @@ public:
 
 	int triangles_version = -1;
 
-	bool cpu_triangles_ahead = false;//TODO: maybe unneeded
-
 	/**
 	 * @brief workInProgress
 	 * a mutex to lock the geometry as soon as it is beeing worked on
@@ -187,6 +185,7 @@ struct Vertex {
 		triangles.popBack();
 	}
 
+	//TODO: make the constructor such that this method doesn't need to be called
 	GpuVertex genGpuVertex() {
 		GpuVertex vert;
 		vert.p = p;
@@ -207,8 +206,8 @@ struct Vertex {
 
 	int32_t tex_ind_in_main_patch;
 
-	StackVector<VertexInTriangle, 16> triangles; //this will not really give any speed benefits (a few milliseconds at most)
-
+	//StackVector<VertexInTriangle, 16> triangles; //this will not really give any speed benefits (a few milliseconds at most)
+	vector<VertexInTriangle> triangles;
 };
 
 class MeshPatchGpuHandle {
@@ -298,17 +297,6 @@ public:
 
 	int addActiveSet(ActiveSet* active_set);
 	int removeActiveSet(ActiveSet *active_set);
-	bool isPartOfActiveSet(const ActiveSet* active_set);
-	bool isPartOfActiveSetWithNeighbours(const ActiveSet* active_set);
-
-	/**
-	 * @brief isValidOnGpu
-	 * checks if it is fully loaded onto the gpu or if something failed
-	 * @return
-	 */
-	bool isValidOnGpu();
-
-	bool isGpuResidencyRequired();
 
 	shared_ptr<DoubleStitch> getDoubleStitchWith(MeshPatch *other_patch);
 	void addStitchReference(shared_ptr<DoubleStitch> stitch);
@@ -377,20 +365,7 @@ public:
 	mutex geom_tex_patch_mutex;
 	shared_ptr<MeshTexture> geom_tex_patch;
 
-	/**
-	 * @brief gpuResidencyRequired
-	 * @param required
-	 * define if the gpuResidency is required or not:
-	 * true means that the patch has to be on the gpu for the next render requests.
-	 * this might only be needed for the GeometryBase
-	 * //TODO: this is sort of not working right now!
-	 * REDO THIS ACCORDING TO SOLUTION SELECTED IN gpuGeomStorage.h
-	 */
-	//bool gpuResidencyRequired=false;
-	//TODO: maybe put this into a base class as part of gpuGeomstorage.h
-	//this would help to split up the code accordingly
-	mutex gpu_required_by_sets_mutex;//TODO: implement this
-	vector<ActiveSet*> gpu_required_by_sets;
+
 
 	/**
 	 * @brief tex_patches
@@ -407,6 +382,7 @@ public:
 	 * This is the storage for the geometry itself.
 	 * (almost ready to be loaded to gpu)
 	 */
+	 int vertices_version = -1;
 	vector<Vertex> vertices;
 
 	/**
@@ -430,23 +406,7 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Vector4f principal_plane;
 
-	weak_ptr<MeshPatchGpuHandle> gpu;
 
-	//TODO: probably get rid of these:
-	#ifdef MOST_CURRENT
-	weak_ptr<VertexBufConnector>   most_current_vertices;
-	weak_ptr<TriangleBufConnector> most_current_triangles;
-	#endif
-
-	///TODO: Use this variable to see when and if there has been changes to the textures
-	/// this has to be set to true whenever the process of setting up a texture is finished.
-	//TODO: get rid of this
-	bool cpu_tex_patch_ahead = false;
-	//TODO: get rid of this
-	bool cpu_info_ahead = false;
-
-	//TODO: get rid of this
-	bool cpu_vertices_ahead = false;
 };
 
 /**
@@ -956,9 +916,7 @@ struct Edge {
 	// When already used for stitching we do not do it from there
 	bool already_used_for_stitch = false;
 
-	//TODO: given an triangle and the ind in the triangle this point reference should be redundant
-	//Triang* triangle;
-	TriangleReference triangle;//ideally replace this with something that is not a pointer
+	TriangleReference triangle;
 	int pos;//edge index within this triangle
 
 	bool is_registered=false;

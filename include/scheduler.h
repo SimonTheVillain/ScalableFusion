@@ -44,6 +44,16 @@ public:
 
 	virtual Matrix4f getLastKnownDepthPose() = 0;
 
+
+
+	//this design allows for only one render cam but if there will be more needed we cross that bridge another time
+	virtual void setRenderCamPose(Matrix4f camPose) = 0;
+	virtual shared_ptr<ActiveSet> getActiveSetRendering() = 0;
+
+	//we probably also want to update the low detail renderer whenever we update the render cam pose
+	//with update i mean recreate and replace
+	virtual shared_ptr<LowDetailRenderer> getLowDetailRenderer();
+
 };
 
 class SchedulerLinear : public SchedulerBase {
@@ -69,6 +79,9 @@ public:
 	}
 
 private:
+	//the active sets used for several operations like rendering and update
+	vector<shared_ptr<ActiveSet>> actuve_sets;
+
 
 	void captureWorker_(shared_ptr<MeshReconstruction> reconstruction, 
 	                    video::Source *source, GLFWwindow *context);

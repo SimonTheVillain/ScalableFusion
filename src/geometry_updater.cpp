@@ -451,7 +451,7 @@ void GeometryUpdater::update(	GpuStorage* gpu_storage,
 	 * the update of the old offset is still done on the old wieghts.
 	 * ok=(o/s + ok-1/sk-1)/( (s * sk-1)/(s + sk-1))
 	 */
-
+	/*
 	Matrix4f proj = Camera::genProjMatrix(mesh->params.depth_fxycxy);
 	Matrix4f pose = depth_pose_in;
 	Matrix4f pose_tmp = pose.inverse();
@@ -676,4 +676,5 @@ void GeometryUpdater::update(	GpuStorage* gpu_storage,
 		gpu_tex_patch->gpu_data_changed = true;
 	}
 	mesh_reconstruction->cleanupGlStoragesThisThread_();
+	*/
 }

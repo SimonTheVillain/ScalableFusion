@@ -17,6 +17,7 @@ MeshTexture::MeshTexture(MeshTexture::Type type, MeshReconstruction *map)
 		  type_(type) {
 }
 
+/*
 shared_ptr<MeshTextureGpuHandle> MeshTexture::genGpuResource(size_t nr_coords,
                                                              cv::Size2i size) {
 
@@ -59,14 +60,15 @@ shared_ptr<MeshTextureGpuHandle> MeshTexture::genGpuResource(size_t nr_coords,
 	return meshTexGpu;
 
 }
+*/
 
-
-
+/*
 cv::Rect2i MeshTexture::getLookupRect() {
 	//TODO: get rid of this, Since it is locking a weak pointer this would create a false sense of safety
 	shared_ptr<MeshTextureGpuHandle> data = gpu.lock();
 	return data->ref_tex->getRect();
 }
+ */
 
 cv::Rect2f MeshTexture::getBounds(const vector<Vector2f> &list) {
 	if(list.size() == 0) {

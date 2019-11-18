@@ -30,6 +30,8 @@ RenderDebugInfo::RenderDebugInfo()
 }
 
 void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
+	return;
+	/*
 	if(rendered_patch == nullptr) {
 		//return;
 	}
@@ -110,6 +112,7 @@ void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
 	mutex_.unlock();
 
 	glFinish();
+	 */
 }
 
 void RenderDebugInfo::setIndexCount(int start_vertex, int vertex_count) {

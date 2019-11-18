@@ -240,6 +240,8 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 					active_set, d_std_tex, d_std_mat, depth_pose,
 					rgb_texture, rgb_pose);
 
+			//after the first step we extend.
+			cv::waitKey();
 			//setting the active set, which also gets rendered to
 			//the one updated in the expand method.
 			//only do this in single threaded mode.

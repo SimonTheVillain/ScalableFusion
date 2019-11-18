@@ -111,7 +111,7 @@ public:
 	GpuBuffer<GpuVertex>       *vertex_buffer = nullptr;
 	GpuBuffer<Eigen::Vector2f> *tex_pos_buffer = nullptr;
 	GpuBuffer<GpuTriangle>     *triangle_buffer = nullptr;
-	GpuBuffer<GpuPatchInfo>    *patch_info_buffer = nullptr;
+	//GpuBuffer<GpuPatchInfo>    *patch_info_buffer = nullptr; //every active set allocates a separate!
 	GpuBuffer<GLint>           *patch_info_index = nullptr;
 
 	chrono::duration<double> time_spent_uploading_vertices;

@@ -172,7 +172,7 @@ struct Vertex {
 		for(size_t i = 0; i < triangles.size(); i++) {
 			if(triangles[i].triangle.get() == triangle) {
 				triangles[i] = triangles.back();
-				triangles.popBack();
+				triangles.pop_back();
 				return;
 			}
 		}
@@ -182,7 +182,7 @@ struct Vertex {
 
 	void removeTriangle(int pos) {
 		triangles[pos] = triangles.back();
-		triangles.popBack();
+		triangles.pop_back();
 	}
 
 	//TODO: make the constructor such that this method doesn't need to be called
@@ -322,9 +322,6 @@ public:
 	 */
 	void cleanupStitches();
 
-	shared_ptr<TriangleBufConnector> getMostCurrentGpuTriangles() {
-		return gpu.lock()->triangles;
-	}
 
 	shared_ptr<DeformationNode> deformation_node;
 
@@ -673,13 +670,14 @@ struct Triangle {
 };
 
 struct Stitch : public GeometryBase {
-
+	//TODO: if that stitch stays empty remove the class
+	/*
 	shared_ptr<TriangleBufConnector> getMostCurrentGpuTriangles() {
 		return triangles_gpu.lock();
-	}
+	}*/
 
 	//TODO: this could also just be a weak ptr to the buffer itself
-	weak_ptr<TriangleBufConnector> triangles_gpu;
+	//weak_ptr<TriangleBufConnector> triangles_gpu;
 };
 
 /**

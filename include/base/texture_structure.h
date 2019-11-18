@@ -173,10 +173,11 @@ public:
 	MeshTexture(Type type, MeshReconstruction *map);
 
 
+	/*
 	shared_ptr<MeshTextureGpuHandle> genGpuResource(size_t nr_coords, 
 	                                                cv::Size2i size);
-
-	cv::Rect2i getLookupRect();
+	*/
+	//cv::Rect2i getLookupRect();
 	//TODO: logic to determine when said lookup is valid
 	//also the tex coords are not valid in any circumstances
 
@@ -192,13 +193,14 @@ public:
 	                                           vector<Vector2f> &out);
 
 	//ACTUALLY THESE NEXT FEW FUNCTIONS ARE HARD TO IMPLEMENT
+	/*
 	void isLookupTexFilled();
 
 	//this is the most important question
 	void isLookupTexUpToDate();
 
 	void isLookupSecuredAndUpToDate(MeshPatch* patch,shared_ptr<ActiveSet>* set);
-
+	*/
 
 
 	//EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -215,7 +217,7 @@ public:
 	mutex mat_mutex;
 	cv::Mat mat;
 
-	weak_ptr<MeshTextureGpuHandle> gpu;
+	//weak_ptr<MeshTextureGpuHandle> gpu;
 
 
 	string name;

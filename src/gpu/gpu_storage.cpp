@@ -68,7 +68,7 @@ GpuStorage::GpuStorage() {
 	vertex_buffer     = new GpuBuffer<GpuVertex>(max_nr_vertices);
 	tex_pos_buffer    = new GpuBuffer<Vector2f>(max_nr_tex_coordinates);
 	triangle_buffer   = new GpuBuffer<GpuTriangle>(max_nr_triangles);
-	//patch_info_buffer = new GpuBuffer<GpuPatchInfo>(max_nr_loaded_patch_infos);
+	patch_info_buffer = new GpuBuffer<GpuPatchInfo>(max_nr_loaded_patch_infos);
 	patch_info_index  = new GpuBuffer<GLint>(max_nr_loaded_patch_infos,
 											 GL_ATOMIC_COUNTER_BUFFER);
 
@@ -93,7 +93,7 @@ GpuStorage::~GpuStorage() {
 		delete vertex_buffer;
 		delete tex_pos_buffer;
 		delete triangle_buffer;
-		//delete patch_info_buffer;
+		delete patch_info_buffer;
 		delete patch_info_index;
 	}
 	delete tex_atlas_geom_lookup_;

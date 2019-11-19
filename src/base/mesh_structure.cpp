@@ -66,15 +66,10 @@ void MeshPatch::updatePrincipalPlaneAndCenter() {
 }
 
 void MeshPatch::addTexPatch(shared_ptr<MeshTexture> tex_patch) {
-	//todo: set according flag
-	//cout << "[MeshPatch::addTexPatch]we added a new texture for this patch, a (re)upload should be imminent" << endl;
-	cpu_tex_patch_ahead = true;
 	tex_patches.push_back(tex_patch);
 }
 
 void MeshPatch::removeTexPatch(shared_ptr<MeshTexture> tex_patch) {
-	//todo: set according flag
-	cpu_tex_patch_ahead = true;
 	tex_patches.erase(remove(tex_patches.begin(), tex_patches.end(), tex_patch), 
 	                  tex_patches.end());
 }
@@ -85,79 +80,6 @@ void MeshPatch::removeTexPatches(vector<shared_ptr<MeshTexture>> tex_patches) {
 	}
 }
 
-bool MeshPatch::isGpuResidencyRequired() {
-	return (!gpu_required_by_sets.empty());
-}
-
-int MeshPatch::addActiveSet(ActiveSet *active_set) {
-	int count;
-	gpu_required_by_sets_mutex.lock();
-	count = gpu_required_by_sets.size();
-	gpu_required_by_sets.push_back(active_set);
-	gpu_required_by_sets_mutex.unlock();
-	return count;
-}
-
-//returns the amount of active set bound before removing this one!!!!!
-int MeshPatch::removeActiveSet(ActiveSet *active_set) {
-	int count;
-	gpu_required_by_sets_mutex.lock();
-	count = gpu_required_by_sets.size();
-	//the erase deletes the elements at the end. but i stil do not know why this is necessary
-	gpu_required_by_sets.erase(remove(gpu_required_by_sets.begin(), 
-	                                  gpu_required_by_sets.end(), active_set), 
-	                           gpu_required_by_sets.end());
-	gpu_required_by_sets_mutex.unlock();
-	return count;
-}
-
-bool MeshPatch::isPartOfActiveSet(const ActiveSet *active_set) {
-	for(size_t i = 0; i < gpu_required_by_sets.size(); i++) {
-		if(gpu_required_by_sets[i] == active_set) {
-			return true;
-		}
-	}
-	return false;
-}
-
-bool MeshPatch::isPartOfActiveSetWithNeighbours(const ActiveSet *active_set) {
-	if(!isPartOfActiveSet(active_set)) {
-		return false;
-	}
-
-	double_stitch_mutex.lock();
-	for(shared_ptr<DoubleStitch> stitch : double_stitches) {
-		if(stitch->patches[0].lock().get() != this) {
-			continue;
-		}
-		if(!stitch->isPartOfActiveSet(active_set)) {
-			//this means not all the neighbours of this stitch are loaded to the gpu
-			double_stitch_mutex.unlock();
-			return false;
-		}
-	}
-	double_stitch_mutex.unlock();
-
-	triple_stitch_mutex.lock();
-	for(shared_ptr<TripleStitch> stitch : triple_stitches) {
-		if(stitch->patches[0].lock().get() != this) {
-			continue;
-		}
-		if(!stitch->isPartOfActiveSet(active_set)) {
-			//this means not all the neighbours of this are loaded to the gpu
-			triple_stitch_mutex.unlock();
-			return false;
-		}
-	}
-	triple_stitch_mutex.unlock();
-	return true;
-}
-
-bool MeshPatch::isValidOnGpu() {
-	cout << "[MeshPatch::isValidOnGpu] this check probably is useless! don't use it / get rid of it" << endl;
-	//todo implement more checks
-	return (gpu.lock() != nullptr);
-}
 
 shared_ptr<DoubleStitch> MeshPatch::getDoubleStitchWith(MeshPatch* other_patch) {
 	//cout << "[MeshPatch::getDoubleStitchWith]replace this with the other function not working with IDs" << endl;

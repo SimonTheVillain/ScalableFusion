@@ -7,7 +7,7 @@ using namespace Eigen;
 
 void gpu::GeometryUpdate::calcCenterAndRadius(
 		vector<shared_ptr<MeshPatch>> &patches) {
-
+/*
 	if(patches.empty()) {
 		return;
 	}
@@ -73,5 +73,5 @@ void gpu::GeometryUpdate::calcCenterAndRadius(
 	//and last step:
 	//maybe even set this stuff on the patch itself. or all patches at once?
 	//it at least needs to be efficiently set for the octree
-
+	*/
 }

@@ -35,17 +35,8 @@ public:
 
 	~ActiveSet();
 
-	void drawDoubleStitches();
-	void drawTripleStitches();
-	void drawPatches();
-	void drawEverything();
-
-	void reuploadHeaders();
-
-	void checkForCompleteGeometry();
-
 	string name;
-
+	/*
 	GpuStorage *gpu_geom_storage;
 
 	vector<shared_ptr<MeshPatch>> retained_mesh_patches_cpu;
@@ -55,12 +46,13 @@ public:
 	vector<shared_ptr<TriangleBufConnector>> retained_double_stitches;
 	vector<shared_ptr<TriangleBufConnector>> retained_triple_stitches;//TODO: implement this (almost just for ref textures)
 	shared_ptr<TriangleBufConnector> retained_triple_stitches_coalesced;
-
+	*/
 	//TODO: is it better retaining it here compared to retaining it in the actual gpumesh structure?
 	//vector<shared_ptr<MeshTextureGpuHandle>> retainedMeshTextureGpuHandles;
-	GLuint glBufferHeader;
+
 private:
 
+	/*
 	ActiveSet(GpuStorage *storage, vector<shared_ptr<MeshPatch>> patches,
 			  MeshReconstruction *map,
 			  LowDetailRenderer* low_detail_renderer,
@@ -68,7 +60,7 @@ private:
 			  InformationRenderer* information_renderer,
 			  bool initial,//TODO: also get rid of these initial frames
 	          bool debug1 = false);
-
+	*/
 
 	//initial setup of active set (TODO: how to handle textures and resources that do not exist upfront?)
 	/*
@@ -90,10 +82,10 @@ private:
 
 
 	vector<shared_ptr<TexturedMeshGPU>> patches;
+	shared_ptr<PatchInfoBufConnector> headers;
 	//the key is the patch id (maybe share patch id with stitch ids)
 	//value is the index in the according vectors
 	unordered_map<int,int> patchInds;
-	unordered_map<int,int> verticesInds;
 	//separate textures
 
 

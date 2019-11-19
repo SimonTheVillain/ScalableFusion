@@ -25,14 +25,11 @@ MeshPatch::~MeshPatch() {
 	//cout << "THE TRIANGLES ARE NOT DELETED!!!!!" << endl;
 }
 
-bool MeshPatch::isCreationProcessOngoing() {
-	return (geom_tex_patch == nullptr);
-}
 
 void MeshPatch::updateCenterPoint() {
 	Vector4d c = Vector4d(0, 0, 0, 0);
 	for(size_t i = 0; i < vertices.size(); i++) {
-		c += vertices[i].p.cast<double>();
+		c += vertices[i].getP().cast<double>();
 	}
 	setPos((c * (1.0 / double(vertices.size()))).block<3, 1>(0, 0).cast<float>());
 }
@@ -42,7 +39,7 @@ void MeshPatch::updateSphereRadius() {
 	Vector3f p = getPos();
 	Vector4f center(p[0], p[1], p[2], 0);
 	for(size_t i = 0; i < vertices.size(); i++) {
-		Vector4f diff = center - vertices[i].p;
+		Vector4f diff = center - vertices[i].getP();
 		float dist = Vector3f(diff[0], diff[1], diff[2]).norm();
 		r = max(r, dist);
 	}
@@ -52,8 +49,8 @@ void MeshPatch::updateSphereRadius() {
 void MeshPatch::updatePrincipalPlaneAndCenter() {
 	PrincipalPlaneAccumulator accumulator;
 	for(size_t i = 0; i < vertices.size(); i++) {
-		accumulator.addPoint(vertices[i].p);
-		if(isnan(vertices[i].p[0])) {
+		accumulator.addPoint(vertices[i].getP());
+		if(isnan(vertices[i].getP()[0])) {
 			cout << "[MeshPatch::updatePrincipalPlaneAndCenter] why is this nan?" << endl;
 		}
 	}
@@ -80,7 +77,7 @@ void MeshPatch::removeTexPatches(vector<shared_ptr<MeshTexture>> tex_patches) {
 	}
 }
 
-
+/*
 shared_ptr<DoubleStitch> MeshPatch::getDoubleStitchWith(MeshPatch* other_patch) {
 	//cout << "[MeshPatch::getDoubleStitchWith]replace this with the other function not working with IDs" << endl;
 	for(int i = 0; i < double_stitches.size(); i++) {
@@ -168,6 +165,7 @@ void MeshPatch::removeStitchReference(shared_ptr<TripleStitch> stitch) {
 	triple_stitch_mutex.unlock();
 }
 
+
 set<shared_ptr<MeshPatch> > MeshPatch::getNeighbours() {
 	set<shared_ptr<MeshPatch>> neighbours;
 
@@ -239,6 +237,7 @@ TripleStitch::TripleStitch() {
 	//mostly this will only be one triangle
 	triangles.reserve(4);
 }
+
 
 TripleStitch::~TripleStitch() {
 	#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
@@ -409,7 +408,9 @@ bool DoubleStitch::connectsSamePatches(shared_ptr<DoubleStitch> other) {
 	}
 	return false;
 }
+*/
 
+/*
 void GeometryBase::replacePatchInTriangleReferences(shared_ptr<MeshPatch> from,
                                                     shared_ptr<MeshPatch> to,
                                                     int vertex_offset) {
@@ -449,7 +450,10 @@ void GeometryBase::deregisterTriangles() {
 		}
 	}
 }
+*/
 
+//TODO: fix and put back in (used for stitching, meshing and stuff)
+/*
 void Triangle::replacePatchReference(MeshPatch *from, MeshPatch *to, 
                                      int offset) {
 	for(size_t i = 0; i < 3; i++) {
@@ -758,3 +762,4 @@ void Triangle::registerTriangle(TriangleReference &triangle_to_register,
 		}
 	}
 }
+ */

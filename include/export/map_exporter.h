@@ -23,19 +23,20 @@ private:
 	};
 	
 public:
-	static void exportMapTest(string test);
+	//TODO: reimplementing a proper integration
+	static void exportMapTest(string test) {}
 	static void exportMap(MeshReconstruction *map, string path, 
-	                      unsigned int properties = 0xFFFFFFFF);
+	                      unsigned int properties = 0xFFFFFFFF) {}
 
 	//only HighRes or LowRes is valid
 	static void exportMesh(MeshReconstruction *map, string path,
-	                       Properties_ properties);
+	                       Properties_ properties) {}
 
 	static void storeCoarse(MeshReconstruction *map,LowDetailRenderer* lowDetailRenderer, string file_path);
-	static void storeFine(MeshReconstruction *map, string file_path);
+	static void storeFine(MeshReconstruction *map, string file_path) {}
 
-	static void storeGraph(MeshReconstruction *map, string file_path);
-	static void storeDeformationGraph(MeshReconstruction *map, string file_path);
+	static void storeGraph(MeshReconstruction *map, string file_path) {}
+	static void storeDeformationGraph(MeshReconstruction *map, string file_path) {}
 };
 
 #endif // FILE_EXPORT_MAP_H

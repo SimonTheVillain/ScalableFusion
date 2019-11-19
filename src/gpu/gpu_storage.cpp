@@ -111,10 +111,11 @@ shared_ptr<ActiveSet> GpuStorage::makeActiveSet(
 		TextureUpdater* texture_updater,
 		InformationRenderer* information_renderer,
 		bool initial, bool debug1) {
-
+/*
 	shared_ptr<ActiveSet> active_set =
 			shared_ptr<ActiveSet>(
 					new ActiveSet(this, patches, map, low_detail_renderer, texture_updater, information_renderer, initial, debug1));//instead of just patches
-
+*/
+	shared_ptr<ActiveSet> active_set;
 	return active_set;
 }

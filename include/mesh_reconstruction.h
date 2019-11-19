@@ -70,7 +70,7 @@ class MeshReconstruction {
 
 public:
 
-	//TODO: use these to replace everything else
+	//TODO: this should not be in the reconstruction itself
 	struct Parameters {
 
 		size_t max_sem_label_count = 8;
@@ -166,19 +166,22 @@ public:
 	//TextureUpdater texturing;
 	//Labelling labelling;
 
+	/*
 	mutex active_set_update_mutex;
 	shared_ptr<ActiveSet> active_set_update;
 	shared_ptr<ActiveSet> active_set_expand;
-
-	atomic<bool> initializing_logic;
+	*/
+	//atomic<bool> initializing_logic;
 
 private:
 
-	void cleanupGlStoragesThisThread_();
+	//void cleanupGlStoragesThisThread_();
 
+	//TODO: this should not be in the reconstruction itself
 	cv::Mat generateColorCodedTexture_(cv::Mat segmentation);
 
-	void setActiveSetUpdate_(shared_ptr<ActiveSet> set);
+	//TODO: this should not be in the reconstruction itself
+	//void setActiveSetUpdate_(shared_ptr<ActiveSet> set);
 
 	TriangleReference addTriangle_(
 			VertexReference pr1, VertexReference pr2, VertexReference pr3, 
@@ -186,7 +189,7 @@ private:
 	TriangleReference addTriangle_(VertexReference pr1, VertexReference pr2, 
 	                               VertexReference pr3);
 
-	GarbageCollector *garbage_collector_;
+	//GarbageCollector *garbage_collector_;
 
 	//shouldnt that be a shared pointer
 	mutex patches_mutex_;

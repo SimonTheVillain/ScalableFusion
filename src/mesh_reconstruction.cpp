@@ -12,20 +12,9 @@
 
 using namespace std;
 using namespace Eigen;
-/*
-//TODO: add icp to this project
-//#include <ICPOdometry.h>
-*/
-
-void MeshReconstruction::initInGlLogicContext() {
-
-}
-
-void MeshReconstruction::cleanupGlStoragesThisThread_() {
-	fbo_storage_.garbageCollect();
-}
 
 bool MeshReconstruction::removePatch(shared_ptr<MeshPatch> patch) {
+	cout << "THIS IS IMPORTANT" << endl;
 	patch->double_stitch_mutex.lock();
 	for(size_t i = 0; i < patch->double_stitches.size(); i++) {
 	   patch->double_stitches[i]->removeFromPatches(patch);

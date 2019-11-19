@@ -13,7 +13,7 @@
 
 using namespace std;
 using namespace Eigen;
-
+/*
 ActiveSet::ActiveSet(GpuStorage *storage,
 					 vector<shared_ptr<MeshPatch>> patches,
 					 MeshReconstruction *map,
@@ -729,3 +729,4 @@ void ActiveSet::checkForCompleteGeometry() {
 		}
 	}
 }
+ */

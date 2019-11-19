@@ -14,6 +14,7 @@
 using namespace std;
 using namespace Eigen;
 
+/*
 void MapExporter::exportMap(MeshReconstruction *map, string path,
 							unsigned int properties) {
 }
@@ -380,3 +381,4 @@ void MapExporter::storeDeformationGraph(MeshReconstruction *map,
 	//magic in between
 	file.close();
 }
+*/

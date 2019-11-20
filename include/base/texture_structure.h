@@ -81,7 +81,7 @@ using namespace Eigen;
 
 class GeometryBase;
 class MeshReconstruction;
-class MeshPatch;
+class Meshlet;
 class ActiveSet;
 struct MeshTexture;
 class Recycler;
@@ -93,7 +93,7 @@ class MeshTextureGpuHandle {
 public:
 
 	struct Dependency {
-		weak_ptr<GeometryBase> geometry; //maybe this needs to be a MeshPatchGpuHandle or GeometryBase
+		weak_ptr<GeometryBase> geometry; //maybe this needs to be a MeshletGpuHandle or GeometryBase
 		// (because we care for triangles)
 		int triangle_position_on_gpu = 0;
 		int triangles_version = 0;
@@ -146,7 +146,7 @@ public:
  * somehow the GPU payload type should be able to be created by the CPU payload
  */
 struct MeshTexture {
-	friend MeshPatch;
+	friend Meshlet;
 	friend ActiveSet;
 
 public:
@@ -199,7 +199,7 @@ public:
 	//this is the most important question
 	void isLookupTexUpToDate();
 
-	void isLookupSecuredAndUpToDate(MeshPatch* patch,shared_ptr<ActiveSet>* set);
+	void isLookupSecuredAndUpToDate(Meshlet* patch,shared_ptr<ActiveSet>* set);
 	*/
 
 
@@ -212,7 +212,7 @@ public:
 	vector<Vector2f> tex_coords;
 
 	///TODO: might be needed for gpuGeomstorage !It is actually needed to check if the residency of this patch still is required.
-	MeshPatch *parent_patch = nullptr;
+	Meshlet *parent_patch = nullptr;
 
 	mutex mat_mutex;
 	cv::Mat mat;

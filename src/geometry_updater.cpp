@@ -42,8 +42,12 @@ void GeometryUpdater::extend(
 	Matrix4f proj_1_color = Camera::genProjMatrix(reconstruction->params.rgb_fxycxy);
 
 	//extract the visible patches from the active set
-	vector<shared_ptr<MeshPatch>> visible_patches =
-			active_set_of_formerly_visible_patches->retained_mesh_patches_cpu;
+	vector<shared_ptr<Meshlet>> visible_meshlets;
+	for(auto bla : active_set_of_formerly_visible_patches->patch_inds){
+		shared_ptr<Meshlet> meshlet =
+				reconstruction->getMeshlet(bla.first);
+		visible_meshlets.push_back(meshlet);
+	}
 
 	//this might me more suitable for the beginning but lets do it here:
 	information_renderer->renderDepth(
@@ -62,11 +66,9 @@ void GeometryUpdater::extend(
 	//TODO: fill a list of borders with edges...(without having to )
 	vector<vector<Edge>> borders;
 	Matrix4f proj_pose = proj_depth * depth_pose_in.inverse();
-	int debug_patch_count = 
-			active_set_of_formerly_visible_patches->retained_mesh_patches_cpu.size();
 
 	stitching.genBorderList(
-			active_set_of_formerly_visible_patches->retained_mesh_patches_cpu, borders, 
+			visible_meshlets, borders,
 			proj_pose);
 	stitching.reloadBorderGeometry(borders);
 	//TODO: reimplement this function to improve everything!!!
@@ -123,20 +125,20 @@ void GeometryUpdater::extend(
 
 	//*****************************************TOOOOODOOOOOO*********************
 	//TODO: put this piece of code into the meshIt part!!!!!
-	vector<shared_ptr<MeshPatch>> new_shared_mesh_patches;
+	vector<shared_ptr<Meshlet>> new_shared_mesh_patches;
 	//the same as the one above but with shared elements
 	for(int i = 0; i < seg_count; i++) {
-		shared_ptr<MeshPatch> mesh_patch = reconstruction->genMeshPatch();
+		shared_ptr<Meshlet> mesh_patch = reconstruction->genMeshlet();
 		new_shared_mesh_patches.push_back(mesh_patch);//storing all shared_ptr to the next reconstruction patch
 	}
 	for(int i = 0; i < seg.rows; i++) {
 		for(int j = 0; j < seg.cols; j++) {
 			int index = seg.at<int32_t>(i, j);
 			if(index != -1) {
-				mesh_pointers.at<MeshPatch*>(i, j) = 
+				mesh_pointers.at<Meshlet*>(i, j) =
 						new_shared_mesh_patches[index].get();
 			} else {
-				mesh_pointers.at<MeshPatch*>(i, j) = nullptr;
+				mesh_pointers.at<Meshlet*>(i, j) = nullptr;
 			}
 		}
 	}
@@ -203,35 +205,16 @@ void GeometryUpdater::extend(
 
 	//remove patches with zero triangles. Even when they pose as a source for stitches
 
-	vector<shared_ptr<MeshPatch>> list_of_mesh_patches_to_keep;
-	vector<shared_ptr<MeshPatch>> set_of_patches_to_be_removed;
+	vector<shared_ptr<Meshlet>> list_of_mesh_patches_to_keep;
+	vector<shared_ptr<Meshlet>> set_of_patches_to_be_removed;
 
 	for(size_t i = 0; i < new_shared_mesh_patches.size(); i++) {
-		shared_ptr<MeshPatch> &patch = new_shared_mesh_patches[i];
+		shared_ptr<Meshlet> &patch = new_shared_mesh_patches[i];
 		if(patch->triangles.empty()) {
-			//if the patch does not have triangles we go over all stitches and their respective triangles and delete them
-			//remove
-			int debug_double_stitches_before = patch->double_stitches.size();
-			for(size_t j = 0; j < patch->double_stitches.size(); j++) {
-				shared_ptr<DoubleStitch> stitch = patch->double_stitches[j];
-				int debug_count_before = patch->double_stitches.size();
-				stitch->removeFromPatches(patch);//this should always remove one reference from this patch
-				if(debug_count_before != patch->double_stitches.size()) {
-					//assert(0);
-				}
-				stitch->deregisterTriangles();
-			}
-			if(!patch->double_stitches.empty()) {
-				//assert(0);//this is weird!!!!!!! didn't we delete all double stitches?
-			}
-
-			for(size_t j = 0; j < patch->triple_stitches.size(); j++) {
-				shared_ptr<TripleStitch> stitch = patch->triple_stitches[j];
-				stitch->removeFromPatches(patch);
-				stitch->deregisterTriangles();
-			}
-			if(!patch->double_stitches.empty()) {
-				//assert(0);//this is weired!!!!!!! didn't we delete all double stitches?
+			for(int i=0;i<patch->vertices.size();i++){
+				Vertex &vertex = patch->vertices[i];
+				//TODO: check if vertex is connected to triangles...
+				// if it is just std::move it to one possible neighbour
 			}
 			set_of_patches_to_be_removed.push_back(patch);
 		} else {
@@ -265,12 +248,12 @@ void GeometryUpdater::extend(
 	//most of the code below this active set creation can be put into the active set
 	//creation routine
 
-	visible_patches.insert(visible_patches.end(),
-	                       new_shared_mesh_patches.begin(),
-	                       new_shared_mesh_patches.end());
+	visible_meshlets.insert(visible_meshlets.end(),
+							new_shared_mesh_patches.begin(),
+							new_shared_mesh_patches.end());
 	shared_ptr<ActiveSet> new_active_set =
 			gpu_storage->makeActiveSet(
-					visible_patches,
+					visible_meshlets,
 					reconstruction,
 					low_detail_renderer,
 					texture_updater,
@@ -287,21 +270,12 @@ void GeometryUpdater::extend(
 
 	time_start = time_end;
 
-	new_active_set->reuploadHeaders();
+	new_active_set->setupHeaders();
 	texture_updater->generateGeomTex(reconstruction,
 			                        new_shared_mesh_patches, depth_pose_in,
 	                                proj_depth, d_std_tex, new_active_set,
 	                                information_renderer);
-	for(shared_ptr<MeshPatch> patch : new_shared_mesh_patches) {
-		//TODO: test patch
-		if(!patch->isPartOfActiveSetWithNeighbours(new_active_set.get())) {
-			assert(0);//all of the new ones should be loaded
-		}
-		if(patch->geom_tex_patch->gpu.lock() == nullptr) {
-			assert(0);//whyyyyy. the geometry textures should be secured at
-			//this point
-		}
-	}
+
 
 	//until here..... not further (not further we implemented stuff)
 	//(and with we i mean me)
@@ -322,7 +296,7 @@ void GeometryUpdater::extend(
 
 	// After doing the textures and geometry we are supposed to be done with this
 	// Active set
-	new_active_set->reuploadHeaders();
+	new_active_set->setupHeaders();
 
 	// The apply new color data is supposed to create new texture coordinates as well as creating new textures
 	// this and the above function should replace the two steps below
@@ -377,23 +351,6 @@ void GeometryUpdater::extend(
 
 	reconstruction->octree_.addObjects(new_shared_mesh_patches);
 
-	//TODO: remove
-	//check if the newly created active set is completely loaded
-	new_active_set->checkForCompleteGeometry();
-	reconstruction->active_set_expand = new_active_set;
-
-	//debug... check if the active set has all the geometry textures
-	for(auto patch : new_active_set->retained_mesh_patches_cpu) {
-		//TODO: test patch
-		if(!patch->isPartOfActiveSetWithNeighbours(new_active_set.get())) {
-			continue;
-		}
-		if(patch->geom_tex_patch->gpu.lock() == nullptr) {
-			cout << "DEBUG/TODO: reinsert the assert at this point" << endl;
-			//assert(0);//whyyyyy. the geometry textures should be secured at
-			//this point
-		}
-	}
 
 	time_end = chrono::system_clock::now();
 	auto elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start_all);
@@ -406,9 +363,9 @@ void GeometryUpdater::extend(
 	//creation and upload of the new active set. (which is shit btw.)
 
 	/*****************************UPDATING GRAPH***************************/
-	vector<DeformationNode::NodePixPos> nodes(visible_patches.size());
-	for(size_t i = 0; i < visible_patches.size(); i++) {
-		shared_ptr<MeshPatch> patch = visible_patches[i];
+	vector<DeformationNode::NodePixPos> nodes(visible_meshlets.size());
+	for(size_t i = 0; i < visible_meshlets.size(); i++) {
+		shared_ptr<Meshlet> patch = visible_meshlets[i];
 		Vector3f pos = patch->getPos();
 		Vector4f pos4(pos[0], pos[1], pos[2], 1.0f);
 		pos4 = proj_pose * pos4;
@@ -460,11 +417,11 @@ void GeometryUpdater::update(	GpuStorage* gpu_storage,
 	// Get the position of the depth camera
 	Vector4f cam_pos = Camera::calcCamPosFromExtrinsic(pose_tmp);
 
-	vector<shared_ptr<MeshPatch>> patches = active_set->retained_mesh_patches_cpu;
+	vector<shared_ptr<Meshlet>> patches = active_set->retained_mesh_patches_cpu;
 
 	// Creation of the descriptors for this job
 	vector<gpu::UpdateDescriptor> descriptors;
-	vector<shared_ptr<MeshPatch>> updated_patches;
+	vector<shared_ptr<Meshlet>> updated_patches;
 
 	vector<shared_ptr<TexAtlasPatch>> dest_tex_handles; //retain the destination tex handles for this function
 
@@ -477,9 +434,9 @@ void GeometryUpdater::update(	GpuStorage* gpu_storage,
 		//?????
 		//TODO: maybe the generation of this descriptor fits into
 		//the mesh patch class.
-		shared_ptr<MeshPatch> patch = patches[i];
+		shared_ptr<Meshlet> patch = patches[i];
 
-		shared_ptr<MeshPatchGpuHandle> gpu = patch->gpu.lock();
+		shared_ptr<MeshletGpuHandle> gpu = patch->gpu.lock();
 		if(!patch->isPartOfActiveSetWithNeighbours(active_set.get())) {
 			continue;
 		}
@@ -610,7 +567,7 @@ void GeometryUpdater::update(	GpuStorage* gpu_storage,
 
 	//desperate debug measure
 	for(auto patch : patches) {
-		shared_ptr<MeshPatchGpuHandle> gpuPatch = patch->gpu.lock();
+		shared_ptr<MeshletGpuHandle> gpuPatch = patch->gpu.lock();
 		if(gpuPatch == nullptr) {
 			assert(0);
 		}
@@ -643,8 +600,8 @@ void GeometryUpdater::update(	GpuStorage* gpu_storage,
 
 	//after updating the target we want to switch target and source
 	for(size_t i = 0; i < updated_patches.size(); i++) {
-		shared_ptr<MeshPatch> patch = updated_patches[i];
-		shared_ptr<MeshPatchGpuHandle> gpu = patch->gpu.lock();
+		shared_ptr<Meshlet> patch = updated_patches[i];
+		shared_ptr<MeshletGpuHandle> gpu = patch->gpu.lock();
 		shared_ptr<MeshTextureGpuHandle> gpu_tex_patch =
 				patch->geom_tex_patch->gpu.lock();
 

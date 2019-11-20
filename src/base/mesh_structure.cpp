@@ -10,7 +10,7 @@ using namespace std;
 using namespace Eigen;
 
 ///TODO: replace this with something that returns the pointer not the shared_ptr
-MeshPatch::MeshPatch(Octree<MeshPatch> *octree) {
+Meshlet::Meshlet(Octree<Meshlet> *octree) {
 	setOctree(octree);
 
 	//TODO: get this from a constant... essentially it should speed up the process
@@ -20,13 +20,13 @@ MeshPatch::MeshPatch(Octree<MeshPatch> *octree) {
 	deformation_node = make_shared<DeformationNode>(this);
 }
 
-MeshPatch::~MeshPatch() {
-	//cout << "[MeshPatch::~MeshPatch] DEBUG: destructor got called." << endl;
+Meshlet::~Meshlet() {
+	//cout << "[Meshlet::MeshletDEBUG: destructor got called." << endl;
 	//cout << "THE TRIANGLES ARE NOT DELETED!!!!!" << endl;
 }
 
 
-void MeshPatch::updateCenterPoint() {
+void Meshlet::updateCenterPoint() {
 	Vector4d c = Vector4d(0, 0, 0, 0);
 	for(size_t i = 0; i < vertices.size(); i++) {
 		c += vertices[i].getP().cast<double>();
@@ -34,7 +34,7 @@ void MeshPatch::updateCenterPoint() {
 	setPos((c * (1.0 / double(vertices.size()))).block<3, 1>(0, 0).cast<float>());
 }
 
-void MeshPatch::updateSphereRadius() {
+void Meshlet::updateSphereRadius() {
 	float r = 0;
 	Vector3f p = getPos();
 	Vector4f center(p[0], p[1], p[2], 0);
@@ -46,40 +46,41 @@ void MeshPatch::updateSphereRadius() {
 	setRadius(r);
 }
 
-void MeshPatch::updatePrincipalPlaneAndCenter() {
+void Meshlet::updatePrincipalPlaneAndCenter() {
 	PrincipalPlaneAccumulator accumulator;
 	for(size_t i = 0; i < vertices.size(); i++) {
 		accumulator.addPoint(vertices[i].getP());
 		if(isnan(vertices[i].getP()[0])) {
-			cout << "[MeshPatch::updatePrincipalPlaneAndCenter] why is this nan?" << endl;
+			cout << "[Meshlet::updatePrincipalPlaneAndCenter] why is this nan?" << endl;
 		}
 	}
 	principal_plane = accumulator.plane();
 	Vector4f center = accumulator.centerPoint();
 	setPos(Vector3f(center[0], center[1], center[2]));
 	if(isnan(center[0])) {
-		cout << "[MeshPatch::updatePrincipalPlaneAndCenter] why is this nan?" << endl;
+		cout << "[Meshlet::updatePrincipalPlaneAndCenter] why is this nan?" << endl;
 	}
 }
 
-void MeshPatch::addTexPatch(shared_ptr<MeshTexture> tex_patch) {
+void Meshlet::addTexPatch(shared_ptr<MeshTexture> tex_patch) {
 	tex_patches.push_back(tex_patch);
 }
 
-void MeshPatch::removeTexPatch(shared_ptr<MeshTexture> tex_patch) {
+void Meshlet::removeTexPatch(shared_ptr<MeshTexture> tex_patch) {
 	tex_patches.erase(remove(tex_patches.begin(), tex_patches.end(), tex_patch), 
 	                  tex_patches.end());
 }
 
-void MeshPatch::removeTexPatches(vector<shared_ptr<MeshTexture>> tex_patches) {
+void Meshlet::removeTexPatches(vector<shared_ptr<MeshTexture>> tex_patches) {
 	for(auto tex_patch : tex_patches) {
 		removeTexPatch(tex_patch);
 	}
 }
 
+
 /*
-shared_ptr<DoubleStitch> MeshPatch::getDoubleStitchWith(MeshPatch* other_patch) {
-	//cout << "[MeshPatch::getDoubleStitchWith]replace this with the other function not working with IDs" << endl;
+shared_ptr<DoubleStitch> Meshlet::getDoubleStitchWith(Meshlet* other_patch) {
+	//cout << "[Meshlet::getDoubleStitchWith]replace this with the other function not working with IDs" << endl;
 	for(int i = 0; i < double_stitches.size(); i++) {
 		bool invalid_stitch = false;
 		if(double_stitches[i]->patches[0].use_count()) {
@@ -106,20 +107,20 @@ shared_ptr<DoubleStitch> MeshPatch::getDoubleStitchWith(MeshPatch* other_patch) 
 	return empty;
 }
 
-void MeshPatch::addStitchReference(shared_ptr<DoubleStitch> stitch) {
+void Meshlet::addStitchReference(shared_ptr<DoubleStitch> stitch) {
 	double_stitch_mutex.lock();
 	double_stitches.push_back(stitch);
 	double_stitch_mutex.unlock();
 }
 
-shared_ptr<TripleStitch> MeshPatch::getTripleStitchWith(
-		MeshPatch *other_patch1,
-		MeshPatch *other_patch2) {
-	MeshPatch* id1 = this;
-	MeshPatch* id2 = other_patch1;
-	MeshPatch* id3 = other_patch2;
+shared_ptr<TripleStitch> Meshlet::getTripleStitchWith(
+		Meshlet *other_patch1,
+		Meshlet *other_patch2) {
+	Meshlet* id1 = this;
+	Meshlet* id2 = other_patch1;
+	Meshlet* id3 = other_patch2;
 	//all permutations:
-	const MeshPatch *perm[][3] = {{id1, id2, id3},
+	const Meshlet *perm[][3] = {{id1, id2, id3},
 	                              {id1, id3, id2},
 	                              {id2, id1, id3},
 	                              {id2, id3, id1},
@@ -143,13 +144,13 @@ shared_ptr<TripleStitch> MeshPatch::getTripleStitchWith(
 	return empty;
 }
 
-void MeshPatch::addStitchReference(shared_ptr<TripleStitch> stitch) {
+void Meshlet::addStitchReference(shared_ptr<TripleStitch> stitch) {
 	triple_stitch_mutex.lock();
 	triple_stitches.push_back(stitch);
 	triple_stitch_mutex.unlock();
 }
 
-void MeshPatch::removeStitchReference(shared_ptr<DoubleStitch> stitch) {
+void Meshlet::removeStitchReference(shared_ptr<DoubleStitch> stitch) {
 	double_stitch_mutex.lock();
 	double_stitches.erase(
 			remove(double_stitches.begin(),double_stitches.end(),stitch),
@@ -157,7 +158,7 @@ void MeshPatch::removeStitchReference(shared_ptr<DoubleStitch> stitch) {
 	double_stitch_mutex.unlock();
 }
 
-void MeshPatch::removeStitchReference(shared_ptr<TripleStitch> stitch) {
+void Meshlet::removeStitchReference(shared_ptr<TripleStitch> stitch) {
 	triple_stitch_mutex.lock();
 	triple_stitches.erase(
 			remove(triple_stitches.begin(),triple_stitches.end(),stitch),
@@ -166,8 +167,8 @@ void MeshPatch::removeStitchReference(shared_ptr<TripleStitch> stitch) {
 }
 
 
-set<shared_ptr<MeshPatch> > MeshPatch::getNeighbours() {
-	set<shared_ptr<MeshPatch>> neighbours;
+set<shared_ptr<Meshlet> > Meshlet::getNeighbours() {
+	set<shared_ptr<Meshlet>> neighbours;
 
 	double_stitch_mutex.lock();
 	for(auto double_stitch : double_stitches) {
@@ -178,7 +179,7 @@ set<shared_ptr<MeshPatch> > MeshPatch::getNeighbours() {
 	triple_stitch_mutex.lock();
 	for(auto triple_stitch : triple_stitches) {
 		//continue; //does this make a diference?
-		shared_ptr<MeshPatch> other_patches[2];
+		shared_ptr<Meshlet> other_patches[2];
 		triple_stitch->getOtherPatches(weak_self.lock(), other_patches);
 		if(other_patches[0].get() != this) {
 			neighbours.insert(other_patches[0]);
@@ -204,7 +205,7 @@ set<shared_ptr<MeshPatch> > MeshPatch::getNeighbours() {
 	return neighbours;
 }
 
-shared_ptr<DoubleStitch> MeshPatch::getDoubleStitchTo(shared_ptr<MeshPatch> patch) {
+shared_ptr<DoubleStitch> Meshlet::getDoubleStitchTo(shared_ptr<Meshlet> patch) {
 	double_stitch_mutex.lock();
 	for(auto double_stitch : double_stitches) {
 		if(double_stitch->isConnectingPatch(patch)) {
@@ -216,7 +217,7 @@ shared_ptr<DoubleStitch> MeshPatch::getDoubleStitchTo(shared_ptr<MeshPatch> patc
 	return nullptr;
 }
 
-shared_ptr<TripleStitch> MeshPatch::getTripleStitchTo(shared_ptr<MeshPatch> patch) {
+shared_ptr<TripleStitch> Meshlet::getTripleStitchTo(shared_ptr<Meshlet> patch) {
 	triple_stitch_mutex.lock();
 	for(auto triple_stitch : triple_stitches) {
 		if(triple_stitch->isConnectingPatch(patch)) {
@@ -228,7 +229,7 @@ shared_ptr<TripleStitch> MeshPatch::getTripleStitchTo(shared_ptr<MeshPatch> patc
 	return nullptr;
 }
 
-bool MeshPatch::isGeometryFullyAllocated() {
+bool Meshlet::isGeometryFullyAllocated() {
 	assert(0);
 	return (gpu.lock() != nullptr);
 }
@@ -260,9 +261,9 @@ bool TripleStitch::isPartOfActiveSet(const ActiveSet *active_set) {
 	        patches[2].lock()->isPartOfActiveSet(active_set));
 }
 
-void TripleStitch::removeFromPatches(shared_ptr<MeshPatch> except_for_patch) {
+void TripleStitch::removeFromPatches(shared_ptr<Meshlet> except_for_patch) {
 	for(size_t i = 0; i < 3; i++) {
-		shared_ptr<MeshPatch> locked = patches[i].lock();
+		shared_ptr<Meshlet> locked = patches[i].lock();
 		if(except_for_patch == locked || locked.use_count() == 0) {
 			continue;
 		} else {
@@ -271,8 +272,8 @@ void TripleStitch::removeFromPatches(shared_ptr<MeshPatch> except_for_patch) {
 	}
 }
 
-shared_ptr<MeshPatch> TripleStitch::getAnyOtherPatch(
-		shared_ptr<MeshPatch> patch) {
+shared_ptr<Meshlet> TripleStitch::getAnyOtherPatch(
+		shared_ptr<Meshlet> patch) {
 	if(patch == patches[0].lock()) {
 		return patches[1].lock();
 	}
@@ -285,8 +286,8 @@ shared_ptr<MeshPatch> TripleStitch::getAnyOtherPatch(
 	return nullptr;
 }
 
-bool TripleStitch::getOtherPatches(shared_ptr<MeshPatch> patch, 
-                                   shared_ptr<MeshPatch> patches_out[]) {
+bool TripleStitch::getOtherPatches(shared_ptr<Meshlet> patch,
+                                   shared_ptr<Meshlet> patches_out[]) {
 	if(patch == patches[0].lock()) {
 		patches_out[0] = patches[1].lock();
 		patches_out[1] = patches[2].lock();
@@ -305,8 +306,8 @@ bool TripleStitch::getOtherPatches(shared_ptr<MeshPatch> patch,
 	return false;
 }
 
-void TripleStitch::replacePatchReference(shared_ptr<MeshPatch> from, 
-                                         shared_ptr<MeshPatch> to, int offset) {
+void TripleStitch::replacePatchReference(shared_ptr<Meshlet> from,
+                                         shared_ptr<Meshlet> to, int offset) {
 	for(size_t i = 0; i < 3; i++) {
 		if(patches[i].lock() == from) {
 			patches[i] = to;
@@ -321,7 +322,7 @@ bool TripleStitch::isCovertDoubleStitch() {
 	        (patches[0].lock() == patches[2].lock()));
 }
 
-bool TripleStitch::isConnectingPatch(shared_ptr<MeshPatch> patch) {
+bool TripleStitch::isConnectingPatch(shared_ptr<Meshlet> patch) {
 	for(size_t i = 0; i < 3; i++) {
 		//assert(0); //here (at the weak pointer) we had a memory exception
 		if(patches[i].lock() == patch) {
@@ -341,9 +342,9 @@ DoubleStitch::~DoubleStitch() {
 	#endif
 }
 
-void DoubleStitch::removeFromPatches(shared_ptr<MeshPatch> except_for_patch) {
+void DoubleStitch::removeFromPatches(shared_ptr<Meshlet> except_for_patch) {
 	for(size_t i = 0; i < 2; i++) {
-		shared_ptr<MeshPatch> locked = patches[i].lock();
+		shared_ptr<Meshlet> locked = patches[i].lock();
 		if(except_for_patch == locked || locked.use_count() == 0) {
 			continue;
 		}
@@ -351,8 +352,8 @@ void DoubleStitch::removeFromPatches(shared_ptr<MeshPatch> except_for_patch) {
 	}
 }
 
-shared_ptr<MeshPatch> DoubleStitch::getOtherPatch(
-		shared_ptr<MeshPatch> const &patch) {
+shared_ptr<Meshlet> DoubleStitch::getOtherPatch(
+		shared_ptr<Meshlet> const &patch) {
 	if(patch == patches[0].lock()) {
 		return patches[1].lock();
 	}
@@ -374,8 +375,8 @@ bool DoubleStitch::isPartOfActiveSet(const ActiveSet *active_set) {
 	        patches[1].lock()->isPartOfActiveSet(active_set));
 }
 
-void DoubleStitch::replacePatchReference(shared_ptr<MeshPatch> from, 
-                                         shared_ptr<MeshPatch> to) {
+void DoubleStitch::replacePatchReference(shared_ptr<Meshlet> from,
+                                         shared_ptr<Meshlet> to) {
 	for(size_t i = 0; i < 2; i++) {
 		if(patches[i].lock() == from) {
 			patches[i] = to;
@@ -387,7 +388,7 @@ bool DoubleStitch::isDegenerated() {
 	return (patches[0].lock() == patches[1].lock());
 }
 
-bool DoubleStitch::isConnectingPatch(shared_ptr<MeshPatch> patch) {
+bool DoubleStitch::isConnectingPatch(shared_ptr<Meshlet> patch) {
 	if(patches[0].lock() == patch) {
 		return true;
 	}
@@ -411,8 +412,8 @@ bool DoubleStitch::connectsSamePatches(shared_ptr<DoubleStitch> other) {
 */
 
 /*
-void GeometryBase::replacePatchInTriangleReferences(shared_ptr<MeshPatch> from,
-                                                    shared_ptr<MeshPatch> to,
+void GeometryBase::replacePatchInTriangleReferences(shared_ptr<Meshlet> from,
+                                                    shared_ptr<Meshlet> to,
                                                     int vertex_offset) {
 	//do i even know what this is about?
 	for(size_t i = 0; i < triangles.size(); i++) {
@@ -421,7 +422,7 @@ void GeometryBase::replacePatchInTriangleReferences(shared_ptr<MeshPatch> from,
 }
 
 void GeometryBase::setNewMainPatchForTriangles(
-		shared_ptr<MeshPatch> main_patch) {
+		shared_ptr<Meshlet> main_patch) {
 	for(size_t i = 0; i < triangles.size(); i++) {
 		triangles[i].setNewMainPatch(main_patch.get());
 	}
@@ -454,7 +455,7 @@ void GeometryBase::deregisterTriangles() {
 
 //TODO: fix and put back in (used for stitching, meshing and stuff)
 /*
-void Triangle::replacePatchReference(MeshPatch *from, MeshPatch *to, 
+void Triangle::replacePatchReference(Meshlet *from, Meshlet *to,
                                      int offset) {
 	for(size_t i = 0; i < 3; i++) {
 		if(points[i].getPatch() == from) {
@@ -463,7 +464,7 @@ void Triangle::replacePatchReference(MeshPatch *from, MeshPatch *to,
 	}
 }
 
-void Triangle::setNewMainPatch(MeshPatch *patch) {
+void Triangle::setNewMainPatch(Meshlet *patch) {
 	for(size_t i = 1; i < 3; i++) {
 		if(points[i].getPatch() == patch) {
 			swap(points[0], points[i]);
@@ -529,7 +530,7 @@ bool Vertex::encompassed() {
 
 vector<shared_ptr<VertexBufConnector>> debug_retain_vertices;
 vector<shared_ptr<TriangleBufConnector>> debug_retain_triangle_buf;
-MeshPatchGpuHandle::MeshPatchGpuHandle(GpuStorage *gpu_geom_storage,
+MeshletGpuHandle::MeshletGpuHandle(GpuStorage *gpu_geom_storage,
 									   int nr_vertices, int nr_triangles)
 		: vertices_dest(gpu_geom_storage->vertex_buffer->getBlock(nr_vertices)),
 		  vertices_source(gpu_geom_storage->vertex_buffer->getBlock(nr_vertices)),
@@ -540,16 +541,16 @@ MeshPatchGpuHandle::MeshPatchGpuHandle(GpuStorage *gpu_geom_storage,
 		  weighted_label_tex_count(0) {
 }
 
-MeshPatchGpuHandle::~MeshPatchGpuHandle() {
-	shared_ptr<MeshPatch> download_to = download_to_when_finished.lock();
+MeshletGpuHandle::MeshletGpuHandle {
+	shared_ptr<Meshlet> download_to = download_to_when_finished.lock();
 }
 
-bool MeshPatchGpuHandle::setLabelTex(shared_ptr<MeshTextureGpuHandle> tex) {
+bool MeshletGpuHandle::setLabelTex(shared_ptr<MeshTextureGpuHandle> tex) {
 	label_tex = tex;
 	label_tex_valid = true;
 }
 
-bool MeshPatchGpuHandle::addWeightedLabelTex(
+bool MeshletGpuHandle::addWeightedLabelTex(
 		shared_ptr<MeshTextureGpuHandle> tex) {
 	size_t max_lab_cnt = sizeof(weighted_label_texs) / sizeof(tex);
 	if(weighted_label_tex_count >= max_lab_cnt) {

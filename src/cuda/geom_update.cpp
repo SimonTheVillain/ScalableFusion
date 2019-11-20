@@ -6,7 +6,7 @@ using namespace std;
 using namespace Eigen;
 
 void gpu::GeometryUpdate::calcCenterAndRadius(
-		vector<shared_ptr<MeshPatch>> &patches) {
+		vector<shared_ptr<Meshlet>> &patches) {
 /*
 	if(patches.empty()) {
 		return;
@@ -14,9 +14,9 @@ void gpu::GeometryUpdate::calcCenterAndRadius(
 	vector<gpu::GeometryUpdate::CalcCenterTask> tasks;
 
 	int debug = 0;
-	for(shared_ptr<MeshPatch> patch : patches) {
+	for(shared_ptr<Meshlet> patch : patches) {
 		gpu::GeometryUpdate::CalcCenterTask task;
-		shared_ptr<MeshPatchGpuHandle> gpu_patch = patch->gpu.lock();
+		shared_ptr<MeshletGpuHandle> gpu_patch = patch->gpu.lock();
 		if(gpu_patch == nullptr) {
 			assert(0);
 		}

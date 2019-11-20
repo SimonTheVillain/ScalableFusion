@@ -14,7 +14,7 @@ using namespace std;
 using namespace Eigen;
 
 struct Vertex;
-class MeshPatch;
+class Meshlet;
 
 namespace gpu {
 
@@ -60,7 +60,7 @@ namespace gpu {
 			uint32_t count;
 		};
 
-		static void calcCenterAndRadius(vector<shared_ptr<MeshPatch>> &patches);
+		static void calcCenterAndRadius(vector<shared_ptr<Meshlet>> &patches);
 
 	private:
 

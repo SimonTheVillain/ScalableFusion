@@ -242,7 +242,7 @@ void SchedulerThreaded::updateActiveSet_(cv::Mat d_std_mat,
 	map_->setActiveSetUpdate_(active_set);
 
 	//debug... check if the active set has all the geometry textures
-	for(shared_ptr<MeshPatch> patch : active_set->retained_mesh_patches_cpu) {
+	for(shared_ptr<Meshlet> patch : active_set->retained_mesh_patches_cpu) {
 		//TODO: test patch
 		if(!patch->isPartOfActiveSetWithNeighbours(active_set.get())) {
 			continue;

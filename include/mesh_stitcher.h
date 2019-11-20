@@ -25,7 +25,7 @@ public:
 	void rasterLineGeometry(Matrix4f view, Matrix4f proj, Edge *edge, 
 	                        cv::Mat geometry, cv::Mat debug);
 
-	void genBorderList(vector<shared_ptr<MeshPatch>> &patches, 
+	void genBorderList(vector<shared_ptr<Meshlet>> &patches,
 	                   vector<vector<Edge>> &border_list, 
 	                   Matrix4f debug_proj_pose);
 

@@ -387,7 +387,7 @@ void InformationRenderer::bindRenderTriangleReferenceProgram(MeshReconstruction*
 }
 
 void InformationRenderer::renderTriangleReferencesForPatch(
-		ActiveSet *active_set, shared_ptr<MeshPatch> &patch,
+		ActiveSet *active_set, shared_ptr<Meshlet> &patch,
 		shared_ptr<MeshTexture> &target_texture) {
 
 	shared_ptr<MeshTextureGpuHandle> gpu_tex = target_texture->gpu.lock();
@@ -421,7 +421,7 @@ void InformationRenderer::renderTriangleReferencesForPatch(
 	//get this done correctly
 	if(patch->isPartOfActiveSetWithNeighbours(active_set)) {//this should not not be the case
 		//render the patch.
-		shared_ptr<MeshPatchGpuHandle> patch_gpu = patch->gpu.lock();
+		shared_ptr<MeshletGpuHandle> patch_gpu = patch->gpu.lock();
 
 		if(patch_gpu == nullptr) {
 			cout << "[InformationRenderer::renderTriangleReferencesForPatch]"

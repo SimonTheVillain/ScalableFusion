@@ -100,27 +100,27 @@ void MeshStitcher::rasterLineGeometry(Matrix4f view, Matrix4f proj, Edge *edge,
 	bresenham(pix0, pix1, f);
 }
 
-void MeshStitcher::genBorderList(vector<shared_ptr<MeshPatch>> &patches,
+void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 								 vector<vector<Edge>> &border_list,
 								 Matrix4f debug_proj_pose) {
 	float s = 2.0f;
 	cv::Mat debug_mat(480 * (s + 1), 640 * (s + 1), CV_8UC3);
 	debug_mat.setTo(0);
 
-	unordered_set<shared_ptr<MeshPatch>> patch_set(patches.begin(), patches.end());
+	unordered_set<shared_ptr<Meshlet>> patch_set(patches.begin(), patches.end());
 	unordered_set<GeometryBase*> base_set;
 
 	//TODO: remove
 	//DEBUG: to enxure readability we will create a vector
-	vector<MeshPatch*> debug_patches_ordered;
+	vector<Meshlet*> debug_patches_ordered;
 	for(int i = 0; i < patches.size(); i++) {
 		debug_patches_ordered.push_back(patches[i].get());
 	}
 	sort(debug_patches_ordered.begin(), debug_patches_ordered.end(),
-	     [](const MeshPatch *a, const MeshPatch *b) {return a->id > b->id;});
+	     [](const Meshlet *a, const Meshlet *b) {return a->id > b->id;});
 
 	//iterate over all patches and triangles
-	for(shared_ptr<MeshPatch> patch : patches) {
+	for(shared_ptr<Meshlet> patch : patches) {
 		//iterate over all triangles belonging to this patch and its stitches
 		//in case of an empty unused edge we follow it in both directions
 		base_set.insert(patch.get());
@@ -362,7 +362,7 @@ void MeshStitcher::reloadBorderGeometry(vector<vector<Edge>> &border_list) {
 	vector<GpuVertex*> gpu_verts;
 	vector<VertexReference> pts;
 	for(auto p : point_refs) {
-		shared_ptr<MeshPatchGpuHandle> gpu = p.getPatch()->gpu.lock();
+		shared_ptr<MeshletGpuHandle> gpu = p.getPatch()->gpu.lock();
 		if(gpu == nullptr) {
 			#ifndef IGNORE_SERIOUS_BUG_2
 			assert(0);
@@ -580,7 +580,7 @@ void MeshStitcher::stitchOnBorders(
 				VertexReference vr = other_edge.points(1);
 				Vector2i pix = project2i(other_edge.points(1).get()->p);
 				//TODO: check if the next point really belongs to the newly added geometry
-				MeshPatch *patch = new_seg_pm.at<MeshPatch*>(pix[1], pix[0]);
+				Meshlet *patch = new_seg_pm.at<Meshlet*>(pix[1], pix[0]);
 				if(patch == vr.getPatch()) {
 					//if the other side of the stitch is not just a single vertex
 					#ifdef SHOW_TEXT_STITCHING
@@ -725,7 +725,7 @@ void MeshStitcher::stitchOnBorders(
 								Vertex          *v = vr.get();
 								Vector2i       pix = project2i(v->p);
 								//check if the pixel of the next edge point really belongs to new geometry:
-								MeshPatch *patch = new_seg_pm.at<MeshPatch*>(pix[1], pix[0]);
+								Meshlet *patch = new_seg_pm.at<Meshlet*>(pix[1], pix[0]);
 								if(patch != vr.getPatch()) {
 									#ifdef SHOW_TEXT_STITCHING
 									cout << "quitting sewing because the next pixel would lie on wrong side" << endl;
@@ -810,7 +810,7 @@ void MeshStitcher::stitchOnBorders(
 										break;
 									}
 								}
-								MeshPatch *patch = new_seg_pm.at<MeshPatch*>(pix[1], pix[0]);
+								Meshlet *patch = new_seg_pm.at<Meshlet*>(pix[1], pix[0]);
 								if(patch != vr.getPatch()) {
 									#ifdef SHOW_TEXT_STITCHING
 									cout << "quitting sewing because the next pixel would lie on wrong side" << endl;
@@ -937,7 +937,7 @@ void MeshStitcher::stitchOnBorders(
 					}
 
 					//check if the pixel exists within the newly added points
-					MeshPatch *patch = new_seg_pm.at<MeshPatch*>(yn, xn);
+					Meshlet *patch = new_seg_pm.at<Meshlet*>(yn, xn);
 					int index = new_pt_ind_m.at<int>(yn, xn);
 					if(patch == nullptr) {
 						continue;
@@ -1035,7 +1035,7 @@ void MeshStitcher::stitchOnBorders(
 									VertexReference vr = other_edge.points(1);
 									Vector2i pix = project2i(other_edge.points(1).get()->p);
 									//TODO: check if the next point really belongs to the newly added geometry
-									MeshPatch *patch = new_seg_pm.at<MeshPatch*>(pix[1], pix[0]);
+									Meshlet *patch = new_seg_pm.at<Meshlet*>(pix[1], pix[0]);
 									if(patch == vr.getPatch()) {
 										//if the other side of the stitch is not just a single vertex
 										#ifdef SHOW_TEXT_STITCHING

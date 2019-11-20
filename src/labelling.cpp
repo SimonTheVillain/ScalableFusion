@@ -19,7 +19,7 @@ void Labelling::applyLabels(shared_ptr<ActiveSet> active_set, cv::Mat labels,
 void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
                               shared_ptr<gfx::GpuTex2D> d_std_tex, 
                               Matrix4f pose) {
-
+/*
 	MeshReconstruction *mesh = mesh_reconstruction;
 	//first we create a texture: gfx::GpuTex2D
 	//internal formatGL_R32I;
@@ -41,7 +41,7 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 	vector<CoalescedGpuTransfer::TaskD2D> copy_tasks;
 
 	// Creating lookup textures
-	vector<shared_ptr<MeshPatch>> patches_update_lookup;
+	vector<shared_ptr<Meshlet>> patches_update_lookup;
 	vector<shared_ptr<MeshTexture>> textures_update_lookup;
 
 	//and the actual labelling tasks:
@@ -57,10 +57,10 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 
 	//actually, we need to secure the labels in at least this active set.
 
-	for(shared_ptr<MeshPatch> patch_cpu : active_set->retained_mesh_patches_cpu) {
+	for(shared_ptr<Meshlet> patch_cpu : active_set->retained_mesh_patches_cpu) {
 
 		patch_cpu->label_tex_patch_mutex.lock();
-		shared_ptr<MeshPatchGpuHandle> patch_gpu = patch_cpu->gpu.lock();
+		shared_ptr<MeshletGpuHandle> patch_gpu = patch_cpu->gpu.lock();
 		if(patch_gpu == nullptr) {
 			continue;
 		}
@@ -87,7 +87,7 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 			patch_cpu->label_tex_patch = mesh_texture;
 			patch_gpu->setLabelTex(tex_gpu_handle);
 
-			shared_ptr<MeshPatchGpuHandle> patch_gpu = patch_cpu->gpu.lock();
+			shared_ptr<MeshletGpuHandle> patch_gpu = patch_cpu->gpu.lock();
 
 			if(patch_gpu != nullptr) {
 				shared_ptr<MeshTextureGpuHandle> tex_patch_gpu = patch_gpu->label_tex;
@@ -159,11 +159,12 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 			mesh->gpu_geom_storage_.tex_pos_buffer->getCudaPtr(), copy_tasks);
 	//now we do the lookup textures
 	cout << "DEBUG: some of these textures are missing?, but why?" << endl;
-
+	*/
 	/*
 	mesh->texturing.genLookupTex(active_set.get(), patches_update_lookup,
 	                             textures_update_lookup, false); // no dilation of lookup
 	*/
+	/*
 	int minuseins = -1; // TODO: wth? (simon) Yeah this was me!
 	Vector4f initial_value(*((float*) &minuseins), 0, 0, 0);
 	gpu::Labelling::initializeSurfaces<Vector4f>(initialization_tasks, 
@@ -186,4 +187,5 @@ void Labelling::projectLabels(shared_ptr<ActiveSet> active_set, cv::Mat &labels,
 	CoalescedGpuTransfer::upload(info_update_tasks);
 
 	return;
+	*/
 }

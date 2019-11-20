@@ -16,14 +16,14 @@ class TextureUpdater {
 public:
 
 	void generateGeomTex(MeshReconstruction* reconstruction,
-						 vector<shared_ptr<MeshPatch> > &new_patches,
+						 vector<shared_ptr<Meshlet> > &new_patches,
 						 Matrix4f pose, Matrix4f proj,
 						 shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 						 shared_ptr<ActiveSet> active_set,
 						 InformationRenderer* information_renderer);
 
 	void projToGeomTex(ActiveSet *active_set, 
-	                   vector<shared_ptr<MeshPatch> > &new_patches,
+	                   vector<shared_ptr<Meshlet> > &new_patches,
 	                   shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 	                   Matrix4f pose, Matrix4f proj);
 
@@ -39,7 +39,7 @@ public:
 	                    shared_ptr<ActiveSet> &active_set);
 
 	void applyColorData(MeshReconstruction* reconstruction,
-						vector<shared_ptr<MeshPatch>> &visible_patches,
+						vector<shared_ptr<Meshlet>> &visible_patches,
 						LowDetailRenderer* low_detail_renderer,
 	                    shared_ptr<gfx::GpuTex2D> rgb_in,
 	                    Matrix4f &pose, Matrix4f &proj, 
@@ -47,12 +47,12 @@ public:
 
 	void genLookupTexGeom(MeshReconstruction* reconstruction,
 						  ActiveSet *active_set,
-						  vector<shared_ptr<MeshPatch> > &patches,
+						  vector<shared_ptr<Meshlet> > &patches,
 						  InformationRenderer* information_renderer);
 
 	void genLookupTex(MeshReconstruction* reconstruction,
 					  ActiveSet *active_set,
-					  vector<shared_ptr<MeshPatch> > &patches,
+					  vector<shared_ptr<Meshlet> > &patches,
 					  vector<shared_ptr<MeshTexture>> &textures,
 					  InformationRenderer* information_renderer,
 					  bool dilate = true);

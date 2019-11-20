@@ -108,8 +108,8 @@ void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 	size_t triangle_count = 0;
 	size_t vertex_count = 0;
 	map->patches_mutex_.lock();
-	for(pair<int, shared_ptr<MeshPatch>> id_patch : map->patches_) {//of course auto would be valid here as well
-		shared_ptr<MeshPatch> patch = id_patch.second;
+	for(pair<int, shared_ptr<Meshlet>> id_patch : map->patches_) {//of course auto would be valid here as well
+		shared_ptr<Meshlet> patch = id_patch.second;
 		start_indices[id_patch.first] = vertex_count;
 		triangle_count += patch->triangles.size();
 		vertex_count += patch->vertices.size();
@@ -176,8 +176,8 @@ void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 		}
 	};
 
-	for(pair<int, shared_ptr<MeshPatch>> id_patch : map->patches_) {
-		shared_ptr<MeshPatch> patch = id_patch.second;
+	for(pair<int, shared_ptr<Meshlet>> id_patch : map->patches_) {
+		shared_ptr<Meshlet> patch = id_patch.second;
 		for(int i = 0 ; i < patch->vertices.size(); i++) {
 			aiVector3D vec;
 			vec.x = patch->vertices[i].p[0];
@@ -296,11 +296,11 @@ void MapExporter::exportMapTest(string file_path) {
 }
 
 void MapExporter::storeGraph(MeshReconstruction *map, string file_path) {
-	unordered_map<MeshPatch*, int> index_map;
+	unordered_map<Meshlet*, int> index_map;
 	unordered_set<shared_ptr<DoubleStitch>> unique_stitches;
 	int k = 0;
-	for(pair<int, shared_ptr<MeshPatch>> id_patch : map->patches_) {//of course auto would be valid here as well
-		shared_ptr<MeshPatch> patch = id_patch.second;
+	for(pair<int, shared_ptr<Meshlet>> id_patch : map->patches_) {//of course auto would be valid here as well
+		shared_ptr<Meshlet> patch = id_patch.second;
 		index_map[patch.get()] = k;
 		k++;
 		for(size_t i = 0; i < patch->double_stitches.size(); i++) {
@@ -328,19 +328,19 @@ void MapExporter::storeGraph(MeshReconstruction *map, string file_path) {
 void MapExporter::storeDeformationGraph(MeshReconstruction *map,
 										string file_path) {
 
-	unordered_map<MeshPatch*, unordered_set<MeshPatch*>> unique_edges;
-	unordered_map<MeshPatch*, int> index_map;
+	unordered_map<Meshlet*, unordered_set<Meshlet*>> unique_edges;
+	unordered_map<Meshlet*, int> index_map;
 	int k = 0;
-	for(pair<int, shared_ptr<MeshPatch>> id_patch : map->patches_) {//of course auto would be valid here as well
-		shared_ptr<MeshPatch> patch = id_patch.second;
+	for(pair<int, shared_ptr<Meshlet>> id_patch : map->patches_) {//of course auto would be valid here as well
+		shared_ptr<Meshlet> patch = id_patch.second;
 		index_map[patch.get()] = k;
 		k++;
 		for(int i = 0; i < 4; i++) {
 			for(pair<float, DeformationNode::WeakNodeDist> neighbour : 
 			    patch->deformation_node->neighbours[i]) {
-				MeshPatch *p1 = patch.get();
+				Meshlet *p1 = patch.get();
 				if(neighbour.second.node.lock() != nullptr) {
-					MeshPatch *p2 = neighbour.second.node.lock()->patch;
+					Meshlet *p2 = neighbour.second.node.lock()->patch;
 					if(p1 == p2) {
 						assert(0);//this should not happen!!!! really!!!
 						continue;
@@ -349,7 +349,7 @@ void MapExporter::storeDeformationGraph(MeshReconstruction *map,
 						swap(p1, p2);
 					}
 					if(unique_edges.count(p1) == 0) {
-						unordered_set<MeshPatch*> set;
+						unordered_set<Meshlet*> set;
 						unique_edges[p1] = set;
 					}
 					unique_edges[p1].insert(p2);

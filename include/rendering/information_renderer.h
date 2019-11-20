@@ -19,7 +19,7 @@ using namespace std;
 using namespace Eigen;
 
 class MeshReconstruction;
-class MeshPatch;
+class Meshlet;
 class MeshTexture;
 class ActiveSet;
 class LowDetailRenderer;
@@ -72,7 +72,7 @@ public:
 	void bindRenderTriangleReferenceProgram(MeshReconstruction* reconstruction);
 
 	void renderTriangleReferencesForPatch(ActiveSet *active_set, 
-	                                      shared_ptr<MeshPatch> &patch,
+	                                      shared_ptr<Meshlet> &patch,
 	                                      shared_ptr <MeshTexture> &target_texture);
 
 

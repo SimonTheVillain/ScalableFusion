@@ -15,7 +15,7 @@ using namespace std;
 using namespace Eigen;
 /*
 ActiveSet::ActiveSet(GpuStorage *storage,
-					 vector<shared_ptr<MeshPatch>> patches,
+					 vector<shared_ptr<Meshlet>> patches,
 					 MeshReconstruction *map,
 					 LowDetailRenderer* low_detail_renderer,
 					 TextureUpdater* texture_updater,
@@ -27,8 +27,8 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 
 	gpu_geom_storage = storage;
 
-	vector<shared_ptr<MeshPatch>> new_mesh_patches_cpu;
-	vector<shared_ptr<MeshPatchGpuHandle>> new_mesh_patches_gpu;
+	vector<shared_ptr<Meshlet>> new_mesh_patches_cpu;
+	vector<shared_ptr<MeshletGpuHandle>> new_mesh_patches_gpu;
 	vector<shared_ptr<TriangleBufConnector>> mesh_stitches_gpu;
 
 	//combined download for triangles and vertices
@@ -39,20 +39,20 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 	vector<GpuTriangle> coalesced_triangles;
 
 	//connect patches and gpu patches in a map until we are finally connecting
-	unordered_map<MeshPatch*, shared_ptr<MeshPatchGpuHandle>> patch_map;
+	unordered_map<Meshlet*, shared_ptr<MeshletGpuHandle>> patch_map;
 
 	//also combined download for the header?
 
 	//manually upload all the new patches:
 	for(size_t i = 0; i < patches.size(); i++) {
 		//create all the necessary buffers and also upload the triangles
-		MeshPatch *patch = patches[i].get();
-		shared_ptr<MeshPatchGpuHandle> gpu_patch = patch->gpu.lock();
+		Meshlet *patch = patches[i].get();
+		shared_ptr<MeshletGpuHandle> gpu_patch = patch->gpu.lock();
 
 		//if the gpuPatch exists we should just secure it and will not need to download
 		if(gpu_patch == nullptr) {
 			//if there is no gpuPatch we create a new one.
-			gpu_patch = make_shared<MeshPatchGpuHandle>(storage,
+			gpu_patch = make_shared<MeshletGpuHandle>(storage,
 			                                            patch->vertices.size(),
 			                                            patch->triangles.size());
 
@@ -101,8 +101,8 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 	//only upload triangles for patches we uploaded the vertices
 	//TODO: also for triangles with chenged position of the header and similar issues
 	for(size_t i = 0; i < new_mesh_patches_cpu.size(); i++) {
-		MeshPatch *patch = new_mesh_patches_cpu[i].get();
-		shared_ptr<MeshPatchGpuHandle> gpu_patch = new_mesh_patches_gpu[i];
+		Meshlet *patch = new_mesh_patches_cpu[i].get();
+		shared_ptr<MeshletGpuHandle> gpu_patch = new_mesh_patches_gpu[i];
 
 		CoalescedGpuTransfer::Task task;
 		task.count = patch->triangles.size();
@@ -112,10 +112,10 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 		for(size_t j = 0; j < patch->triangles.size(); j++) {
 			Triangle &triangle = patch->triangles[j];
 			GpuTriangle gpu_triangle;
-			shared_ptr<MeshPatchGpuHandle> gpu_this_pt = patch_map[triangle.points[0].getPatch()];
+			shared_ptr<MeshletGpuHandle> gpu_this_pt = patch_map[triangle.points[0].getPatch()];
 			for(size_t k = 0; k < 3; k++) {
 				VertexReference pr = triangle.points[k];
-				shared_ptr<MeshPatchGpuHandle> gpu_this_pt_debug =
+				shared_ptr<MeshletGpuHandle> gpu_this_pt_debug =
 						patch_map[triangle.points[k].getPatch()];
 				//TODO: do something else to fix this
 				//obviously this fails if we don't set gpu references
@@ -132,13 +132,13 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 	set<shared_ptr<DoubleStitch>> double_stitches;
 	set<shared_ptr<TripleStitch>> triple_stitches;
 	for(size_t i = 0; i < patches.size(); i++) {
-		MeshPatch *patch = patches[i].get();
+		Meshlet *patch = patches[i].get();
 
 		//now add the triangles for stitches to the set:
 		for(size_t j = 0; j < patch->double_stitches.size(); j++) {
 			shared_ptr<DoubleStitch> stitch = patch->double_stitches[j];
-			MeshPatch *debug_patch1 = stitch->patches[0].lock().get();
-			MeshPatch *debug_patch2 = stitch->patches[1].lock().get();
+			Meshlet *debug_patch1 = stitch->patches[0].lock().get();
+			Meshlet *debug_patch2 = stitch->patches[1].lock().get();
 			if(stitch == nullptr) {
 				continue;
 			}
@@ -168,7 +168,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 					GpuTriangle gpu_triangle;
 					for(size_t k = 0; k < 3; k++) {
 						VertexReference pr = triangle.points[k];
-						shared_ptr<MeshPatchGpuHandle> gpu_this_pt = 
+						shared_ptr<MeshletGpuHandle> gpu_this_pt =
 								patch_map[pr.getPatch()];
 
 						#ifdef DEBUG
@@ -224,7 +224,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 			GpuTriangle gpu_triangle;
 			for(size_t k = 0; k < 3; k++) {
 				VertexReference pr = triangle.points[k];
-				shared_ptr<MeshPatchGpuHandle> gpu_this_pt =
+				shared_ptr<MeshletGpuHandle> gpu_this_pt =
 						patch_map[pr.getPatch()];
 				gpu_triangle.patch_info_inds[k] =
 						gpu_this_pt->patch_infos->getStartingIndex();
@@ -287,7 +287,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 	//TODO: debug stupid bugs
 
 	for(int i = 0; i < new_mesh_patches_cpu.size(); i++) {
-		shared_ptr<MeshPatch> patch = new_mesh_patches_cpu[i];
+		shared_ptr<Meshlet> patch = new_mesh_patches_cpu[i];
 		for(int j = 0; j < patch->tex_patches.size(); j++) {
 			if(patch->tex_patches[j]->gpu.lock() == nullptr) {
 				assert(0);//this should not be here
@@ -295,7 +295,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 		}
 	}
 	for(int i = 0; i < patches.size(); i++) {
-		shared_ptr<MeshPatch> patch = patches[i];
+		shared_ptr<Meshlet> patch = patches[i];
 		for(int j = 0; j < patch->tex_patches.size(); j++) {
 			if(patch->tex_patches[j]->gpu.lock() == nullptr) {
 				assert(0);//this should not be here
@@ -308,9 +308,9 @@ ActiveSet::~ActiveSet() {
 
 	//TODO: time this! make the download enforcable to prevent it from happening during time critical tasks.
 
-	vector<shared_ptr<MeshPatch>> patches_to_be_downloaded;
+	vector<shared_ptr<Meshlet>> patches_to_be_downloaded;
 	patches_to_be_downloaded.reserve(retained_mesh_patches_cpu.size());
-	for(shared_ptr<MeshPatch> patch : retained_mesh_patches_cpu) {
+	for(shared_ptr<Meshlet> patch : retained_mesh_patches_cpu) {
 		//remove this active set from all patches.
 		if(patch->removeActiveSet(this)) {
 			if(patch->gpu.lock() == nullptr) {
@@ -322,14 +322,14 @@ ActiveSet::~ActiveSet() {
 
 	//TODO: download the textures and vertices (texCoords?) to the according cpu structures
 	vector<CoalescedGpuTransfer::DirectTask> coalesced_download_tasks;
-	vector<tuple<shared_ptr<MeshPatch>, vector<GpuVertex>>> downloaded_vertices;
+	vector<tuple<shared_ptr<Meshlet>, vector<GpuVertex>>> downloaded_vertices;
 	vector<tuple<shared_ptr<MeshTexture>, vector<Vector2f>>> downloaded_tex_coords;
 	//vector<tuple<shared_ptr<MeshTexture>, vector<Vector2f>>> downloaded_tex_coords;
 	//for the beginning lets do the texture transfer uncoalesced
-	for(shared_ptr<MeshPatch> patch : patches_to_be_downloaded) {
+	for(shared_ptr<Meshlet> patch : patches_to_be_downloaded) {
 		//TODO: add a retain count to the gpu handle
-		//TODO: not so fast there is a active set list for each MeshPatch (remove these todos after implementation)
-		shared_ptr<MeshPatchGpuHandle> patch_gpu = patch->gpu.lock();
+		//TODO: not so fast there is a active set list for each Meshlet (remove these todos after implementation)
+		shared_ptr<MeshletGpuHandle> patch_gpu = patch->gpu.lock();
 
 		//check if the gpu ever changed anything with the vertices
 		if(patch_gpu->gpu_vertices_changed) {
@@ -340,7 +340,7 @@ ActiveSet::~ActiveSet() {
 			task.byte_count = sizeof(GpuVertex) * count;
 			vector<GpuVertex> vertices(count);
 			task.dst = &vertices[0];
-			tuple<shared_ptr<MeshPatch>, vector<GpuVertex>> t = 
+			tuple<shared_ptr<Meshlet>, vector<GpuVertex>> t =
 					make_tuple(patch, move(vertices));
 			downloaded_vertices.push_back(move(t));
 			coalesced_download_tasks.push_back(task);
@@ -429,7 +429,7 @@ ActiveSet::~ActiveSet() {
 	//copy the buffer over to the according elements
 	//vertices
 	for(size_t i = 0; i < downloaded_vertices.size(); i++) {
-		shared_ptr<MeshPatch> patch = get<0>(downloaded_vertices[i]);
+		shared_ptr<Meshlet> patch = get<0>(downloaded_vertices[i]);
 		vector<GpuVertex> &verts_gpu = get<1>(downloaded_vertices[i]);
 		assert(verts_gpu.size() == patch->vertices.size());
 		//TODO: secure this with a mutex!!!!
@@ -450,16 +450,16 @@ ActiveSet::~ActiveSet() {
 
 //ideally this method only got patches with newly generated gpuPatches but probably it doesn't have any gpuTextures
 void ActiveSet::uploadTexAndCoords_(
-		vector<shared_ptr<MeshPatch>> &patches,
-		vector<shared_ptr<MeshPatchGpuHandle>> &patches_gpu,
+		vector<shared_ptr<Meshlet>> &patches,
+		vector<shared_ptr<MeshletGpuHandle>> &patches_gpu,
 		const MeshReconstruction *map, bool initial) {
 
 	vector<CoalescedGpuTransfer::Task> coalesced_tex_coord_tasks;
 	vector<Vector2f> coalesced_tex_coords;
 
 	for(size_t k = 0; k < patches.size(); k++) {
-		shared_ptr<MeshPatch> patch = patches[k];
-		shared_ptr<MeshPatchGpuHandle> patch_gpu = patches_gpu[k];
+		shared_ptr<Meshlet> patch = patches[k];
+		shared_ptr<MeshletGpuHandle> patch_gpu = patches_gpu[k];
 		if(patch_gpu == nullptr) {
 			assert(0); //the gpuPatch should exist at this point
 		}
@@ -578,19 +578,19 @@ void ActiveSet::uploadTexAndCoords_(
 
 
 void ActiveSet::checkAndUpdateRefTextures_(
-		const vector<shared_ptr<MeshPatch>> &patches,
+		const vector<shared_ptr<Meshlet>> &patches,
 		MeshReconstruction *reconstruction,
 		TextureUpdater *texture_updater,
 		InformationRenderer* information_renderer) {
-	vector<shared_ptr<MeshPatch>> dated_patches;
+	vector<shared_ptr<Meshlet>> dated_patches;
 	vector<shared_ptr<MeshTexture>> dated_textures;
 
 	for(size_t i = 0; i < patches.size(); i++) {
-		shared_ptr<MeshPatch> patch = patches[i];
+		shared_ptr<Meshlet> patch = patches[i];
 		if(!patch->isPartOfActiveSetWithNeighbours(this)) {
 			continue;
 		}
-		shared_ptr<MeshPatchGpuHandle> patch_gpu = patch->gpu.lock();
+		shared_ptr<MeshletGpuHandle> patch_gpu = patch->gpu.lock();
 		shared_ptr<MeshTextureGpuHandle> tex_patch_gpu = patch_gpu->geom_tex;
 		if(tex_patch_gpu != nullptr) {
 			if(!tex_patch_gpu->checkRefTexDependencies()) {
@@ -625,7 +625,7 @@ void ActiveSet::drawTripleStitches() {
 void ActiveSet::drawPatches() {
 	//first iterate over all the mesh patches:
 	for(size_t i = 0; i < retained_mesh_patches.size(); i++) {
-		MeshPatchGpuHandle &current_patch = *retained_mesh_patches[i];
+		MeshletGpuHandle &current_patch = *retained_mesh_patches[i];
 		//first check that all the textures are resident
 		if(current_patch.geom_tex != nullptr) {
 			current_patch.geom_tex->tex->getTex()->makeResidentInThisThread();
@@ -654,9 +654,9 @@ void ActiveSet::drawEverything() {
 void ActiveSet::reuploadHeaders() {
 	vector<GpuPatchInfo>  coalesced_infos;
 	vector<GpuPatchInfo*> coalesced_info_pos;
-	for(shared_ptr<MeshPatch> patch : retained_mesh_patches_cpu) {
+	for(shared_ptr<Meshlet> patch : retained_mesh_patches_cpu) {
 		GpuPatchInfo info;
-		shared_ptr<MeshPatchGpuHandle> gpu = patch->gpu.lock();
+		shared_ptr<MeshletGpuHandle> gpu = patch->gpu.lock();
 		info.patch_id = patch->id;
 		info.debug1 = patch->debug1;
 

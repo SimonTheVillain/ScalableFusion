@@ -23,7 +23,7 @@ using namespace std;
 
 class MeshReconstruction;
 class GeometryBase;
-class MeshPatch;
+class Meshlet;
 class MeshTexture;
 struct DoubleStitch;
 struct TripleStitch;
@@ -34,7 +34,7 @@ class GpuStorage;
 class InformationRenderer;
 class PresentationRenderer;
 
-class MeshPatchGpuHandle;
+class MeshletGpuHandle;
 
 class GpuSlottedBuffer;
 
@@ -85,7 +85,7 @@ public:
 	void resetTimers();
 
 	shared_ptr<ActiveSet> makeActiveSet(
-			vector<shared_ptr<MeshPatch> > patches,
+			vector<shared_ptr<Meshlet> > patches,
 			MeshReconstruction *map,
 			LowDetailRenderer* low_detail_renderer,
 			TextureUpdater* texture_updater,
@@ -159,8 +159,8 @@ private:
 
 	shared_ptr<TexCoordBufConnector> uploadMeshTexCoords_(shared_ptr<MeshTexture> coords);
 	shared_ptr<TriangleBufConnector> uploadTriangles_(GeometryBase *base_element);
-	void uploadMeshPatch_(MeshPatch *patch, ActiveSet *active_set);
-	void unloadMeshPatch_(MeshPatch *patch);
+	void uploadMeshPatch_(Meshlet *patch, ActiveSet *active_set);
+	void unloadMeshPatch_(Meshlet *patch);
 	void unloadDoubleStitch_(DoubleStitch *stitch);
 	/**
 	 * @brief uploadTripleStitch

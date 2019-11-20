@@ -6,14 +6,14 @@
 
 #include <gpu/shader.h>
 
-class MeshPatch;
+class Meshlet;
 
 class RenderDebugInfo {
 public:
 
 	struct ShowPatch {
 		float r, g, b, a;
-		MeshPatch* patch;
+		Meshlet* patch;
 	};
 
 	RenderDebugInfo();
@@ -21,8 +21,8 @@ public:
 	void render(Eigen::Matrix4f proj, Eigen::Matrix4f cam_pose);
 	void setIndexCount(int index, int count);
 
-	void addPatch(MeshPatch *patch, float r, float g, float b);
-	void setPatch(MeshPatch *patch);
+	void addPatch(Meshlet *patch, float r, float g, float b);
+	void setPatch(Meshlet *patch);
 
 	std::vector<ShowPatch> patches;
 
@@ -33,7 +33,7 @@ public:
 
 	bool force_dst_geom;
 
-	MeshPatch *rendered_patch;
+	Meshlet *rendered_patch;
 
 	//also make the color configurable;
 

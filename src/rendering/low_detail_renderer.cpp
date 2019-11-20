@@ -86,7 +86,7 @@ void LowDetailRenderer::initInGlContext() {
 	}
 }
 
-void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in, 
+void LowDetailRenderer::addPatches(vector<shared_ptr<Meshlet> > &patches_in,
                                    Vector3f cam_pos) {
 	if(patches_in.size() == 0) {
 		return;
@@ -94,11 +94,11 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 	//prevent the render thread from swapping the buffers
 	new_buffers_ = false;
 
-	vector<weak_ptr<MeshPatch>> new_patches;
+	vector<weak_ptr<Meshlet>> new_patches;
 	vector<weak_ptr<CoarseTriangle>> new_coarse_triangles;
 
 	for(size_t i = 0; i < patches_in.size(); i++) {
-		MeshPatch &patch = *(patches_in[i].get());
+		Meshlet &patch = *(patches_in[i].get());
 		if(patch.vertices.size() == 1) {
 			cout << "this definitely should not be, "
 			        "patches with single vertices (or zero triangles)" << endl;
@@ -109,7 +109,7 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 		new_patches.push_back(patches_in[i]);
 		patch.index_within_coarse = index;
 		//iterate neighbours
-		set<shared_ptr<MeshPatch>> neighbours = patch.getNeighbours();
+		set<shared_ptr<Meshlet>> neighbours = patch.getNeighbours();
 
 		//lets check triple stitches.... if they are consistent with the remaining data structure.
 		patch.triple_stitch_mutex.lock();
@@ -156,15 +156,15 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 			new_coarse_triangles.push_back(triangle);
 		}
 
-		for(set<shared_ptr<MeshPatch>>::iterator it1 = neighbours.begin();
+		for(set<shared_ptr<Meshlet>>::iterator it1 = neighbours.begin();
 		    it1 != neighbours.end(); ++it1) {
 			//find all the neighbours of the neighbours
-			set<shared_ptr<MeshPatch>> n2eighbours = (*it1)->getNeighbours();
-			for(set<shared_ptr<MeshPatch>>::iterator it2 = n2eighbours.begin();
+			set<shared_ptr<Meshlet>> n2eighbours = (*it1)->getNeighbours();
+			for(set<shared_ptr<Meshlet>>::iterator it2 = n2eighbours.begin();
 			    it2 != n2eighbours.end(); ++it2) {
 				//test if we have a fitting triangle by comparing with all the neighbouring
 				//iterate again over the first set of neighbours (O(n^3))
-				for(set<shared_ptr<MeshPatch>>::iterator it3 = neighbours.begin();
+				for(set<shared_ptr<Meshlet>>::iterator it3 = neighbours.begin();
 				    it3 != neighbours.end(); ++it3) {
 					if((*it3) == (*it2)) {
 						#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
@@ -205,7 +205,7 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 			new_visible[i] = 0;
 			continue;
 		}
-		shared_ptr<MeshPatch> patch = new_patches[i].lock();
+		shared_ptr<Meshlet> patch = new_patches[i].lock();
 		Vector3f p3 = patch->getPos();
 		new_vertices[i].p = Vector4f(p3[0], p3[1], p3[2], 1.0f);
 		new_vertices[i].n = Vector4f(NAN, NAN, NAN, NAN);//placeholder
@@ -321,7 +321,7 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 	//setup the gpu to calculate the average colors of the vertices
 	vector<CalcMeanColorDescriptor> descriptors;
 	for(size_t i = 0; i < patches_in.size(); i++) {
-		MeshPatch &patch = *(patches_in[i].get());
+		Meshlet &patch = *(patches_in[i].get());
 		if(patch.tex_patches.empty()) {
 			//if there is no color for the texture we don't update it.
 			continue;
@@ -411,7 +411,7 @@ void LowDetailRenderer::downloadCurrentGeometry(
 }
 
 void LowDetailRenderer::updateColorForPatches(
-		vector<shared_ptr<MeshPatch>> &patches_in) {
+		vector<shared_ptr<Meshlet>> &patches_in) {
 	modifying_buffers_.lock();
 
 	shared_ptr<GlCudaBuffer<GpuCoarseVertex>> vert_buf = vertex_buffer_;
@@ -430,7 +430,7 @@ void LowDetailRenderer::updateColorForPatches(
 	//setup the gpu to calculate the average colors of the vertices
 	vector<CalcMeanColorDescriptor> descriptors;
 	for(size_t i = 0; i < patches_in.size(); i++) {
-		MeshPatch &patch = *(patches_in[i].get());
+		Meshlet &patch = *(patches_in[i].get());
 		CalcMeanColorDescriptor desc;
 
 		if(patch.tex_patches.size() == 0) {
@@ -546,7 +546,7 @@ void LowDetailRenderer::renderExceptForActiveSets(
 			continue;
 		}
 		for(size_t j = 0; j < aset->retained_mesh_patches_cpu.size(); j++) {
-			shared_ptr<MeshPatch> patch = aset->retained_mesh_patches_cpu[j];
+			shared_ptr<Meshlet> patch = aset->retained_mesh_patches_cpu[j];
 			disable_patches.push_back(patch->index_within_coarse);
 			if(debug_max<patch->index_within_coarse) {
 				debug_max = patch->index_within_coarse;
@@ -669,9 +669,9 @@ bool CoarseTriangle::isValid() {
 	return true;
 }
 
-CoarseTriangle::CoarseTriangle(shared_ptr<MeshPatch> p1, 
-                               shared_ptr<MeshPatch> p2, 
-                               shared_ptr<MeshPatch> p3) {
+CoarseTriangle::CoarseTriangle(shared_ptr<Meshlet> p1,
+                               shared_ptr<Meshlet> p2,
+                               shared_ptr<Meshlet> p3) {
 	patches[0] = p1;
 	patches[1] = p2;
 	patches[2] = p3;
@@ -689,9 +689,9 @@ CoarseTriangle::~CoarseTriangle() {
 
 }
 
-bool CoarseTriangle::isConnectingSame3Patches(shared_ptr<MeshPatch> p1,
-                                              shared_ptr<MeshPatch> p2,
-                                              shared_ptr<MeshPatch> p3) {
+bool CoarseTriangle::isConnectingSame3Patches(shared_ptr<Meshlet> p1,
+                                              shared_ptr<Meshlet> p2,
+                                              shared_ptr<Meshlet> p3) {
 	if(!isValid()) {
 		return false;
 	}
@@ -727,9 +727,9 @@ void LowDetailPoint::addCoarseTriangle(
 }
 
 shared_ptr<CoarseTriangle> LowDetailPoint::getCoarseTriangleWith(
-		shared_ptr<MeshPatch> p1, 
-		shared_ptr<MeshPatch> p2, 
-		shared_ptr<MeshPatch> p3) {
+		shared_ptr<Meshlet> p1,
+		shared_ptr<Meshlet> p2,
+		shared_ptr<Meshlet> p3) {
 
 	coarse_triangle_mutex.lock();
 	for(size_t i = 0; i < triangle_within_neighbours.size(); i++) {

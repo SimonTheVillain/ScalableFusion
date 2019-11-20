@@ -12,7 +12,7 @@ using namespace std;
 using namespace Eigen;
 
 void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
-									 vector<shared_ptr<MeshPatch> > &new_patches,
+									 vector<shared_ptr<Meshlet> > &new_patches,
 									 Matrix4f pose, Matrix4f proj,
 									 shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 									 shared_ptr<ActiveSet> active_set,
@@ -32,9 +32,9 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 	Matrix4f mvp = proj * pose_inv;
 
 	//all of these patches have to be valid...
-	vector<shared_ptr<MeshPatch>> valid_mesh_patches = new_patches;
+	vector<shared_ptr<Meshlet>> valid_mesh_patches = new_patches;
 
-	for(shared_ptr<MeshPatch> patch : new_patches) {
+	for(shared_ptr<Meshlet> patch : new_patches) {
 		for(shared_ptr<DoubleStitch> stitch : patch->double_stitches) {
 			if(stitch->patches[1].lock()->gpu.lock() == nullptr) {
 				assert(0);
@@ -72,7 +72,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 		if(max(bound.width, bound.height) > 1024) {
 			cout << "maybe download everything related to these bounds. "
 			        "we need to find out what is going on here" << endl;
-			shared_ptr<MeshPatchGpuHandle> gpu = new_patches[i]->gpu.lock();
+			shared_ptr<MeshletGpuHandle> gpu = new_patches[i]->gpu.lock();
 			int count = gpu->vertices_source->getSize();
 			GpuVertex vertices[count];
 			gpu->vertices_source->download(vertices);
@@ -92,7 +92,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 					mesh->gpu_geom_storage_.tex_pos_buffer->getGlName();
 			that_one_debug_rendering_thingy->addPatch(new_patches[i].get(), 1, 0, 0);
 
-			shared_ptr<MeshPatch> debug_patch = new_patches[i];
+			shared_ptr<Meshlet> debug_patch = new_patches[i];
 			for(int i = 0; i < debug_patch->double_stitches.size(); i++) {
 				if(debug_patch->double_stitches[i]->patches[0].lock() != debug_patch) {
 					continue;
@@ -120,12 +120,12 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 	vector<TexCoordGen::Task> tex_gen_tasks;
 	tex_gen_tasks.reserve(valid_mesh_patches.size());
 
-	vector<shared_ptr<MeshPatch>> mesh_patches_with_novel_tex;
+	vector<shared_ptr<Meshlet>> mesh_patches_with_novel_tex;
 	mesh_patches_with_novel_tex.reserve(valid_mesh_patches.size());
 
 	for(size_t i = 0; i < valid_mesh_patches.size(); i++) {
-		shared_ptr<MeshPatch>              patch = valid_mesh_patches[i];
-		shared_ptr<MeshPatchGpuHandle> gpu_patch = patch->gpu.lock();
+		shared_ptr<Meshlet>              patch = valid_mesh_patches[i];
+		shared_ptr<MeshletGpuHandle> gpu_patch = patch->gpu.lock();
 
 		shared_ptr<MeshTextureGpuHandle> gpu_texture = gpu_patch->geom_tex;
 		if(gpu_texture == nullptr) {
@@ -233,7 +233,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 
 	//since the texture has data that needs to only exists on the gpu,
 	//we setup the texture to be downloaded as soon
-	for(shared_ptr<MeshPatch> patch : valid_mesh_patches) {
+	for(shared_ptr<Meshlet> patch : valid_mesh_patches) {
 		shared_ptr<MeshTextureGpuHandle> tex = patch->gpu.lock()->geom_tex;
 		if(tex == nullptr) {
 			assert(0);
@@ -253,7 +253,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 
 
 void TextureUpdater::projToGeomTex(ActiveSet* active_set,
-								   vector<shared_ptr<MeshPatch>> &new_patches,
+								   vector<shared_ptr<Meshlet>> &new_patches,
 								   shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 								   Matrix4f pose, Matrix4f proj) {
 
@@ -261,7 +261,7 @@ void TextureUpdater::projToGeomTex(ActiveSet* active_set,
 	vector<InitDescriptor> commands;
 
 	for(size_t i = 0; i < new_patches.size(); i++) {
-		MeshPatch *patch = new_patches[i].get();
+		Meshlet *patch = new_patches[i].get();
 		InitDescriptor command;
 		shared_ptr<MeshTextureGpuHandle> geom_tex_gpu_handle = 
 				patch->geom_tex_patch->gpu.lock();
@@ -327,15 +327,15 @@ void TextureUpdater::colorTexUpdate(MeshReconstruction* reconstruction,
 	 *
 	 */
 
-	vector<shared_ptr<MeshPatch>> visible_shared_patches;
+	vector<shared_ptr<Meshlet>> visible_shared_patches;
 	if(active_set != nullptr) {
 		visible_shared_patches = active_set->retained_mesh_patches_cpu;
 	}
 
 	//todo: replace the depth pose with the rgb camera pose
 
-	vector<shared_ptr<MeshPatch>> fully_loaded_visible_patches;
-	for(shared_ptr<MeshPatch> patch : visible_shared_patches) {
+	vector<shared_ptr<Meshlet>> fully_loaded_visible_patches;
+	for(shared_ptr<Meshlet> patch : visible_shared_patches) {
 		if(patch->isPartOfActiveSetWithNeighbours(active_set.get())) {
 			fully_loaded_visible_patches.push_back(patch);
 		}
@@ -348,7 +348,7 @@ void TextureUpdater::colorTexUpdate(MeshReconstruction* reconstruction,
 }
 
 void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
-									vector<shared_ptr<MeshPatch>> &visible_patches,
+									vector<shared_ptr<Meshlet>> &visible_patches,
 									LowDetailRenderer* low_detail_renderer,
 									shared_ptr<gfx::GpuTex2D> rgb_in,
 									Matrix4f &pose, Matrix4f &proj,
@@ -379,7 +379,7 @@ void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
 
 	vector<CopyDescriptor> copies;
 
-	vector<shared_ptr<MeshPatch>> patches_with_color_updates;
+	vector<shared_ptr<Meshlet>> patches_with_color_updates;
 
 	struct GpuCpuTexPair {
 		shared_ptr<MeshTexture> cpu;
@@ -398,8 +398,8 @@ void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
 			//most likely there are no triangles in said patch....
 			continue;
 		}
-		shared_ptr<MeshPatch>              patch = visible_patches[i];
-		shared_ptr<MeshPatchGpuHandle> gpu_patch = patch->gpu.lock();
+		shared_ptr<Meshlet>              patch = visible_patches[i];
+		shared_ptr<MeshletGpuHandle> gpu_patch = patch->gpu.lock();
 		vector<shared_ptr<MeshTexture>> tex_patches_to_delete;
 		patch->tex_patches_mutex.lock();
 
@@ -561,7 +561,7 @@ void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
 
 void TextureUpdater::genLookupTexGeom(MeshReconstruction* reconstruction,
 									  ActiveSet *active_set,
-									  vector<shared_ptr<MeshPatch>> &patches,
+									  vector<shared_ptr<Meshlet>> &patches,
 									  InformationRenderer* information_renderer) {
 	vector<shared_ptr<MeshTexture>> textures;
 	for(size_t i = 0; i < patches.size(); i++) {
@@ -575,7 +575,7 @@ void TextureUpdater::genLookupTexGeom(MeshReconstruction* reconstruction,
 void TextureUpdater::genLookupTex(
 		MeshReconstruction* reconstruction,
 		ActiveSet *active_set,
-		vector<shared_ptr<MeshPatch>> &patches,
+		vector<shared_ptr<Meshlet>> &patches,
 		vector<shared_ptr<MeshTexture>> &textures,
 		InformationRenderer *information_renderer,
 		bool dilate) {
@@ -584,7 +584,7 @@ void TextureUpdater::genLookupTex(
 	information_renderer->bindRenderTriangleReferenceProgram(reconstruction);
 
 	for(size_t i = 0; i < patches.size();i++) {
-		shared_ptr<MeshPatch>              patch = patches[i];
+		shared_ptr<Meshlet>              patch = patches[i];
 		shared_ptr<MeshTexture>          texture = textures[i];
 		shared_ptr<MeshTextureGpuHandle> gpu_tex = texture->gpu.lock();
 		if(gpu_tex == nullptr) {

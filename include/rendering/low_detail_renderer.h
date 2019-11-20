@@ -15,9 +15,7 @@
 using namespace std;
 using namespace Eigen;
 
-class MeshPatch;
-struct DoubleStitch;
-struct TripleStitch;
+class Meshlet;
 class ActiveSet;
 
 template<typename T>
@@ -36,23 +34,21 @@ struct GlCudaBuffer {
 
 struct CoarseTriangle {
 
-	CoarseTriangle(shared_ptr<MeshPatch> p1,
-	               shared_ptr<MeshPatch> p2,
-	               shared_ptr<MeshPatch> p3);
+	CoarseTriangle(shared_ptr<Meshlet> p1,
+	               shared_ptr<Meshlet> p2,
+	               shared_ptr<Meshlet> p3);
 
 	~CoarseTriangle();
 
 	bool isValid();
 
-	bool isConnectingSame3Patches(shared_ptr<MeshPatch> p1,
-	                              shared_ptr<MeshPatch> p2,
-	                              shared_ptr<MeshPatch> p3);
+	bool isConnectingSame3Patches(shared_ptr<Meshlet> p1,
+	                              shared_ptr<Meshlet> p2,
+	                              shared_ptr<Meshlet> p3);
 
 	bool flipToFacePos(Vector3f pos);
 
-	weak_ptr<MeshPatch> patches[3];
-	weak_ptr<DoubleStitch> double_stitches[3];
-	weak_ptr<TripleStitch> triple_stitches[3];
+	weak_ptr<Meshlet> patches[3];
 };
 
 /**
@@ -65,9 +61,9 @@ public:
 
 	void addCoarseTriangle(shared_ptr<CoarseTriangle> coarse_triangle);
 
-	shared_ptr<CoarseTriangle> getCoarseTriangleWith(shared_ptr<MeshPatch> p1,
-	                                                 shared_ptr<MeshPatch> p2,
-	                                                 shared_ptr<MeshPatch> p3);
+	shared_ptr<CoarseTriangle> getCoarseTriangleWith(shared_ptr<Meshlet> p1,
+	                                                 shared_ptr<Meshlet> p2,
+	                                                 shared_ptr<Meshlet> p3);
 
 	void cleanupCoarseTriangles();
 
@@ -94,10 +90,10 @@ public:
 
 	void initInGlContext();
 
-	void addPatches(vector<shared_ptr<MeshPatch>> &patches_in,
+	void addPatches(vector<shared_ptr<Meshlet>> &patches_in,
 	                Vector3f cam_pos);
 
-	void updateColorForPatches(vector<shared_ptr<MeshPatch>> &patches_in);
+	void updateColorForPatches(vector<shared_ptr<Meshlet>> &patches_in);
 
 	//TODO: split this up:
 	void renderExceptForActiveSets(vector<shared_ptr<ActiveSet>> &sets, 
@@ -118,7 +114,7 @@ public:
 	void downloadCurrentGeometry(vector<GpuCoarseVertex> &vertices, 
 	                             vector<int> &indices);
 
-	vector<weak_ptr<MeshPatch>> patches;
+	vector<weak_ptr<Meshlet>> patches;
 	vector<weak_ptr<CoarseTriangle>> coarse_triangles;
 
 private:

@@ -1,7 +1,7 @@
 #ifndef FILE_MESH_RECONSTRUCTION_H
 #define FILE_MESH_RECONSTRUCTION_H
 
-#include <map>
+#include <unordered_map>
 //synchronization
 #include <condition_variable>
 #include <atomic>
@@ -94,22 +94,21 @@ public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	};
 
-	MeshReconstruction(GLFWwindow *context, GarbageCollector *garbage_collector,
-	                   bool threaded, int depth_width = 640, 
+	MeshReconstruction(int depth_width = 640,
 	                   int depth_height = 480, int rgb_width = 640, 
 	                   int rgb_height = 480);
 
 	~MeshReconstruction();
 
-	bool removePatch(shared_ptr<MeshPatch> patch);
+	bool removePatch(shared_ptr<Meshlet> patch);
 
-	shared_ptr<MeshPatch> getPatchById(int id) {
+	shared_ptr<Meshlet> getPatchById(int id) {
 		patches_mutex_.lock();
-		shared_ptr<MeshPatch> patch = patches_[id];
+		shared_ptr<Meshlet> patch = patches_[id];
 		patches_mutex_.unlock();
 		return patch;
 	}
-	vector<shared_ptr<MeshPatch>> GetAllPatches();
+	vector<shared_ptr<Meshlet>> GetAllPatches();
 
 	void clearInvalidGeometry(shared_ptr<ActiveSet> set, cv::Mat depth, 
 	                          Matrix4f depth_pose);
@@ -119,7 +118,7 @@ public:
 	}
 
 	//TODO: these two
-	shared_ptr<MeshPatch> genMeshPatch();
+	shared_ptr<Meshlet> genMeshlet();
 	shared_ptr<MeshTexture> genMeshTexture(MeshTexture::Type content_type);
 
 	void setRGBIntrinsics(Vector4f fxycxy);
@@ -149,14 +148,14 @@ public:
 											   TextureUpdater* texture_updater,
 											   InformationRenderer* information_renderer);
 	vector<cv::Rect2f> genBoundsFromPatches(
-			vector<shared_ptr<MeshPatch>> &patches, Matrix4f pose, 
+			vector<shared_ptr<Meshlet>> &patches, Matrix4f pose,
 			Matrix4f proj, shared_ptr<ActiveSet> active_set);
 
 	//Free everything
 	void erase();
 
 	Parameters params;
-
+	shared_ptr<Meshlet> getMeshlet(int id);
 	//TODO: remove, just for debugging purpose
 	//InformationRenderer information_renderer;
 	//PresentationRenderer render_presentation;
@@ -183,18 +182,18 @@ private:
 	//TODO: this should not be in the reconstruction itself
 	//void setActiveSetUpdate_(shared_ptr<ActiveSet> set);
 
-	TriangleReference addTriangle_(
-			VertexReference pr1, VertexReference pr2, VertexReference pr3, 
+	Triangle* addTriangle_(
+			Vertex* pr1, Vertex* pr2, Vertex* pr3,
 			vector<weak_ptr<GeometryBase>> &debug_new_stitches);
-	TriangleReference addTriangle_(VertexReference pr1, VertexReference pr2, 
-	                               VertexReference pr3);
+	Triangle* addTriangle_(Vertex* pr1, Vertex* pr2,
+						   Vertex* pr3);
 
 	//GarbageCollector *garbage_collector_;
 
 	//shouldnt that be a shared pointer
 	mutex patches_mutex_;
-	map<int, shared_ptr<MeshPatch>> patches_;
-	Octree<MeshPatch> octree_;//stores the objects in a spacial manner
+	unordered_map<int, shared_ptr<Meshlet>> patches_;
+	Octree<Meshlet> octree_;//stores the objects in a spacial manner
 	int current_max_patch_id_ = 0;//this basically is the number of patches currently in use
 
 	//TODO: completely get rid of the concept of recycler

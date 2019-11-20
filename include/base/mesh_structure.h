@@ -46,25 +46,12 @@ class DeformationNode;
 class GeometryBase {
 public:
 
-	//TODO: check if this is even necessary
-	//TODO: maybe do not do this as virtual method to get higher performance
-	/**
-	 * @brief isGpuResidencyRequired
-	 * @return
-	 * this returns true if this structures residency on the gpu is required for rendering
-	 */
-	virtual bool isGpuResidencyRequired() = 0;
 
-	virtual bool isPartOfActiveSet(const ActiveSet *set) = 0;
-
-	//TODO: maybe do this with respect to the active set!
-	virtual	shared_ptr<TriangleBufConnector> getMostCurrentGpuTriangles() = 0;
-
-	void replacePatchInTriangleReferences(shared_ptr<MeshPatch> from,
-	                                      shared_ptr<MeshPatch> to,
+	void replacePatchInTriangleReferences(shared_ptr<Meshlet> from,
+	                                      shared_ptr<Meshlet> to,
 	                                      int vertex_offset);
 
-	void setNewMainPatchForTriangles(shared_ptr<MeshPatch> main_patch);
+	void setNewMainPatchForTriangles(shared_ptr<Meshlet> main_patch);
 
 	void deregisterTriangles();
 
@@ -113,142 +100,30 @@ public:
  */
 class ActiveSet;
 
-struct TriangleReference {
-
-	TriangleReference() { }
-
-	TriangleReference(GeometryBase *geometry_base, int ind)
-			: container(geometry_base),
-			  index(ind) { };
-
-	bool valid() {
-		return (container != nullptr && index != -1);
-	}
-
-	/** \deprecated */
-	bool equalTo(const TriangleReference &other) {
-		return (container == other.container && index == other.index);
-	}
-
-	bool operator==(const TriangleReference &other) {
-		return (container == other.container && index == other.index);
-	}
-
-	bool operator!=(const TriangleReference &other) {
-		return (!(*this == other));
-	}
-
-	Triangle *get() {
-		assert(valid());
-		return &container->triangles[index];
-	};
-	//should this be  a weak ptr?
-	GeometryBase *container = nullptr;
-
-	int index = -1;
-
-};
 class Vertex;
-struct VertexReference {
-	MeshPatch *patch_ = nullptr;
-
-	int index_ = -1;
-public:
-
-	MeshPatch* getPatch() const {
-		return patch_;
-	}
-
-	int getIndex() const {
-		return index_;
-	}
-
-	// TODO: create a proper operator you fool
-	/** \deprecated */
-	bool isEqualTo(VertexReference &other) {
-		return (patch_ == other.patch_ && index_ == other.index_);
-	}
-
-	bool operator==(const VertexReference &other) {
-		return (patch_ == other.patch_ && index_ == other.index_);
-	}
-
-	bool operator<(const VertexReference &other) {
-		if(patch_ < other.patch_) {
-			return true;
-		} else if(patch_ > other.patch_) {
-			return false;
-		} else {
-			return index_ < other.index_;
-		}
-	}
-
-	Vertex* get() const;/* {
-		return &patch_->vertices[index_];
-	};*/
-
-	void set(MeshPatch *p, int i) {
-		if(i < -1 || i > 10000) {
-			assert(0); // Something again is very wrong DEBUG
-		}
-		if(p == 0) {
-			//assert(0);
-		}
-		index_ = i;
-		patch_ = p;
-	}
-	VertexReference(){};
-
-	//copy constructor
-	VertexReference(const VertexReference &o):
-			patch_(o.patch_),
-			index_(o.index_){ }
-	VertexReference& operator=(const VertexReference &o)
-	{
-		patch_ = o.patch_;
-		index_ = o.index_;
-		return *this;
-	}
-	//move constructor that invalidates the original reference
-	VertexReference(VertexReference &&o){
-		patch_ = o.patch_;
-		index_ = o.index_;
-		o.set(nullptr,-1);//invalidate the original reference
-	}
-
-};
 
 // TODO: Maybe let this vertex structure also replace the gpuvertex
 class Vertex {
 public:
 
 	struct VertexInTriangle {
-		TriangleReference triangle;
+		Triangle* triangle;
 		int ind_in_triangle = -1;
+		//TODO: move constructor to move the vertex and its new pointer
 	};
-private:
-
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Vector4f p;
-	Vector3f n; // TODO: start using this at some point
+	Vector3f n;
+
+	Meshlet* meshlet;
+private:
+
 
 	int32_t tex_ind_in_main_patch;
 
-	vector<VertexReference> mocked_by;
-	VertexReference mocking;
 	vector<VertexInTriangle> triangles;
 public:
 
-	void removeMockedBy(Vertex *vert){
-		for(int i=0;i<mocked_by.size();i++){
-			if(mocked_by[i].get() == vert){
-				mocked_by[i] = mocked_by[mocked_by.size()-1];
-				mocked_by.pop_back();
-				return;
-			}
-		}
-		assert(0);
-	}
 
 
 	//StackVector<VertexInTriangle, 16> triangles; //this will not really give any speed benefits (a few milliseconds at most)
@@ -258,12 +133,8 @@ public:
 			: tex_ind_in_main_patch(-1) { 
 	}
 
-	Vertex(	Vertex && o) :
-			mocked_by(std::move(o.mocked_by)),
-			mocking(std::move(mocking)),
-			p(o.p),
-			n(o.n),
-			triangles(std::move(o.triangles)) {}
+	//move constructor
+	Vertex(	Vertex && o);
 
 	Vertex(GpuVertex gpu_vertex) {
 		p = gpu_vertex.p;
@@ -272,25 +143,19 @@ public:
 	}
 
 	~Vertex(){
-#ifdef DEBUG
-		assert(isMocking() != mocked_by.size()>0);
-#endif
-		if(isMocking()){
-			mocking.get()->removeMockedBy(this);
+		//well, this is a complicated questions: removing a vertex would also mean to delete a few triangles
+		if(triangles.size()>0){
+			assert(0);// at this stage we don't remove valid vertices
 		}
-		if(mocked_by.size()>0){
-			mocked_by[0].get()->p = p;
-			mocked_by[0].get()->n = n;
-			mocked_by[0].get()->triangles = std::move(triangles);
-			for(int i=1;i<mocked_by.size();i++){
-				mocked_by[i].get()->mocking = mocked_by[0];
-			}
+		for(int i=0;i<triangles.size();i++){
+			//at least remove the reference to this triangle
+			//triangles[i].triangle->
 		}
 	}
 
 	void removeTriangle(Triangle* triangle) {
 		for(size_t i = 0; i < triangles.size(); i++) {
-			if(triangles[i].triangle.get() == triangle) {
+			if(triangles[i].triangle == triangle) {
 				triangles[i] = triangles.back();
 				triangles.pop_back();
 				return;
@@ -305,43 +170,35 @@ public:
 		triangles.pop_back();
 	}
 
-	bool isMocking(){
-		return mocking.getPatch() != nullptr;
+	void replaceTriangle(Triangle* from, Triangle* to) {
+		for(size_t i=0;i<triangles.size();i++){
+			if(triangles[i].triangle == from){
+				triangles[i].triangle = to;
+				return;
+			}
+		}
 	}
 
+
 	Vector4f getP(){
-		if(isMocking()){
-			return mocking.get()->getP();
-		}
+
 		return p;
 	}
 	Vector3f getN(){
-		if(isMocking()){
-			return mocking.get()->getN();
-		}
+
 		return n;
 	}
 
 	void setP(Vector4f p){
-		if(isMocking()){
-			mocking.get()->p = p;
-			return;
-		}
+
 		this->p = p;
 	}
 	void setN(){
-		if(isMocking()){
-			mocking.get()->n = n;
-			return;
-		}
 		this->n = n;
 	}
 
 	//TODO: make the constructor such that this method doesn't need to be called
 	GpuVertex genGpuVertex() {
-		if(isMocking()){
-			return mocking.get()->genGpuVertex();
-		}
 		GpuVertex vert;
 		vert.p = p;
 		vert.n = n;
@@ -362,13 +219,13 @@ public:
 
 };
 
-class MeshPatchGpuHandle {
+class MeshletGpuHandle {
 public:
 
-	MeshPatchGpuHandle(GpuStorage* gpu_geom_storage, int nr_vertices,
-					   int nr_triangles);
+	MeshletGpuHandle(GpuStorage* gpu_geom_storage, int nr_vertices,
+					 int nr_triangles);
 
-	~MeshPatchGpuHandle();
+	~MeshletGpuHandle();
 
 	bool setLabelTex(shared_ptr<MeshTextureGpuHandle> tex);
 
@@ -391,7 +248,7 @@ public:
 
 	bool gpu_vertices_changed;
 
-	weak_ptr<MeshPatch> download_to_when_finished;
+	weak_ptr<Meshlet> download_to_when_finished;
 
 	//TODO: think about what to do on the texture side of things
 	//the plan is that this mesh patch gpu handle keeps grip of
@@ -422,14 +279,14 @@ public:
  * Very big TODO: a patch will need a system to be worked on and being rendered from
  * different threads.
  */
-class MeshPatch : public GeometryBase,
-                  public OctreeMember<MeshPatch>, //The name of this pattern is CRTP https://stackoverflow.com/questions/4030224/whats-the-use-of-the-derived-class-as-a-template-parameter
+class Meshlet : public GeometryBase,
+				public OctreeMember<Meshlet>, //The name of this pattern is CRTP https://stackoverflow.com/questions/4030224/whats-the-use-of-the-derived-class-as-a-template-parameter
                   public LowDetailPoint {
 public:
 
-	MeshPatch(Octree<MeshPatch> *octree);
+	Meshlet(Octree<Meshlet> *octree);
 
-	~MeshPatch();
+	~Meshlet();
 
 	weak_ptr<GeometryBase> getWeakBaseSelf() {
 		return static_pointer_cast<GeometryBase>(weak_self.lock());
@@ -450,32 +307,32 @@ public:
 	int addActiveSet(ActiveSet* active_set);
 	int removeActiveSet(ActiveSet *active_set);
 
-	shared_ptr<DoubleStitch> getDoubleStitchWith(MeshPatch *other_patch);
+	shared_ptr<DoubleStitch> getDoubleStitchWith(Meshlet *other_patch);
 	void addStitchReference(shared_ptr<DoubleStitch> stitch);
 	void removeStitchReference(shared_ptr<DoubleStitch> stitch);
 
 
-	shared_ptr<TripleStitch> getTripleStitchWith(MeshPatch *other_patch_1, 
-	                                             MeshPatch *other_patch_2);
+	shared_ptr<TripleStitch> getTripleStitchWith(Meshlet *other_patch_1,
+	                                             Meshlet *other_patch_2);
 	void addStitchReference(shared_ptr<TripleStitch> stitch);
 	void removeStitchReference(shared_ptr<TripleStitch> stitch);
 
-	set<shared_ptr<MeshPatch>> getNeighbours();
+	set<shared_ptr<Meshlet>> getNeighbours();
 
-	shared_ptr<DoubleStitch> getDoubleStitchTo(shared_ptr<MeshPatch> patch);
-	shared_ptr<TripleStitch> getTripleStitchTo(shared_ptr<MeshPatch> patch);
+	shared_ptr<DoubleStitch> getDoubleStitchTo(shared_ptr<Meshlet> patch);
+	shared_ptr<TripleStitch> getTripleStitchTo(shared_ptr<Meshlet> patch);
 
 	bool isGeometryFullyAllocated();
 	 */
 
 	mutex neighbour_mutex;
-	vector<weak_ptr<MeshPatch>> neighbours;
-	void addNeighbour(weak_ptr<MeshPatch> nb){
+	vector<weak_ptr<Meshlet>> neighbours;
+	void addNeighbour(weak_ptr<Meshlet> nb){
 		neighbour_mutex.lock();
 		neighbours.push_back(nb);
 		neighbour_mutex.unlock();
 	}
-	void removeNeighbour(MeshPatch *neighbour);
+	void removeNeighbour(Meshlet *neighbour);//TODO!
 
 
 	/**
@@ -500,11 +357,6 @@ public:
 	mutex sem_label_tex_patch_mutex;
 	vector<shared_ptr<MeshTexture>> sem_label_tex_patches;
 
-	mutex double_stitch_mutex;
-	vector<shared_ptr<DoubleStitch>> double_stitches;
-
-	mutex triple_stitch_mutex;
-	vector<shared_ptr<TripleStitch>> triple_stitches;
 
 	/**
 	* @brief geom_tex_patch
@@ -554,7 +406,7 @@ public:
 	bool debug = false;
 	int debug1 = 0;
 
-	weak_ptr<MeshPatch> weak_self;
+	weak_ptr<Meshlet> weak_self;
 
 	/**
 	 * @brief center
@@ -606,22 +458,50 @@ struct Triangle {
 	struct Neighbour {
 
 		bool valid() {
-			return ref.valid();
+			return ptr != nullptr;
 		}
 
 		void invalidate() {
 			pos = -1;
-			ref = TriangleReference();
+			ptr = nullptr;
 		}
 
 		//position in neighbour
 		int pos = -1;
-		TriangleReference ref;
+		Triangle* ptr;
 		bool debug = false;
+
+		//TODO: write proper move constructor
+		/*
+		Neighbour(Neighbour &&o){
+			//this move constructor would not work without
+			if(o.pos != -1){
+				//the old reference to this edge needs to be updated
+				//o.ptr->neighbours[o.pos].ptr = this; // this is not even the same type
+				//the index (pos) should not change except for we would cylce trough within one triangle or something
+			}
+			this->pos = o.pos;
+			this->ptr = o.ptr;
+
+			//invaldiate the old copy source
+			o.pos = -1;
+			o.ptr = nullptr;
+
+		}*/
+		Neighbour(){}
+		~Neighbour(){
+			if(pos != -1){
+				//invalidate the old reference to this triangle
+				ptr->neighbours[pos].ptr = nullptr;
+				ptr->neighbours[pos].pos = -1;
+			}
+		}
+
+
 	};
 
 	bool registered = false;
-	bool debug_is_stitch = false;
+	bool debug_is_stitch = false;//
 	int  debug_nr = -1;
 
 	/**
@@ -631,12 +511,43 @@ struct Triangle {
 
 	EdgeReference   edges[3];
 	//VertexReference points[3];
-	int 			points[3] = {-1, -1, -1};
+	Vertex* 		vertices[3] = {nullptr, nullptr, nullptr};
 	Neighbour       neighbours[3];
 
 	Triangle() { }
 
+	//move constructor
+	Triangle(Triangle &&o){
+
+		for(int i=0;i<3;i++){
+			Neighbour &nb = neighbours[i];
+			//update the neighbours reference pointing at this
+			nb.ptr->neighbours[nb.pos].ptr = this;
+			nb.invalidate();//invalidating the move source
+
+			vertices[i] = o.vertices[i];
+			o.vertices[i] = nullptr;//invalidate at source (maybe not necessary)
+			vertices[i]->replaceTriangle(&o,this);
+
+
+			//TODO: edges!
+
+		}
+	}
+
+
 	~Triangle() {
+		for(auto vert : vertices){
+			if(vert!=nullptr)
+				vert->removeTriangle(this);
+		}
+		for(auto nb : neighbours){
+			if(nb.ptr != nullptr){
+				nb.ptr->neighbours[nb.pos].invalidate();
+			}
+		}
+
+		//TODO: edges!
 	}
 
 	//TODO: fix and reinsert these (used a lot in meshing and stitching)
@@ -729,24 +640,24 @@ struct Triangle {
 		assert(!neighbours[1].valid());
 		assert(!neighbours[2].valid());
 		if(cnt == 1) {
-			int p = points[0];
-			points[0] = points[1];
-			points[1] = points[2];
-			points[2] = p;
+			Vertex* p = vertices[0];
+			vertices[0] = vertices[1];
+			vertices[1] = vertices[2];
+			vertices[2] = p;
 		} else if(cnt == 2) {
-			int p = points[0];
-			points[0] = points[2];
-			points[2] = points[1];
-			points[1] = p;
+			Vertex* p = vertices[0];
+			vertices[0] = vertices[2];
+			vertices[2] = vertices[1];
+			vertices[1] = p;
 
 		}
 	}
 
 	//TODO: reinsert these (used a lot in meshing and stitching)
 	/*
-	void replacePatchReference(MeshPatch *from, MeshPatch *to, int offset);
+	void replacePatchReference(Meshlet *from, Meshlet *to, int offset);
 
-	void setNewMainPatch(MeshPatch *patch);
+	void setNewMainPatch(Meshlet *patch);
 
 	VertexReference getThirdPoint(VertexReference p1, VertexReference p2);
 	*/
@@ -760,18 +671,18 @@ struct Triangle {
 		return selfReference;
 	}*/
 };
-
+/*
 struct Stitch : public GeometryBase {
 	//TODO: if that stitch stays empty remove the class
-	/*
-	shared_ptr<TriangleBufConnector> getMostCurrentGpuTriangles() {
-		return triangles_gpu.lock();
-	}*/
+
+	//shared_ptr<TriangleBufConnector> getMostCurrentGpuTriangles() {
+	//	return triangles_gpu.lock();
+	//}
 
 	//TODO: this could also just be a weak ptr to the buffer itself
 	//weak_ptr<TriangleBufConnector> triangles_gpu;
 };
-
+*/
 /**
  * @brief The DoubleStitch struct
  * Geometry to stitch only two geometry texments together
@@ -790,19 +701,19 @@ struct DoubleStitch : public Stitch {
 	}
 
 	// Remove self from all the patches
-	void removeFromPatches(shared_ptr<MeshPatch> except_for_patch = nullptr);
+	void removeFromPatches(shared_ptr<Meshlet> except_for_patch = nullptr);
 
-	shared_ptr<MeshPatch> getOtherPatch(shared_ptr<MeshPatch> const &patch);
+	shared_ptr<Meshlet> getOtherPatch(shared_ptr<Meshlet> const &patch);
 
 	bool isGpuResidencyRequired();
 
 	bool isPartOfActiveSet(const ActiveSet* active_set);
 
-	void replacePatchReference(shared_ptr<MeshPatch> from,
-	                           shared_ptr<MeshPatch> to);
+	void replacePatchReference(shared_ptr<Meshlet> from,
+	                           shared_ptr<Meshlet> to);
 	bool isDegenerated();
 
-	bool isConnectingPatch(shared_ptr<MeshPatch> patch);
+	bool isConnectingPatch(shared_ptr<Meshlet> patch);
 
 	bool connectsSamePatches(shared_ptr<DoubleStitch> other);
 
@@ -810,7 +721,7 @@ struct DoubleStitch : public Stitch {
 
 	//the two patches the double stitch is connecting.
 	//the main patch(the one whose texture we are using) is patch[0]
-	weak_ptr<MeshPatch> patches[2];
+	weak_ptr<Meshlet> patches[2];
 
 	bool debug_to_delete1 = false;
 	bool debug_to_delete2 = false;
@@ -845,28 +756,28 @@ struct TripleStitch: public Stitch {
 	}
 
 	//remove self from all the patches
-	void removeFromPatches(shared_ptr<MeshPatch> except_for_patch = nullptr);
+	void removeFromPatches(shared_ptr<Meshlet> except_for_patch = nullptr);
 
-	shared_ptr<MeshPatch> getAnyOtherPatch(shared_ptr<MeshPatch> patch);
+	shared_ptr<Meshlet> getAnyOtherPatch(shared_ptr<Meshlet> patch);
 	//
-	bool getOtherPatches(shared_ptr<MeshPatch> patch, 
-	                     shared_ptr<MeshPatch> patches_out[2]);
+	bool getOtherPatches(shared_ptr<Meshlet> patch,
+	                     shared_ptr<Meshlet> patches_out[2]);
 
 
-	void replacePatchReference(shared_ptr<MeshPatch> from,
-	                           shared_ptr<MeshPatch> to,
+	void replacePatchReference(shared_ptr<Meshlet> from,
+	                           shared_ptr<Meshlet> to,
 	                           int offset);
 
 	bool isCovertDoubleStitch();
 
-	bool isConnectingPatch(shared_ptr<MeshPatch> patch);
+	bool isConnectingPatch(shared_ptr<Meshlet> patch);
 
 	///TODO: check if this weak self is needed
 	weak_ptr<TripleStitch> weak_self;
 
 	///TODO (not implemented yet)
 	//int positionWithinSlot=-1;//since a triple stitch will most certainly only contain one triangle it is necessary to have
-	weak_ptr<MeshPatch> patches[3];
+	weak_ptr<Meshlet> patches[3];
 };
   */
 
@@ -878,20 +789,20 @@ struct Edge {
 
 	Edge() { }
 
-	Edge(TriangleReference &tri, int index_in_triangle) {
+	Edge(Triangle* tri, int index_in_triangle) {
 		triangle = tri;
 		pos = index_in_triangle;
 	}
 
 	void registerInTriangle(int border_ind, int ind) {
 		is_registered = true;
-		triangle.get()->edges[pos].border_ind = border_ind;
-		triangle.get()->edges[pos].ind = ind;
+		triangle->edges[pos].border_ind = border_ind;
+		triangle->edges[pos].ind = ind;
 	}
 
 	void unregister() {
 		assert(is_registered);
-		triangle.get()->edges[pos].invalidate();//invalidate the reference to this edge
+		triangle->edges[pos].invalidate();//invalidate the reference to this edge
 		is_registered=false;
 	}
 
@@ -899,8 +810,8 @@ struct Edge {
 	bool getOtherEdge(int endpoint, Edge &result, 
 	                  vector<vector<Edge>> &border_list) {
 
-		Triangle* current_triangle = triangle.get();
-		TriangleReference current_triangle_ref = triangle;
+		Triangle* current_triangle = triangle;
+		Triangle* current_triangle_ref = triangle;
 		int current_edge_ind_in_triangle = pos;
 
 		int ttl = 10000;//TODO: put that back to 100.... we will not have than 16 or so triangles for a point
@@ -918,7 +829,7 @@ struct Edge {
 			if(!current_triangle->neighbours[current_edge_ind_in_triangle].valid()) {
 				if(current_triangle->edges[current_edge_ind_in_triangle].valid()) {
 					result = *current_triangle->edges[current_edge_ind_in_triangle].get(border_list);
-					assert(result.triangle.valid());
+					assert(result.triangle != nullptr);
 					return true;
 				}
 
@@ -929,32 +840,10 @@ struct Edge {
 				return true;
 			}
 
-			if(current_edge_ind_in_triangle > 2 || current_edge_ind_in_triangle < 0) {//debug efforts
-				assert(0);
-			}
-			if(current_triangle_ref.index < 0 || current_triangle_ref.index > 10000) {
-				cout << current_triangle_ref.container->triangles.size() << endl;
-				assert(0);
-			}
-			// Get to the next triangle
-			current_triangle_ref =
-					current_triangle->neighbours[current_edge_ind_in_triangle].ref;
-			if(!current_triangle_ref.container->debugIsValid()) {
-				getOtherEdge(endpoint, result, border_list); //debug.... this should not happen
-				assert(0);
-			}
-			if(current_triangle_ref.index < 0 || current_triangle_ref.index > 10000) {
-				getOtherEdge(endpoint, result, border_list);//debug.... this should not happen
-				cout << current_triangle_ref.container->triangles.size() << endl;
-				assert(0);
-			}
+
 			current_edge_ind_in_triangle =
 					current_triangle->neighbours[current_edge_ind_in_triangle].pos;
-			if(current_edge_ind_in_triangle > 2 || current_edge_ind_in_triangle < 0) {//debug efforts
-				assert(0); //(simon) current triangle seems off
-			}
-
-			current_triangle = current_triangle_ref.get();
+			current_triangle = current_triangle_ref;
 		}
 
 		getOtherEdge(endpoint, result, border_list);//debug... this should never happen
@@ -963,8 +852,7 @@ struct Edge {
 	}
 
 	bool isOpen() {
-		Triangle *tri = triangle.get();
-		return !tri->neighbours[pos].valid();
+		return !triangle->neighbours[pos].valid();
 	}
 
 	bool getOtherEdge(int endpoint, Edge &result) {
@@ -1005,7 +893,7 @@ struct Edge {
 	// When already used for stitching we do not do it from there
 	bool already_used_for_stitch = false;
 
-	TriangleReference triangle;
+	Triangle* triangle;
 	int pos;//edge index within this triangle
 
 	bool is_registered=false;
@@ -1015,8 +903,23 @@ struct Edge {
 	//this is weird
 
 	bool outermost_connections_made[2] = {false, false};
-	VertexReference outermost_connections[2];
+	Vertex* outermost_connections[2];
 	Vector2f outermost_connection_fragment_pos[2];
 };
+
+
+
+//this is down here so it can be inlined
+Vertex::Vertex ( Vertex && o){
+	this->meshlet = o.meshlet;
+	p = o.p;
+	n = o.n;
+	tex_ind_in_main_patch  = tex_ind_in_main_patch;
+	triangles = std::move(o.triangles);
+	for(auto triangle : triangles){
+		//set old references to this vertex to the new position
+		triangle.triangle->vertices[triangle.ind_in_triangle] = this;
+	}
+}
 
 #endif // FILE_MESH_STRUCTURE_H

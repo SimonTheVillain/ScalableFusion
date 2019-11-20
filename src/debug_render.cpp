@@ -60,7 +60,7 @@ void RenderDebugInfo::render(Matrix4f proj, Matrix4f cam_pose) {
 	mutex_.lock();
 
 	for(int i = 0; i < patches.size(); i++) {
-		MeshPatch* p = patches[i].patch;
+		Meshlet* p = patches[i].patch;
 		glUniform4f(2, patches[i].r, patches[i].g, patches[i].b, 1);
 		glUniform1i(3, -1);
 		if(p != nullptr) {
@@ -122,11 +122,11 @@ void RenderDebugInfo::setIndexCount(int start_vertex, int vertex_count) {
 	mutex_.unlock();
 }
 
-void RenderDebugInfo::setPatch(MeshPatch *patch) {
+void RenderDebugInfo::setPatch(Meshlet *patch) {
 	rendered_patch = patch;
 }
 
-void RenderDebugInfo::addPatch(MeshPatch *patch, float r, float g, float b) {
+void RenderDebugInfo::addPatch(Meshlet *patch, float r, float g, float b) {
 	ShowPatch task = {r, g, b, 0, patch};
 	patches.push_back(task);
 }

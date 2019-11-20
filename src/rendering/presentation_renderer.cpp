@@ -241,7 +241,7 @@ void PresentationRenderer::renderInWindow(MeshReconstruction* reconstruction,
 		                LowDetailRenderer* low_detail_renderer_local,
 		                TextureUpdater* texture_updater_local,
 		                InformationRenderer* information_renderer_local) {
-			vector<shared_ptr<MeshPatch>> visible_patches =
+			vector<shared_ptr<Meshlet>> visible_patches =
 					reconstruction_local->octree_.getObjects(inv_cam_pose, intrinsics, res, view_distance);
 
 			cudaDeviceSynchronize();

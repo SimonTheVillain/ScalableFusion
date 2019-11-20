@@ -386,7 +386,7 @@ int main(int argc, const char *argv[]) {
 							static_cast<int>(xpos_old), static_cast<int>(ypos_old),
 							&patch_ind, &triangle_ind);
 			if(!isnan(clicked_point[0])) {
-				shared_ptr<MeshPatch> patch = scalable_map->getPatchById(patch_ind);
+				shared_ptr<Meshlet> patch = scalable_map->getPatchById(patch_ind);
 				if(patch != nullptr) {
 					wire_sphere_model.setPosition(patch->getPos());
 					wire_sphere_model.setRadius(patch->getRadius());

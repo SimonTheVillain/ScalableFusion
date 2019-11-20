@@ -34,7 +34,7 @@ void GpuStorage::resetTimers() {
 	upload_calls_patch_infos = 0;
 }
 
-void GpuStorage::unloadMeshPatch_(MeshPatch *patch) {
+void GpuStorage::unloadMeshPatch_(Meshlet *patch) {
 	cout << "the mechanism for unloading a mesh patch is not implemented yet" <<  endl;
 	assert(0);
 }
@@ -105,7 +105,7 @@ GpuStorage::~GpuStorage() {
 }
 
 shared_ptr<ActiveSet> GpuStorage::makeActiveSet(
-		vector<shared_ptr<MeshPatch>> patches,
+		vector<shared_ptr<Meshlet>> patches,
 		MeshReconstruction *map,
 		LowDetailRenderer* low_detail_renderer,
 		TextureUpdater* texture_updater,

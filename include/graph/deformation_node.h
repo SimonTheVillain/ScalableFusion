@@ -51,7 +51,7 @@ using namespace std;
 using namespace Eigen;
 
 class DeformationNode;
-class MeshPatch;
+class Meshlet;
 
 class DeformationNode {
 public:
@@ -67,13 +67,13 @@ public:
 		float dist;
 	};
 
-	DeformationNode(MeshPatch *p) 
+	DeformationNode(Meshlet *p)
 			: patch(p) { }
 
 	void findNeighbours(const Vector3f &pos, const cv::Vec2f &pix_pos, 
 	                    const vector<NodePixPos> &nodes);
 
-	MeshPatch *patch;
+	Meshlet *patch;
 	//storing neighbours in 4 quadrants (in sorted fashion
 	map<float, WeakNodeDist> neighbours[4];
 

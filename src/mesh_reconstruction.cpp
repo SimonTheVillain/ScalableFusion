@@ -13,20 +13,16 @@
 using namespace std;
 using namespace Eigen;
 
-bool MeshReconstruction::removePatch(shared_ptr<MeshPatch> patch) {
+bool MeshReconstruction::removePatch(shared_ptr<Meshlet> patch) {
 	cout << "THIS IS IMPORTANT" << endl;
-	patch->double_stitch_mutex.lock();
-	for(size_t i = 0; i < patch->double_stitches.size(); i++) {
-	   patch->double_stitches[i]->removeFromPatches(patch);
-	}
-	patch->double_stitch_mutex.unlock();
 
-	patch->triple_stitch_mutex.lock();
-	for(size_t i = 0; i < patch->triple_stitches.size(); i++) {
-		patch->triple_stitches[i]->removeFromPatches(patch);
+	//remove patch from
+	for(auto neighbour_weak : patch->neighbours){
+		auto neighbour = neighbour_weak.lock();
+		neighbour->removeNeighbour(patch.get());
 	}
-	patch->triple_stitch_mutex.unlock();
 
+	patch->neighbours.clear();
 	patches_mutex_.lock();
 	for(auto it = patches_.begin(); it != patches_.end(); ++it) {
 		if(it->second == patch) {
@@ -107,19 +103,9 @@ Matrix4f MeshReconstruction::genDepthProjMat() {
 	return proj2 * proj1;
 }
 
-void MeshReconstruction::setActiveSetUpdate_(shared_ptr<ActiveSet> set) {
-	active_set_update_mutex.lock();
-	active_set_update = set;
-	active_set_update_mutex.unlock();
-}
 
-MeshReconstruction::MeshReconstruction(GLFWwindow *context, 
-                                       GarbageCollector *garbage_collector,
-                                       bool threaded, 
-                                       int depth_width, int depth_height, 
-                                       int rgb_width, int rgb_height) 
-		: garbage_collector_(garbage_collector),
-		  initializing_logic(false) {
+MeshReconstruction::MeshReconstruction(int depth_width, int depth_height,
+                                       int rgb_width, int rgb_height) {
 
 	params.depth_res.width = depth_width;
 	params.depth_res.height = depth_height;
@@ -135,15 +121,11 @@ MeshReconstruction::MeshReconstruction(GLFWwindow *context,
 //we assume that the opengl context still exists when running the destructor
 // (otherwise the opengl stuff would not behave nicely)
 MeshReconstruction::~MeshReconstruction() {
-	if(rendering_active_set_update_worker_ != nullptr) {
-		delete rendering_active_set_update_worker_;
-	}
-	//TODO: check for the textures.... are they deleted as well?
 }
 
-shared_ptr<MeshPatch> MeshReconstruction::genMeshPatch() {
+shared_ptr<Meshlet> MeshReconstruction::genMeshlet() {
 	current_max_patch_id_++;
-	shared_ptr<MeshPatch> mesh_patch(new MeshPatch(&octree_));
+	shared_ptr<Meshlet> mesh_patch(new Meshlet(&octree_));
 	mesh_patch->id = current_max_patch_id_;
 	mesh_patch->weak_self = mesh_patch;
 	patches_[current_max_patch_id_] = mesh_patch;
@@ -167,29 +149,21 @@ bool MeshReconstruction::hasGeometry() {
 	return patches_.size() > 0;
 }
 
+//TODO: get rid of this method
 void MeshReconstruction::erase() {
 	//The scheduler should be closed at this point
+	cout << "erase... this function does not do what you expect it to do" << endl;
+	vector<weak_ptr<Meshlet>> patches;//collect weak pointers to that stuff to see what of this is still existent
+	vector<shared_ptr<Meshlet>> shared_patches;//collect weak pointers to that stuff to see what of this is still existent
 
-	vector<weak_ptr<MeshPatch>> patches;//collect weak pointers to that stuff to see what of this is still existent
-	vector<shared_ptr<MeshPatch>> shared_patches;//collect weak pointers to that stuff to see what of this is still existent
-	vector<weak_ptr<MeshPatchGpuHandle>> gpu_patches;
-	vector<weak_ptr<MeshTextureGpuHandle>> gpu_textures;
 	int debug = 0 ;
 	for(auto patch : patches_) {
 		debug++;
 		patches.push_back(patch.second);
-		gpu_patches.push_back(patch.second->gpu);
 		shared_patches.push_back(patch.second);
-		shared_ptr<MeshPatchGpuHandle> gpu_patch = patch.second->gpu.lock();
-		if(gpu_patch != nullptr) {
-			gpu_textures.push_back(gpu_patch->geom_tex);
-		}
 	}
 
 	patches_.clear();
-	active_set_update.reset();
-	active_set_rendering_.reset();
-	active_set_expand.reset();
 
 	for(int i = 0; i < debug; i++) {
 		shared_patches.pop_back();
@@ -204,22 +178,14 @@ void MeshReconstruction::erase() {
 	for(int i = 0; i < patches.size(); i++) {
 		assert(patches[i].expired());
 	}
-	int active_gpu_patches = 0;
-	for(int i = 0; i < gpu_patches.size(); i++) {
-		active_gpu_patches += gpu_patches[i].use_count();
-	}
-	int active_gpu_textures = 0;
-	for(int i = 0; i < gpu_textures.size(); i++) {
-		active_gpu_textures += gpu_textures[i].use_count();
-	}
 	vector<gfx::GpuTex2D*> textures = gfx::GpuTex2D::getTexList();
 
 	//TODO: mechanism to delete all fbos that are used in thread
 	glFinish();
 }
 
-vector<shared_ptr<MeshPatch>> MeshReconstruction::GetAllPatches() {
-	vector<shared_ptr<MeshPatch>> patches;
+vector<shared_ptr<Meshlet>> MeshReconstruction::GetAllPatches() {
+	vector<shared_ptr<Meshlet>> patches;
 	for(auto patch : patches_) {
 		patches.push_back(patch.second);
 	}
@@ -237,9 +203,9 @@ vector<shared_ptr<MeshPatch>> MeshReconstruction::GetAllPatches() {
  *
  */
 
-TriangleReference MeshReconstruction::addTriangle_(VertexReference pr1,
-                                                   VertexReference pr2,
-                                                   VertexReference pr3) {
+Triangle* MeshReconstruction::addTriangle_(Vertex* pr1,
+										   Vertex* pr2,
+										   Vertex* pr3) {
 	//same method as below but without the debug
 	assert(0);
 }
@@ -249,16 +215,16 @@ TriangleReference MeshReconstruction::addTriangle_(VertexReference pr1,
 int debug_global_stitch_triangle_ctr = 0;
 TripleStitch *debug_quenstionable_triplestitch = nullptr;
 
-TriangleReference MeshReconstruction::addTriangle_(
-		VertexReference pr1, VertexReference pr2, VertexReference pr3,
+Triangle* MeshReconstruction::addTriangle_(
+		Vertex* pr1, Vertex* pr2, Vertex* pr3,
 		vector<weak_ptr<GeometryBase>> &debug_new_stitches) {
 
 	//TODO: remove this debug output
 	//cout << "This method is untested when it comes to its ability to register triangles" << endl;
 	Triangle triangle;
-	triangle.points[0] = pr1;
-	triangle.points[1] = pr2;
-	triangle.points[2] = pr3;
+	triangle.vertices[0] = pr1;
+	triangle.vertices[1] = pr2;
+	triangle.vertices[2] = pr3;
 	triangle.debug_is_stitch = true;
 	triangle.debug_nr = debug_global_stitch_triangle_ctr;
 	if(triangle.debug_nr == 11757) {
@@ -305,7 +271,7 @@ TriangleReference MeshReconstruction::addTriangle_(
 	if(double_stitch) {//p1 is different
 		//find a fitting double stitch or create one
 		TriangleReference tr;
-		MeshPatch *patch2 = nullptr;
+		Meshlet *patch2 = nullptr;
 		if(pr1.getPatch() != pr2.getPatch()) {
 			patch2 = pr2.getPatch();
 		} else if(pr1.getPatch() != pr3.getPatch()) {
@@ -367,7 +333,7 @@ TriangleReference MeshReconstruction::addTriangle_(
 			debug_new_stitches.push_back(stitch);
 
 		} else {
-			MeshPatch *main_patch = stitch->patches[0].lock().get();
+			Meshlet *main_patch = stitch->patches[0].lock().get();
 			if(main_patch != triangle.points[0].getPatch()) {
 				//TODO: rotate the triangle points so it fits again:
 				if(main_patch == triangle.points[1].getPatch()) {
@@ -468,16 +434,16 @@ cv::Mat MeshReconstruction::generateDepthFromView(int width, int height,
 
 //let this stay within the mesh
 vector<cv::Rect2f> MeshReconstruction::genBoundsFromPatches(
-		vector<shared_ptr<MeshPatch> > &patches, Matrix4f pose, Matrix4f proj,
+		vector<shared_ptr<Meshlet> > &patches, Matrix4f pose, Matrix4f proj,
 		shared_ptr<ActiveSet> active_set) {
 
 	Matrix4f mvp = proj * pose.inverse();
 
 	vector<TexCoordGen::BoundTask> bound_tasks;
-	vector<shared_ptr<MeshPatch>> valid_mesh_patches;
+	vector<shared_ptr<Meshlet>> valid_mesh_patches;
 	int valid_count = 0;
-	for(shared_ptr<MeshPatch> patch : patches) {
-		shared_ptr<MeshPatchGpuHandle> gpu_patch = patch->gpu.lock();
+	for(shared_ptr<Meshlet> patch : patches) {
+		shared_ptr<MeshletGpuHandle> gpu_patch = patch->gpu.lock();
 
 		//check if patch is on gpu. Which it should be!
 		if(gpu_patch == nullptr) {
@@ -610,11 +576,11 @@ void MeshReconstruction::clearInvalidGeometry(shared_ptr<ActiveSet> set,
 	Matrix4f pose_inv = pose.inverse();
 	Matrix4f proj_pose = proj * pose_inv;
 
-	vector<shared_ptr<MeshPatch>> patches = set->retained_mesh_patches_cpu;
+	vector<shared_ptr<Meshlet>> patches = set->retained_mesh_patches_cpu;
 
 	vector<gpu::GeometryValidityChecks::VertexTask> tasks;
-	for(shared_ptr<MeshPatch> patch : patches) {
-		shared_ptr<MeshPatchGpuHandle> gpu_patch = patch->gpu.lock();
+	for(shared_ptr<Meshlet> patch : patches) {
+		shared_ptr<MeshletGpuHandle> gpu_patch = patch->gpu.lock();
 		if(gpu_patch == nullptr) {
 			continue;
 		}
@@ -637,14 +603,14 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 		InformationRenderer* information_renderer
 		) {
 
-	vector<shared_ptr<MeshPatch>> visible_shared_patches = 
+	vector<shared_ptr<Meshlet>> visible_shared_patches =
 			octree_.getObjects(depth_pose, params.depth_fxycxy, 
 			                   Vector2f(params.depth_res.width, 
 			                            params.depth_res.height), 
 			                   getMaxDistance(),
 			                   0.0f);//don't dilate the frustum in this case
 
-	for(shared_ptr<MeshPatch> patch : visible_shared_patches) {
+	for(shared_ptr<Meshlet> patch : visible_shared_patches) {
 		//TODO: test patch
 		if(!patch->isPartOfActiveSetWithNeighbours(active_set_update.get())) {
 			//continue;
@@ -661,14 +627,14 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 		}
 	}
 
-	set<shared_ptr<MeshPatch>> patches_including_neighbours;
-	for(shared_ptr<MeshPatch> patch : visible_shared_patches) {
+	set<shared_ptr<Meshlet>> patches_including_neighbours;
+	for(shared_ptr<Meshlet> patch : visible_shared_patches) {
 		patches_including_neighbours.insert(patch);
 		for(shared_ptr<DoubleStitch> stitch : patch->double_stitches) {
 			if (stitch->patches[0].lock() != patch) {
 				//continue;
 			}
-			shared_ptr<MeshPatch> neighbour = stitch->patches[1].lock();
+			shared_ptr<Meshlet> neighbour = stitch->patches[1].lock();
 			if(neighbour->isInsertedInOctree()) {
 				patches_including_neighbours.insert(neighbour);
 			}
@@ -678,7 +644,7 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 				// continue;
 			}
 			for(size_t i = 1; i < 3; i++) {
-				shared_ptr<MeshPatch> neighbour = stitch->patches[i].lock();
+				shared_ptr<Meshlet> neighbour = stitch->patches[i].lock();
 				if(neighbour->isInsertedInOctree()) {
 					patches_including_neighbours.insert(neighbour);
 				}
@@ -686,7 +652,7 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 		}
 	}
 
-	vector<shared_ptr<MeshPatch>> patches_with_neighbours(
+	vector<shared_ptr<Meshlet>> patches_with_neighbours(
 			patches_including_neighbours.begin(),
 			patches_including_neighbours.end());
 
@@ -701,7 +667,7 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 
 	//if it fails down here even though it doesn't fail up there....
 	//you are doing something wrong
-	for(shared_ptr<MeshPatch> patch : visible_shared_patches) {
+	for(shared_ptr<Meshlet> patch : visible_shared_patches) {
 		//TODO: test patch
 		if(!patch->isPartOfActiveSetWithNeighbours(new_active_set.get())) {
 			continue;

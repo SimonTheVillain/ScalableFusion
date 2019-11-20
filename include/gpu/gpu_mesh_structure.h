@@ -11,12 +11,12 @@
 #include "gpu_buffer.h"
 
 
-class MeshPatch;
+class Meshlet;
 class MeshTexture;
 
 /*
 struct VertexToken{
-	weak_ptr<MeshPatch> token;
+	weak_ptr<Meshlet> token;
 };
 
 struct TextureToken{
@@ -37,14 +37,14 @@ public:
 };
 
 
-class TexturedMeshGPU{
+class MeshletGPU{
 public:
 	TriangleBufConnector triangles;
 	int triangle_version;
 
 	VertexBufConnector vertices;
 	int vertex_version;
-	unique_ptr<weak_ptr<MeshPatch>> vertex_token;
+	unique_ptr<weak_ptr<Meshlet>> vertex_token;
 
 
 	//TODO: triangle version of neighbours might be needed
@@ -69,6 +69,6 @@ class VerticesGPU{
 public:
 	int version;
 	VertexBufConnector vertices;
-	unique_ptr<weak_ptr<MeshPatch>> token;
+	unique_ptr<weak_ptr<Meshlet>> token;
 };*/
 #endif //SCALABLE_FUSION_GPU_MESH_STRUCTURE_H

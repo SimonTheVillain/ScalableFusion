@@ -88,6 +88,8 @@ void LowDetailRenderer::initInGlContext() {
 
 void LowDetailRenderer::addPatches(vector<shared_ptr<Meshlet> > &patches_in,
                                    Vector3f cam_pos) {
+	assert(0); // reimplement this later on
+	/*
 	if(patches_in.size() == 0) {
 		return;
 	}
@@ -109,7 +111,7 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<Meshlet> > &patches_in,
 		new_patches.push_back(patches_in[i]);
 		patch.index_within_coarse = index;
 		//iterate neighbours
-		set<shared_ptr<Meshlet>> neighbours = patch.getNeighbours();
+		vector<weak_ptr<Meshlet>> neighbours = patch.neighbours;
 
 		//lets check triple stitches.... if they are consistent with the remaining data structure.
 		patch.triple_stitch_mutex.lock();
@@ -371,10 +373,12 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<Meshlet> > &patches_in,
 
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());
+	 */
 }
 
 void LowDetailRenderer::downloadCurrentGeometry(
 		vector<GpuCoarseVertex> &vertices, vector<int> &indices) {
+	assert(0); // reinsert this lateron (if needed)
 
 	modifying_buffers_.lock();
 
@@ -408,10 +412,13 @@ void LowDetailRenderer::downloadCurrentGeometry(
 	gpuErrchk(cudaPeekAtLastError());
 
 	modifying_buffers_.unlock();
+
 }
 
 void LowDetailRenderer::updateColorForPatches(
 		vector<shared_ptr<Meshlet>> &patches_in) {
+	assert(0);// reinsert this later on
+	/*
 	modifying_buffers_.lock();
 
 	shared_ptr<GlCudaBuffer<GpuCoarseVertex>> vert_buf = vertex_buffer_;
@@ -466,10 +473,13 @@ void LowDetailRenderer::updateColorForPatches(
 
 	new_buffers_ = new_buffers_intermediate;
 	modifying_buffers_.unlock();
+	 */
 }
 
 void LowDetailRenderer::renderExceptForActiveSets(
 		vector<shared_ptr<ActiveSet> > &sets, Matrix4f proj, Matrix4f cam_pose) {
+	assert(0); // reinsert and update this code later on
+	/*
 	gfx::GLUtils::checkForOpenGLError(
 			"[LowDetailRenderer::renderExceptForActiveSets] At the beginning.");
 	shader_->use();
@@ -588,6 +598,7 @@ void LowDetailRenderer::renderExceptForActiveSets(
 	gfx::GLUtils::checkForOpenGLError(
 			"[LowDetailRenderer::renderExceptForActiveSets] "
 			"Error at rendering coarse reconstruction.");
+			*/
 }
 
 void LowDetailRenderer::updateMaskForActiveSets(
@@ -675,7 +686,7 @@ CoarseTriangle::CoarseTriangle(shared_ptr<Meshlet> p1,
 	patches[0] = p1;
 	patches[1] = p2;
 	patches[2] = p3;
-
+/*
 	double_stitches[0] = p1->getDoubleStitchTo(p2);
 	double_stitches[1] = p1->getDoubleStitchTo(p3);
 	double_stitches[2] = p2->getDoubleStitchTo(p3);
@@ -683,6 +694,7 @@ CoarseTriangle::CoarseTriangle(shared_ptr<Meshlet> p1,
 	triple_stitches[0] = p1->getTripleStitchTo(p2);
 	triple_stitches[1] = p1->getTripleStitchTo(p3);
 	triple_stitches[2] = p2->getTripleStitchTo(p3);
+ */
 }
 
 CoarseTriangle::~CoarseTriangle() {
@@ -714,8 +726,10 @@ bool CoarseTriangle::flipToFacePos(Vector3f pos) {
 	Vector3f v2 = patches[2].lock()->getPos() - patches[0].lock()->getPos();
 	if(v1.cross(v2).dot(to_camera) < 0) {
 		swap(patches[1], patches[2]);
+		/*
 		swap(double_stitches[1], double_stitches[2]);
 		swap(triple_stitches[1], triple_stitches[2]);
+		 */
 	}
 }
 

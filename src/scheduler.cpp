@@ -51,6 +51,8 @@ SchedulerLinear::SchedulerLinear(
 
 	capture_thread_ = thread(&SchedulerLinear::captureWorker_, this, map, source, context);
 	pthread_setname_np(capture_thread_.native_handle(),"capture");
+
+	active_sets.resize(2); // 0 for update, 1 for rendering
 }
 
 SchedulerLinear::~SchedulerLinear() {
@@ -76,20 +78,20 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 	int frame_count = expand_interval_;
 
-	reconstruction->initInGlLogicContext();
+//	reconstruction->initInGlLogicContext(); // nope
 
 	InformationRenderer* information_renderer =
 		new InformationRenderer();
 
-	information_renderer->initInContext(reconstruction.get());
+	information_renderer->initInContext(gpu_storage_->garbage_collector_);
 
 	information_renderer->initInContext(
 			640,// TODO: don't hardcode this!!!
 			480,
-			reconstruction.get());
+			gpu_storage_->garbage_collector_);
 
 	GeometryUpdater* geometry_updater =
-			new GeometryUpdater();
+			new GeometryUpdater(gpu_storage_->garbage_collector_,640,480);
 	TextureUpdater* texture_updater =
 			new TextureUpdater();
 	//texture_updater.mesh_reconstruction = map.get();
@@ -156,9 +158,9 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 			accu_pose = accu_pose * rel_pose;
 		}
 
-		reconstruction->active_set_update_mutex.lock();
-		shared_ptr<ActiveSet> active_set_capturing = reconstruction->active_set_update;
-		reconstruction->active_set_update_mutex.unlock();
+		active_sets_mutex.lock();
+		shared_ptr<ActiveSet> active_set_capturing = active_sets[0];
+		active_sets_mutex.unlock();
 
 		Matrix4f depth_pose = accu_pose.cast<float>().matrix();
 		Matrix4f rgb_pose   = rel_depth_to_color * depth_pose;
@@ -210,33 +212,32 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		//now integrate everything new:
 		//Update the active set according to the current pose:
 		//map->debugCheckTriangleNeighbourConsistency(map->GetAllPatches());
-		shared_ptr<ActiveSet> active_set =
+		shared_ptr<ActiveSet> active_set;// = make_shared<ActiveSet>();
+				        /*
 				reconstruction->genActiveSetFromPose(depth_pose,
 													 low_detail_renderer_, //that low detail renderer needs to be shared with
 						                             texture_updater,
-													 information_renderer);
+													 information_renderer);*/
 		//map->debugCheckTriangleNeighbourConsistency(map->GetAllPatches());
 
 		//don't ask me what this is doing here!TODO: find out
 		reconstruction->clearInvalidGeometry(active_set, depth, depth_pose);
 
-		geometry_updater->update(d_std_tex, depth_pose, active_set);
+		geometry_updater->update(gpu_storage_, d_std_tex, depth_pose, active_set);
 
-		texture_updater->colorTexUpdate(reconstruction.get(),rgb_texture,low_detail_renderer_, rgb_pose, active_set);
+		texture_updater->colorTexUpdate(reconstruction.get(),
+				rgb_texture,low_detail_renderer_, rgb_pose, active_set);
 
-		//there definitely is a reason to keep the active set here!
-		reconstruction->setActiveSetUpdate_(active_set);
+
 
 		//every now and then we add new geometry:
 		if(frame_count == expand_interval_ || first_lap) {
 
-			/************* SEMANTIC LABELLING ***********************/
-
-			/*********************************************************/
 
 			//expanding the existing geometry
 			geometry_updater->extend(
 					reconstruction.get(), information_renderer, texture_updater, low_detail_renderer_,
+					gpu_storage_,
 					active_set, d_std_tex, d_std_mat, depth_pose,
 					rgb_texture, rgb_pose);
 
@@ -245,11 +246,10 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 			//setting the active set, which also gets rendered to
 			//the one updated in the expand method.
 			//only do this in single threaded mode.
-			reconstruction->setActiveSetUpdate_(reconstruction->active_set_expand);
 
 			frame_count = 0;
 
-			active_set_last_expand = reconstruction->active_set_expand;
+			//active_set_last_expand = reconstruction->active_set_expand;
 			depth_pose_last_expand = depth_pose;
 		}
 
@@ -260,7 +260,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		first_lap = false;
 
 		//cleanup VBO and VAOs that are deleted but only used within this thread
-		reconstruction->cleanupGlStoragesThisThread_();
+		//reconstruction->cleanupGlStoragesThisThread_();
 		gpu_storage_->garbage_collector_->collect();
 
 		cv::imshow("rgb", rgb);
@@ -283,14 +283,14 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 				gpu_storage_->tex_atlas_geom_lookup_->countPatches() << " rgb " <<
 				gpu_storage_->tex_atlas_rgb_8_bit_->countPatches() << endl;
 
-		cout << "FBOs active " << reconstruction->getFboCountDebug_() << endl;
+		//cout << "FBOs active " << reconstruction->getFboCountDebug_() << endl;
 	}
 
 	delete information_renderer;
 	delete geometry_updater;
 	delete texture_updater;
 	//delete everything for the fbo
-	reconstruction->fbo_storage_.forceGarbageCollect();
+	gpu_storage_->fbo_storage_->forceGarbageCollect();
 	gpu_storage_->garbage_collector_->forceCollect();
 	glFinish();
 

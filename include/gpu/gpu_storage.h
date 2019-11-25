@@ -25,8 +25,6 @@ class MeshReconstruction;
 class GeometryBase;
 class Meshlet;
 class MeshTexture;
-struct DoubleStitch;
-struct TripleStitch;
 class UnsecuredTriangleCollection;
 class MeshTexture;
 
@@ -161,12 +159,12 @@ private:
 	shared_ptr<TriangleBufConnector> uploadTriangles_(GeometryBase *base_element);
 	void uploadMeshPatch_(Meshlet *patch, ActiveSet *active_set);
 	void unloadMeshPatch_(Meshlet *patch);
-	void unloadDoubleStitch_(DoubleStitch *stitch);
+	//void unloadDoubleStitch_(DoubleStitch *stitch);
 	/**
 	 * @brief uploadTripleStitch
 	 * again triple stitches, they should be collected and put into one buffer, but only when needed.
 	 */
-	void uploadTripleStitches_(vector<TripleStitch*> triple_stitches);
+	//void uploadTripleStitches_(vector<TripleStitch*> triple_stitches);
 
 	uint64_t delete_debug_tex_reference_;
 	//MeshReconstruction *map_;//TODO: get rid of this

@@ -23,7 +23,7 @@ class Meshlet;
 class MeshTexture;
 class ActiveSet;
 class LowDetailRenderer;
-
+class GpuStorage;
 class GLFWwindow;
 /**
  * @brief The RenderMapInformations class
@@ -56,36 +56,43 @@ public:
 
 	~InformationRenderer();
 
-	void initInContext(int width, int height, MeshReconstruction *map);
+	void initInContext(int width, int height, GarbageCollector* garbage_collector);
 
-	void initInContext(MeshReconstruction* reconstruction);
+	void initInContext(GarbageCollector* garbage_collector);
 
 	shared_ptr<gfx::GpuTex2D> getDepthTexture();
 
 	shared_ptr<gfx::GpuTex2D> getStdTexture();
 
-	void renderDepth(ActiveSet *active_set, Matrix4f projection, Matrix4f pose);
+	void renderDepth(ActiveSet *active_set,
+					 GpuStorage* gpu_storage,
+					 Matrix4f projection, Matrix4f pose);
 
 	///TODO: create a renderer for which patch is used in which image!!!
 	//L.G. Debugging tool
 
-	void bindRenderTriangleReferenceProgram(MeshReconstruction* reconstruction);
+	void bindRenderTriangleReferenceProgram(MeshReconstruction* reconstruction,
+											GpuStorage* gpu_storage);
 
-	void renderTriangleReferencesForPatch(ActiveSet *active_set, 
+	void renderTriangleReferencesForPatch(ActiveSet *active_set,
+	                                      GpuStorage* gpu_storage,
 	                                      shared_ptr<Meshlet> &patch,
 	                                      shared_ptr <MeshTexture> &target_texture);
 
 
 
 	void renderTriangleReferencesAndDepth(ActiveSet *active_set,
+	                                      GpuStorage* gpu_storage,
 	                                      Matrix4f projection,
 	                                      Matrix4f pose);
 
-	void render(ActiveSet *active_set, Matrix4f projection, Matrix4f pose,
+	void render(ActiveSet *active_set, GpuStorage* gpu_storage, Matrix4f projection, Matrix4f pose,
 	            cv::Mat *depth = nullptr, cv::Mat *normals = nullptr, 
 	            cv::Mat *color = nullptr, cv::Mat *labels = nullptr);
 
 	Vector4f renderAndExtractInfo(MeshReconstruction* reconstruction,
+			                      ActiveSet* active_set, //TODO: make this a whole list of active sets
+			                      GpuStorage* gpu_storage,
 			                      Matrix4f view, Matrix4f proj,
 								  LowDetailRenderer* low_detail_renderer,
 	                              bool render_visible_from_cam,

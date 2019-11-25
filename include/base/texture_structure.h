@@ -105,7 +105,7 @@ public:
 			shared_ptr<TexAtlasPatch> source_tex_being_downloaded = nullptr,
 			shared_ptr<TexCoordBufConnector> tex_coords_being_downloaded = nullptr);
 
-	bool checkRefTexDependencies();
+	//bool checkRefTexDependencies();
 
 	GpuTextureInfo genTexInfo();
 

@@ -39,9 +39,6 @@ void GpuStorage::unloadMeshPatch_(Meshlet *patch) {
 	assert(0);
 }
 
-void GpuStorage::unloadDoubleStitch_(DoubleStitch *stitch) {
-}
-
 /**
  * @brief GpuGeomStorage::uploadTripleStitches
  * @param tripleStitches
@@ -50,11 +47,6 @@ void GpuStorage::unloadDoubleStitch_(DoubleStitch *stitch) {
  * becomes invalid, the slot should be refilled with the remaining valid triangles.
  * TODO: implement this! or maybe not? Probably not!!! (don't know anymore.... think about it
  */
-void GpuStorage::uploadTripleStitches_(
-		vector<TripleStitch*> triple_stitches) {
-	cout << "[GpuStorage::uploadTripleStitches] for using this unimplemented method i sentence you to crash" << endl;
-	assert(0);
-}
 
 
 GpuStorage::GpuStorage() {

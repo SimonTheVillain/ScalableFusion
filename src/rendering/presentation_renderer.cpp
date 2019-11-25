@@ -83,14 +83,14 @@ void PresentationRenderer::initInContext(MeshReconstruction* reconstruction) {
 	glBindVertexArray(debug_VAO_);
 }
 
-void PresentationRenderer::render(ActiveSet *active_set, Matrix4f projection,
+void PresentationRenderer::render(GpuStorage* gpu_storage, ActiveSet *active_set, Matrix4f projection,
 								  Matrix4f pose) {
 	gfx::GLUtils::checkForOpenGLError("[RenderMapPresentation::render] before doing anything.");
 
 	if(active_set == nullptr) {
 		return;
 	}
-	if(active_set->retained_double_stitches.size() == 0) {
+	if(active_set->patches.size() == 0) {
 		return;
 	}
 
@@ -114,25 +114,25 @@ void PresentationRenderer::render(ActiveSet *active_set, Matrix4f projection,
 			"[RenderMapPresentation::render] Setting up uniforms.");
 	//the vertex buffer
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
-	                 active_set->gpu_geom_storage->vertex_buffer->getGlName());
+	                 gpu_storage->vertex_buffer->getGlName());
 
 	gfx::GLUtils::checkForOpenGLError(
 			"[RenderMapPresentation::render] Binding vertexBuffer");
 	//bind texture coordinates
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
-	                 active_set->gpu_geom_storage->tex_pos_buffer->getGlName());
+	                 gpu_storage->tex_pos_buffer->getGlName());
 	gfx::GLUtils::checkForOpenGLError(
 			"[RenderMapPresentation::render] Binding texPosBuffer");
 
 	//the triangle buffer
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
-	                 active_set->gpu_geom_storage->triangle_buffer->getGlName());
+	                 gpu_storage->triangle_buffer->getGlName());
 	gfx::GLUtils::checkForOpenGLError(
 			"[RenderMapPresentation::render] Binding triangleBuffer");
 
 	//the patch information
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
-	                 active_set->gpu_geom_storage->patch_info_buffer->getGlName());
+	                 gpu_storage->patch_info_buffer->getGlName());
 
 	gfx::GLUtils::checkForOpenGLError(
 			"[RenderMapPresentation::render] Binding buffers");
@@ -152,14 +152,9 @@ void PresentationRenderer::render(ActiveSet *active_set, Matrix4f projection,
 	//on the new one its way better.
 	//activeSet->vectorUpdateMutex.lock();
 
-	glUniform4f(7, 0, 0, 0, 1);
-	active_set->drawPatches();
-
-	glUniform4f(7, 0.7f, 0, 0, 1);
-	active_set->drawDoubleStitches();
-
-	glUniform4f(7, 0, 0, 0.7f, 1);
-	active_set->drawTripleStitches();
+	glUniform4f(7, 0, 0, 0, 1); // set color for meshes to black!
+	//TODO: really render stuff!!!!! (with our new approach)
+	//active_set->drawPatches();
 
 	glFinish();//i know this isn't ideal for performance but we need to make sure that the data usage is
 	// contained within this function so it won't be modified outside
@@ -168,13 +163,17 @@ void PresentationRenderer::render(ActiveSet *active_set, Matrix4f projection,
 			"[RenderMapPresentation::render] After doing everything.");
 }
 
-void PresentationRenderer::renderInWindow(MeshReconstruction* reconstruction,
+void PresentationRenderer::renderInWindow(GpuStorage* gpu_storage,
+		                                  MeshReconstruction* reconstruction,
 										  Matrix4f view, Matrix4f proj,
 										  bool render_visible_from_cam,
 										  GLFWwindow *root_context,
 										  InformationRenderer* information_renderer,
 										  LowDetailRenderer* low_detail_renderer,
 										  TextureUpdater* texture_updater) {
+	assert(0); //TODO: rework this and let the scheduler handle the creation of contexts
+	/*
+
 	//return;//TODO: remove this debug measure
 	//disgusting debug attempt
 	bool disable_render_of_user_camera=false; //false means we render stuff seen by the user camera
@@ -265,15 +264,15 @@ void PresentationRenderer::renderInWindow(MeshReconstruction* reconstruction,
 		};
 
 		//the update worker is not queuing the update tasks.
-		/*
-		rendering_active_set_update_worker_->setNextTask(bind(task, cam_pose, 
-		                                                      intrinsics,
-		                                                      res, 1.0f,
-		                                                      reconstruction,
-		                                                      low_detail_renderer,
-		                                                      texture_updater,
-		                                                      information_renderer));
-		                                                      */
+
+		//rendering_active_set_update_worker_->setNextTask(bind(task, cam_pose,
+		//                                                      intrinsics,
+		//                                                      res, 1.0f,
+		//                                                      reconstruction,
+		//                                                      low_detail_renderer,
+		//                                                      texture_updater,
+		//                                                      information_renderer));
+
 
 	} else {
 		reconstruction->active_set_rendering_mutex_.lock();
@@ -314,4 +313,5 @@ void PresentationRenderer::renderInWindow(MeshReconstruction* reconstruction,
 	gpuErrchk(cudaPeekAtLastError());
 
 	low_detail_renderer->renderExceptForActiveSets(sets, proj, view);
+	*/
 }

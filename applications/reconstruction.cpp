@@ -288,8 +288,8 @@ int main(int argc, const char *argv[]) {
 
 	//create a map object that takes 640 by 480 sized depth images
 	shared_ptr<MeshReconstruction> scalable_map =
-			make_shared<MeshReconstruction>(invisible_window, &garbage_collector,
-											multithreaded, 640, 480);
+			make_shared<MeshReconstruction>(640, 480,
+											640,480);
 
 	video::TuwDataset dataset(dataset_path, true);
 
@@ -300,8 +300,8 @@ int main(int argc, const char *argv[]) {
 	TextureUpdater texture_updater;
 	SchedulerBase *scheduler = nullptr;
 	if(multithreaded) {
-		assert(0);//DON't use the threaded scheduler since it is completely broken
-		scheduler = new SchedulerThreaded(scalable_map, &dataset, invisible_window);
+		assert(0);//DON't use the threaded scheduler since it is completely broken (right now, might be better na
+		//scheduler = new SchedulerThreaded(scalable_map, &dataset, invisible_window);
 	} else {
 		scheduler = new SchedulerLinear(scalable_map, gpu_storage, &dataset,
 										invisible_window,
@@ -311,7 +311,7 @@ int main(int argc, const char *argv[]) {
 
 	//create an window with the necessary opengl context
 
-	scalable_map->initInGLRenderingContext();
+	//scalable_map->initInGLRenderingContext();
 
 	PresentationRenderer presentation_renderer;
 	InformationRenderer information_renderer;//TODO: setup low detail renderer
@@ -365,7 +365,8 @@ int main(int argc, const char *argv[]) {
 
 		low_detail_renderer.initInGlContext();
 		if(!disable_rendering) {
-			presentation_renderer.renderInWindow(scalable_map.get(),
+			presentation_renderer.renderInWindow(gpu_storage,
+												 scalable_map.get(),
 												 view, proj,
 												 render_high_detail,
 												 invisible_window,
@@ -380,6 +381,8 @@ int main(int argc, const char *argv[]) {
 			Vector4f clicked_point =
 					information_renderer.renderAndExtractInfo(
 							scalable_map.get(),
+							nullptr,//active set
+							gpu_storage,
 							view, proj, &low_detail_renderer,
 							render_high_detail, // render stuff thats visible from camera perspective
 							invisible_window, 1280, 800,
@@ -400,6 +403,8 @@ int main(int argc, const char *argv[]) {
 			Vector4f center =
 					information_renderer.renderAndExtractInfo(
 							scalable_map.get(),
+							nullptr,
+							gpu_storage,
 							view, proj,
 							&low_detail_renderer,
 							render_high_detail, invisible_window, 1280, 800,
@@ -439,12 +444,14 @@ int main(int argc, const char *argv[]) {
 		//TODO: make the exporter more of an integral part of the scaleableMap
 		//MapExporter::ExportMap(map,"/home/simon/Documents/reconstruction_results/");
 		//store the stupid reconstruction somewhere
-		MapExporter::storeCoarse(scalable_map.get(), &low_detail_renderer, coarse_output_file);
+		assert(0); // TODO: reinsert this functionality
+		//MapExporter::storeCoarse(scalable_map.get(), &low_detail_renderer, coarse_output_file);
 	}
 
 	if(!detailed_output_file.empty()) {
 		//store the stupid reconstruction somewhere
-		MapExporter::storeFine(scalable_map.get(), detailed_output_file);
+		assert(0);//TODO: reinsert this functionality
+		//MapExporter::storeFine(scalable_map.get(), detailed_output_file);
 	}
 
 	close_request =  true;

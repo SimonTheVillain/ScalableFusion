@@ -18,9 +18,9 @@ void genTexCoords_kernel(TexCoordGen::Task *tasks, Matrix4f proj_pose,
 		for(size_t j = 0; j < 3; j++) {
 			//get the vertex position of this triangle:
 			GpuTriangle triangle = task.triangles[i];
-			GpuPatchInfo patch_info= patch_infos[triangle.patch_info_inds[j]];
-			int ind = patch_info.vertex_source_start_ind + triangle.indices[j];
-			Vector4f p = vertices[ind].p;
+			//GpuPatchInfo patch_info= patch_infos[triangle.patch_info_inds[j]];
+			int ind = triangle.indices[j];
+			Vector4f p = task.vertices[ind].p;
 
 			//now do the projection
 			Vector4f proj = proj_pose * p;
@@ -88,9 +88,8 @@ void getTexCoordBounds_kernel(TexCoordGen::BoundTask *tasks,
 		GpuTriangle triangle = task.triangles[i];
 		for(size_t j = 0; j < 3; j++) {
 			//get the vertex position of this triangle:
-			GpuPatchInfo patch_info = patch_infos[triangle.patch_info_inds[j]];
-			int ind = patch_info.vertex_source_start_ind + triangle.indices[j];
-			Vector4f p = vertices[ind].p;
+			int ind = triangle.indices[j];
+			Vector4f p = task.vertices[ind].p;
 
 			//now do the projection
 			Vector4f proj = proj_pose * p;

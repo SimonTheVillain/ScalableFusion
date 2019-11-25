@@ -52,6 +52,7 @@ void GeometryUpdater::extend(
 	//this might me more suitable for the beginning but lets do it here:
 	information_renderer->renderDepth(
 			active_set_of_formerly_visible_patches.get(),
+			gpu_storage,
 			proj_depth_n, depth_pose_in);
 	cv::Mat ex_geom(height, width, CV_32FC4);//existing geometry
 	information_renderer->getDepthTexture()->downloadData(ex_geom.data);

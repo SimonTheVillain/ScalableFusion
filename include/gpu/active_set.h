@@ -75,7 +75,9 @@ public:
 				vector<bool> allocate_new_verts = {});
 
 
-	void setupHeaders();
+	void setupHeaders(){
+		assert(0);//TODO: this!
+	}
 	GLuint getHeaderBuffer();
 
 

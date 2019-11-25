@@ -155,6 +155,7 @@ MeshTextureGpuHandle::MeshTextureGpuHandle(
 	gpuErrchk(cudaPeekAtLastError());
 }
 
+/*
 bool MeshTextureGpuHandle::checkRefTexDependencies() {
 	//TODO: maybe check the refTex dependencies relative to a active set. !?
 	if(ref_tex_dependencies.empty()) {
@@ -184,6 +185,7 @@ bool MeshTextureGpuHandle::checkRefTexDependencies() {
 	}
 	return true;
 }
+ */
 
 GpuTextureInfo MeshTextureGpuHandle::genTexInfo() {
 	GpuTextureInfo info = tex->genTexInfo(coords->getStartingIndex());

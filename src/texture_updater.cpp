@@ -17,15 +17,16 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 									 shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 									 shared_ptr<ActiveSet> active_set,
 									 InformationRenderer* information_renderer) {
-
+	assert(0);//TODO: reimplement this functionality
+	/*
 	MeshReconstruction *mesh = reconstruction;
 	//TODO: even though commented out this still holds true
-	/*
+
 	cout << "[ScaleableMap::generateGeomTexForNovelPatches] "
 			"i fear tex coordinates are still missing for vertices "
 			"without triangles! This is going to be a problem with the "
 			"texture update" << endl;
-	*/
+
 	float scale = 2;
 
 	Matrix4f pose_inv = pose.inverse();
@@ -248,7 +249,8 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 
 	//and after doing this we can update the patch header
 
-	active_set->reuploadHeaders();
+	active_set->setupHeaders();
+	*/
 }
 
 
@@ -256,7 +258,8 @@ void TextureUpdater::projToGeomTex(ActiveSet* active_set,
 								   vector<shared_ptr<Meshlet>> &new_patches,
 								   shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 								   Matrix4f pose, Matrix4f proj) {
-
+	assert(0);//TODO: reimplement this functionality
+	/*
 	//we create a list of commands for the gpu to follow to update the textures.
 	vector<InitDescriptor> commands;
 
@@ -301,6 +304,7 @@ void TextureUpdater::projToGeomTex(ActiveSet* active_set,
 	//TODO: this is not fully filling the textures. Get to the root of this issue
 
 	return;
+	 */
 }
 
 void TextureUpdater::colorTexUpdate(MeshReconstruction* reconstruction,
@@ -308,6 +312,8 @@ void TextureUpdater::colorTexUpdate(MeshReconstruction* reconstruction,
 									LowDetailRenderer* low_detail_renderer,
 									Matrix4f color_pose_in,
 									shared_ptr<ActiveSet> &active_set) {
+	assert(0);//TODO: reinsert this funcionality
+	/*
 	int width = rgba_tex->getWidth();
 	int height = rgba_tex->getHeight();
 
@@ -316,16 +322,6 @@ void TextureUpdater::colorTexUpdate(MeshReconstruction* reconstruction,
 	//2. Step should be the incorporation of new sensor data into the already existing map.
 	Matrix4f proj = Camera::genProjMatrix(reconstruction->params.rgb_fxycxy);
 
-	/**
-	 * TODO:
-	 * .) iterate over all visible patches
-	 * .) and over the color textures attached to these patches
-	 * .) check if the texture we are using is a better fit than the one already in place
-	 * .) replace or add the texture.
-	 *   *) calculate new tex coordinates
-	 *   *) normalize them and create the cutouts from the texture
-	 *
-	 */
 
 	vector<shared_ptr<Meshlet>> visible_shared_patches;
 	if(active_set != nullptr) {
@@ -345,6 +341,7 @@ void TextureUpdater::colorTexUpdate(MeshReconstruction* reconstruction,
 	               active_set);//the active set all the newly created textures will be attached to
 
 	reconstruction->cleanupGlStoragesThisThread_();
+	 */
 }
 
 void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
@@ -353,7 +350,8 @@ void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
 									shared_ptr<gfx::GpuTex2D> rgb_in,
 									Matrix4f &pose, Matrix4f &proj,
 									shared_ptr<ActiveSet> active_set) {
-
+	assert(0); //TODO: reimplement this functionality
+	/*
 	MeshReconstruction *mesh = reconstruction;
 	if(active_set == nullptr) {
 		return;
@@ -556,7 +554,7 @@ void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
 		update.gpu->gpu_data_changed = true;
 	}
 
-	return;
+	*/
 }
 
 void TextureUpdater::genLookupTexGeom(MeshReconstruction* reconstruction,
@@ -579,6 +577,8 @@ void TextureUpdater::genLookupTex(
 		vector<shared_ptr<MeshTexture>> &textures,
 		InformationRenderer *information_renderer,
 		bool dilate) {
+	assert(0); //TODO: reinsert this functionality
+	/*
 	vector<DilationDescriptor> dilations;
 	dilations.reserve(patches.size());
 	information_renderer->bindRenderTriangleReferenceProgram(reconstruction);
@@ -622,4 +622,5 @@ void TextureUpdater::genLookupTex(
 	for(size_t i = 0; i < patches.size(); i++) {
 		patches[i]->geom_tex_patch->ref_tex_filled = true;
 	}
+	 */
 }

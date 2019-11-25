@@ -20,6 +20,7 @@ class Worker;
 class InformationRenderer;
 class LowDetailRenderer;
 class TextureUpdater;
+class GpuStorage;
 
 class PresentationRenderer { //TODO: maybe rename this
 public:
@@ -32,9 +33,10 @@ public:
 
 	void initInContext(MeshReconstruction* reconstruction);
 
-	void render(ActiveSet *active_set, Matrix4f projection, Matrix4f pose);
+	void render(GpuStorage* gpu_storage, ActiveSet *active_set, Matrix4f projection, Matrix4f pose);
 
-	void renderInWindow(MeshReconstruction* reconstruction,
+	void renderInWindow(GpuStorage* gpu_storage,
+						MeshReconstruction* reconstruction,
 						Matrix4f view, Matrix4f proj,
 						bool render_visible_from_cam,
 						GLFWwindow *root_context,

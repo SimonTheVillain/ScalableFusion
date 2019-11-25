@@ -17,6 +17,7 @@ public:
 
 	struct Task {
 		GpuTriangle *triangles;
+		GpuVertex *vertices;
 		uint32_t triangle_count;
 		Vector2f *coords;
 		float scale_x;
@@ -27,6 +28,7 @@ public:
 
 	struct BoundTask {
 		GpuTriangle *triangles;
+		GpuVertex* vertices;
 		uint32_t triangle_count;
 		uint32_t target_ind;
 		int debug_type = 0;

@@ -11,12 +11,12 @@ int debug_triangle_count = 0;
 Mesher::TriangleReference Mesher::addTriangle(	Vertex* pr1,
 									  			Vertex* pr2,
 												Vertex* pr3,
-												Neighbour &nr1,
-												Neighbour &nr2,
-												Neighbour &nr3,
+												Mesher::Neighbour &nr1,
+												Mesher::Neighbour &nr2,
+												Mesher::Neighbour &nr3,
 												int &rotated) {
 
-	rotated = 0;
+	rotated = 0; // it seems with the new approach we don't care about rotation anymore
 	Meshlet *patch_1 = pr1->meshlet;
 	Meshlet *patch_2 = pr2->meshlet;
 	Meshlet *patch_3 = pr3->meshlet;
@@ -24,6 +24,56 @@ Mesher::TriangleReference Mesher::addTriangle(	Vertex* pr1,
 		assert(0); // Maybe we don't want to have a assert here
 		return TriangleReference(); // Can't add this triangle to the
 	}
+
+	{
+		Meshlet* patch = patch_1;
+		patch->work_in_progress.lock();
+
+		//create a triangle:
+		Triangle triangle;
+		triangle.vertices[0] = pr1;
+		triangle.vertices[1] = pr2;
+		triangle.vertices[2] = pr3;
+		triangle.neighbours[0].ptr = nr1.ref.get();
+		triangle.neighbours[0].pos = nr1.pos;
+		triangle.neighbours[1].ptr = nr2.ref.get();
+		triangle.neighbours[1].pos = nr2.pos;
+		triangle.neighbours[2].ptr = nr3.ref.get();
+		triangle.neighbours[2].pos = nr3.pos;
+		triangle.debug_nr = debug_triangle_count++;
+
+
+		TriangleReference triangle_reference;
+		triangle_reference.ptr = patch;
+		triangle_reference.pos = patch->triangles.size();
+		patch->triangles.push_back(std::move(triangle));
+		patch->triangles.back().registerSelf();
+		patch->work_in_progress.unlock();
+
+		if(patch_1 != patch_2){
+			//add neighbourhood between patch_1 and patch_2
+			if(patch_1->isNeighbourWith(patch_2)){
+				patch_1->addNeighbour(patch_2->getWeakSelf());
+				patch_2->addNeighbour(patch_1->getWeakSelf());
+			}
+		}
+		if(patch_1 != patch_2){
+			//add neighbourhood between patch1 and patch 3
+			if(patch_1->isNeighbourWith(patch_3)){
+				patch_1->addNeighbour(patch_3->getWeakSelf());
+				patch_3->addNeighbour(patch_1->getWeakSelf());
+			}
+		}
+		if(patch_2 != patch_3){
+			//add neighbourhood between patch2 and patch3
+			if(patch_2->isNeighbourWith(patch_3)){
+				patch_2->addNeighbour(patch_3->getWeakSelf());
+				patch_3->addNeighbour(patch_2->getWeakSelf());
+			}
+		}
+		return triangle_reference;
+	}
+	/*
 
 	// Here we should not ask if all the indices are the same...
 	// First case is every vertex is from the same patch
@@ -46,10 +96,10 @@ Mesher::TriangleReference Mesher::addTriangle(	Vertex* pr1,
 
 
 		TriangleReference triangle_reference;
-		triangle_reference.container = patch;
-		triangle_reference.index = patch->triangles.size();
-		patch->triangles.push_back(triangle);
-		Triangle::registerTriangle(triangle_reference, false); // TODO: check if registering the triangle worked
+		triangle_reference.ptr = patch;
+		triangle_reference.pos = patch->triangles.size();
+		patch->triangles.push_back(std::move(triangle));
+		patch->triangles.back().registerSelf();
 		patch->work_in_progress.unlock();
 		return triangle_reference;
 	}
@@ -60,6 +110,7 @@ Mesher::TriangleReference Mesher::addTriangle(	Vertex* pr1,
 
 		// First test if there is a triple stitch already
 		shared_ptr<TripleStitch> stitch =  patch_1->getTripleStitchWith(patch_2,patch_3);
+		if(!)
 		// Temporary point references
 		Vertex* p1 = pr1;
 		Vertex* p2 = pr2;
@@ -219,6 +270,7 @@ Mesher::TriangleReference Mesher::addTriangle(	Vertex* pr1,
 		stitch->cpu_triangles_ahead = true;
 		return triangle_reference;
 	}
+	 */
 }
 
 void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
@@ -232,7 +284,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 
 	Neighbour nb_up[width];
 	Neighbour nb_left;
-	const Triangle::Neighbour empty;
+	Neighbour empty;
 
 	int r;
 	// In a first step iterate over all points to store the indices
@@ -351,7 +403,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 						// Top left triangle
 						if(fabs(zs[0] - zs[1]) < threshold &&
 						   fabs(zs[0] - zs[2]) < threshold) {
-							tn.ptr = addTriangle(pr[0], pr[3], pr[1], nb_left, nb_up[j],
+							tn.ref = addTriangle(pr[0], pr[3], pr[1], nb_left, nb_up[j],
 							                     empty, r);
 							nb_up[j].invalidate();
 							nb_left.invalidate();
@@ -362,7 +414,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 						// Top right triangle
 						if(fabs(zs[0] - zs[1]) < threshold &&
 						   fabs(zs[1] - zs[2]) < threshold) {
-							tn.ptr = addTriangle(pr[0], pr[2], pr[1], empty, empty, nb_up[j],
+							tn.ref = addTriangle(pr[0], pr[2], pr[1], empty, empty, nb_up[j],
 							                     r);
 							tn.pos = (1 - r + 3) % 3;
 							nb_left = tn;
@@ -393,10 +445,10 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 				threshold = xtionStdToThresholdSeg(threshold);
 				if(distance_ur_bl < threshold) {
 
-					Triangle::Neighbour nb_diag;
+					Neighbour nb_diag;
 					if(fabs(zs[1] - zs[0]) < threshold) {
 						// Top left triangle
-						nb_diag.ptr = addTriangle(pr[0], pr[3], pr[1], nb_left, empty,
+						nb_diag.ref = addTriangle(pr[0], pr[3], pr[1], nb_left, empty,
 						                          nb_up[j], r);
 						debug_created = true;
 
@@ -405,7 +457,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 
 					if(fabs(zs[1] - zs[2]) < threshold) {
 						// Bottom right triangle
-						tn.ptr = addTriangle(pr[3], pr[2], pr[1], empty, empty, nb_diag, r);
+						tn.ref = addTriangle(pr[3], pr[2], pr[1], empty, empty, nb_diag, r);
 						debug_created = true;
 						tn.pos = (1 - r + 3) % 3;
 						nb_left = tn;
@@ -429,9 +481,9 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 				// which is part of the triangle
 				threshold = sensor_std.at<cv::Vec4f>(i, j)[2];
 				threshold = xtionStdToThresholdSeg(threshold);
-				Triangle::Neighbour nb_diag;
-				Triangle::Neighbour nb_up_new;
-				Triangle::Neighbour nb_left_new;
+				Neighbour nb_diag;
+				Neighbour nb_up_new;
+				Neighbour nb_left_new;
 				if(distance_ul_br < threshold) {
 					if(fabs(zs[0] - zs[3]) < threshold) {
 						// Bottom left triangle
@@ -492,7 +544,8 @@ inline bool operator==(const VertexTexConn &lhs, const VertexTexConn &rhs) {
 }
 
 void Mesher::genTexIndices(vector<shared_ptr<Meshlet> > &patches) {
-
+	assert(0);//this really needs to be fixed!!!!!!! important
+	/*
 	for(size_t i = 0; i < patches.size(); i++) {
 		set<VertexTexConn> vert_set;
 		auto appendTexCoords = [&vert_set] (Triangle &triangle) {
@@ -582,4 +635,5 @@ void Mesher::genTexIndices(vector<shared_ptr<Meshlet> > &patches) {
 			}
 		}
 	}
+	 */
 }

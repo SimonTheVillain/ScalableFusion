@@ -133,21 +133,24 @@ public:
 	/**
 	 * @brief initInGlLogicContext
 	 */
-	void initInGlLogicContext();
+	//void initInGlLogicContext();
 
 	/**
 	 * @brief initInGLRenderingContext
 	 */
-	void initInGLRenderingContext();
+	//void initInGLRenderingContext();
 
 	bool hasGeometry();
 
 	//pls describe these
+	/*
 	shared_ptr<ActiveSet> genActiveSetFromPose(Matrix4f depth_pose,
 											   LowDetailRenderer* low_detail_renderer,
 											   TextureUpdater* texture_updater,
 											   InformationRenderer* information_renderer);
-	vector<cv::Rect2f> genBoundsFromPatches(
+
+	 */
+	 vector<cv::Rect2f> genBoundsFromPatches(
 			vector<shared_ptr<Meshlet>> &patches, Matrix4f pose,
 			Matrix4f proj, shared_ptr<ActiveSet> active_set);
 

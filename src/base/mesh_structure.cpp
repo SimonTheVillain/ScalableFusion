@@ -10,7 +10,8 @@ using namespace std;
 using namespace Eigen;
 
 ///TODO: replace this with something that returns the pointer not the shared_ptr
-Meshlet::Meshlet(Octree<Meshlet> *octree) {
+Meshlet::Meshlet(int id,Octree<Meshlet> *octree) :
+				id(id){
 	setOctree(octree);
 
 	//TODO: get this from a constant... essentially it should speed up the process

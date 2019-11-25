@@ -27,7 +27,6 @@ class GpuTex2D;
 
 class GeometryUpdater {
 public:
-
 	void setup(MeshReconstruction *reconstruction) {
 		mesh_reconstruction = reconstruction;
 		stitching.setup(reconstruction);
@@ -58,6 +57,10 @@ public:
 
 	//TODO: integrate this here!
 	GpuNormSeg gpu_pre_seg_;
+
+	GeometryUpdater(	GarbageCollector* garbage_collector,
+						int width,int height) :
+							gpu_pre_seg_(garbage_collector,width,height) {}
 
 };
 

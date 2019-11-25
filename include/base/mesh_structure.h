@@ -133,12 +133,20 @@ public:
 			: tex_ind_in_main_patch(-1) { 
 	}
 
+	Vertex( const Vertex& o){
+		p = o.p;
+		n = o.n;
+		meshlet = meshlet;
+		//the other elements are better not copied since they are highly dependant on the
+		//vertex retaining its position in memory
+	}
 	//move constructor
 	Vertex(	Vertex && o);
 
 	Vertex(GpuVertex gpu_vertex) {
 		p = gpu_vertex.p;
 		n = gpu_vertex.n;
+		meshlet = meshlet;
 		tex_ind_in_main_patch = gpu_vertex.tex_ind_in_main_patch;
 	}
 
@@ -177,6 +185,15 @@ public:
 				return;
 			}
 		}
+	}
+	void insertTriangle(Triangle* in,int ind_in_triangle){
+		triangles.emplace_back();
+		triangles.back().ind_in_triangle = ind_in_triangle;
+		triangles.back().triangle = in;
+		//VertexInTriangle vit;
+		//vit.ind_in_triangle = indexInTriangle;
+		//vit.triangle = in;
+		//triangles.push_back(vit);
 	}
 
 
@@ -284,12 +301,16 @@ class Meshlet : public GeometryBase,
                   public LowDetailPoint {
 public:
 
-	Meshlet(Octree<Meshlet> *octree);
+	Meshlet(int id, Octree<Meshlet> *octree);
 
 	~Meshlet();
 
 	weak_ptr<GeometryBase> getWeakBaseSelf() {
 		return static_pointer_cast<GeometryBase>(weak_self.lock());
+	}
+
+	weak_ptr<Meshlet> getWeakSelf() {
+		return weak_self;
 	}
 
 	//iterates over all the geometry and updates the octree accordingly
@@ -332,8 +353,30 @@ public:
 		neighbours.push_back(nb);
 		neighbour_mutex.unlock();
 	}
-	void removeNeighbour(Meshlet *neighbour);//TODO!
+	void removeNeighbour(Meshlet *neighbour){
+		neighbour_mutex.lock();
+		for(int i=0;i<neighbours.size();i++){
+			if(neighbours[i].lock().get() == neighbour){
+				neighbours[i] = neighbours.back();
+				neighbours.pop_back();
+				break;
+			}
+		}
+		neighbour_mutex.unlock();
+	}
 
+	bool isNeighbourWith(Meshlet* other){
+		neighbour_mutex.lock();
+		bool result = false;
+		for(auto neighbour : neighbours){
+			if(neighbour.lock().get() == other){
+				result = true;
+				break;
+			}
+		}
+		neighbour_mutex.unlock();
+		return result;
+	}
 
 	/**
 	 * @brief cleanupStitches
@@ -466,6 +509,7 @@ struct Triangle {
 			ptr = nullptr;
 		}
 
+
 		//position in neighbour
 		int pos = -1;
 		Triangle* ptr;
@@ -535,7 +579,9 @@ struct Triangle {
 		}
 	}
 
-
+	Meshlet* getMeshlet(){
+		return vertices[0]->meshlet;
+	}
 	~Triangle() {
 		for(auto vert : vertices){
 			if(vert!=nullptr)
@@ -634,6 +680,18 @@ struct Triangle {
 	static void registerTriangle(TriangleReference &triangle_to_register, 
 	                             bool search_edges = true, bool debug = false);
 	*/
+	 void registerSelf(){
+	 	for(int i : {0, 1, 2}){
+	 		if(neighbours[i].valid()){
+	 			int ind = neighbours[i].pos;
+	 			neighbours[i].ptr->neighbours[ind].ptr = this;
+	 			neighbours[i].ptr->neighbours[ind].pos = i;
+
+	 			//add triangle to vertices
+	 			vertices[i]->insertTriangle(this,i);
+	 		}
+	 	}
+	 }
 	void cycle(int cnt) {
 		assert(!registered);
 		assert(!neighbours[0].valid());
@@ -861,15 +919,16 @@ struct Edge {
 	}
 
 	//TODO:fix and reinsert (used in stitching and meshing)
-	/*
-	VertexReference points(int i) {
+
+	Vertex* vertices(int i) {
 		assert(i == 0 || i == 1);
 		int ind = pos + i;
 		if(ind == 3) {
 			ind = 0;
 		}
-		return triangle.get()->points[ind];
+		return triangle->vertices[ind];
 	}
+	/*
 
 	VertexReference oppositePoint() {
 		int ind = pos - 1;
@@ -910,7 +969,7 @@ struct Edge {
 
 
 //this is down here so it can be inlined
-Vertex::Vertex ( Vertex && o){
+inline Vertex::Vertex ( Vertex && o){
 	this->meshlet = o.meshlet;
 	p = o.p;
 	n = o.n;

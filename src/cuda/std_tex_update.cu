@@ -358,8 +358,7 @@ void stdTexInit_kernel(const cudaTextureObject_t input,
 		GpuTriangle triangle = triangles[triangle_id];
 		Vector4f point(0, 0, 0, 0);
 		for(int j = 0; j < 3; j++) {
-			GpuPatchInfo &info = patch_infos[triangle.patch_info_inds[j]];
-			int index = info.vertex_source_start_ind + triangle.indices[j];
+			int index = descriptor.vertex_start_ind + triangle.indices[j];
 			point += vertices[index].p * bary[j];
 		}
 

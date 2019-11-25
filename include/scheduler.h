@@ -2,6 +2,7 @@
 #define FILE_SCHEDULER_H
 
 #include <thread>
+#include <mutex>
 
 #include <Eigen/Eigen>
 
@@ -52,7 +53,7 @@ public:
 
 	//we probably also want to update the low detail renderer whenever we update the render cam pose
 	//with update i mean recreate and replace
-	virtual shared_ptr<LowDetailRenderer> getLowDetailRenderer();
+	virtual shared_ptr<LowDetailRenderer> getLowDetailRenderer() = 0;
 
 };
 
@@ -78,9 +79,22 @@ public:
 		return last_known_depth_pose_;
 	}
 
+	virtual void setRenderCamPose(Matrix4f camPose){
+
+	}
+	virtual shared_ptr<ActiveSet> getActiveSetRendering(){
+		return nullptr;
+	}
+
+	//we probably also want to update the low detail renderer whenever we update the render cam pose
+	//with update i mean recreate and replace
+	virtual shared_ptr<LowDetailRenderer> getLowDetailRenderer(){
+		return nullptr;
+	}
 private:
 	//the active sets used for several operations like rendering and update
-	vector<shared_ptr<ActiveSet>> actuve_sets;
+	mutex active_sets_mutex;
+	vector<shared_ptr<ActiveSet>> active_sets;
 
 
 	void captureWorker_(shared_ptr<MeshReconstruction> reconstruction, 

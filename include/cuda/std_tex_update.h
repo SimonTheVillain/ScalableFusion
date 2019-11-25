@@ -68,7 +68,7 @@ struct InitDescriptor {
 		cudaSurfaceObject_t output;
 
 		cudaSurfaceObject_t reference_texture;
-
+		int vertex_start_ind;
 		cv::Point2i ref_offset;
 		cv::Point2i out_offset;
 		int width;

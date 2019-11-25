@@ -33,16 +33,16 @@ void MeshStitcher::rasterLineGeometry(Matrix4f view, Matrix4f proj, Edge *edge,
 
 	//do a proper interpolation between depth values:
 	//http://stackoverflow.com/questions/24441631/how-exactly-does-opengl-do-perspectively-correct-linear-interpolation
-	VertexReference pi = edge->points(1);
-	Vector4f P0 = pi.get()->p;
+	Vertex* pi = edge->vertices(1);
+	Vector4f P0 = pi->p;
 	Vector4f projected0 = p_v * P0;
 	Vector2f pix0 = Vector2f(projected0[0] / projected0[3],
 	                         projected0[1] / projected0[3]);
 	float w0 = projected0[3];
 	Vector4f point0 = view * P0; //transform the point into camera space
 
-	pi = edge->points(0);
-	Vector4f P1 = pi.get()->p;
+	pi = edge->vertices(0);
+	Vector4f P1 = pi->p;
 	Vector4f projected1 = p_v*P1;
 	Vector2f pix1 = Vector2f(projected1[0] / projected1[3],
 	                         projected1[1] / projected1[3]);
@@ -108,7 +108,7 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 	debug_mat.setTo(0);
 
 	unordered_set<shared_ptr<Meshlet>> patch_set(patches.begin(), patches.end());
-	unordered_set<GeometryBase*> base_set;
+	unordered_set<Meshlet*> meshlets;
 
 	//TODO: remove
 	//DEBUG: to enxure readability we will create a vector
@@ -120,28 +120,12 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 	     [](const Meshlet *a, const Meshlet *b) {return a->id > b->id;});
 
 	//iterate over all patches and triangles
+
 	for(shared_ptr<Meshlet> patch : patches) {
 		//iterate over all triangles belonging to this patch and its stitches
 		//in case of an empty unused edge we follow it in both directions
-		base_set.insert(patch.get());
-		patch->double_stitch_mutex.lock();
-		for(shared_ptr<DoubleStitch> &stitch : patch->double_stitches) {
-			if(patch_set.count(stitch->patches[0].lock()) &&
-			   patch_set.count(stitch->patches[1].lock())) {
-				base_set.insert(stitch.get());
-			}
-		}
-		patch->double_stitch_mutex.unlock();
+		meshlets.insert(patch.get());
 
-		patch->triple_stitch_mutex.lock();
-		for(shared_ptr<TripleStitch> stitch : patch->triple_stitches) {
-			if(patch_set.count(stitch->patches[0].lock()) &&
-			   patch_set.count(stitch->patches[1].lock()) &&
-			   patch_set.count(stitch->patches[2].lock())) {
-				base_set.insert(stitch.get());
-			}
-		}
-		patch->triple_stitch_mutex.unlock();
 	}
 
 	cv::Point2i pcv1_old;
@@ -151,10 +135,10 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 		if(border_list.size() != 49) {
 			return;
 		}
-		Vector4f p1 = edge.points(0).get()->p;
+		Vector4f p1 = edge.vertices(0)->p;
 		p1 = debug_proj_pose * p1;
 		p1 = p1 * (1.0f / p1[3]);
-		Vector4f p2 = edge.points(1).get()->p;
+		Vector4f p2 = edge.vertices(1)->p;
 		p2 = debug_proj_pose * p2;
 		p2 = p2 * (1.0f / p2[3]);
 
@@ -183,7 +167,7 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 			current_edge.getOtherEdge(0, current_edge, border_list);
 			renderEdge(current_edge); //debug
 
-			if(base_set.count(current_edge.triangle.container) != 1) {
+			if(meshlets.count(current_edge.triangle->getMeshlet()) != 1) {
 				following_border = false;//if the new edge is attached to a patch outside we abort.
 				continue;
 			}
@@ -224,7 +208,7 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 			while(following_border) {
 				current_edge.getOtherEdge(1, current_edge, border_list);//other direction
 				renderEdge(current_edge);
-				if(base_set.count(current_edge.triangle.container) != 1) {
+				if(meshlets.count(current_edge.triangle->getMeshlet()) != 1) {
 					following_border = false;//if the new edge is attached to a patch outside we abort.
 					continue;
 				}
@@ -243,8 +227,8 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 						}
 						cv::waitKey(1);
 						int debug_size = border_list.size();
-						Triangle *current_triangle = current_edge.triangle.get();
-						Triangle *last_triangle    = debug_last_edge.triangle.get();
+						Triangle *current_triangle = current_edge.triangle;
+						Triangle *last_triangle    = debug_last_edge.triangle;
 						Edge new_edge;
 						debug_last_edge.getOtherEdge(1, new_edge, border_list);
 
@@ -289,7 +273,7 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 	for(GeometryBase *geom_base : debug_patches_ordered) {
 		for(size_t j = 0; j < geom_base->triangles.size(); j++) {
 			Triangle &triangle = geom_base->triangles[j];
-			TriangleReference tri_ref(geom_base, j);
+			Triangle* tri_ref = & triangle;
 			if(!triangle.neighbours[0].valid()) {
 				//TODO: also check for the according neighbour not to have a valid edge
 				if(!triangle.edges[0].valid()) {
@@ -343,6 +327,9 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 void MeshStitcher::reloadBorderGeometry(vector<vector<Edge>> &border_list) {
 	//i very much fear what happens when something here changes
 
+	assert(0);//Do this later... definitely part of the the active sets responsibilities!
+	/*
+
 	MeshReconstruction *mesh = mesh_reconstruction;
 
 	set<Vertex*> vertices;
@@ -382,6 +369,7 @@ void MeshStitcher::reloadBorderGeometry(vector<vector<Edge>> &border_list) {
 		pts[i].get()->p = downloaded_data[i].p;
 	}
 	cout << "[Stitching::reloadBorderGeometry] its over!!" << endl;
+	 */
 }
 
 //TODO: also download the geometry of such list
@@ -401,6 +389,9 @@ void MeshStitcher::stitchOnBorders(
 		cv::Mat debug_color_coded_new_segmentation, cv::Mat new_seg_pm, 
 		cv::Mat new_pt_ind_m, 
 		vector<weak_ptr<GeometryBase>> &debug_list_new_edges) {
+
+	assert(0); // this needs to be here but reimplemented
+	/*
 
 	MeshReconstruction *map = mesh_reconstruction;
 
@@ -1148,4 +1139,5 @@ void MeshStitcher::stitchOnBorders(
 			edge.already_used_for_stitch = true;
 		}
 	}
+	 */
 }

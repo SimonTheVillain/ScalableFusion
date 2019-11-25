@@ -124,12 +124,20 @@ MeshReconstruction::~MeshReconstruction() {
 }
 
 shared_ptr<Meshlet> MeshReconstruction::genMeshlet() {
-	current_max_patch_id_++;
-	shared_ptr<Meshlet> mesh_patch(new Meshlet(&octree_));
-	mesh_patch->id = current_max_patch_id_;
-	mesh_patch->weak_self = mesh_patch;
-	patches_[current_max_patch_id_] = mesh_patch;
-	return mesh_patch;
+	patches_mutex_.lock();
+	current_max_patch_id_ ++;
+	auto meshlet = make_shared<Meshlet>(current_max_patch_id_,&octree_);
+	meshlet->weak_self = meshlet;
+	patches_[current_max_patch_id_] = meshlet;
+	patches_mutex_.unlock();
+	return meshlet;
+}
+
+shared_ptr<Meshlet> MeshReconstruction::getMeshlet(int id){
+	patches_mutex_.lock();
+	auto result = patches_[id];
+	patches_mutex_.unlock();
+	return result;
 }
 
 shared_ptr<MeshTexture> MeshReconstruction::genMeshTexture(
@@ -212,13 +220,14 @@ Triangle* MeshReconstruction::addTriangle_(Vertex* pr1,
 
 //Creating a new triangle just from vertex references.
 //used in the inter frame stitching process
-int debug_global_stitch_triangle_ctr = 0;
-TripleStitch *debug_quenstionable_triplestitch = nullptr;
+//int debug_global_stitch_triangle_ctr = 0;
+//TripleStitch *debug_quenstionable_triplestitch = nullptr;
 
 Triangle* MeshReconstruction::addTriangle_(
 		Vertex* pr1, Vertex* pr2, Vertex* pr3,
 		vector<weak_ptr<GeometryBase>> &debug_new_stitches) {
-
+assert(0);
+/*
 	//TODO: remove this debug output
 	//cout << "This method is untested when it comes to its ability to register triangles" << endl;
 	Triangle triangle;
@@ -357,6 +366,7 @@ Triangle* MeshReconstruction::addTriangle_(
 
 		return tr;
 	}
+ */
 }
 
 float cross(Vector2f v1, Vector2f v2) {
@@ -392,7 +402,7 @@ cv::Mat MeshReconstruction::generateDepthFromView(int width, int height,
 	//but right now we do not have anyof these steps
 	//, therefore we project the points into space. on the gpu
 
-
+	/*
 	//2. Step should be the incorporation of new sensor data into the already existing map.
 	float fx = params.depth_fxycxy[0];
 	float fy = params.depth_fxycxy[1];
@@ -430,12 +440,16 @@ cv::Mat MeshReconstruction::generateDepthFromView(int width, int height,
 		int_depth.at<unsigned short>(i) = ex_geom.at<Vector4f>(i)[2] * 1000.0f;
 	}
 	return int_depth;
+	 */
 }
 
 //let this stay within the mesh
 vector<cv::Rect2f> MeshReconstruction::genBoundsFromPatches(
 		vector<shared_ptr<Meshlet> > &patches, Matrix4f pose, Matrix4f proj,
 		shared_ptr<ActiveSet> active_set) {
+
+	assert(0);//this method should be in the mesher class
+	/*
 
 	Matrix4f mvp = proj * pose.inverse();
 
@@ -533,11 +547,14 @@ vector<cv::Rect2f> MeshReconstruction::genBoundsFromPatches(
 			                                        gpu_geom_storage_.vertex_buffer->getCudaPtr());
 	vector<cv::Rect2f> bounds = vector_tmp;
 	return bounds;
+	 */
 }
 
 void MeshReconstruction::clearInvalidGeometry(shared_ptr<ActiveSet> set, 
                                               cv::Mat depth, 
                                               Matrix4f depth_pose) {
+	assert(0);// this method should not be necessary at all
+	/*
 	if(set == nullptr) {
 		return;
 	}
@@ -594,14 +611,17 @@ void MeshReconstruction::clearInvalidGeometry(shared_ptr<ActiveSet> set,
 	gpu::GeometryValidityChecks::checkVertexValidity(
 			d_std_max_std_map->getCudaSurfaceObject(), width, height, pose_inv, 
 			proj_pose, tasks, gpu_geom_storage_.vertex_buffer->getCudaPtr());//vertices on gpu
+			*/
 }
 
+/*
 shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 		Matrix4f depth_pose,
 		LowDetailRenderer *low_detail_renderer,
 		TextureUpdater *texture_updater,
 		InformationRenderer* information_renderer
 		) {
+	assert(0); // this should definitely not be in this class
 
 	vector<shared_ptr<Meshlet>> visible_shared_patches =
 			octree_.getObjects(depth_pose, params.depth_fxycxy, 
@@ -689,9 +709,13 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 	new_active_set->checkForCompleteGeometry();
 
 	return new_active_set;
-}
 
+}
+ */
+
+/*
 void MeshReconstruction::initInGLRenderingContext() {
+	assert(0); // don't do this in here!
 	gfx::GLUtils::checkForOpenGLError("[ScaleableMap::initInGLRenderingContex] before");
 
 	//to think of: We could ignore any synchronization and begin rendering only if the buffers are created
@@ -703,9 +727,9 @@ void MeshReconstruction::initInGLRenderingContext() {
 
 	//render_presentation.initInContext(640, 480, this);
 
-	gpu_pre_seg_ = make_shared<GpuNormSeg>(garbage_collector_, 
-	                                       params.depth_res.width, 
-	                                       params.depth_res.height);
+	gpu_pre_seg_ = make_shared<GpuNormSeg>(garbage_collector_,
+										   params.depth_res.width,
+										   params.depth_res.height);
 
 	gfx::GLUtils::checkForOpenGLError(
 			"[ScaleableMap::initInGLRenderingContex] Initialization of presentation object.");
@@ -713,4 +737,6 @@ void MeshReconstruction::initInGLRenderingContext() {
 	//low_detail_renderer.initInGlContext();
 
 	gfx::GLUtils::checkForOpenGLError("[ScaleableMap::initInGLRenderingContex] end");
+
 }
+ */

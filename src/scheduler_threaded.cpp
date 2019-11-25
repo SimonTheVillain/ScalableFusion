@@ -307,6 +307,7 @@ SchedulerThreaded::SchedulerThreaded(shared_ptr<MeshReconstruction> map,
 		  frame_count_(10),
 		  frame_done_debug_synchronize_(false) {
 
+	/*
 	//return;//TODO: remove this desparate debug measure
 
 	auto initializerLogic = [&](GLFWwindow *parent_context, 
@@ -382,6 +383,8 @@ SchedulerThreaded::SchedulerThreaded(shared_ptr<MeshReconstruction> map,
 	refine_depth_timer_.mute      = true;
 	expand_timer_.mute            = true;
 	#endif
+
+	 */
 }
 
 SchedulerThreaded::~SchedulerThreaded() {

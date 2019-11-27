@@ -18,6 +18,7 @@ layout (location = 1) uniform mat4 proj_matrix;
 layout (location = 4) uniform int  render_wireframe;
 layout (location = 5) uniform int  color_mode;
 layout (location = 6) uniform int  lighting_mode;
+layout (location = 8) uniform int  patch_info_start_ind;
 
 //some funny varyings altough some are flat
 out vec2 tex_pos_out;
@@ -41,22 +42,21 @@ void main(void) {
 	int triangle_id = id / 3;
 	const GpuTriangle triangle = triangles[triangle_id];
 
-	GpuPatchInfo main_patch_info = patches[triangle.patch_info_inds[0]];
-	patch_id = main_patch_info.patch_id;
-	debug1 = main_patch_info.debug1;
+	GpuPatchInfo patch_info = patches[patch_info_start_ind + gl_DrawID];
+	patch_id = patch_info.patch_id;
+	debug1 = 0;
 
-	GpuPatchInfo patch_info = patches[triangle.patch_info_inds[point_id]];
-	int vertex_id = triangle.pos_indices[point_id] +
-	                patch_info.vertex_source_start_ind;
+	int vertex_id = triangle.indices[point_id] +
+	                patch_info.vertex_start_ind;
 	vec4 point = vertices[vertex_id].p;
 	normal.xyz = vertices[vertex_id].n;
 
-	GpuTextureInfo tex_info = main_patch_info.texture_infos[0];
+	GpuTextureInfo tex_info = patch_info.texture_infos[0];
 	if(color_mode == 2) {
-		tex_info = main_patch_info.std_texture;
+		tex_info = patch_info.std_texture;
 	}
 
-	if(main_patch_info.tex_layers == 0 && color_mode == 0) {
+	if(patch_info.tex_layers == 0 && color_mode == 0) {
 		bindless_texture = 0;
 	} else {
 		bindless_texture = tex_info.tex_pointer_gl;//take the texutre from first slot
@@ -65,7 +65,7 @@ void main(void) {
 	is_stitch = 1;//unfortunately as it is right now we can't tell if a triangle is stitching
 	//------------------------------------------
 
-	uint32_t tex_pos_ind = uint32_t(triangle.tex_indices[point_id]) +
+	uint32_t tex_pos_ind = uint32_t(triangle.indices[point_id]) +
 	                       tex_info.tex_coord_start_ind;
 	tex_pos_out = tex_coords[tex_pos_ind];
 	//adapt the coordinate to the tex atlas
@@ -74,29 +74,15 @@ void main(void) {
 	tex_pos_out = tex_pos_out + tex_info.pos;
 	if(color_mode == 4) {
 		//in this case we put out the (COME ON WHY CAN'T YOU FINISH COMMENTS)
-		tex_info = main_patch_info.std_texture;
+		tex_info = patch_info.std_texture;
 		bindless_texture = tex_info.ref_tex_ptr_debug_gl;
-		uint32_t tex_pos_ind = uint32_t(triangle.tex_indices[point_id]) +
+		uint32_t tex_pos_ind = uint32_t(triangle.indices[point_id]) +
 		                       tex_info.tex_coord_start_ind;
 		tex_pos_out = tex_coords[tex_pos_ind];
 		//adapt the coordinate to the tex atlas
 		tex_pos_out = vec2(tex_pos_out.x * tex_info.size.x,
 		                   tex_pos_out.y * tex_info.size.y);
 		tex_pos_out = tex_pos_out + tex_info.ref_tex_pos_debug;
-	}
-	if(color_mode == 5) {
-		//mode 5 is the output of the first layer of label textures
-		tex_info = main_patch_info.segmentation_texture;
-		bindless_texture = tex_info.tex_pointer_gl;
-		uint32_t tex_pos_ind = uint32_t(triangle.tex_indices[point_id]) +
-		                       tex_info.tex_coord_start_ind;
-		tex_pos_out = tex_coords[tex_pos_ind];
-		//adapt the coordinate to the tex atlas
-		tex_pos_out = vec2(tex_pos_out.x * tex_info.size.x,
-		                   tex_pos_out.y * tex_info.size.y);
-		tex_pos_out = tex_pos_out + tex_info.ref_tex_pos_debug;
-
-		bindless_texture = tex_info.ref_tex_ptr_debug_gl;
 	}
 
 	interp_position = view_matrix * point;  //the position of the vertex in space (gets interpolated for the fragments)
@@ -111,9 +97,8 @@ void main(void) {
 	vec2 sc[3];//screen coords
 	vec3 points[3];
 	for(int i = 0; i < 3; i++) {
-		GpuPatchInfo patch_info = patches[triangle.patch_info_inds[i]];
-		int vertex_id = triangle.pos_indices[i] +
-		                patch_info.vertex_source_start_ind;
+		int vertex_id = triangle.indices[i] +
+		                patch_info.vertex_start_ind;
 		vec4 p = vertices[vertex_id].p;
 		points[i] = p.xyz;
 		p = proj_matrix * view_matrix * p;

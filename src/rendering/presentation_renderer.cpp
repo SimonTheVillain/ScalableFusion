@@ -171,7 +171,7 @@ void PresentationRenderer::renderInWindow(GpuStorage* gpu_storage,
 										  InformationRenderer* information_renderer,
 										  LowDetailRenderer* low_detail_renderer,
 										  TextureUpdater* texture_updater) {
-	assert(0); //TODO: rework this and let the scheduler handle the creation of contexts
+	//assert(0); //TODO: rework this and let the scheduler handle the creation of contexts
 	/*
 
 	//return;//TODO: remove this debug measure

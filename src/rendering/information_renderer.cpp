@@ -30,11 +30,6 @@ const string triangle_ref_depth_frag =
 #include "shader/triangle_ref_depth.frag"
 ;
 
-const string triangle_ref_depth_geom =
-#include "shader/datastructure.glsl"
-
-#include "shader/triangle_ref_depth.geom"
-;
 
 const string triangle_ref_depth_vert =
 #include "shader/datastructure.glsl"
@@ -46,11 +41,6 @@ const string unified_info_frag =
 #include "shader/unified_info.frag"
 ;
 
-const string unified_info_geom =
-#include "shader/datastructure.glsl"
-
-#include "shader/unified_info.geom"
-;
 const string unified_info_vert =
 #include "shader/datastructure.glsl"
 

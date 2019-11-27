@@ -27,8 +27,8 @@ in vec4 interp_proj;//debug is this the same as gl_FragCoord?
 flat in uint64_t bindless_texture;
 in vec2 tex_pos_out;
 
-in vec2 label_pos_out;
-flat in uint64_t bindless_label_texture;
+//in vec2 label_pos_out;
+//flat in uint64_t bindless_label_texture;
 
 in float z;
 
@@ -51,6 +51,7 @@ void main(void) {
 
 	//LABEL
 	//TODO: proper readout of labels
+	/*
 	int test = 700000;
 	label = vec4(intBitsToFloat(test), 1, 0, 1);
 
@@ -61,6 +62,7 @@ void main(void) {
 		vec4 surface_labels = texture(sampler, label_pos_out);
 		label = vec4(surface_labels.x, 1, 0, 1);
 	}
+	*/
 	//rendering to 32 bit integers
 	//https://www.gamedev.net/forums/topic/571627-how-to-render-32-bit-integer-into-textures/
 }

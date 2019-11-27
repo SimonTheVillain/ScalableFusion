@@ -32,7 +32,7 @@ void genTexCoords_kernel(TexCoordGen::Task *tasks, Matrix4f proj_pose,
 			                           (tex_coord[1] - task.offset_y) * task.scale_y);
 
 			//TODO: put the point back into bounds
-			task.coords[task.triangles[i].tex_indices[j]] = scaled;
+			task.coords[task.triangles[i].indices[j]] = scaled;
 		}
 		i += blockDim.x;
 	}

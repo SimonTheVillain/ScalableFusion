@@ -14,7 +14,7 @@ layout(std430, binding = 3) buffer PatchBuffer {
 };
 
 layout(location = 0) uniform int max_nr_tex_points; //this seems to be the only thing that is actually needed
-
+layout(location = 1) uniform int patch_info_start_ind;
 //todo: The output for the whole shader is going to be a texture with triangle indices and
 //a parametrized position on the textures
 flat out int triangle_index;//thats an easy one
@@ -26,12 +26,12 @@ void main(void) {
 	int point_id    = id % 3;
 	int triangle_id = id / 3;
 	const GpuTriangle triangle = triangles[triangle_id];
-	int patch_slot             = triangle.patch_info_inds[0];
+	int patch_slot             = gl_DrawID + patch_info_start_ind;
 	GpuPatchInfo patch_info    = patches[patch_slot];
 
-	vec4 point = vertices[triangle.pos_indices[point_id]].p;
+	vec4 point = vertices[triangle.indices[point_id]].p;
 
-	uint32_t tex_pos_ind = triangle.tex_indices[point_id] +
+	uint32_t tex_pos_ind = triangle.indices[point_id] +
 	                       patch_info.std_texture.tex_coord_start_ind;
 
 	//the new stuff:

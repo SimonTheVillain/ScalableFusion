@@ -15,6 +15,7 @@ layout(std430, binding = 3) buffer PatchBuffer {
 
 layout(location = 0) uniform mat4 view_matrix;//one matrix is taking up 4 locations
 layout(location = 1) uniform mat4 proj_matrix;
+layout(location = 2) uniform int patch_info_start_ind;
 
 //some funny varyings altough some are flat
 out vec2 tex_pos_out;
@@ -35,21 +36,20 @@ void main(void) {
 	int point_id    = id % 3;
 	int triangle_id = id / 3;
 	const GpuTriangle triangle = triangles[triangle_id];
-	GpuPatchInfo main_patch_info = patches[triangle.patch_info_inds[0]];
-	patch_id = main_patch_info.patch_id;
+	GpuPatchInfo patch_info = patches[patch_info_start_ind + gl_DrawID];
+	patch_id = patch_info.patch_id;
 
-	GpuPatchInfo patch_info = patches[triangle.patch_info_inds[point_id]];
-	int vertex_id = triangle.pos_indices[point_id] +
-	                patch_info.vertex_source_start_ind;
+	int vertex_id = triangle.indices[point_id] +
+	                patch_info.vertex_start_ind;
 	vec4 point = vertices[vertex_id].p;
-	GpuTextureInfo tex_info = main_patch_info.std_texture;
+	GpuTextureInfo tex_info = patch_info.std_texture;
 	tex_coord_slot_out = int(tex_info.tex_coord_start_ind);//debug seems to be OK tough
 	bindless_texture = tex_info.tex_pointer_gl;
 
 	is_stitch = 1;//unfortunately as it is right now we can't tell if a triangle is stitching
 	//------------------------------------------
 
-	uint32_t tex_pos_ind = triangle.tex_indices[point_id] + 
+	uint32_t tex_pos_ind = triangle.indices[point_id] +
 	                       tex_info.tex_coord_start_ind;
 
 	tex_pos_out = tex_coords[tex_pos_ind];

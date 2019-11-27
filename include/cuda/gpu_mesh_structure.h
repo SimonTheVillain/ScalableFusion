@@ -30,20 +30,8 @@ struct GpuVertex {
 //triangle with references to everything. since the first referenced patch(patch slot) is the one we get
 //our textures from we do not need extra structures for stitch triangles.
 struct GpuTriangle {
-
-	//TODO: transition from absolute indices to relative indices and
-	//references to the patch itself.
-	//NOT NEEDED ANYMORE
-	//int16_t patch_info_inds[3];//patch info indices for the triangle
-
 	int16_t indices[3];//these are absolute indices for the vertex buffer.
 
-	int16_t tex_indices[3];//these texIndices are relative. the texture information itself is within the patchSlot
-
-	// TODO:
-	int16_t invalid = 0;//invalid pixel which are valid
-	int16_t altogether = 0;//pixel alltogether
-	//if too many of the pixel are invalid
 };
 
 
@@ -78,7 +66,7 @@ struct GpuTextureInfo {
  * storing vertex indices in a ringbuffer)
  */
 struct GpuPatchInfo {
-	//int32_t patch_id;//only for information rendering i presume
+	int32_t patch_id;//only for information rendering i presume
 	int32_t triangle_start_ind;
 	int32_t vertex_start_ind;
 	GpuTextureInfo std_texture;

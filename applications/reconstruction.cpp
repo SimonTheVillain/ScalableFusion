@@ -253,7 +253,7 @@ int main(int argc, const char *argv[]) {
 	if(!glfwInit())
 		exit(EXIT_FAILURE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_VISIBLE, 0);
 	invisible_window = glfwCreateWindow(640, 480, "Invisible Window", nullptr,
 										nullptr);

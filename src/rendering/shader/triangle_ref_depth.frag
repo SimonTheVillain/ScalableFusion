@@ -1,5 +1,5 @@
 R"(
-#version 450 core
+#version 460 core
 
 #extension GL_NV_bindless_texture : require
 #extension GL_NV_gpu_shader5 : require // for uint64_t

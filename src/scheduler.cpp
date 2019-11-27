@@ -23,7 +23,7 @@ using namespace Eigen;
 
 GLFWwindow *SchedulerBase::createConnectedGlContext(GLFWwindow *context) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);//4.6 is the least viable version we need
 	glfwWindowHint(GLFW_VISIBLE, 0);
 	return glfwCreateWindow(640, 480, "HOPE U NO VISIBLE", nullptr, context);
 }

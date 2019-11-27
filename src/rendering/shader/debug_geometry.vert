@@ -15,7 +15,9 @@ layout(std430, binding = 3) buffer PatchBuffer {
 
 layout(location = 0) uniform mat4 view_matrix;//one matrix is taking up 4 locations
 layout(location = 1) uniform mat4 proj_matrix;
-layout(location = 3) uniform int  overwrite_start_ind;
+layout(location = 3) uniform int  overwrite_start_ind; //TODO: remove this
+//TODO: new inputs
+layout(location = 4) uniform int patch_info_start_ind;
 
 vec2 res = vec2(1280, 800);//this should be a uniform set outside of the shader
 out float distances[3];
@@ -27,16 +29,15 @@ void main(void) {
 	int triangle_id = id / 3;
 	const GpuTriangle triangle = triangles[triangle_id];
 
-	GpuPatchInfo main_patch_info = patches[triangle.patch_info_inds[0]];
-	int patch_id = main_patch_info.patch_id;
+	GpuPatchInfo patch_info = patches[patch_info_start_ind + gl_DrawID];
+	int start_ind = patch_info.vertex_start_ind;
 
-	GpuPatchInfo patch_info = patches[triangle.patch_info_inds[point_id]];
-	int start_ind = patch_info.vertex_source_start_ind = patch_info.vertex_source_start_ind;
+
 	if(overwrite_start_ind >= 0) {
 		start_ind = overwrite_start_ind;
 	}
 
-	int vertex_id = triangle.pos_indices[point_id] + start_ind;
+	int vertex_id = triangle.indices[point_id] + start_ind;
 	vec4 point = vertices[vertex_id].p;
 
 	gl_Position = proj_matrix * view_matrix * point;
@@ -44,12 +45,7 @@ void main(void) {
 	vec2 sc[3];//screen coords
 	vec3 points[3];
 	for(int i = 0; i < 3; i++) {
-		GpuPatchInfo patch_info = patches[triangle.patch_info_inds[i]];
-		start_ind = patch_info.vertex_source_start_ind = patch_info.vertex_source_start_ind;
-		if(overwrite_start_ind >= 0) {
-			start_ind = overwrite_start_ind;
-		}
-		int vertex_id = triangle.pos_indices[i] + start_ind;
+		int vertex_id = triangle.indices[i] + start_ind;
 		vec4 p = vertices[vertex_id].p;
 		points[i] = p.xyz;
 		p = proj_matrix * view_matrix * p;

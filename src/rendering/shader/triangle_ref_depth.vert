@@ -15,7 +15,7 @@ layout(std430, binding = 3) buffer PatchBuffer {
 
 layout(location = 0) uniform mat4 view_matrix;//one matrix is taking up 4 locations
 layout(location = 1) uniform mat4 proj_matrix;
-
+layout(location = 2) uniform int patch_info_start_ind;
 //some funny varyings altough some are flat
 flat out int is_stitch;
 flat out int patch_id;
@@ -28,13 +28,13 @@ void main(void) {
 	int point_id    = id % 3;
 	int triangle_id = id / 3;
 	const GpuTriangle triangle = triangles[triangle_id];
-	GpuPatchInfo main_patch_info = patches[triangle.patch_info_inds[0]];
+	GpuPatchInfo main_patch_info = patches[patch_info_start_ind + gl_DrawID];
 	patch_id = main_patch_info.patch_id;
 	triangle_index = triangle_id - main_patch_info.triangle_start_ind;
 
-	GpuPatchInfo patch_info = patches[triangle.patch_info_inds[point_id]];
-	int vertex_id = triangle.pos_indices[point_id] +
-	                patch_info.vertex_source_start_ind;
+	GpuPatchInfo patch_info = patches[triangle.indices[point_id]];
+	int vertex_id = triangle.indices[point_id] +
+	                patch_info.vertex_start_ind;
 	vec4 point = vertices[vertex_id].p;
 	point_world = point;
 	is_stitch = 10;

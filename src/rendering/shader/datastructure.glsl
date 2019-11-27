@@ -1,5 +1,5 @@
 R"(
-#version 450 core
+#version 460 core
 #extension GL_ARB_gpu_shader_int64 : enable
 #extension GL_NV_gpu_shader5 : enable
 
@@ -17,13 +17,7 @@ struct GpuVertex {
 };
 
 struct GpuTriangle {
-	int16_t pos_indices[3];
-	int16_t tex_indices[3];
-
-	//how to not render invalid vertices
-	//https://stackoverflow.com/questions/5116289/is-it-possible-to-drop-a-triangle-from-being-rendered-using-vertex-shaders
-	int16_t invalid;//invalid pixel which are valid
-	int16_t alltogether;//pixel alltogether
+	int16_t indices[3];
 };
 
 
@@ -56,9 +50,9 @@ struct GpuTextureInfo {
  * storing vertex indices in a ringbuffer)
  */
 struct GpuPatchInfo {
-	//int32_t patch_id; //only for information rendering i presume
+	int32_t patch_id; //only for information rendering i presume
 	int32_t triangle_start_ind;
-	int32_t vertexe_start_ind;
+	int32_t vertex_start_ind;
 	GpuTextureInfo std_texture;
 	GpuTextureInfo texture_infos[GPU_MAX_TEX_PER_PATCH];
 	int32_t tex_layers;

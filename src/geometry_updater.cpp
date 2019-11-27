@@ -18,6 +18,7 @@ void GeometryUpdater::extend(
 		LowDetailRenderer* low_detail_renderer,
 		GpuStorage* gpu_storage,
 		shared_ptr<ActiveSet> active_set_of_formerly_visible_patches,
+		vector<shared_ptr<ActiveSet>> all_active_sets,
 		shared_ptr<gfx::GpuTex2D> d_std_tex, cv::Mat& d_std_mat,
 		Matrix4f depth_pose_in, shared_ptr<gfx::GpuTex2D> rgb_tex,
 		Matrix4f color_pose_in) {
@@ -43,11 +44,14 @@ void GeometryUpdater::extend(
 
 	//extract the visible patches from the active set
 	vector<shared_ptr<Meshlet>> visible_meshlets;
-	for(auto bla : active_set_of_formerly_visible_patches->patch_inds){
-		shared_ptr<Meshlet> meshlet =
-				reconstruction->getMeshlet(bla.first);
-		visible_meshlets.push_back(meshlet);
+	if(active_set_of_formerly_visible_patches){
+		for(auto bla : active_set_of_formerly_visible_patches->patch_inds){
+			shared_ptr<Meshlet> meshlet =
+					reconstruction->getMeshlet(bla.first);
+			visible_meshlets.push_back(meshlet);
+		}
 	}
+
 
 	//this might me more suitable for the beginning but lets do it here:
 	information_renderer->renderDepth(
@@ -72,7 +76,6 @@ void GeometryUpdater::extend(
 			visible_meshlets, borders,
 			proj_pose);
 	stitching.reloadBorderGeometry(borders);
-	//TODO: reimplement this function to improve everything!!!
 	stitching.rasterBorderGeometry(borders, depth_pose_in, proj_depth, ex_geom);
 
 	//this is a premilary measure to get the geometry adding running....
@@ -108,6 +111,8 @@ void GeometryUpdater::extend(
 			}
 		}
 	}
+	cv::imshow("points",points);
+	cv::waitKey(1);
 
 	#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
 	cv::imshow("novel geometry", points);
@@ -212,11 +217,28 @@ void GeometryUpdater::extend(
 	for(size_t i = 0; i < new_shared_mesh_patches.size(); i++) {
 		shared_ptr<Meshlet> &patch = new_shared_mesh_patches[i];
 		if(patch->triangles.empty()) {
-			for(int i=0;i<patch->vertices.size();i++){
-				Vertex &vertex = patch->vertices[i];
-				//TODO: check if vertex is connected to triangles...
+			for(int j=0;j<patch->vertices.size();j++){
+				Vertex &vertex = patch->vertices[j];
+				// check if vertex is connected to triangles...
 				// if it is just std::move it to one possible neighbour
+				for(int k=0;k<vertex.triangles.size();k++){
+					Triangle  *triangle = vertex.triangles[k].triangle;
+					Meshlet *target_meshlet = nullptr;
+					for(int l : {0,1,2}){
+						if(triangle->vertices[l]->meshlet != patch.get()){
+							target_meshlet = triangle->vertices[l]->meshlet;
+							break;
+						}
+					}
+					//we found a suitable  spot for the vertex. so we move it
+					if(target_meshlet){
+						target_meshlet->vertices.push_back(move(vertex));
+						break;
+					}
+
+				}
 			}
+			patch->vertices.clear();
 			set_of_patches_to_be_removed.push_back(patch);
 		} else {
 			// If the patch has real triangles we keep it
@@ -253,12 +275,17 @@ void GeometryUpdater::extend(
 							new_shared_mesh_patches.begin(),
 							new_shared_mesh_patches.end());
 	shared_ptr<ActiveSet> new_active_set =
+			make_shared<ActiveSet>(gpu_storage,
+									visible_meshlets,
+									all_active_sets);
+			/*
 			gpu_storage->makeActiveSet(
 					visible_meshlets,
 					reconstruction,
 					low_detail_renderer,
 					texture_updater,
 					information_renderer, true); // most of the members are initial
+					*/
 	new_active_set->name = "createdInApplyNewData";
 
 	/*************************************TOOOODOOOOO************************/

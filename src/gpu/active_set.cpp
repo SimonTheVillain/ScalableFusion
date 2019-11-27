@@ -13,6 +13,31 @@
 
 using namespace std;
 using namespace Eigen;
+
+
+
+ActiveSet::ActiveSet(GpuStorage *storage,
+					 vector<shared_ptr<Meshlet>> patches,
+					 vector<shared_ptr<ActiveSet>> active_sets,
+					 vector<bool> allocate_new_verts){
+	vector<shared_ptr<Meshlet>> reupload;
+
+	for(auto patch : patches){
+
+		for(auto old_set : active_sets){
+			//if(patch_inds.count(patches.))
+		}
+	}
+}
+
+
+ActiveSet::~ActiveSet() {
+
+}
+
+void ActiveSet::setupHeaders(){
+	cout << "TODO: (IMPLEMENT THIS) ActiveSet::setupHeaders" << endl;
+}
 /*
 ActiveSet::ActiveSet(GpuStorage *storage,
 					 vector<shared_ptr<Meshlet>> patches,

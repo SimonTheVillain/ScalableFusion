@@ -116,7 +116,7 @@ public:
 	Vector3f n;
 
 	Meshlet* meshlet;
-private:
+public:
 
 
 	int32_t tex_ind_in_main_patch;
@@ -565,12 +565,15 @@ struct Triangle {
 
 		for(int i=0;i<3;i++){
 			Neighbour &nb = neighbours[i];
+			nb = o.neighbours[i];
 			//update the neighbours reference pointing at this
-			nb.ptr->neighbours[nb.pos].ptr = this;
-			nb.invalidate();//invalidating the move source
-
+			if(nb.ptr){
+				nb.ptr->neighbours[nb.pos].ptr = this;
+				o.neighbours[i].invalidate();//invalidating the move source
+			}
 			vertices[i] = o.vertices[i];
 			o.vertices[i] = nullptr;//invalidate at source (maybe not necessary)
+			assert(vertices[i]);
 			vertices[i]->replaceTriangle(&o,this);
 
 

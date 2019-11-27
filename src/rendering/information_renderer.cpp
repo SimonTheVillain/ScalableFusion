@@ -322,8 +322,14 @@ void InformationRenderer::renderDepth(ActiveSet *active_set,
 	glUniformMatrix4fv(1, 1, false, (GLfloat*) &projection);
 	glUniformMatrix4fv(4, 1, false, (GLfloat*) &projection_tmp);//for as soon as i added this...
 
-	if(active_set->patches.size() == 0) {
-		//the active set is empty
+	if(active_set){
+		if(active_set->patches.size() == 0) {
+			//the active set is empty
+			glFinish();
+			return;
+		}
+	}else{
+		//in case the active set is invalid
 		glFinish();
 		return;
 	}

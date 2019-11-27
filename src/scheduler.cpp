@@ -128,7 +128,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		}
 		take_next_step_ = false;
 		if(!source->readFrame()) {
-			break; // end this loop if there is no new image
+			break; // end this lorop if there is no new image
 			//This could be written more efficiently (but who cares about beautiful code?) Niko does.
 		}
 
@@ -238,14 +238,12 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 			geometry_updater->extend(
 					reconstruction.get(), information_renderer, texture_updater, low_detail_renderer_,
 					gpu_storage_,
-					active_set, d_std_tex, d_std_mat, depth_pose,
+					active_set,active_sets, d_std_tex, d_std_mat, depth_pose,
 					rgb_texture, rgb_pose);
 
-			//after the first step we extend.
+			//after the first step we wait (DEBUG).
 			cv::waitKey();
-			//setting the active set, which also gets rendered to
-			//the one updated in the expand method.
-			//only do this in single threaded mode.
+
 
 			frame_count = 0;
 

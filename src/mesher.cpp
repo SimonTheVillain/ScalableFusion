@@ -292,18 +292,20 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 		for(int j = 0; j < width; j++) {
 			Meshlet* mesh = (Meshlet*) mesh_pointers.at<uint64_t>(i, j);
 			if(mesh) {
-				Vertex vertex;
-				vertex.p = depth_pose * points.at<Vector4f>(i, j);
-				if(isnan(vertex.p[0])) {
-					assert(0);
-					cout << "[ScaleableMap::meshIt] Why is this nan?" << endl;
-				}
-
 				int index = mesh->vertices.size();
 				vertex_indices.at<int>(i, j) = index;
 
 				mesh->work_in_progress.lock();
-				mesh->vertices.push_back(vertex);
+				mesh->vertices.emplace_back();
+				Vertex &vert = mesh->vertices.back();
+				vert.p = depth_pose * points.at<Vector4f>(i, j);
+#ifdef DEBUG
+				if(isnan(vert.p[0])) {
+					assert(0);
+					cout << "[ScaleableMap::meshIt] Why is this nan?" << endl;
+				}
+#endif
+				vert.meshlet = mesh;
 				mesh->work_in_progress.unlock();
 
 
@@ -325,20 +327,41 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 			// or the other way around.
 			// In each case the possible triangles are different
 
+			cv::Vec2i coords[] =
+					{	{(int)i,(int)j},
+	   					{(int)i, (int)j + 1},
+	   					{(int)i+1, (int)j + 1},
+						{(int)i + 1, (int)j}};
 			float zs[4]; // Storage for depth values
 			zs[0] = points.at<Vector4f>(    i,     j)[2]; // Upper left
-			zs[2] = points.at<Vector4f>(i + 1, j + 1)[2]; // Bottom right
 			zs[1] = points.at<Vector4f>(    i, j + 1)[2]; // Upper right
+			zs[2] = points.at<Vector4f>(i + 1, j + 1)[2]; // Bottom right
 			zs[3] = points.at<Vector4f>(i + 1,     j)[2]; // Bottom left
 			float distance_ul_br = fabs(zs[0] - zs[2]);
 			float distance_ur_bl = fabs(zs[1] - zs[3]);
 
-			Vertex* pr[4] = {
+			Vertex* pr[4];/* = {
 					&(((Meshlet*) mesh_pointers.at<uint64_t>(    i, j    ))->vertices[vertex_indices.at<int>(i, j)]),
 					&(((Meshlet*) mesh_pointers.at<uint64_t>(i + 1, j + 1))->vertices[vertex_indices.at<int>(i, j + 1)]),
 					&(((Meshlet*) mesh_pointers.at<uint64_t>(i    , j + 1))->vertices[vertex_indices.at<int>(i, j + 1)]),
 					&(((Meshlet*) mesh_pointers.at<uint64_t>(i + 1, j    ))->vertices[vertex_indices.at<int>(i + 1, j)]),
-			};
+			};*/
+			float threshold = max_depth_step;
+
+			int nan_count = 0;
+			int nan_at = -1;
+			for(int k : {0,1,2,3}){
+				if(isnan(zs[k])){
+					nan_count++;
+					nan_at = k;
+				}else{
+					Meshlet* meshlet = (Meshlet*) mesh_pointers.at<uint64_t>(coords[k][0], coords[k][1]);
+					int index = vertex_indices.at<int>(coords[k][0], coords[k][1]);
+					//Vector4f debug =  points.at<Vector4f>(
+					assert(meshlet);//this should not be zero! why is it though?
+					pr[k] = &(meshlet->vertices[index]);
+				}
+			}
 			/*
 			pr[0].set((Meshlet*) mesh_pointers.at<uint64_t>(i, j),
 			          vertex_indices.at<int>(    i,     j));
@@ -350,16 +373,13 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 			          vertex_indices.at<int>(i + 1,     j));
 			          */
 
-			float threshold = max_depth_step;
-
-			int nan_count = 0;
-			int nan_at = -1;
+			/*
 			for(size_t k = 0; k < 4; k++) {
 				if(isnan(zs[k])) {
 					nan_count++;
 					nan_at = k;
 				}
-			}
+			}*/
 			if(nan_count == 1) {
 
 				// The threshold has to be taken from a valid pixel
@@ -544,6 +564,8 @@ inline bool operator==(const VertexTexConn &lhs, const VertexTexConn &rhs) {
 }
 
 void Mesher::genTexIndices(vector<shared_ptr<Meshlet> > &patches) {
+	cout << "TODO: reimplement Mesher::genTexIndices" << endl;
+	return;
 	assert(0);//this really needs to be fixed!!!!!!! important
 	/*
 	for(size_t i = 0; i < patches.size(); i++) {

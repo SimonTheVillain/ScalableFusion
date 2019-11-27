@@ -327,6 +327,8 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 void MeshStitcher::reloadBorderGeometry(vector<vector<Edge>> &border_list) {
 	//i very much fear what happens when something here changes
 
+	cout << "TODO: reimplement MeshStitcher::reloadBorderGeometry" << endl;
+	return;
 	assert(0);//Do this later... definitely part of the the active sets responsibilities!
 	/*
 
@@ -389,7 +391,8 @@ void MeshStitcher::stitchOnBorders(
 		cv::Mat debug_color_coded_new_segmentation, cv::Mat new_seg_pm, 
 		cv::Mat new_pt_ind_m, 
 		vector<weak_ptr<GeometryBase>> &debug_list_new_edges) {
-
+	cout << "IMPLEMENT THIS!!!!! MeshStitcher::stitchOnBorders" << endl;
+	return;
 	assert(0); // this needs to be here but reimplemented
 	/*
 

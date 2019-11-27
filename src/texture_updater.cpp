@@ -312,6 +312,7 @@ void TextureUpdater::colorTexUpdate(MeshReconstruction* reconstruction,
 									LowDetailRenderer* low_detail_renderer,
 									Matrix4f color_pose_in,
 									shared_ptr<ActiveSet> &active_set) {
+	return;
 	assert(0);//TODO: reinsert this funcionality
 	/*
 	int width = rgba_tex->getWidth();

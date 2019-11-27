@@ -553,7 +553,7 @@ vector<cv::Rect2f> MeshReconstruction::genBoundsFromPatches(
 void MeshReconstruction::clearInvalidGeometry(shared_ptr<ActiveSet> set, 
                                               cv::Mat depth, 
                                               Matrix4f depth_pose) {
-	assert(0);// this method should not be necessary at all
+	//assert(0);// this method should not be necessary at all TODO: remove
 	/*
 	if(set == nullptr) {
 		return;

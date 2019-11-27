@@ -40,6 +40,8 @@ public:
 			LowDetailRenderer* low_detail_renderer,
 			GpuStorage* gpu_storage,
 			shared_ptr<ActiveSet> active_set_of_formerly_visible_patches,
+			vector<shared_ptr<ActiveSet>> all_active_sets, //TODO: get up to date active sets by providing an
+			// interface to a proper container
 			shared_ptr<gfx::GpuTex2D> d_std_tex,
 			cv::Mat &d_std_mat, Matrix4f depth_pose_in,
 			shared_ptr<gfx::GpuTex2D> rgb_tex,

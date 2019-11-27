@@ -22,6 +22,9 @@ public:
 			pos = -1;
 		}
 		Triangle* get(){
+			if(ptr==nullptr){
+				return nullptr;
+			}
 			return & (ptr->triangles[pos]);
 		}
 	};

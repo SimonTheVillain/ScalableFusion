@@ -71,13 +71,11 @@ public:
 	//setup of active set while also retaining data from existing active sets
 	ActiveSet(	GpuStorage *storage,
 				vector<shared_ptr<Meshlet>> patches,
-				vector<shared_ptr<ActiveSet>> activeSets,
+				vector<shared_ptr<ActiveSet>> active_sets,
 				vector<bool> allocate_new_verts = {});
 
 
-	void setupHeaders(){
-		assert(0);//TODO: this!
-	}
+	void setupHeaders();
 	GLuint getHeaderBuffer();
 
 

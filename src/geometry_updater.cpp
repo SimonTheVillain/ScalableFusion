@@ -277,7 +277,7 @@ void GeometryUpdater::extend(
 	shared_ptr<ActiveSet> new_active_set =
 			make_shared<ActiveSet>(gpu_storage,
 									visible_meshlets,
-									all_active_sets);
+									all_active_sets);//TODO: all active sets should be
 			/*
 			gpu_storage->makeActiveSet(
 					visible_meshlets,

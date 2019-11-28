@@ -70,7 +70,7 @@ public:
 
 	//setup of active set while also retaining data from existing active sets
 	ActiveSet(	GpuStorage *storage,
-				vector<shared_ptr<Meshlet>> patches,
+				vector<shared_ptr<Meshlet>> meshlets_requested,
 				vector<shared_ptr<ActiveSet>> active_sets,
 				vector<bool> allocate_new_verts = {});
 
@@ -80,7 +80,7 @@ public:
 
 
 
-	vector<shared_ptr<MeshletGPU>> patches;
+	vector<shared_ptr<MeshletGPU>> meshlets;
 	shared_ptr<PatchInfoBufConnector> headers;
 	//the key is the patch id (maybe share patch id with stitch ids)
 	//value is the index in the according vectors

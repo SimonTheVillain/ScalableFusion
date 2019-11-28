@@ -90,7 +90,7 @@ void PresentationRenderer::render(GpuStorage* gpu_storage, ActiveSet *active_set
 	if(active_set == nullptr) {
 		return;
 	}
-	if(active_set->patches.size() == 0) {
+	if(active_set->meshlets.size() == 0) {
 		return;
 	}
 

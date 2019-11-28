@@ -17,17 +17,99 @@ using namespace Eigen;
 
 
 ActiveSet::ActiveSet(GpuStorage *storage,
-					 vector<shared_ptr<Meshlet>> patches,
+					 vector<shared_ptr<Meshlet>> meshlets_requested,
 					 vector<shared_ptr<ActiveSet>> active_sets,
 					 vector<bool> allocate_new_verts){
 	vector<shared_ptr<Meshlet>> reupload;
 
-	for(auto patch : patches){
+	//the key is the index
+	unordered_map<int,shared_ptr<Meshlet>> map_requested;
+	for(const shared_ptr<Meshlet> &meshlet : meshlets_requested)
+		map_requested[meshlet->id] = meshlet;
 
-		for(auto old_set : active_sets){
-			//if(patch_inds.count(patches.))
+	//patches_set.insert(patches.begin(),patches.end());
+
+	//key is index
+	unordered_map<int,shared_ptr<MeshletGPU>> most_current_meshlets;
+
+	//unfortunately this does not hold the most current texture
+	unordered_map<int,shared_ptr<TextureLayerGPU>> most_current_textures;
+
+	//todo: fill the most current maps
+	for(auto active_set : active_sets){
+
+		if(active_set == nullptr)
+			continue;
+		for(auto id_ind : active_set->patch_inds){
+			int id = id_ind.first;
+			int ind = id_ind.second;
+
+
+			if(map_requested.count(id) == 0)
+				break;// the meshlet in question is not requested to be in this active set
+			if(most_current_meshlets.count(id)){
+				//check which one is the newest
+				auto &most_current = most_current_meshlets[id];
+				auto candidate = active_set->meshlets[ind];
+				//TODO: at this point it would be appropriate to test for triangle_version
+				if(candidate->vertex_version > most_current->vertex_version){
+					//most_current_meshlets[id] = candidate;
+					most_current = candidate;
+				}
+			}else{
+				most_current_meshlets[id] = active_set->meshlets[ind];
+			}
+
+			//TODO: what to do about the textures?
+			//maybe we create a GPUMeshlet that collects the newest elements of neighbouring meshlets
 		}
 	}
+
+	//generate list of meshlets which do not reside on GPU -> reupload them
+	vector<shared_ptr<Meshlet>> meshlet_to_reupload;//TODO: get rid of this list?
+
+	//upload / convert list to ne
+	for(auto meshlet : meshlets_requested){
+		int index = 0;
+		if(most_current_meshlets.count(meshlet->id)){
+			//there is a meshlet on the GPU
+			//TODO: check if it is sufficient and in case generate it
+		}else{
+			//there is no meshlet on the GPU
+			//at least allocate the memory for this meshlet!
+			//upload...
+
+			meshlet_to_reupload.push_back(meshlet);
+		}
+		patch_inds[meshlet->id] = index;
+	}
+
+	for(auto meshlet : most_current_meshlets){
+		//TODO: reassemble the most current meshlets
+	}
+
+
+
+
+	for(auto meshlet : meshlet_to_reupload){
+		//TODO: reupload this meshlet
+	}
+
+	/*
+	for(auto patch : patches){
+
+		shared_ptr<MeshletGPU> most_current = nullptr;
+		int most_current_triangle = -1;
+		int most_current_vertices = -1;
+		for(auto old_set : active_sets){
+			if(old_set->patch_inds.count(patch->id)){
+				int ind = old_set->patch_inds[patch->id];
+				//if
+			}
+		}
+	}
+	for(auto patch:)
+	 */
 }
 
 

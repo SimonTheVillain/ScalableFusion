@@ -124,14 +124,14 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 	shared_ptr<ActiveSet> active_set_last_expand;
 	Matrix4f depth_pose_last_expand;
-
 	while(source->isRunning() && !end_threads_) {
 		if(paused_ && !take_next_step_) {
 			continue;
 		}
+
 		take_next_step_ = false;
 		if(!source->readFrame()) {
-			break; // end this loop if there is no new image
+			continue; // end this loop if there is no new image
 			//This could be written more efficiently (but who cares about beautiful code?) Niko does.
 		}
 
@@ -290,7 +290,6 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 		cout << "FBOs active " << reconstruction->getFboCountDebug_() << endl;
 	}
-
 	delete information_renderer;
 	delete geometry_updater;
 	delete texture_updater;

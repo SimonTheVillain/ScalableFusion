@@ -103,6 +103,8 @@ struct Frame {
 	cv::Mat depth;       //!< The depth image
 	float exposure_time; //!< The exposure time of the RGB image
 	double timestamp;    //!< The timestamp of the frame
+
+	//TODO: maybe we need something related to ISO as well
 };
 
 //! Abstract base class for video sources

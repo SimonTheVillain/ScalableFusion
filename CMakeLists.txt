@@ -11,7 +11,7 @@ cmake_minimum_required (VERSION 3.8)
 if(NOT DEFINED CMAKE_CUDA_COMPILER)
 	set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
 endif()
-#add_definitions(-DEIGEN_DONT_VECTORIZE)
+add_definitions(-DEIGEN_DONT_VECTORIZE)
 
 # Project
 project(scalable_fusion
@@ -22,7 +22,7 @@ set(LIB_NAME scalfu)
 set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_BUILD_TYPE Debug)
-#set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Release)
 string(TOLOWER ${CMAKE_BUILD_TYPE} LOWERCASE_CMAKE_BUILD_TYPE)
 if(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
 	add_definitions(-DDEBUG)

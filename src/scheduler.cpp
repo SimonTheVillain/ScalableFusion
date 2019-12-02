@@ -134,7 +134,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 			continue; // end this loop if there is no new image
 			//This could be written more efficiently (but who cares about beautiful code?) Niko does.
 		}
-
+		reconstruction->patches_mutex_.lock();
 		cv::Mat depth = source->frame.depth; // 16 bit 1mm resolution
 		cv::Mat rgb   = source->frame.rgb; // 8 bit 3 channels (usually)
 
@@ -289,6 +289,8 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 			 reconstruction->tex_atlas_rgb_8_bit_->countPatches() << endl;
 
 		cout << "FBOs active " << reconstruction->getFboCountDebug_() << endl;
+
+		reconstruction->patches_mutex_.unlock();
 	}
 	delete information_renderer;
 	delete geometry_updater;

@@ -37,7 +37,7 @@ using namespace Eigen;
 
 template <class T>
 class OctreeNode;
- 
+
 template <class T>
 class Octree;
 
@@ -105,8 +105,8 @@ public:
 			//check if this object still is in the right octree node
 			Vector3f node_center = node_->getCenter();
 			float node_width_2 = node_->getHalfWidth();
-			if(!OctreeNode<T>::fitsWithinNode(new_pos, new_radius, node_center, 
-			                                  node_width_2)) {
+			if(!OctreeNode<T>::fitsWithinNode(new_pos, new_radius, node_center,
+											  node_width_2)) {
 
 				//if  the object doesn't fit into this node anymore we have to relocate it
 				//first it has to be romoved from the current node
@@ -115,8 +115,8 @@ public:
 
 				//actually the object will be completely removed from the octree
 				// so node and octree references will be invalid
-				shared_ptr<T> shared = node_->removeObject(static_cast<T*>(this), 
-				                                           false); //do it without changing the node....
+				shared_ptr<T> shared = node_->removeObject(static_cast<T*>(this),
+														   false); //do it without changing the node....
 
 				//assert(0); //removing object here could invalidate the upper node (which is this node right now)
 				//TODO: Solution might be to prevent remove object in this context from removing upper nodes since we are just moving
@@ -127,7 +127,7 @@ public:
 					Vector3f node_center = upper_node->getCenter();
 					float node_width_2 = upper_node->getHalfWidth();
 					if(OctreeNode<T>::fitsWithinNode(new_pos, new_radius, node_center,
-					                                 node_width_2) ||//if it fits into the node
+													 node_width_2) ||//if it fits into the node
 					   upper_node->parent_ == nullptr) {//or we are at the uppermost node
 						//we found a node where this object would fit in
 						setOctree(tree);//readd the object to the octree
@@ -145,8 +145,8 @@ public:
 	}
 
 	static bool checkVisibility(const Vector3f &center, const float &radius,
-	                            const Vector4f (&planes)[6], 
-	                            const Matrix4f &cam_pose, const float &max_dist);
+								const Vector4f (&planes)[6],
+								const Matrix4f &cam_pose, const float &max_dist);
 
 	void setPos(Vector3f pos) {
 		setSphere(pos, getRadius());
@@ -186,8 +186,8 @@ public:
 	 * @return
 	 */
 	vector<shared_ptr<T> > getObjects(Matrix4f cam_pos, Vector4f intrinsics,
-	                                  Vector2f resolution, float max_dist,
-	                                  float dilate_frustum = 0.0f);
+									  Vector2f resolution, float max_dist,
+									  float dilate_frustum = 0.0f);
 
 	void addObject(shared_ptr<T> object) {
 		mutex_.lock();
@@ -215,8 +215,11 @@ public:
 		mutex_.unlock();
 	}
 
+
+	void clear();
+
 private:
-	
+
 	OctreeNode<T> *root_node_;
 
 	//actually there should be the possibilty to read from multiple threads
@@ -269,11 +272,11 @@ public:
 		return (objects.size() < LOWER_LIMIT_OBJECTS) && !hasChildren();
 	}
 
-	void appendVisibleObjects(vector<shared_ptr<T>> &visible, 
-	                          const Vector4f (&planes)[6],
-	                          const Matrix4f &cam_pose,
-	                          const float &max_dist,
-	                          const float &dilate_frustum = 0.0f);
+	void appendVisibleObjects(vector<shared_ptr<T>> &visible,
+							  const Vector4f (&planes)[6],
+							  const Matrix4f &cam_pose,
+							  const float &max_dist,
+							  const float &dilate_frustum = 0.0f);
 
 	//if all the subnodes have too few elements we delete them and store the remaining objects in the
 	void eatChildren();//really necessary?
@@ -308,8 +311,9 @@ public:
 
 	bool childrenAreSparseNoGrandchildren();
 
-	static bool fitsWithinNode(Vector3f center, float radius, 
-	                           Vector3f node_center, float node_width_2);
+	static bool fitsWithinNode(Vector3f center, float radius,
+							   Vector3f node_center, float node_width_2);
+	void clear();
 
 private:
 
@@ -321,11 +325,11 @@ private:
 };
 
 template<class T>
-bool OctreeMember<T>::checkVisibility(const Vector3f &center, 
-                                      const float &radius,
-                                      const Vector4f (&planes)[6],
-                                      const Matrix4f &cam_pose,
-                                      const float &max_dist) {
+bool OctreeMember<T>::checkVisibility(const Vector3f &center,
+									  const float &radius,
+									  const Vector4f (&planes)[6],
+									  const Matrix4f &cam_pose,
+									  const float &max_dist) {
 	for(size_t i = 0; i < 6; i++) {
 		Vector4f p = Vector4f(center[0], center[1], center[2], 1);
 		float distance = p.dot(planes[i]);
@@ -338,8 +342,8 @@ bool OctreeMember<T>::checkVisibility(const Vector3f &center,
 
 template<class T>
 Octree<T>::Octree()
-		: root_node_(new OctreeNode<T>(nullptr, Vector3f(0, 0, 0), 
-		                               INITIAL_NODE_WIDTH / 2.0f)) {
+		: root_node_(new OctreeNode<T>(nullptr, Vector3f(0, 0, 0),
+									   INITIAL_NODE_WIDTH / 2.0f)) {
 }
 
 template<class T>
@@ -348,11 +352,16 @@ Octree<T>::~Octree() {
 }
 
 template<class T>
-vector<shared_ptr<T> > Octree<T>::getObjects(Matrix4f cam_pos, 
-                                             Vector4f intrinsics,
-                                             Vector2f resolution,
-                                             float max_dist,
-                                             float dilate_frustum) {
+void Octree<T>::clear(){
+	root_node_->clear();
+}
+
+template<class T>
+vector<shared_ptr<T> > Octree<T>::getObjects(Matrix4f cam_pos,
+											 Vector4f intrinsics,
+											 Vector2f resolution,
+											 float max_dist,
+											 float dilate_frustum) {
 	//The plan here is to transform all the poins into the camera frame to then test if they
 	//are within the frustum
 	float &fx = intrinsics[0];
@@ -371,15 +380,15 @@ vector<shared_ptr<T> > Octree<T>::getObjects(Matrix4f cam_pos,
 	//create planes which cut the frustrum
 	Vector4f alpha(0, 0, 0, 0);
 	Vector4f planes[6] = {Vector4f(  0,  fy,     -cy, 0),  //up
-	                      Vector4f(  0, -fy, cy - ry, 0),  //down
-	                      Vector4f( fx,   0,     -cx, 0),  //left
-	                      Vector4f(-fx,   0, cx - rx, 0),  //right
-	                      Vector4f(  0,   0,      -1, 0),  //near plane
-	                      Vector4f(  0,   0,       1, 0)}; //far plane maxDist
+						  Vector4f(  0, -fy, cy - ry, 0),  //down
+						  Vector4f( fx,   0,     -cx, 0),  //left
+						  Vector4f(-fx,   0, cx - rx, 0),  //right
+						  Vector4f(  0,   0,      -1, 0),  //near plane
+						  Vector4f(  0,   0,       1, 0)}; //far plane maxDist
 
 	for(size_t i = 0; i < 6; i++) {
 		planes[i].block<3, 1>(0, 0).normalize();
-		planes[i].block<3, 1>(0, 0) = 
+		planes[i].block<3, 1>(0, 0) =
 				cam_pos.block<3, 3>(0, 0) * planes[i].block<3, 1>(0, 0);
 		float dist = planes[i].block<3, 1>(0, 0).dot(cam_pos.block<3, 1>(0, 3));
 		planes[i][3] = -dist;
@@ -388,17 +397,17 @@ vector<shared_ptr<T> > Octree<T>::getObjects(Matrix4f cam_pos,
 
 	mutex_.lock();
 	root_node_->appendVisibleObjects(objects, planes, cam_pose, max_dist,
-	                                 dilate_frustum);
+									 dilate_frustum);
 	mutex_.unlock();
 	return objects;
 }
 
 template<class T>
-OctreeNode<T>::OctreeNode(OctreeNode<T> *parent, Vector3f center, 
-                          float half_width)
+OctreeNode<T>::OctreeNode(OctreeNode<T> *parent, Vector3f center,
+						  float half_width)
 		: parent_(parent),
 		  children_{nullptr, nullptr, nullptr, nullptr,
-		            nullptr, nullptr, nullptr, nullptr},
+					nullptr, nullptr, nullptr, nullptr},
 		  center_(center),
 		  half_width_(half_width) {
 }
@@ -415,13 +424,13 @@ OctreeNode<T>::~OctreeNode() {
 template<class T>
 Vector3f OctreeNode<T>::getCenterAtIndex(int ind) {
 	const Vector3f vectors[8] = {Vector3f( -1, -1, -1),//actually we could derive this from the first 3 bits of ind
-	                             Vector3f( -1, -1,  1),//(don't know if this would be shorter or faster)
-	                             Vector3f( -1,  1, -1),
-	                             Vector3f( -1,  1,  1),
-	                             Vector3f(  1, -1, -1),
-	                             Vector3f(  1, -1,  1),
-	                             Vector3f(  1,  1, -1),
-	                             Vector3f(  1,  1,  1)};
+								 Vector3f( -1, -1,  1),//(don't know if this would be shorter or faster)
+								 Vector3f( -1,  1, -1),
+								 Vector3f( -1,  1,  1),
+								 Vector3f(  1, -1, -1),
+								 Vector3f(  1, -1,  1),
+								 Vector3f(  1,  1, -1),
+								 Vector3f(  1,  1,  1)};
 
 	return center_ + half_width_ * 0.5f * vectors[ind];
 }
@@ -440,8 +449,8 @@ void OctreeNode<T>::split() {
 		for(size_t j = 0; j < 8; j++) {
 			float sub_width_2 = half_width_ / 2.0f;
 			Vector3f sub_center = getCenterAtIndex(j);
-			if(fitsWithinNode(object->getPos(), object->getRadius(), 
-			                  sub_center, sub_width_2)) {
+			if(fitsWithinNode(object->getPos(), object->getRadius(),
+							  sub_center, sub_width_2)) {
 				//test if the object would fit into this child node
 				if(children_[j] == nullptr) {
 					//if the child node doesn't exist yet we create one
@@ -454,10 +463,10 @@ void OctreeNode<T>::split() {
 
 				//and remove from this vector.....
 				//TODO: find out if this is the way to go
-				#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
+#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
 				cout << "we really have to test if this is doing what "
 				        "it is supposed to do" << endl;
-				#endif
+#endif
 				objects[i] = objects[objects.size() - 1];
 				objects.pop_back();//remove the last element
 				break;
@@ -468,14 +477,14 @@ void OctreeNode<T>::split() {
 
 template<class T>
 void OctreeNode<T>::appendVisibleObjects(vector<shared_ptr<T>> &visible,
-                                         const Vector4f (&planes)[6],
-                                         const Matrix4f &cam_pose,
-                                         const float &max_dist,
-                                         const float &dilate_frustum) {
+										 const Vector4f (&planes)[6],
+										 const Matrix4f &cam_pose,
+										 const float &max_dist,
+										 const float &dilate_frustum) {
 	//first test if this node is visible
 	if(!OctreeMember<T>::checkVisibility(center_,
-	                                     half_width_ * sqrt(3) + dilate_frustum,
-	                                     planes, cam_pose, max_dist)) {
+										 half_width_ * sqrt(3) + dilate_frustum,
+										 planes, cam_pose, max_dist)) {
 		//if not we just do nothing
 		return;
 	}
@@ -488,8 +497,8 @@ void OctreeNode<T>::appendVisibleObjects(vector<shared_ptr<T>> &visible,
 			assert(0);
 		}
 		if(OctreeMember<T>::checkVisibility(object->getPos(),
-		                                    object->getRadius() + dilate_frustum,
-		                                    planes, cam_pose, max_dist)) {
+											object->getRadius() + dilate_frustum,
+											planes, cam_pose, max_dist)) {
 			visible.push_back(object);
 		}
 	}
@@ -497,8 +506,8 @@ void OctreeNode<T>::appendVisibleObjects(vector<shared_ptr<T>> &visible,
 	//when done with that we go trough all the childs
 	for(size_t i = 0; i < 8; i++) {
 		if(children_[i] != nullptr) {
-		   children_[i]->appendVisibleObjects(visible, planes, cam_pose, max_dist,
-		                                      dilate_frustum);
+			children_[i]->appendVisibleObjects(visible, planes, cam_pose, max_dist,
+											   dilate_frustum);
 		}
 	}
 }
@@ -508,8 +517,8 @@ void OctreeNode<T>::eatChildren() {
 	//cout << "WE HAVE TO MUTEX THIS" << endl;
 	for(size_t i = 0; i < 8; i++) {
 		if(children_[i] != nullptr) {
-			objects.insert(objects.end(), children_[i]->objects.begin(), 
-			               children_[i]->objects.end());
+			objects.insert(objects.end(), children_[i]->objects.begin(),
+						   children_[i]->objects.end());
 			if(children_[i]->hasChildren()) {
 				assert(0);//when deleting a child node we want them to be empty
 			}
@@ -564,8 +573,8 @@ void OctreeNode<T>::putInPlace(shared_ptr<T> object) {
 	for(size_t i = 0; i < 8; i++) {
 		Vector3f sub_center=getCenterAtIndex(i);
 		//test if the object would fit into this child node
-		if(fitsWithinNode(object->getPos(),object->getRadius(), 
-		                  sub_center, sub_width_2)) {
+		if(fitsWithinNode(object->getPos(),object->getRadius(),
+						  sub_center, sub_width_2)) {
 
 			//create a new Node if necessary
 			if(children_[i] == nullptr) {
@@ -606,10 +615,11 @@ shared_ptr<T> OctreeNode<T>::removeObject(T *object, bool check_and_shrink) {
 	}
 	if(debug_found_object == false) {
 		//TODO: find out why this really does not work out
-		shared_ptr<T> obj = objects[objects.size() - 1].lock();
+		shared_ptr<T> debug_obj = objects.back().lock();
+		int debug_size = objects.size();
 		assert(0);
 	}
-	assert(debug_found_object); //the object hast to be in the list. if not we are screwed.
+	assert(debug_found_object); //the object hast to be in the list. if not something is flawed
 
 	object->setOctree(nullptr);
 	object->setOctreeNode(nullptr);
@@ -648,8 +658,8 @@ void OctreeNode<T>::removeObject(shared_ptr<T> object) {
 
 template <class T>
 bool OctreeNode<T>::fitsWithinNode(shared_ptr<T> object) {
-	return fitsWithinNode(object->getPos(), object->getRadius(), center_, 
-	                      half_width_);
+	return fitsWithinNode(object->getPos(), object->getRadius(), center_,
+						  half_width_);
 }
 
 template <class T>
@@ -683,7 +693,7 @@ bool OctreeNode<T>::childrenAreSparseNoGrandchildren() {
 
 template <class T>
 bool OctreeNode<T>::fitsWithinNode(Vector3f center, float radius,
-                                   Vector3f node_center, float node_width_2) {
+								   Vector3f node_center, float node_width_2) {
 	for(size_t i = 0; i < 3; i++) {
 		if(center[i] + radius > node_center[i] + node_width_2) {
 			return false;
@@ -694,5 +704,22 @@ bool OctreeNode<T>::fitsWithinNode(Vector3f center, float radius,
 	}
 	return true;
 }
-
+template <class T>
+void OctreeNode<T>::clear(){
+	for(size_t i=0;i<objects.size();i++){
+		shared_ptr<OctreeMember<T>> obj = objects[i].lock();
+		if(obj!=nullptr){
+			obj->setOctree(nullptr);
+			obj->setOctreeNode(nullptr);
+		}
+	}
+	objects.clear();
+	for(size_t i=0;i<8;i++){
+		if(children_[i] != nullptr){
+			children_[i]->clear();
+			delete children_[i];
+			children_[i] = nullptr;
+		}
+	}
+}
 #endif // FILE_OCTREE_H

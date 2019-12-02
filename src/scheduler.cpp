@@ -135,6 +135,10 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 			//This could be written more efficiently (but who cares about beautiful code?) Niko does.
 		}
 		reconstruction->patches_mutex_.lock();
+		if(reconstruction->active_set_update == nullptr){
+			first_lap = true;
+		}
+
 		cv::Mat depth = source->frame.depth; // 16 bit 1mm resolution
 		cv::Mat rgb   = source->frame.rgb; // 8 bit 3 channels (usually)
 

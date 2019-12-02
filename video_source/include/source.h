@@ -97,6 +97,8 @@ struct Intrinsics {
 /*! 
  *  This container can hold all possible data for a single frame as provided 
  *  by a video source of choice.
+ * 
+ * \todo Add ISO information
  */
 struct Frame {
 	cv::Mat rgb;         //!< The RGB image 

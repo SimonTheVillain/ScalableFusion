@@ -215,6 +215,9 @@ public:
 		mutex_.unlock();
 	}
 
+
+	void clear();
+
 private:
 	
 	OctreeNode<T> *root_node_;
@@ -310,6 +313,7 @@ public:
 
 	static bool fitsWithinNode(Vector3f center, float radius, 
 	                           Vector3f node_center, float node_width_2);
+	void clear();
 
 private:
 
@@ -345,6 +349,11 @@ Octree<T>::Octree()
 template<class T>
 Octree<T>::~Octree() {
 	delete root_node_;
+}
+
+template<class T>
+void Octree<T>::clear(){
+	root_node_->clear();
 }
 
 template<class T>
@@ -606,10 +615,11 @@ shared_ptr<T> OctreeNode<T>::removeObject(T *object, bool check_and_shrink) {
 	}
 	if(debug_found_object == false) {
 		//TODO: find out why this really does not work out
-		shared_ptr<T> obj = objects[objects.size() - 1].lock();
+		shared_ptr<T> debug_obj = objects.back().lock();
+		int debug_size = objects.size();
 		assert(0);
 	}
-	assert(debug_found_object); //the object hast to be in the list. if not we are screwed.
+	assert(debug_found_object); //the object hast to be in the list. if not something is flawed
 
 	object->setOctree(nullptr);
 	object->setOctreeNode(nullptr);
@@ -694,5 +704,22 @@ bool OctreeNode<T>::fitsWithinNode(Vector3f center, float radius,
 	}
 	return true;
 }
-
+template <class T>
+void OctreeNode<T>::clear(){
+	for(size_t i=0;i<objects.size();i++){
+		shared_ptr<OctreeMember<T>> obj = objects[i].lock();
+		if(obj!=nullptr){
+			obj->setOctree(nullptr);
+			obj->setOctreeNode(nullptr);
+		}
+	}
+	objects.clear();
+	for(size_t i=0;i<8;i++){
+		if(children_[i] != nullptr){
+			children_[i]->clear();
+			delete children_[i];
+			children_[i] = nullptr;
+		}
+	}
+}
 #endif // FILE_OCTREE_H

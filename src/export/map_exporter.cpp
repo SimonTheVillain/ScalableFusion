@@ -198,7 +198,7 @@ void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 			appendTrianglesAsFaces(geom->triangles);
 		}
 	};
-	shared_ptr<GeometryBase> base = *(double_stitches.begin());
+	//shared_ptr<GeometryBase> base = *(double_stitches.begin());
 	appendFaces(reinterpret_cast<set<shared_ptr<GeometryBase>>&>(double_stitches));
 	appendFaces(reinterpret_cast<set<shared_ptr<GeometryBase>>&>(triple_stitches));
 

@@ -246,6 +246,19 @@ bool MeshReconstruction::hasGeometry() {
 }
 
 void MeshReconstruction::erase() {
+	active_set_update_mutex.lock();
+	active_set_rendering_mutex_.lock();
+	active_set_update.reset();
+	active_set_rendering_.reset();
+	active_set_expand.reset();
+	active_set_update_mutex.unlock();
+	active_set_rendering_mutex_.unlock();
+	octree_.clear();//if it were the other way around everything it would crash
+	patches_.clear();
+
+	return;
+
+
 	//The scheduler should be closed at this point
 
 	vector<weak_ptr<MeshPatch>> patches;//collect weak pointers to that stuff to see what of this is still existent
@@ -269,7 +282,8 @@ void MeshReconstruction::erase() {
 	active_set_rendering_.reset();
 	active_set_expand.reset();
 
-	for(int i = 0; i < debug; i++) {
+
+	for(int i = 0; i < shared_patches.size(); i++) {
 		shared_patches.pop_back();
 	}
 

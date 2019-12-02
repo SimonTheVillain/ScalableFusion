@@ -446,7 +446,7 @@ int main(int argc, const char *argv[]) {
 	}
 
 	close_request =  true;
-
+	scalable_map->erase();
 	cout << "[main] DEBUG everything should be deleted" << endl;
 	garbage_collector.forceCollect();
 	delete scheduler;

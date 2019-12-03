@@ -408,6 +408,7 @@ public:
 	 * (almost ready to be loaded to gpu)
 	 */
 	vector<Vertex> vertices;
+	vector<cv::Vec3b> vertex_colors;
 
 	/**
 	 * @brief id

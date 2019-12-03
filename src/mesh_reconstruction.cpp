@@ -104,7 +104,7 @@ bool MeshReconstruction::removePatch(shared_ptr<MeshPatch> patch) {
 	}
 	patch->triple_stitch_mutex.unlock();
 
-	patches_mutex_.lock();
+	//patches_mutex_.lock(); //THIS IS JUST REMOVED SINCE IT CREATES A DEADLOCK
 	for(auto it = patches_.begin(); it != patches_.end(); ++it) {
 		if(it->second == patch) {
 			patches_.erase(it);
@@ -112,7 +112,7 @@ bool MeshReconstruction::removePatch(shared_ptr<MeshPatch> patch) {
 			return true;
 		}
 	}
-	patches_mutex_.unlock();
+	//patches_mutex_.unlock(); //THIS IS JUST REMOVED SINCE IT CREATES A DEADLOCK!
 	return false;
 }
 

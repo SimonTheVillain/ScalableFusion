@@ -223,7 +223,10 @@ TriangleReference Mesher::addTriangle(const VertexReference &pr1,
 void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 					cv::Mat vertex_indices, cv::Mat sensor_std,
 					float max_depth_step, //deprecate this
-                     Matrix4f depth_pose) {
+                     Matrix4f depth_pose,
+                     cv::Mat rgb,
+                     Eigen::Matrix4f color_pose,
+                     Eigen::Vector4f rgb_intrinsics) {
 	int width  = points.cols;
 	int height = points.rows;
 
@@ -232,6 +235,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 	const Triangle::Neighbour empty;
 
 	int r;
+	Matrix4f color_pose_ = color_pose.inverse();
 	// In a first step iterate over all points to store the indices
 	for(int i = 0; i < height; i++) {
 		for(int j = 0; j < width; j++) {
@@ -249,6 +253,23 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 
 				mesh->work_in_progress.lock();
 				mesh->vertices.push_back(vertex);
+				{
+					//VERTEX COLORS!!!!!!!!!
+					Eigen::Vector4f p = color_pose_ * vertex.p;
+
+					Vector2f p_proj(p[0] * rgb_intrinsics[0] / p[2] + rgb_intrinsics[2],
+									p[1] * rgb_intrinsics[1] / p[2] + rgb_intrinsics[3]);
+					cv::Vec3b c(255,0,0);
+					if(	p_proj[0] >= 0 && p_proj[0] < rgb.cols &&
+						p_proj[1] >= 0 && p_proj[1] < rgb.rows){
+						c[0] = rgb.at<cv::Vec4b>((int)p_proj[1],(int)p_proj[0])[0];
+						c[1] = rgb.at<cv::Vec4b>((int)p_proj[1],(int)p_proj[0])[1];
+						c[2] = rgb.at<cv::Vec4b>((int)p_proj[1],(int)p_proj[0])[2];
+					}
+
+					//
+					mesh->vertex_colors.push_back(c);
+				}
 				mesh->work_in_progress.unlock();
 
 				mesh->cpu_vertices_ahead = true;

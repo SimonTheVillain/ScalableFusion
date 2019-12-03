@@ -30,7 +30,10 @@ public:
 
 	void meshIt(cv::Mat points, cv::Mat mesh_pointers, cv::Mat vertex_indices,
 	            cv::Mat sensor_std, float max_depth_step, //deprecate this
-	            Eigen::Matrix4f depth_pose);
+	            Eigen::Matrix4f depth_pose,
+	            cv::Mat rgb,
+	            Eigen::Matrix4f color_pose,
+	            Eigen::Vector4f rgb_intrinsics);
 
 
 	// TODO: move fillNovelPatchesWithTexIndices here! (because it is a terrible function name

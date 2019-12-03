@@ -157,8 +157,11 @@ void GeometryUpdater::extend(
 	cv::Mat vertex_indices(height, width, CV_32SC1);
 	vertex_indices.setTo(cv::Scalar(-1)); // TODO: remove this line, should not be necessary
 
+	cv::Mat rgb(rgb_tex->getHeight(),rgb_tex->getWidth(),CV_8UC4);
+	rgb_tex->downloadData(rgb.data);
 	meshing.meshIt(points, mesh_pointers, vertex_indices, d_std_mat,
-				   reconstruction->params.max_depth_step, depth_pose_in);
+				   reconstruction->params.max_depth_step, depth_pose_in,rgb,color_pose_in,
+				   reconstruction->params.rgb_fxycxy);
 
 	for(size_t i = 0; i < new_shared_mesh_patches.size(); i++) {
 		//TODO: unify these functions and maybe do this at the very end of everything!!!!!

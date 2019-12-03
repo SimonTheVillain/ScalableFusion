@@ -152,6 +152,8 @@ void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 	//lets just try a quad
 	p_mesh->mVertices = new aiVector3D[vertex_count];
 	p_mesh->mNumVertices = vertex_count;
+	p_mesh->mColors[0] = new aiColor4D[vertex_count];
+
 	p_mesh->mTextureCoords[0] = new aiVector3D[vertex_count];
 
 	p_mesh->mFaces = new aiFace[triangle_count];
@@ -183,6 +185,10 @@ void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 			vec.y = patch->vertices[i].p[1];
 			vec.z = patch->vertices[i].p[2];
 			p_mesh->mVertices[j] = vec;
+			p_mesh->mColors[0][j].r = patch->vertex_colors[i][0];
+			p_mesh->mColors[0][j].g = patch->vertex_colors[i][1];
+			p_mesh->mColors[0][j].b = patch->vertex_colors[i][2];
+			p_mesh->mColors[0][j].a = 255;
 			vec.x = vec.x * 0.5f + 0.5f;
 			vec.y = vec.y * 0.5f + 0.5f;
 			vec.z = vec.z * 0.5f + 0.5f;

@@ -28,11 +28,11 @@ set(@LIB_NAME@_LIBRARY_DIRS
 set(@LIB_NAME@_LIBRARIES
     @LIB_NAME@
     glfw
-    gfx
+    #gfx
     glog
     icp_cuda
     radical
-    segmentation
+    #segmentation
     dataset_loader
     video_source
     @ASSIMP_LIBRARIES@

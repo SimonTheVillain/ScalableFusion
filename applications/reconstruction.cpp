@@ -188,6 +188,7 @@ int main(int argc, const char *argv[]) {
 	replay_speed = 1.0f;
 #endif // DEBUG
 	bool use_dataset_trajectory = false;
+	string data_source = "TUW";
 	float groundtruth_trajectory_scale = 1.0f;
 	bool invert_ground_truth_trajectory = false;
 
@@ -229,6 +230,8 @@ int main(int argc, const char *argv[]) {
 			 "Scale the trajectory so it might match the scale for the depthmap")
 			("invertGroundtruth", po::bool_switch(&invert_ground_truth_trajectory),
 			 "You might have inverted all of your coordinates.... if so then i advise you to set this flag.")
+			 ("dataSource", po::value<string>(&data_source),
+			"The data source TUW, TUM or anything else you feel like implementing")
 			("scaleDepth,s", po::value<float>(&depth_scale),"Scale the input depth so we end up in mm resolution.")
 			("autoquit,q", po::bool_switch(&auto_quit),
 			 "Close the window and quit everything when finished running through the dataset")
@@ -273,7 +276,16 @@ int main(int argc, const char *argv[]) {
 			make_shared<MeshReconstruction>(invisible_window, &garbage_collector,
 											multithreaded, 640, 480);
 
-	video::TuwDataset dataset(dataset_path, true);
+	video::Source *source;
+
+	if(data_source == "TUW"){
+		source = new video::TuwDataset(dataset_path, hd);
+
+	}else if(data_source == "TUM"){
+		source = new video::TumDataset(dataset_path, hd);
+	}else{
+		assert(0);//no valid dataset type specified
+	}
 
 	shared_ptr<IncrementalSegmentation> incremental_segmentation =
 			make_shared<EdithSegmentation>();
@@ -283,9 +295,10 @@ int main(int argc, const char *argv[]) {
 	TextureUpdater texture_updater;
 	SchedulerBase *scheduler = nullptr;
 	if(multithreaded) {
-		scheduler = new SchedulerThreaded(scalable_map, &dataset, invisible_window);
+		assert(0);
+		//scheduler = new SchedulerThreaded(scalable_map, source, invisible_window);
 	} else {
-		scheduler = new SchedulerLinear(scalable_map, &garbage_collector, &dataset,
+		scheduler = new SchedulerLinear(scalable_map, &garbage_collector, source,
 										invisible_window,
 										&low_detail_renderer,
 										incremental_segmentation);
@@ -334,7 +347,7 @@ int main(int argc, const char *argv[]) {
 
 	gfx::GLUtils::checkForOpenGLError("[main] Error creating an opengl context!");
 
-	while(!glfwWindowShouldClose(window) && (dataset.isRunning() || !auto_quit)) {
+	while(!glfwWindowShouldClose(window) && (source->isRunning() || !auto_quit)) {
 		scheduler->pause(paused);
 		if(next_single_step) {
 			next_single_step = false;

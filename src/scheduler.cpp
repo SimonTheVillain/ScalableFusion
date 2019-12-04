@@ -66,6 +66,8 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
                                      video::Source *source, GLFWwindow *context) {
 	//TODO: Check: creating a connected context might invalidate our efforts to properly destroy all of this threads resources
 
+	Sophus::SE3d accu_pose;
+
 	GLFWwindow *connected_context = createConnectedGlContext(context);
 	glfwMakeContextCurrent(connected_context);
 	//this has to be done once for every gl context or thread:
@@ -115,7 +117,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 	//this is a replacement for a proper test if there already is something added to the map
 	bool first_lap = true;
 
-	Sophus::SE3d accu_pose;
+
 
 	accu_pose.setRotationMatrix(Matrix3d::Identity());
 	accu_pose.translation() = Vector3d(0, 0, 0);
@@ -125,6 +127,11 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 	shared_ptr<ActiveSet> active_set_last_expand;
 	Matrix4f depth_pose_last_expand;
 	while(source->isRunning() && !end_threads_) {
+		if(overwrite_pose_){
+			overwrite_pose_ = false;
+			accu_pose.setRotationMatrix(rot_);
+			accu_pose.translation() = pos_;
+		}
 		if(paused_ && !take_next_step_) {
 			continue;
 		}
@@ -310,4 +317,10 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 	delete odometry;
 
 	cout << "DEBUG: scheduler finished thread" <<endl;
+}
+
+void SchedulerLinear::setSensorPose(Eigen::Matrix3d rot, Eigen::Vector3d pos) {
+	rot_ = rot;
+	pos_ = pos;
+	overwrite_pose_ = true;
 }

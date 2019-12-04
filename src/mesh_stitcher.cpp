@@ -800,7 +800,11 @@ void MeshStitcher::stitchOnBorders(
 									break;
 								}
 								Edge other_edge;
-								current_sewing_edge.getOtherEdge(1, other_edge, borders);
+								//current_sewing_edge.getOtherEdge(1, other_edge, borders);//TODO: go back to this
+								if(!current_sewing_edge.getOtherEdge(1, other_edge, borders)){
+									//this is hiding some serious underlying issue
+									return;
+								}
 								VertexReference vr = other_edge.points(1);
 								Vertex          *v = vr.get();
 								Vector2i       pix = project2i(v->p);

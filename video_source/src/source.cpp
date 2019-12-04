@@ -174,14 +174,18 @@ video::TuwDataset::TuwDataset(string source_dir, bool is_high_res)
 	ifstream file_exposure;
 	is_high_res_ ? file_exposure.open(source_dir_ + "/rgb_ids_exposure.txt") :
 	               file_exposure.open(source_dir_ + "/rgb_exposure.txt");
+
+	string line;
 	if(!file_exposure.is_open()) {
 		cout << "Could not open open exposure file" << endl;
-		assert(0);
-	}
-	string line;
-	while(getline(file_exposure, line)) {
-		exposure_times_.push_back(atof(line.c_str()));
-		// TODO: Sort exposure times and assign to correct frames
+		//assert(0);
+	}else
+	{
+		while(getline(file_exposure, line)) {
+			exposure_times_.push_back(atof(line.c_str()));
+			// TODO: Sort exposure times and assign to correct frames
+		}
+
 	}
 
 	if(is_high_res_) {

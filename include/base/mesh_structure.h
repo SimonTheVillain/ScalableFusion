@@ -858,7 +858,7 @@ struct Edge {
 		TriangleReference current_triangle_ref = triangle;
 		int current_edge_ind_in_triangle = pos;
 
-		int ttl = 10000;//TODO: put that back to 100.... we will not have than 16 or so triangles for a point
+		int ttl = 100;//TODO: put that back to 100.... we will not have more than 16 or so triangles for a point
 		while(ttl--) {
 
 			//go to the next edge on this triangle:
@@ -911,7 +911,7 @@ struct Edge {
 
 			current_triangle = current_triangle_ref.get();
 		}
-
+		return false;//TODO: remove this! this is shadowing a serious issue!
 		getOtherEdge(endpoint, result, border_list);//debug... this should never happen
 		assert(0);//more than 100 triangles on this node means something is off!!!
 		return false;

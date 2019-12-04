@@ -44,6 +44,9 @@ public:
 
 	virtual Matrix4f getLastKnownDepthPose() = 0;
 
+
+	virtual void setSensorPose(Eigen::Matrix3d rot, Eigen::Vector3d pos) = 0;
+
 };
 
 class SchedulerLinear : public SchedulerBase {
@@ -69,7 +72,15 @@ public:
 		return last_known_depth_pose_;
 	}
 
+
+
+
+	void setSensorPose(Eigen::Matrix3d rot, Eigen::Vector3d pos);
+
 private:
+	bool overwrite_pose_ = false;
+	Eigen::Matrix3d rot_;
+	Eigen::Vector3d pos_;
 
 	void captureWorker_(shared_ptr<MeshReconstruction> reconstruction, 
 	                    video::Source *source, GLFWwindow *context);

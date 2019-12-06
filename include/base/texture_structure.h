@@ -208,6 +208,8 @@ public:
 
 	bool ref_tex_filled = false;
 
+	bool do_not_upload = true;
+
 	//TODO: get rid of this
 	vector<Vector2f> tex_coords;
 

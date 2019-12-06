@@ -15,7 +15,9 @@ using namespace std;
 using namespace Eigen;
 
 
-
+//TODO: find a way to allocate textures and texture pointers in this thing:
+//Meshlet textures could have a flag "do_not_upload" and a new version number to indicate a
+//update that requires a newly allocated texture
 ActiveSet::ActiveSet(GpuStorage *storage,
 					 vector<shared_ptr<Meshlet>> meshlets_requested,
 					 vector<shared_ptr<ActiveSet>> active_sets,
@@ -71,7 +73,21 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 
 				}
 
-				//TODO: textures!!!
+				//TODO: geometry texture!!!
+
+
+
+				//TODO: all the other textures
+				for(size_t k=0;k<candidate.textures.size();k++){
+					auto &candid_texture = candidate.textures[k];
+					if(most_current.textures.size()-1 >= i){
+						//when there is no old texture in this patch we just copy over
+						most_current.textures[i] = candidate.textures[i];
+					}else{
+						//TODO: go by version number and such!
+					}
+				}
+
 			}else if(candidate.triangle_version > meshlet->triangles_version){
 				//the triangle version on the GPU should never be greater than on the CPU
 				assert(0);//this really should not happen
@@ -103,7 +119,12 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 		
 		most_current.vertex_token = make_unique<weak_ptr<Meshlet>>(meshlet);
 
+		//TODO: geometry textures
+
 		//TODO: textures
+		for(size_t k=0;k<meshlet->tex_patches.size();k++){
+			//upload new textures
+		}
 
 
 	}

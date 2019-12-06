@@ -51,6 +51,25 @@ public:
 	virtual void setRenderCamPose(Matrix4f camPose) = 0;
 	virtual shared_ptr<ActiveSet> getActiveSetRendering() = 0;
 
+
+	//TODO: these:!! (at least partially)
+	/*
+	virtual shared_ptr<ActiveSet> getActiveSetExtension() = 0;
+	virtual shared_ptr<ActiveSet> setActiveSetExtension(shared_ptr<ActiveSet> set) = 0;
+
+	virtual shared_ptr<ActiveSet> getActiveSetGeomUpdate() = 0;
+	virtual shared_ptr<ActiveSet> setActiveSetGeomUpdate(shared_ptr<ActiveSet> set) = 0;
+
+
+	virtual shared_ptr<ActiveSet> getActiveSetTexUpdate() = 0;
+	virtual shared_ptr<ActiveSet> setActiveSetTexUpdate(shared_ptr<ActiveSet> set) = 0;
+	 */
+
+
+
+	//is handling active sets the responsibility of the scheduler?
+	virtual vector<shared_ptr<ActiveSet>> getActiveSets() = 0;
+
 	//we probably also want to update the low detail renderer whenever we update the render cam pose
 	//with update i mean recreate and replace
 	virtual shared_ptr<LowDetailRenderer> getLowDetailRenderer() = 0;
@@ -83,7 +102,10 @@ public:
 
 	}
 	virtual shared_ptr<ActiveSet> getActiveSetRendering(){
-		return nullptr;
+		active_sets_mutex.lock();
+		auto set = active_sets[1];
+		active_sets_mutex.unlock();
+		return set;
 	}
 
 	//we probably also want to update the low detail renderer whenever we update the render cam pose
@@ -91,6 +113,9 @@ public:
 	virtual shared_ptr<LowDetailRenderer> getLowDetailRenderer(){
 		return nullptr;
 	}
+
+	vector<shared_ptr<ActiveSet>> getActiveSets();
+
 private:
 	//the active sets used for several operations like rendering and update
 	mutex active_sets_mutex;

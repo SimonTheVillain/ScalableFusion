@@ -37,7 +37,7 @@ vec2 res = vec2(1280, 800);//this should be a uniform set outside of the shader
 out float distances[3];
 void main(void) {
 	//-------------new rendering----------------
-	int id          = gl_VertexID;
+	int id          = gl_VertexID; //gl_VertexID is broken with multidraw .... atomic counter?
 	int point_id    = id % 3;
 	int triangle_id = id / 3;
 	const GpuTriangle triangle = triangles[triangle_id];

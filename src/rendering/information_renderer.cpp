@@ -637,7 +637,6 @@ Vector4f InformationRenderer::renderAndExtractInfo(
 		Matrix4f view, Matrix4f proj, LowDetailRenderer* low_detail_renderer, bool render_visible_from_cam,
 		GLFWwindow *root_context, int width, int height, int x, int y, 
 		int *patch_ind, int *triangle_ind) {
-
 	assert(0);//this needs a bigger overhaul
 	/*
 	gfx::GLUtils::checkForOpenGLError(

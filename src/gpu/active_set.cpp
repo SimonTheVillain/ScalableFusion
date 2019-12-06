@@ -30,11 +30,88 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 	//patches_set.insert(patches.begin(),patches.end());
 
 	//key is index
-	unordered_map<int,shared_ptr<MeshletGPU>> most_current_meshlets;
+	//unordered_map<int,MeshletGPU> most_current_meshlets;
 
 	//unfortunately this does not hold the most current texture
-	unordered_map<int,shared_ptr<TextureLayerGPU>> most_current_textures;
+	//unordered_map<int,shared_ptr<TextureLayerGPU>> most_current_textures;
 
+
+	for(size_t i=0;i<meshlets_requested.size();i++){
+		shared_ptr<Meshlet> meshlet = meshlets_requested[i];
+		bool reallocate=false;
+		if(!allocate_new_verts.empty()){
+			reallocate = allocate_new_verts[i];
+		}
+		patch_inds[meshlet->id] = meshlets.size();
+		meshlets.emplace_back();
+		MeshletGPU &most_current = meshlets.back();
+		most_current.id = meshlet->id;
+
+		//check if the data already exists in one of the active sets
+		for(auto active_set : active_sets){
+			if(active_set == nullptr)
+				continue;
+			if(active_set->patch_inds.count(meshlet->id) == 0)
+				continue;
+			int id = meshlet->id;
+			int ind = active_set->patch_inds[id];
+
+			MeshletGPU &candidate = active_set->meshlets[ind];
+
+			if(candidate.triangle_version == meshlet->triangles_version){
+				//store the most current versions of texture + vertices
+				most_current.triangle_version = candidate.triangle_version;
+				most_current.triangles = candidate.triangles;
+				if(candidate.vertex_version > most_current.vertex_version){
+					most_current.vertex_version = candidate.vertex_version;
+					most_current.vertices = candidate.vertices;
+
+					// token taken from most current vertex
+					most_current.vertex_token = move(candidate.vertex_token);
+
+				}
+
+				//TODO: textures!!!
+			}else if(candidate.triangle_version > meshlet->triangles_version){
+				//the triangle version on the GPU should never be greater than on the CPU
+				assert(0);//this really should not happen
+			}
+		}
+
+		//reallocate does only really apply if there
+		if(reallocate){
+			if(most_current.vertex_version == -1)
+				assert(0);
+			//TODO: reallocate the new vertices
+			most_current.vertex_version ++;
+			most_current.vertices = storage->vertex_buffer->getBlock(most_current.vertices->getSize());
+		}
+		//check if we already have new data
+		if(most_current.triangle_version != -1)
+			continue;
+
+		//also create token and such!
+		if(reallocate){
+			//reallocate only if there is no initial allocation
+			assert(0);
+		}
+
+
+		most_current.triangle_version = meshlet->triangles_version;
+		most_current.vertex_version = meshlet->vertices_version;
+		uploadGeometry(storage,most_current,meshlet.get());
+		
+		most_current.vertex_token = make_unique<weak_ptr<Meshlet>>(meshlet);
+
+		//TODO: textures
+
+
+	}
+
+
+	headers = storage->patch_info_buffer->getBlock(meshlets.size());
+	setupHeaders();
+	/*
 	//todo: fill the most current maps
 	for(auto active_set : active_sets){
 
@@ -47,54 +124,54 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 
 			if(map_requested.count(id) == 0)
 				break;// the meshlet in question is not requested to be in this active set
-			if(most_current_meshlets.count(id)){
-				//check which one is the newest
-				auto &most_current = most_current_meshlets[id];
-				auto candidate = active_set->meshlets[ind];
-				//TODO: at this point it would be appropriate to test for triangle_version
-				if(candidate->vertex_version > most_current->vertex_version){
-					//most_current_meshlets[id] = candidate;
-					most_current = candidate;
+
+
+			MeshletGPU &most_current = most_current_meshlets[id];
+			MeshletGPU &candidate = active_set->meshlets[ind];
+
+			//if(candidate.triangle_version == meshlets)
+			if(false){
+				if(most_current_meshlets.count(id)){
+					//check which one is the newest
+					MeshletGPU &most_current = most_current_meshlets[id];
+					MeshletGPU &candidate = active_set->meshlets[ind];
+					//TODO: at this point it would be appropriate to test for triangle_version
+					if(candidate.vertex_version > most_current.vertex_version){
+						//most_current_meshlets[id] = candidate;
+						most_current = candidate;
+					}
+				}else{
+					MeshletGPU meshletGpu;
+					meshlet
+							most_current_meshlets[id] = active_set->meshlets[ind];
 				}
-			}else{
-				most_current_meshlets[id] = active_set->meshlets[ind];
 			}
+
 
 			//TODO: what to do about the textures?
 			//maybe we create a GPUMeshlet that collects the newest elements of neighbouring meshlets
 		}
 	}
-
-	//generate list of meshlets which do not reside on GPU -> reupload them
-	vector<shared_ptr<Meshlet>> meshlet_to_reupload;//TODO: get rid of this list?
-
 	//upload / convert list to ne
 	for(auto meshlet : meshlets_requested){
 		int index = 0;
 		if(most_current_meshlets.count(meshlet->id)){
 			//there is a meshlet on the GPU
 			//TODO: check if it is sufficient and in case generate it
+			patch_inds[meshlet->id] = meshlets.size();
+			meshlets.push_back(most_current_meshlets[meshlet->id]);
+
 		}else{
 			//there is no meshlet on the GPU
 			//at least allocate the memory for this meshlet!
 			//upload...
+			MeshletGPU meshletGpu;
 
-			meshlet_to_reupload.push_back(meshlet);
+
 		}
 		patch_inds[meshlet->id] = index;
 	}
-
-	for(auto meshlet : most_current_meshlets){
-		//TODO: reassemble the most current meshlets
-	}
-
-
-
-
-	for(auto meshlet : meshlet_to_reupload){
-		//TODO: reupload this meshlet
-	}
-
+	*/
 	/*
 	for(auto patch : patches){
 
@@ -119,6 +196,106 @@ ActiveSet::~ActiveSet() {
 
 void ActiveSet::setupHeaders(){
 	cout << "TODO: (IMPLEMENT THIS) ActiveSet::setupHeaders" << endl;
+	vector<GpuPatchInfo> infos(meshlets.size());
+	for(size_t i=0;i<meshlets.size();i++){
+		GpuPatchInfo & info = infos[i];
+		auto & meshlet = meshlets[i];
+		info.vertex_start_ind = meshlet.vertices->getStartingIndex();
+		info.triangle_start_ind = meshlet.triangles->getStartingIndex();
+		info.patch_id = meshlet.id;
+
+		//TODO: textures
+		info.tex_layers = meshlet.textures.size();
+		for(size_t k=0;k<meshlet.textures.size();k++){
+
+		}
+
+		//TODO: geometry texture
+		if(meshlet.std_tex.tex != nullptr){
+			info.std_texture.size;
+			info.std_texture._size;
+			info.std_texture.pos;
+			info.std_texture.tex_coord_start_ind;
+			info.std_texture.gl_tex_pointer = meshlet.std_tex.tex->getGlHandle();
+
+		}
+	}
+
+	headers->upload(&infos[0]);
+
+
+}
+
+
+void ActiveSet::upload(shared_ptr<VertexBufConnector> &buf, vector<Vertex> &vertices) {
+	assert(0);//it is not as trivial as this makes it seem
+	vector<GpuVertex> gpu_verts(vertices.size());
+	for(size_t i=0;i<vertices.size();i++){
+		gpu_verts[i] = vertices[i].genGpuVertex();
+	}
+	buf->upload(&gpu_verts[0]);
+}
+
+void ActiveSet::upload(shared_ptr<TriangleBufConnector> &buf, vector<Triangle> &triangles) {
+	assert(0); // it is not exactly clear where these triangles are pointing
+	vector<GpuTriangle> gpu_tris(triangles.size());
+	for(size_t i=0;i<triangles.size();i++){
+		//triangles[i].
+	}
+
+	buf->upload(&gpu_tris[0]);
+}
+
+void ActiveSet::uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Meshlet* meshlet){
+
+	vector<GpuTriangle> gpu_triangles(meshlet->triangles.size());
+	unordered_map<Vertex*,int> additional_verts;
+
+	int count = 0;
+	for(size_t k=0;k<meshlet->triangles.size();k++){
+		auto & triangle = meshlet->triangles[k];
+		for(auto i : {0,1,2}){
+			if(triangle.vertices[i]->meshlet == meshlet){
+				//vertex within this meshlet:
+				//get index
+				size_t ind = 	(reinterpret_cast<size_t>(triangle.vertices[i]) -
+								reinterpret_cast<size_t>(&meshlet->vertices[0]))/sizeof(Vertex);
+				gpu_triangles[k].indices[i] = ind;//TODO: check if this really works
+			}else if(additional_verts.count(triangle.vertices[i])){
+				//the vertex already is part of the additional vertices
+				gpu_triangles[k].indices[i] = additional_verts[triangle.vertices[i]];
+			} else{
+				//the vertex has to be added to the additional vertices
+				gpu_triangles[k].indices[i] = count;
+				additional_verts[triangle.vertices[i]] = count;
+				count ++;
+			}
+		}
+	}
+
+	vector<GpuVertex> gpu_verts(meshlet->vertices.size() + additional_verts.size());
+
+	for(size_t i=0;i<meshlet->vertices.size();i++){
+		gpu_verts[i] = meshlet->vertices[i].genGpuVertex();
+		//cout << gpu_verts[i].p << endl;
+	}
+	int offset = meshlet->vertices.size();
+	for(auto pair : additional_verts){
+		gpu_verts[pair.second + offset] = pair.first->genGpuVertex();
+		//cout << gpu_verts[pair.second + offset].p << endl;
+	}
+	//reserve and upload vertices
+	meshlet_gpu.vertices = storage->vertex_buffer->getBlock(gpu_verts.size());
+	meshlet_gpu.vertices->upload(&gpu_verts[0]);
+
+	//reserve and upload triangles
+	meshlet_gpu.triangles = storage->triangle_buffer->getBlock(gpu_triangles.size());
+	meshlet_gpu.triangles->upload(&gpu_triangles[0]);
+
+
+	//TODO: tasks to transcribe the neighbouring vertices to the ones we have here
+
+
 }
 /*
 ActiveSet::ActiveSet(GpuStorage *storage,

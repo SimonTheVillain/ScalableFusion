@@ -235,11 +235,17 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 
 			//expanding the existing geometry
-			geometry_updater->extend(
+			shared_ptr<ActiveSet> updated_geometry_set = geometry_updater->extend(
+					this,
 					reconstruction.get(), information_renderer, texture_updater, low_detail_renderer_,
 					gpu_storage_,
-					active_set,active_sets, d_std_tex, d_std_mat, depth_pose,
+					active_set, d_std_tex, d_std_mat, depth_pose,
 					rgb_texture, rgb_pose);
+
+			active_sets_mutex.lock();
+			active_sets[0] = updated_geometry_set;
+			active_sets[1] = updated_geometry_set;//debug for rendering!!!!
+			active_sets_mutex.unlock();
 
 			//after the first step we wait (DEBUG).
 			cv::waitKey();
@@ -298,4 +304,12 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 	delete odometry;
 
 	cout << "DEBUG: scheduler finished thread" <<endl;
+}
+
+
+vector<shared_ptr<ActiveSet>> SchedulerLinear::getActiveSets(){
+	active_sets_mutex.lock();
+	vector<shared_ptr<ActiveSet>> sets = active_sets;
+	active_sets_mutex.unlock();
+	return sets;
 }

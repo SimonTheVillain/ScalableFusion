@@ -17,6 +17,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 									 shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 									 shared_ptr<ActiveSet> active_set,
 									 InformationRenderer* information_renderer) {
+	return;
 	assert(0);//TODO: reimplement this functionality
 	/*
 	MeshReconstruction *mesh = reconstruction;
@@ -351,6 +352,8 @@ void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
 									shared_ptr<gfx::GpuTex2D> rgb_in,
 									Matrix4f &pose, Matrix4f &proj,
 									shared_ptr<ActiveSet> active_set) {
+	cout<< "TextureUpdater::applyColorData reimplement this" << endl;
+	return;
 	assert(0); //TODO: reimplement this functionality
 	/*
 	MeshReconstruction *mesh = reconstruction;

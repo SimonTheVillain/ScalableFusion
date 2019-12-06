@@ -109,6 +109,7 @@ void PresentationRenderer::render(GpuStorage* gpu_storage, ActiveSet *active_set
 	glUniform1i(4, (int) show_wireframe);
 	glUniform1i(5, (int) color_mode);
 	glUniform1i(6, (int) shading_mode);
+	glUniform1i(8, active_set->headers->getStartingIndex());
 
 	gfx::GLUtils::checkForOpenGLError(
 			"[RenderMapPresentation::render] Setting up uniforms.");
@@ -155,6 +156,28 @@ void PresentationRenderer::render(GpuStorage* gpu_storage, ActiveSet *active_set
 	glUniform4f(7, 0, 0, 0, 1); // set color for meshes to black!
 	//TODO: really render stuff!!!!! (with our new approach)
 	//active_set->drawPatches();
+
+	int count = active_set->meshlets.size();
+	vector<GLint> firsts(count);
+	vector<GLsizei> counts(count);
+	for(int i=0;i<count;i++){
+		MeshletGPU &meshlet = active_set->meshlets[i];
+		firsts[i] = meshlet.triangles->getStartingIndex()*3;
+		counts[i] = meshlet.triangles->getSize()*3;
+		//counts[i] = 1;
+	}
+	//cout <<"PRESENTATION_RENDERER::RENDER why is there only the first vertex of each meshlet rendered? " << endl;
+	//glMultiDrawArrays(GL_POINTS,&firsts[0],&counts[0], count); //GL_TRIANGLES
+	//THERE IS A BUG WITH NVIDIA
+
+	//TODO: check out new driver version and see if this is fixed!
+	for(int i=0;i<count;i++){
+		glUniform1i(8, active_set->headers->getStartingIndex() + i);
+		glDrawArrays(GL_TRIANGLES,firsts[i],counts[i]);
+
+	}
+
+
 
 	glFinish();//i know this isn't ideal for performance but we need to make sure that the data usage is
 	// contained within this function so it won't be modified outside

@@ -19,7 +19,7 @@ project(scalable_fusion
 )
 set(LIB_NAME scalfu)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_BUILD_TYPE Release)
@@ -33,8 +33,8 @@ endif(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
 # set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native") #TODO: make everything runable with these optimization settings as well
 
 # Definitions
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CUDA_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CUDA_STANDARD 14)
 set(CMAKE_CUDA_FLAGS
 		"${CMAKE_CUDA_FLAGS} \
 		--expt-relaxed-constexpr \

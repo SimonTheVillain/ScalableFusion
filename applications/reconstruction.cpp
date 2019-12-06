@@ -365,6 +365,11 @@ int main(int argc, const char *argv[]) {
 
 		low_detail_renderer.initInGlContext();
 		if(!disable_rendering) {
+			shared_ptr<ActiveSet> set =
+					scheduler->getActiveSetRendering();
+			presentation_renderer.render(gpu_storage,set.get(),proj,view);
+
+			/*
 			presentation_renderer.renderInWindow(gpu_storage,
 												 scalable_map.get(),
 												 view, proj,
@@ -373,6 +378,7 @@ int main(int argc, const char *argv[]) {
 												 &information_renderer,
 												 &low_detail_renderer,
 												 &texture_updater);
+												 */
 		}
 		if(read_out_surface_info == true) {
 			cout << "Reading out the clicked patch to get further info" << endl;

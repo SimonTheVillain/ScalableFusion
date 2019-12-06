@@ -25,7 +25,7 @@ class MeshReconstruction;
 class GeometryBase;
 class Meshlet;
 class MeshTexture;
-class UnsecuredTriangleCollection;
+//class UnsecuredTriangleCollection;
 class MeshTexture;
 
 class GpuStorage;
@@ -34,11 +34,11 @@ class PresentationRenderer;
 
 class MeshletGpuHandle;
 
-class GpuSlottedBuffer;
+//class GpuSlottedBuffer;
 
 class TexAtlas;
 class TexAtlasPatch;
-class FBOConnector;
+//class FBOConnector;
 class Scheduler;
 
 class ActiveSet;

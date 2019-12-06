@@ -88,6 +88,8 @@ void LowDetailRenderer::initInGlContext() {
 
 void LowDetailRenderer::addPatches(vector<shared_ptr<Meshlet> > &patches_in,
                                    Vector3f cam_pos) {
+	cout << "LowDetailRenderer::addPatches new concept for this is needed" << endl;
+	return;
 	assert(0); // reimplement this later on
 	/*
 	if(patches_in.size() == 0) {

@@ -44,6 +44,8 @@ vec4 colorCode(int32_t id) {
 }
 
 void main(void) {
+	color = vec4(1,0,0,1);//debug
+	return;
 	if(debug2 == 1) {
 		color = vec4(0.7, 0.7, 0,1);
 		return;

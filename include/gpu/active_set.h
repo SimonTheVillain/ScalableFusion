@@ -15,12 +15,15 @@ class PresentationRenderer;
 
 class MeshReconstruction;
 class Meshlet;
+class Vertex;
+class Triangle;
 class MeshletGpuHandle;
 class MeshTextureGpuHandle;
 class GpuStorage;
 class LowDetailRenderer;
 class TextureUpdater;
 class GpuTriangle;
+
 template <typename T>
 class GpuBufferConnector;
 typedef GpuBufferConnector<GpuTriangle> TriangleBufConnector;
@@ -80,7 +83,7 @@ public:
 
 
 
-	vector<shared_ptr<MeshletGPU>> meshlets;
+	vector<MeshletGPU> meshlets;
 	shared_ptr<PatchInfoBufConnector> headers;
 	//the key is the patch id (maybe share patch id with stitch ids)
 	//value is the index in the according vectors
@@ -97,6 +100,13 @@ public:
 									MeshReconstruction *reconstruction,
 									TextureUpdater *texture_updater,
 									InformationRenderer* information_renderer);
+
+
+
+	void upload(shared_ptr<VertexBufConnector> &buf, vector<Vertex> &vertices);
+	void upload(shared_ptr<TriangleBufConnector> &buf, vector<Triangle> &triangles);
+
+	void uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Meshlet* meshlet);
 
 };
 

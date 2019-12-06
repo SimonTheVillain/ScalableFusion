@@ -70,6 +70,7 @@ file(GLOB CXX_SRCS
 		gpu/camera.cpp
 		gpu/gpu_tex.cpp
 		gpu/shader.cpp
+		gpu/gpu_mesh_structure.cpp
 		debug_render.cpp
 		geometry_updater.cpp
 		intermediate_depth_model.cpp

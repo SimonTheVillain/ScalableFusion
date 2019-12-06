@@ -7,18 +7,19 @@
 #include <utils/gpu_norm_seg.h>
 #include <graph/deformation_node.h>
 #include <cuda/xtion_camera_model.h>
+#include <scheduler.h>
 
 using namespace std;
 using namespace Eigen;
 
-void GeometryUpdater::extend(
+shared_ptr<ActiveSet> GeometryUpdater::extend(
+		SchedulerBase* scheduler,
 		MeshReconstruction* reconstruction,
 		InformationRenderer *information_renderer,
 		TextureUpdater* texture_updater,
 		LowDetailRenderer* low_detail_renderer,
 		GpuStorage* gpu_storage,
 		shared_ptr<ActiveSet> active_set_of_formerly_visible_patches,
-		vector<shared_ptr<ActiveSet>> all_active_sets,
 		shared_ptr<gfx::GpuTex2D> d_std_tex, cv::Mat& d_std_mat,
 		Matrix4f depth_pose_in, shared_ptr<gfx::GpuTex2D> rgb_tex,
 		Matrix4f color_pose_in) {
@@ -277,7 +278,7 @@ void GeometryUpdater::extend(
 	shared_ptr<ActiveSet> new_active_set =
 			make_shared<ActiveSet>(gpu_storage,
 									visible_meshlets,
-									all_active_sets);//TODO: all active sets should be
+									scheduler->getActiveSets());
 			/*
 			gpu_storage->makeActiveSet(
 					visible_meshlets,
@@ -406,6 +407,9 @@ void GeometryUpdater::extend(
 		node.node->findNeighbours(node.pos, node.pix_pos, nodes);
 	}
 	/*********************************************************************************/
+
+
+	return new_active_set;
 }
 
 void GeometryUpdater::update(	GpuStorage* gpu_storage,

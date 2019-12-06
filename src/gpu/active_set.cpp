@@ -250,6 +250,7 @@ void ActiveSet::uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Mes
 
 	vector<GpuTriangle> gpu_triangles(meshlet->triangles.size());
 	unordered_map<Vertex*,int> additional_verts;
+	int offset = meshlet->vertices.size();
 
 	int count = 0;
 	for(size_t k=0;k<meshlet->triangles.size();k++){
@@ -263,10 +264,10 @@ void ActiveSet::uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Mes
 				gpu_triangles[k].indices[i] = ind;//TODO: check if this really works
 			}else if(additional_verts.count(triangle.vertices[i])){
 				//the vertex already is part of the additional vertices
-				gpu_triangles[k].indices[i] = additional_verts[triangle.vertices[i]];
+				gpu_triangles[k].indices[i] = additional_verts[triangle.vertices[i]] + offset;
 			} else{
 				//the vertex has to be added to the additional vertices
-				gpu_triangles[k].indices[i] = count;
+				gpu_triangles[k].indices[i] = count + offset;
 				additional_verts[triangle.vertices[i]] = count;
 				count ++;
 			}
@@ -277,13 +278,11 @@ void ActiveSet::uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Mes
 
 	for(size_t i=0;i<meshlet->vertices.size();i++){
 		gpu_verts[i] = meshlet->vertices[i].genGpuVertex();
-		//cout << gpu_verts[i].p << endl;
 	}
-	int offset = meshlet->vertices.size();
 	for(auto pair : additional_verts){
 		gpu_verts[pair.second + offset] = pair.first->genGpuVertex();
-		//cout << gpu_verts[pair.second + offset].p << endl;
 	}
+
 	//reserve and upload vertices
 	meshlet_gpu.vertices = storage->vertex_buffer->getBlock(gpu_verts.size());
 	meshlet_gpu.vertices->upload(&gpu_verts[0]);

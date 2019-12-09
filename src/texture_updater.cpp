@@ -17,9 +17,10 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 									 shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 									 shared_ptr<ActiveSet> active_set,
 									 InformationRenderer* information_renderer) {
+	cout << "TextureUpdater::generateGeomTex REIMPLEMENT THIS" << endl;
 	return;
 	assert(0);//TODO: reimplement this functionality
-	/*
+/*
 	MeshReconstruction *mesh = reconstruction;
 	//TODO: even though commented out this still holds true
 
@@ -251,7 +252,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 	//and after doing this we can update the patch header
 
 	active_set->setupHeaders();
-	*/
+*/
 }
 
 

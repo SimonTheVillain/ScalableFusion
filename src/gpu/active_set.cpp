@@ -272,7 +272,7 @@ void ActiveSet::uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Mes
 	vector<GpuTriangle> gpu_triangles(meshlet->triangles.size());
 	unordered_map<Vertex*,int> additional_verts;
 	int offset = meshlet->vertices.size();
-
+	int debug_triangle_count = meshlet->triangles.size();
 	int count = 0;
 	for(size_t k=0;k<meshlet->triangles.size();k++){
 		auto & triangle = meshlet->triangles[k];
@@ -289,6 +289,7 @@ void ActiveSet::uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Mes
 			} else{
 				//the vertex has to be added to the additional vertices
 				gpu_triangles[k].indices[i] = count + offset;
+				assert(triangle.vertices[i]->p[3] == 1.0f);
 				additional_verts[triangle.vertices[i]] = count;
 				count ++;
 			}
@@ -302,6 +303,17 @@ void ActiveSet::uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Mes
 	}
 	for(auto pair : additional_verts){
 		gpu_verts[pair.second + offset] = pair.first->genGpuVertex();
+
+		assert(gpu_verts[pair.second + offset].p[3] == 1.0f);//debug remove
+	}
+	//debug measure
+	int debug_count=0;
+	for(auto vert : gpu_verts){
+		cout << vert.p<< endl;
+		debug_count++;
+		assert(!isnan(vert.p[3]));
+		int debug_size = meshlet->vertices.size();
+		assert(vert.p[3] == 1.0f);
 	}
 
 	//reserve and upload vertices

@@ -15,8 +15,8 @@ Meshlet::Meshlet(int id,Octree<Meshlet> *octree) :
 	setOctree(octree);
 
 	//TODO: get this from a constant... essentially it should speed up the process
-	triangles.reserve(800);
-	vertices.reserve(800);
+	//triangles.reserve(500);
+	//vertices.reserve(900);
 
 	deformation_node = make_shared<DeformationNode>(this);
 }

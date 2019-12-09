@@ -43,5 +43,7 @@ MeshletGPU::~MeshletGPU(){
 	meshlet->vertices_mutex.unlock();
 
 
-	assert(0);//TODO: check if we should download data!!!
+	//TODO: remove everything needed to transcribe neighbouring vertex positions to this patch!!!
+
+
 }

@@ -16,6 +16,9 @@ Mesher::TriangleReference Mesher::addTriangle(	Vertex* pr1,
 												Mesher::Neighbour &nr3,
 												int &rotated) {
 
+	assert(pr1->p[3] == 1.0f);
+	assert(pr2->p[3] == 1.0f);
+	assert(pr3->p[3] == 1.0f);
 	rotated = 0; // it seems with the new approach we don't care about rotation anymore
 	Meshlet *patch_1 = pr1->meshlet;
 	Meshlet *patch_2 = pr2->meshlet;
@@ -29,8 +32,15 @@ Mesher::TriangleReference Mesher::addTriangle(	Vertex* pr1,
 		Meshlet* patch = patch_1;
 		patch->work_in_progress.lock();
 
+
+		TriangleReference triangle_reference;
+		triangle_reference.ptr = patch;
+		triangle_reference.pos = patch->triangles.size();
+
 		//create a triangle:
-		Triangle triangle;
+		patch->triangles.emplace_back();
+		Triangle &triangle =patch->triangles.back();
+		triangle.debug_nr = triangle_reference.pos;
 		triangle.vertices[0] = pr1;
 		triangle.vertices[1] = pr2;
 		triangle.vertices[2] = pr3;
@@ -43,11 +53,7 @@ Mesher::TriangleReference Mesher::addTriangle(	Vertex* pr1,
 		triangle.debug_nr = debug_triangle_count++;
 
 
-		TriangleReference triangle_reference;
-		triangle_reference.ptr = patch;
-		triangle_reference.pos = patch->triangles.size();
-		patch->triangles.push_back(std::move(triangle));
-		patch->triangles.back().registerSelf();
+		triangle.registerSelf();
 		patch->work_in_progress.unlock();
 
 		if(patch_1 != patch_2){
@@ -280,6 +286,8 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 	int width  = points.cols;
 	int height = points.rows;
 
+	cv::Mat debug(480,640,CV_8UC1);
+	debug = 0;
 	//TODO: this sadly needs to be something else
 
 	Neighbour nb_up[width];
@@ -333,14 +341,14 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 	   					{(int)i+1, (int)j + 1},
 						{(int)i + 1, (int)j}};
 			float zs[4]; // Storage for depth values
-			zs[0] = points.at<Vector4f>(    i,     j)[2]; // Upper left
-			zs[1] = points.at<Vector4f>(    i, j + 1)[2]; // Upper right
-			zs[2] = points.at<Vector4f>(i + 1, j + 1)[2]; // Bottom right
-			zs[3] = points.at<Vector4f>(i + 1,     j)[2]; // Bottom left
+			for(int k : {0,1,2,3})
+				zs[k] = points.at<Vector4f>(coords[k][0],coords[k][1])[2];
+
 			float distance_ul_br = fabs(zs[0] - zs[2]);
 			float distance_ur_bl = fabs(zs[1] - zs[3]);
 
-			Vertex* pr[4];/* = {
+			Vertex* pr[4] = { nullptr, nullptr, nullptr, nullptr};//nullptr should not be necessary
+			/*
 					&(((Meshlet*) mesh_pointers.at<uint64_t>(    i, j    ))->vertices[vertex_indices.at<int>(i, j)]),
 					&(((Meshlet*) mesh_pointers.at<uint64_t>(i + 1, j + 1))->vertices[vertex_indices.at<int>(i, j + 1)]),
 					&(((Meshlet*) mesh_pointers.at<uint64_t>(i    , j + 1))->vertices[vertex_indices.at<int>(i, j + 1)]),
@@ -400,6 +408,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 						if(fabs(zs[1] - zs[2]) < threshold &&
 						   fabs(zs[1] - zs[3]) < threshold) {
 							tn.ref = addTriangle(pr[3], pr[2], pr[1], empty, empty, empty, r); // No neighbour in this case
+							debug.at<uint8_t>(i,j)++;
 							tn.pos = (1 - r + 3) % 3;
 							nb_left = tn;
 							tn.pos = (0 - r + 3) % 3;
@@ -413,6 +422,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 						   fabs(zs[3] - zs[2]) < threshold) {
 							tn.ref = addTriangle(pr[0], pr[3], pr[2], nb_left, empty, empty,
 							                     r);
+							debug.at<uint8_t>(i,j)++;
 							tn.pos = (1 - r + 3) % 3;
 							nb_up[j] = tn;
 							nb_left.invalidate();
@@ -425,6 +435,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 						   fabs(zs[0] - zs[2]) < threshold) {
 							tn.ref = addTriangle(pr[0], pr[3], pr[1], nb_left, nb_up[j],
 							                     empty, r);
+							debug.at<uint8_t>(i,j)++;
 							nb_up[j].invalidate();
 							nb_left.invalidate();
 							created = true;
@@ -436,6 +447,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 						   fabs(zs[1] - zs[2]) < threshold) {
 							tn.ref = addTriangle(pr[0], pr[2], pr[1], empty, empty, nb_up[j],
 							                     r);
+							debug.at<uint8_t>(i,j)++;
 							tn.pos = (1 - r + 3) % 3;
 							nb_left = tn;
 							nb_up[j].invalidate();
@@ -470,6 +482,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 						// Top left triangle
 						nb_diag.ref = addTriangle(pr[0], pr[3], pr[1], nb_left, empty,
 						                          nb_up[j], r);
+						debug.at<uint8_t>(i,j)++;
 						debug_created = true;
 
 						nb_diag.pos = (1 - r + 3) % 3;
@@ -478,6 +491,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 					if(fabs(zs[1] - zs[2]) < threshold) {
 						// Bottom right triangle
 						tn.ref = addTriangle(pr[3], pr[2], pr[1], empty, empty, nb_diag, r);
+						debug.at<uint8_t>(i,j)++;
 						debug_created = true;
 						tn.pos = (1 - r + 3) % 3;
 						nb_left = tn;
@@ -507,10 +521,8 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 				if(distance_ul_br < threshold) {
 					if(fabs(zs[0] - zs[3]) < threshold) {
 						// Bottom left triangle
-						if(j == 88 && i == 11) {
-							//cout << "Lets fix this" << endl;
-						}
 						tn.ref = addTriangle(pr[0], pr[3], pr[2], nb_left, empty, empty, r);
+						debug.at<uint8_t>(i,j)++;
 						debug_created = true;
 						tn.pos = (2 - r + 3) % 3;
 						nb_diag = tn;
@@ -522,6 +534,7 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 						// Top right triangle
 						tn.ref = addTriangle(pr[0], pr[2], pr[1], nb_diag, empty, nb_up[j],
 						                     r);
+						debug.at<uint8_t>(i,j)++;
 						debug_created = true;
 						tn.pos = (1 - r + 3) % 3;
 						nb_left_new = tn;
@@ -535,6 +548,8 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 			}
 		}
 	}
+	cv::imshow("debug",debug*127);
+	cv::waitKey(100);
 }
 
 struct VertexTexConn {

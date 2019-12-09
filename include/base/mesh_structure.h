@@ -115,11 +115,11 @@ public:
 	Vector4f p;
 	Vector3f n;
 
-	Meshlet* meshlet;
+	Meshlet* meshlet = nullptr;
 public:
 
 
-	int32_t tex_ind_in_main_patch;
+	int32_t tex_ind_in_main_patch = -1;
 
 	vector<VertexInTriangle> triangles;
 public:
@@ -129,24 +129,24 @@ public:
 	//StackVector<VertexInTriangle, 16> triangles; //this will not really give any speed benefits (a few milliseconds at most)
 
 
-	Vertex() 
-			: tex_ind_in_main_patch(-1) { 
+	Vertex() {
+		//cout << "vertex constructor " << endl;
 	}
 
 	Vertex( const Vertex& o){
 		p = o.p;
 		n = o.n;
-		meshlet = meshlet;
+		meshlet = o.meshlet;
 		//the other elements are better not copied since they are highly dependant on the
 		//vertex retaining its position in memory
 	}
 	//move constructor
-	Vertex(	Vertex && o);
+	Vertex(	Vertex && o) noexcept;
 
 	Vertex(GpuVertex gpu_vertex) {
 		p = gpu_vertex.p;
 		n = gpu_vertex.n;
-		meshlet = meshlet;
+		meshlet = nullptr;
 		tex_ind_in_main_patch = gpu_vertex.tex_ind_in_main_patch;
 	}
 
@@ -562,9 +562,9 @@ struct Triangle {
 	Triangle() { }
 
 	//move constructor
-	Triangle(Triangle &&o){
+	Triangle(Triangle &&o) noexcept{
 
-		for(int i=0;i<3;i++){
+		for(auto i : {0,1,2}){
 			Neighbour &nb = neighbours[i];
 			nb = o.neighbours[i];
 			//update the neighbours reference pointing at this
@@ -572,6 +572,8 @@ struct Triangle {
 				nb.ptr->neighbours[nb.pos].ptr = this;
 				o.neighbours[i].invalidate();//invalidating the move source
 			}
+			debug_nr = o.debug_nr;
+			assert(o.vertices[i]->p[3] == 1.0f);
 			vertices[i] = o.vertices[i];
 			o.vertices[i] = nullptr;//invalidate at source (maybe not necessary)
 			assert(vertices[i]);
@@ -691,9 +693,11 @@ struct Triangle {
 	 			neighbours[i].ptr->neighbours[ind].ptr = this;
 	 			neighbours[i].ptr->neighbours[ind].pos = i;
 
-	 			//add triangle to vertices
-	 			vertices[i]->insertTriangle(this,i);
 	 		}
+
+	 		//vertices should always be valid
+			//add triangle to vertices
+			vertices[i]->insertTriangle(this,i);
 	 	}
 	 }
 	void cycle(int cnt) {
@@ -973,11 +977,11 @@ struct Edge {
 
 
 //this is down here so it can be inlined
-inline Vertex::Vertex ( Vertex && o){
-	this->meshlet = o.meshlet;
+inline Vertex::Vertex ( Vertex && o) noexcept{
+	meshlet = o.meshlet;
 	p = o.p;
 	n = o.n;
-	tex_ind_in_main_patch  = tex_ind_in_main_patch;
+	tex_ind_in_main_patch  = o.tex_ind_in_main_patch;
 	triangles = std::move(o.triangles);
 	for(auto triangle : triangles){
 		//set old references to this vertex to the new position

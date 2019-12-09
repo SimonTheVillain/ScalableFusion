@@ -158,25 +158,27 @@ void PresentationRenderer::render(GpuStorage* gpu_storage, ActiveSet *active_set
 	//active_set->drawPatches();
 
 	int count = active_set->meshlets.size();
-	vector<GLint> firsts(count);
+	vector<GLint> firsts(count,0);
 	vector<GLsizei> counts(count);
 	for(int i=0;i<count;i++){
 		MeshletGPU &meshlet = active_set->meshlets[i];
-		firsts[i] = meshlet.triangles->getStartingIndex()*3;
+		//firsts[i] = meshlet.triangles->getStartingIndex()*3;
 		counts[i] = meshlet.triangles->getSize()*3;
-		//counts[i] = 1;
 	}
 	//cout <<"PRESENTATION_RENDERER::RENDER why is there only the first vertex of each meshlet rendered? " << endl;
-	//glMultiDrawArrays(GL_POINTS,&firsts[0],&counts[0], count); //GL_TRIANGLES
+	glMultiDrawArrays(GL_TRIANGLES,&firsts[0],&counts[0], count); //GL_TRIANGLES
 	//THERE IS A BUG WITH NVIDIA that prevents gl_VertexID from incrementing (it is initialized with the right start point though)
 
 
+	/*
 	//TODO: check out new driver version and see if this is fixed!
 	for(int i=0;i<count;i++){
 		glUniform1i(8, active_set->headers->getStartingIndex() + i);
 		glDrawArrays(GL_TRIANGLES,firsts[i],counts[i]);
 
 	}
+	 */
+
 
 
 

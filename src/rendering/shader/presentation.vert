@@ -40,16 +40,18 @@ void main(void) {
 	int id          = gl_VertexID; //gl_VertexID is broken with multidraw .... atomic counter?
 	int point_id    = id % 3;
 	int triangle_id = id / 3;
-	const GpuTriangle triangle = triangles[triangle_id];
 
 	GpuPatchInfo patch_info = patches[patch_info_start_ind + gl_DrawID];
+	const GpuTriangle triangle = triangles[triangle_id + patch_info.triangle_start_ind];
+
 	patch_id = patch_info.patch_id;
-	debug1 = 0;
+
 
 	int vertex_id = triangle.indices[point_id] +
 	                patch_info.vertex_start_ind;
 	vec4 point = vertices[vertex_id].p;
 	normal.xyz = vertices[vertex_id].n;
+
 
 	GpuTextureInfo tex_info = patch_info.texture_infos[0];
 	if(color_mode == 2) {

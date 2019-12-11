@@ -12,15 +12,53 @@ using namespace std;
 using namespace Eigen;
 
 void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
+									 GpuStorage* gpu_storage,
 									 vector<shared_ptr<Meshlet> > &new_patches,
 									 Matrix4f pose, Matrix4f proj,
 									 shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 									 shared_ptr<ActiveSet> active_set,
 									 InformationRenderer* information_renderer) {
-	cout << "TextureUpdater::generateGeomTex REIMPLEMENT THIS" << endl;
-	return;
-	assert(0);//TODO: reimplement this functionality
-/*
+
+
+	//texture scale!
+	float scale = 2;
+	//cout << "TextureUpdater::generateGeomTex REIMPLEMENT THIS" << endl;
+	//return;
+	//assert(0);//TODO: reimplement this functionality
+	{
+		MeshReconstruction *mesh = reconstruction;
+
+		//first we need to get bounds:
+		vector<cv::Rect2f> bounds = calcTexBounds(active_set, new_patches, pose, proj);
+
+		//then we generate texture coordinates:
+		vector<TexCoordGen::Task> tex_gen_tasks(bounds.size());
+		tex_gen_tasks.reserve(active_set->meshlets.size());
+		for(size_t i=0;i<new_patches.size();i++){
+			//allocate gpu_storage, generate the tasks and go for it!
+			gpu_storage->
+		}
+		Matrix4f mvp = proj * pose.inverse();
+		TexCoordGen::genTexCoords(tex_gen_tasks, mvp);
+		//insert them to the active set
+
+		//render the geom lookup texture
+
+		//std texture
+
+		//finally update the header on the gpu
+
+	}
+
+
+
+	/*
+
+
+
+
+
+	//TODO: OLD! REMOVE THIS!!!!!
 	MeshReconstruction *mesh = reconstruction;
 	//TODO: even though commented out this still holds true
 
@@ -252,7 +290,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 	//and after doing this we can update the patch header
 
 	active_set->setupHeaders();
-*/
+	*/
 }
 
 
@@ -628,4 +666,28 @@ void TextureUpdater::genLookupTex(
 		patches[i]->geom_tex_patch->ref_tex_filled = true;
 	}
 	 */
+}
+
+
+vector<cv::Rect2f> TextureUpdater::calcTexBounds(	shared_ptr<ActiveSet> active_set,
+									 vector<shared_ptr<Meshlet>> &meshlets,
+									 Eigen::Matrix4f pose,
+									 Eigen::Matrix4f proj){
+
+	Matrix4f mvp = proj * pose.inverse();
+	vector<TexCoordGen::BoundTask> bound_tasks(meshlets.size());
+	for(int i=0;i<meshlets.size();i++){
+		shared_ptr<Meshlet> &meshlet = meshlets[i];
+		MeshletGPU* meshlet_gpu = active_set->getGpuMeshlet(meshlet);
+		assert(meshlet_gpu);//debug measure
+
+		TexCoordGen::BoundTask &task = bound_tasks[i];
+		task.vertices = meshlet_gpu->vertices->getStartingPtr();
+		task.vertex_count = meshlet_gpu->vertices->getSize();
+
+	}
+
+
+	return TexCoordGen::getTexCoordBounds(bound_tasks, mvp);
+
 }

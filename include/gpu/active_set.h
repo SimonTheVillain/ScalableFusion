@@ -91,6 +91,8 @@ public:
 	//separate textures
 
 
+	MeshletGPU* getGpuMeshlet(shared_ptr<Meshlet> meshlet);
+
 	void uploadTexAndCoords_(vector<shared_ptr<Meshlet>> &patches,
 	                         vector<shared_ptr<MeshletGpuHandle>> &patches_gpu,
 	                         const MeshReconstruction* map, bool initial = false);

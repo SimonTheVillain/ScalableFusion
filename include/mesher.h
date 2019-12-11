@@ -60,6 +60,9 @@ public:
 	// TODO: move fillNovelPatchesWithTexIndices here! (because it is a terrible function name
 	void genTexIndices(vector<shared_ptr<Meshlet> > &patches);
 
+	void genLocalIndices(vector<shared_ptr<Meshlet>> &meshlets);
+
+
 	MeshReconstruction *mesh_reconstruction;
 
 };

@@ -211,7 +211,6 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	time_start = time_end;
 
 	//remove patches with zero triangles. Even when they pose as a source for stitches
-
 	vector<shared_ptr<Meshlet>> list_of_mesh_patches_to_keep;
 	vector<shared_ptr<Meshlet>> set_of_patches_to_be_removed;
 
@@ -266,7 +265,8 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 	time_start = time_end;
 
-	meshing.genTexIndices(new_shared_mesh_patches);
+	//meshing.genTexIndices(new_shared_mesh_patches);
+	meshing.genLocalIndices(new_shared_mesh_patches);
 
 	//since the texture indices are set we can upload and create a new active set
 	//most of the code below this active set creation can be put into the active set
@@ -338,9 +338,6 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 	time_start = time_end;
 
-	// We want to create a new active set that replaces the old one.
-	// The pointer to the active set should be secured by a mutex.
-	gpu_storage->delete_debug_tex_reference_ = rgb_tex->getGlHandle();
 
 	// Now that we have the geometry on the cpu now do the texture for the geometrical textures:
 

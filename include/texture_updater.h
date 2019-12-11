@@ -16,6 +16,7 @@ class TextureUpdater {
 public:
 
 	void generateGeomTex(MeshReconstruction* reconstruction,
+						 GpuStorage* gpu_storage,
 						 vector<shared_ptr<Meshlet> > &new_patches,
 						 Matrix4f pose, Matrix4f proj,
 						 shared_ptr<gfx::GpuTex2D> geom_sensor_data,
@@ -56,6 +57,18 @@ public:
 					  vector<shared_ptr<MeshTexture>> &textures,
 					  InformationRenderer* information_renderer,
 					  bool dilate = true);
+
+
+	vector<cv::Rect2f> calcTexBounds(	shared_ptr<ActiveSet> active_set,
+										vector<shared_ptr<Meshlet>> &meshlets,
+										Eigen::Matrix4f pose,
+										Eigen::Matrix4f proj);
+
+	//TODO:
+	void calcTexCoords(shared_ptr<ActiveSet> active_set,
+					   vector<shared_ptr<Meshlet>> &meshlets,
+					   Eigen::Matrix4f pose,
+					   Eigen::Matrix4f proj);
 
 	//MeshReconstruction *mesh_reconstruction;//TODO: remove this
 };

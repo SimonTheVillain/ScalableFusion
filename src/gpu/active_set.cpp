@@ -268,7 +268,7 @@ void ActiveSet::upload(shared_ptr<TriangleBufConnector> &buf, vector<Triangle> &
 }
 
 void ActiveSet::uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Meshlet* meshlet){
-
+	/*
 	vector<GpuTriangle> gpu_triangles(meshlet->triangles.size());
 	unordered_map<Vertex*,int> additional_verts;
 	int offset = meshlet->vertices.size();
@@ -323,10 +323,59 @@ void ActiveSet::uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Mes
 	//reserve and upload triangles
 	meshlet_gpu.triangles = storage->triangle_buffer->getBlock(gpu_triangles.size());
 	meshlet_gpu.triangles->upload(&gpu_triangles[0]);
+	*/
+	vector<GpuTriangle> gpu_triangles(meshlet->triangles.size());
+	int max_local_vertex_index = 0;
+	for(auto & tri : meshlet->triangles)
+		for(size_t i : {0,1,2})
+			max_local_vertex_index =
+					std::max(max_local_vertex_index,tri.local_indices[i]);
 
+	vector<Vertex*> vertices(max_local_vertex_index+1);
+	vector<GpuVertex> gpu_vertices(vertices.size());
+	for(size_t i=0;i<meshlet->vertices.size();i++)
+		vertices[i] = &meshlet->vertices[i]; // this is necessary since some of the vertices do not have triangles
+											 // should we clean the mesh from these vertices?
+
+	for(auto & tri : meshlet->triangles)
+		for(size_t i : {0,1,2})
+			vertices[ tri.local_indices[i] ] = tri.vertices[i];
+
+	for(size_t i=0;i<vertices.size();i++)
+		gpu_vertices[i] = vertices[i]->genGpuVertex();
+
+	for(size_t i=0;i<meshlet->triangles.size();i++)
+		for(size_t k : {0,1,2})
+			gpu_triangles[i].indices[k] = meshlet->triangles[i].local_indices[k];
+
+	//debug measure
+	int debug_count=0;
+	for(auto vert : gpu_vertices){
+		//cout << vert.p<< endl;
+		debug_count++;
+		assert(!isnan(vert.p[3]));
+		int debug_size = meshlet->vertices.size();
+		assert(vert.p[3] == 1.0f);
+	}
+
+	//reserve and upload vertices
+	meshlet_gpu.vertices = storage->vertex_buffer->getBlock(gpu_vertices.size());
+	meshlet_gpu.vertices->upload(&gpu_vertices[0]);
+
+	//reserve and upload triangles
+	meshlet_gpu.triangles = storage->triangle_buffer->getBlock(gpu_triangles.size());
+	meshlet_gpu.triangles->upload(&gpu_triangles[0]);
 
 	//TODO: tasks to transcribe the neighbouring vertices to the ones we have here
 
+
+}
+MeshletGPU* ActiveSet::getGpuMeshlet(shared_ptr<Meshlet> meshlet) {
+	if(patch_inds.count(meshlet->id)){
+		int ind = patch_inds[meshlet->id];
+		return &meshlets[ind];
+	}
+	return nullptr;
 
 }
 /*

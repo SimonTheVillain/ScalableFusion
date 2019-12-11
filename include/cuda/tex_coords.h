@@ -16,9 +16,8 @@ class TexCoordGen {
 public:
 
 	struct Task {
-		GpuTriangle *triangles;
 		GpuVertex *vertices;
-		uint32_t triangle_count;
+		uint32_t vertex_count;
 		Vector2f *coords;
 		float scale_x;
 		float scale_y;
@@ -27,19 +26,17 @@ public:
 	};
 
 	struct BoundTask {
-		GpuTriangle *triangles;
 		GpuVertex* vertices;
-		uint32_t triangle_count;
-		uint32_t target_ind;
-		int debug_type = 0;
+		uint32_t vertex_count;
 	};
 
-	static void genTexCoords(vector<Task> tasks, Matrix4f proj_pose,
-	                         GpuPatchInfo *patch_infos, GpuVertex *gpu_vertices);
+	static void genTexCoords(vector<Task> tasks, Matrix4f proj_pose);
 
 	static vector<cv::Rect2f> getPotentialTexCoordBounds(
-			vector<BoundTask> tasks, Matrix4f proj_pose, int result_count, 
-			GpuPatchInfo *patch_infos, GpuVertex *vertices);
+			vector<BoundTask> tasks, Matrix4f proj_pose, int result_count);
+
+	static vector<cv::Rect2f> getTexCoordBounds(
+			vector<BoundTask> tasks, Matrix4f proj_pose);
 
 };
 

@@ -56,23 +56,23 @@ void main(void) {
 		return;
 	}
 
-
+	*/
 	if(bindless_texture == 0) {
 		//if there is no texture bound we put out a other color
 		color = vec4(0.5, 0.5, 0, 1);
-		return;
+	//	return;
 	} else {
 		sampler2D s = sampler2D(bindless_texture);
 		color = texture(s, tex_pos_out);
 	}
-	*/
+
 	//rendering the wireframe
 	float min_distance = min(distances[0], min(distances[1], distances[2]));
 	float mix_val = smoothstep(line_width - 0.5, line_width + 0.5, min_distance);
 
 
 
-	/*
+
 
 	if(color_mode == 1) {
 		color = colorCode(patch_id);
@@ -104,7 +104,7 @@ void main(void) {
 		color = vec4(color.x, 0, 0, 1);//another debug
 		color = vec4(tex_pos_out, 0, 1);//why is this flickering? why!!!!!!
 	}
-	*/
+
 	//certain debug outputs
 	if(is_stitch != 0) {
 	}
@@ -131,7 +131,7 @@ void main(void) {
 		color = vec4(tex_pos_out, 0, 1);//debug
 	}
 
-	color = colorCode(patch_id);
+	//color = colorCode(patch_id);
 	if(render_wireframe != 0) {
 		color = mix(line_color, color, mix_val);
 	}

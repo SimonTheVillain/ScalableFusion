@@ -552,7 +552,11 @@ struct Triangle {
 	/**
 	 * These are the indices to the texture coordinates to the texture defined by the patch used in the first point
 	 */
-	uint32_t tex_indices[3] = {0, 0, 0};
+	//uint32_t tex_indices[3] = {0, 0, 0};
+
+	//TODO: this should replace the tex indices
+	//these should also be used for
+	int32_t local_indices[3] = {-1, -1, -1};
 
 	EdgeReference   edges[3];
 	//VertexReference points[3];

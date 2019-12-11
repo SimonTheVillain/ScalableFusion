@@ -349,6 +349,7 @@ void InformationRenderer::renderDepth(ActiveSet *active_set,
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
 					 gpu_storage->patch_info_buffer->getGlName());
 
+	cout << "LOOK AT WHAT THE PRESENTATION RENDERER DID AND REPEAT EXACTLY THAT" << endl;
 	assert(0); // the rendering method is not operational right now!!!!! drawMulti stuff is needed
 	//active_set->drawEverything();
 	gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderDepth] "

@@ -578,6 +578,30 @@ inline bool operator==(const VertexTexConn &lhs, const VertexTexConn &rhs) {
 	return lhs.vert == rhs.vert;
 }
 
+void Mesher::genLocalIndices(vector<shared_ptr<Meshlet>> &meshlets) {
+	for(auto meshlet : meshlets){
+		//map between vertices and indices
+		unordered_map<Vertex*,int> vertex_positions;
+		size_t k=0;
+		for(size_t i=0;i<meshlet->vertices.size();i++){
+			vertex_positions[ &meshlet->vertices[i] ] = k;
+			k++;
+		}
+		for(auto & tri : meshlet->triangles){
+			for(size_t i : {0,1,2}){
+				if(vertex_positions.count(tri.vertices[i])){
+					tri.local_indices[i] = vertex_positions[tri.vertices[i]];
+				}else{
+					vertex_positions[tri.vertices[i]] = k;
+					tri.local_indices[i] = k;
+					k++;
+				}
+			}
+		}
+	}
+
+}
+
 void Mesher::genTexIndices(vector<shared_ptr<Meshlet> > &patches) {
 	cout << "TODO: reimplement Mesher::genTexIndices" << endl;
 	return;

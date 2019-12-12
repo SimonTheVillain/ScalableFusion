@@ -13,11 +13,15 @@ layout(std430, binding = 3) buffer PatchBuffer {
 	GpuPatchInfo patches[];
 };
 
-layout(location = 0) uniform int max_nr_tex_points; //this seems to be the only thing that is actually needed
-layout(location = 1) uniform int patch_info_start_ind;
+//layout(location = 0) uniform int max_nr_tex_points; //this seems to be the only thing that is actually needed
+//layout(location = 1) uniform int patch_info_start_ind;
+layout(location = 0) uniform int start_tris;
+layout(location = 1) uniform int start_tex_coords;
 //todo: The output for the whole shader is going to be a texture with triangle indices and
 //a parametrized position on the textures
-flat out int triangle_index;//thats an easy one
+flat out int vert_ind1;
+flat out int vert_ind2;
+flat out int vert_ind3;
 out vec3 barycentric_weights;//this is not (barycentric interpolation?)
 
 void main(void) {
@@ -25,18 +29,18 @@ void main(void) {
 	int id          = gl_VertexID;
 	int point_id    = id % 3;
 	int triangle_id = id / 3;
-	const GpuTriangle triangle = triangles[triangle_id];
-	int patch_slot             = gl_DrawID + patch_info_start_ind;
-	GpuPatchInfo patch_info    = patches[patch_slot];
+	const GpuTriangle triangle = triangles[triangle_id + start_tris];
 
-	vec4 point = vertices[triangle.indices[point_id]].p;
+	vert_ind1 = triangle.indices[0];
+	vert_ind2 = triangle.indices[1];
+	vert_ind3 = triangle.indices[2];
 
-	uint32_t tex_pos_ind = triangle.indices[point_id] +
-	                       patch_info.std_texture.tex_coord_start_ind;
+
+	int ind = triangle.indices[point_id];
+
 
 	//the new stuff:
-	gl_Position = vec4(tex_coords[tex_pos_ind] * 2.0 - vec2(1.0, 1.0), 0, 1);
-	triangle_index = triangle_id;
+	gl_Position = vec4(tex_coords[ind + start_tex_coords] * 2.0 - vec2(1.0, 1.0), 0, 1);
 
 	//TODO: test if this really does barycentric interpolation in opengl
 	barycentric_weights = vec3(0, 0, 0);

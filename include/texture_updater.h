@@ -11,13 +11,15 @@ using namespace std;
 using namespace Eigen;
 
 class MeshReconstruction;
+class MeshletGPU;
+class TextureLayerGPU;
 
 class TextureUpdater {
 public:
 
 	void generateGeomTex(MeshReconstruction* reconstruction,
 						 GpuStorage* gpu_storage,
-						 vector<shared_ptr<Meshlet> > &new_patches,
+						 vector<shared_ptr<Meshlet> > &meshlets,
 						 Matrix4f pose, Matrix4f proj,
 						 shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 						 shared_ptr<ActiveSet> active_set,
@@ -46,17 +48,33 @@ public:
 	                    Matrix4f &pose, Matrix4f &proj, 
 	                    shared_ptr<ActiveSet> active_set);
 
+	//old (REMOVE)
 	void genLookupTexGeom(MeshReconstruction* reconstruction,
 						  ActiveSet *active_set,
 						  vector<shared_ptr<Meshlet> > &patches,
 						  InformationRenderer* information_renderer);
 
+	//new
+	void genLookupTexGeom(	  InformationRenderer* information_renderer,
+							  shared_ptr<ActiveSet> active_set,
+							  vector<shared_ptr<Meshlet>> &meshlets,
+							  bool dilate = true);
+
+	//old (REMOVE):
 	void genLookupTex(MeshReconstruction* reconstruction,
 					  ActiveSet *active_set,
 					  vector<shared_ptr<Meshlet> > &patches,
 					  vector<shared_ptr<MeshTexture>> &textures,
 					  InformationRenderer* information_renderer,
 					  bool dilate = true);
+
+	//new
+	void genLookupTex(	InformationRenderer* information_renderer,
+						GpuStorage* gpu_storage,
+						vector<MeshletGPU*> meshlets, //for geometry
+			          	vector<TextureLayerGPU*> textures,
+			          	bool dilate = false);//
+
 
 
 	vector<cv::Rect2f> calcTexBounds(	shared_ptr<ActiveSet> active_set,

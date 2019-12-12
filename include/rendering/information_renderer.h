@@ -14,6 +14,7 @@
 
 #include <gpu/gpu_tex.h>
 #include <gpu/shader.h>
+#include <gpu/gpu_buffer.h>
 
 using namespace std;
 using namespace Eigen;
@@ -25,6 +26,8 @@ class ActiveSet;
 class LowDetailRenderer;
 class GpuStorage;
 class GLFWwindow;
+class MeshletGPU;
+class TexAtlasPatch;
 /**
  * @brief The RenderMapInformations class
  * does some of the rendering of the map to the current view (current camera pose).
@@ -71,15 +74,18 @@ public:
 	///TODO: create a renderer for which patch is used in which image!!!
 	//L.G. Debugging tool
 
-	void bindRenderTriangleReferenceProgram(MeshReconstruction* reconstruction,
-											GpuStorage* gpu_storage);
+	void bindRenderTriangleReferenceProgram(GpuStorage* gpu_storage);
 
+	//old (REMOVE)
 	void renderTriangleReferencesForPatch(ActiveSet *active_set,
 	                                      GpuStorage* gpu_storage,
 	                                      shared_ptr<Meshlet> &patch,
 	                                      shared_ptr <MeshTexture> &target_texture);
 
-
+	//new
+	void renderReference(MeshletGPU* meshlet_gpu,
+						 shared_ptr<TexCoordBufConnector> coords,
+						 shared_ptr<TexAtlasPatch> ref_tex );
 
 	void renderTriangleReferencesAndDepth(ActiveSet *active_set,
 	                                      GpuStorage* gpu_storage,
@@ -140,6 +146,7 @@ private:
 
 	//MeshReconstruction *map_;
 
+	//TODO: rename since it is more about vertex references now!!!!!
 	static weak_ptr<gfx::GLSLProgram> s_triangle_reference_program_;
 	shared_ptr<gfx::GLSLProgram> triangle_reference_program_;
 

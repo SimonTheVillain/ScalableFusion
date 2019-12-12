@@ -142,7 +142,9 @@ shared_ptr<Meshlet> MeshReconstruction::getMeshlet(int id){
 
 shared_ptr<MeshTexture> MeshReconstruction::genMeshTexture(
 		MeshTexture::Type content_type) {
-	return make_shared<MeshTexture>(content_type, this);
+	assert(0);
+	return nullptr;
+	//return make_shared<MeshTexture>(content_type, this);
 }
 
 void MeshReconstruction::setRGBIntrinsics(Vector4f fxycxy) {

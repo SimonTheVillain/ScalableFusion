@@ -310,6 +310,7 @@ public:
 		return static_pointer_cast<GeometryBase>(weak_self.lock());
 	}
 
+	//TODO: make this obsolete with https://en.cppreference.com/w/cpp/memory/enable_shared_from_this
 	weak_ptr<Meshlet> getWeakSelf() {
 		return weak_self;
 	}
@@ -395,12 +396,13 @@ public:
 	//(but do it for semantic labels)
 	//http://www.boost.org/doc/libs/1_55_0/doc/html/lockfree.html (could also be an solution)	
 	//TODO: this
+	/*
 	mutex label_tex_patch_mutex;
 	shared_ptr<MeshTexture> label_tex_patch;
 
 	mutex sem_label_tex_patch_mutex;
 	vector<shared_ptr<MeshTexture>> sem_label_tex_patches;
-
+	*/
 
 	/**
 	* @brief geom_tex_patch

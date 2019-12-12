@@ -166,12 +166,8 @@ public:
 		WEIGHTED_INTEGER_LABELS
 	};
 
-	//TODO: remove this
-	MeshTexture(shared_ptr<TexAtlas> reference_atlas,
-	            shared_ptr<TexAtlas> data_atlas);//TODO: also add the framebuffer thingy
 
-	MeshTexture(Type type, MeshReconstruction *map);
-
+	MeshTexture(Type type);
 
 	/*
 	shared_ptr<MeshTextureGpuHandle> genGpuResource(size_t nr_coords, 
@@ -210,7 +206,6 @@ public:
 
 	bool do_not_upload = true;
 
-	//TODO: get rid of this
 	vector<Vector2f> tex_coords;
 
 	///TODO: might be needed for gpuGeomstorage !It is actually needed to check if the residency of this patch still is required.
@@ -228,7 +223,6 @@ private:
 	//Either we store this and also some information so we don't
 	//need to create the gpu
 	//or maybe we only store a reference to the map:
-	MeshReconstruction *map_;
 	Type type_;
 	//everything additional like texAtlas derive from the textureContent enum
 	//TODO: only let the map call the constructor for meshTexture;

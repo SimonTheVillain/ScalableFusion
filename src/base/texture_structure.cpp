@@ -8,15 +8,11 @@
 using namespace std;
 using namespace Eigen;
 
-MeshTexture::MeshTexture(shared_ptr<TexAtlas> reference_atlas, 
-                         shared_ptr<TexAtlas> data_atlas) {
-}
 
-MeshTexture::MeshTexture(MeshTexture::Type type, MeshReconstruction *map) 
-		: map_(map),
-		  type_(type) {
-}
+MeshTexture::MeshTexture(MeshTexture::Type type)
+		: type_(type){
 
+}
 /*
 shared_ptr<MeshTextureGpuHandle> MeshTexture::genGpuResource(size_t nr_coords,
                                                              cv::Size2i size) {

@@ -358,8 +358,7 @@ void InformationRenderer::renderDepth(ActiveSet *active_set,
 	glFinish();
 }
 
-void InformationRenderer::bindRenderTriangleReferenceProgram(MeshReconstruction* reconstruction,
-															 GpuStorage* gpu_storage) {
+void InformationRenderer::bindRenderTriangleReferenceProgram(GpuStorage* gpu_storage) {
 	triangle_reference_program_->use();
 	gfx::GLUtils::checkForOpenGLError(
 			"[InformationRenderer::bindRenderTriangleReferenceProgram] "
@@ -386,9 +385,48 @@ void InformationRenderer::bindRenderTriangleReferenceProgram(MeshReconstruction*
 			"Binding the buffers.");
 }
 
+
+void InformationRenderer::renderReference(	MeshletGPU* meshlet_gpu,
+											shared_ptr<TexCoordBufConnector> coords,
+											shared_ptr<TexAtlasPatch> ref_tex  ){
+	//what is supposed to be rendered here is the 3 (local) vertex indices +
+	// 3x 8 bit barycentric coordinates packed into the last float
+
+	cv::Rect2i r = ref_tex->getRect();
+	glBindFramebuffer(GL_FRAMEBUFFER,ref_tex->getFBO());
+	gfx::GLUtils::checkOpenGLFramebufferStatus(
+			"ScaleableMap::finalizeGeomTexOfNewPatches");
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(r.x, r.y, r.width, r.height);
+	glViewport(r.x, r.y, r.width, r.height);
+
+	//reinterpret cast
+	int minus1i = -1;
+	float minus1 = *((float*) (&minus1i));//convert the -1 to a float in a bitwise fashion
+
+	glClearColor(minus1, 1, 0, 0);//DEBUG: paint it green
+	glClear(GL_COLOR_BUFFER_BIT);
+	gfx::GLUtils::checkForOpenGLError(
+			"[RenderMapInformations::renderTriangleReferencesForPatch]");
+
+	//render here!
+	int start_ind_tris = meshlet_gpu->triangles->getStartingIndex();
+	int start_ind_tex_coords = coords->getStartingIndex();
+	int size = meshlet_gpu->triangles->getSize();
+	glUniform1i(0,start_ind_tris);
+	glUniform1i(1,start_ind_tex_coords);
+	glDrawArrays(GL_TRIANGLES, 0, size * 3);
+
+	glDisable(GL_SCISSOR_TEST);
+
+
+
+}
 void InformationRenderer::renderTriangleReferencesForPatch(
 		ActiveSet *active_set,GpuStorage* gpu_storage, shared_ptr<Meshlet> &patch,
 		shared_ptr<MeshTexture> &target_texture) {
+
+
 	assert(0); //todo: reinsert this logic... right now it is not feasible
 	/*
 	shared_ptr<MeshTextureGpuHandle> gpu_tex = target_texture->gpu.lock();

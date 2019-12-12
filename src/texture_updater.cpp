@@ -7,13 +7,14 @@
 #include <debug_render.h>
 #include <mesh_reconstruction.h>
 #include <gpu/camera.h>
+#include <gpu/gpu_mesh_structure.h>
 
 using namespace std;
 using namespace Eigen;
 
 void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 									 GpuStorage* gpu_storage,
-									 vector<shared_ptr<Meshlet> > &new_patches,
+									 vector<shared_ptr<Meshlet> > &meshlets,
 									 Matrix4f pose, Matrix4f proj,
 									 shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 									 shared_ptr<ActiveSet> active_set,
@@ -26,28 +27,80 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 	//return;
 	//assert(0);//TODO: reimplement this functionality
 	{
-		MeshReconstruction *mesh = reconstruction;
+		//MeshReconstruction *mesh = reconstruction;//TODO: get rid of!
 
+		vector<MeshletGPU*> meshlets_gpu(meshlets.size());
+		vector<TextureLayerGPU*> texture_layers_gpu(meshlets.size());
 		//first we need to get bounds:
-		vector<cv::Rect2f> bounds = calcTexBounds(active_set, new_patches, pose, proj);
+		vector<cv::Rect2f> bounds = calcTexBounds(active_set, meshlets, pose, proj);
 
 		//then we generate texture coordinates:
 		vector<TexCoordGen::Task> tex_gen_tasks(bounds.size());
 		tex_gen_tasks.reserve(active_set->meshlets.size());
-		for(size_t i=0;i<new_patches.size();i++){
+		for(size_t i=0; i < meshlets.size(); i++){
+			cv::Rect2f &bound = bounds[i];
+			TexCoordGen::Task &task = tex_gen_tasks[i];
+			shared_ptr<Meshlet> &meshlet = meshlets[i];
 			//allocate gpu_storage, generate the tasks and go for it!
-			gpu_storage->
+			MeshletGPU *meshlet_gpu = active_set->getGpuMeshlet(meshlet);
+			meshlets_gpu[i] = meshlet_gpu;
+			texture_layers_gpu[i] = &meshlet_gpu->std_tex;
+
+
+
+			//setup data containers for standard deviation texture
+			meshlet_gpu->std_tex.coords =
+					gpu_storage->tex_pos_buffer->getBlock(meshlet_gpu->vertices->getSize());
+			meshlet_gpu->std_tex.version = 1; //initial version!
+			if(meshlet->geom_tex_patch == nullptr){
+				meshlet->geom_tex_patch = make_shared<MeshTexture>(MeshTexture::Type::STANDARD_DEVIATION);
+			}
+			meshlet_gpu->std_tex.token =
+					make_unique<weak_ptr<MeshTexture>>(meshlet->geom_tex_patch);//TODO: this token
+			cv::Size2i size(bound.width * scale,bound.height * scale);
+			meshlet_gpu->std_tex.tex =
+					gpu_storage->tex_atlas_stds_->getTexAtlasPatch(size);
+			meshlet_gpu->geom_lookup_tex =
+					gpu_storage->tex_atlas_geom_lookup_->getTexAtlasPatch(size);
+
+
+
+
+			//setup the task for texture coordinate generation
+			task.coords = meshlet_gpu->std_tex.coords->getStartingPtr();
+			task.vertices = meshlet_gpu->vertices->getStartingPtr();
+			task.vertex_count = meshlet_gpu->vertices->getSize();
+
+			task.offset_x       = bound.x - 0.5f / float(scale);
+			task.offset_y       = bound.y - 0.5f / float(scale);
+			task.scale_x        = 1.0f / (bound.width  + 1.0f / float(scale));
+			task.scale_y        = 1.0f / (bound.height + 1.0f / float(scale));
+
+
+
 		}
 		Matrix4f mvp = proj * pose.inverse();
+		//TODO:this could actually be put into a future while we are rendering the lookup texture
 		TexCoordGen::genTexCoords(tex_gen_tasks, mvp);
-		//insert them to the active set
 
 		//render the geom lookup texture
 
+		//TODO: remove: it doesn't seem like the headers need to be setup just now!!!
+		//active_set->setupHeaders();//the headers are needed for  the tex_coord positions
+
+		genLookupTex(information_renderer,
+					 gpu_storage,
+					 meshlets_gpu, //for geometry
+					 texture_layers_gpu,//the texture layer the lookup is created for
+					 true);//dilate
+		//genLookupTexGeom(reconstruction, active_set.get(), valid_mesh_patches,information_renderer);
+
 		//std texture
+		//projToGeomTex(active_set.get(), valid_mesh_patches, geom_sensor_data, pose,
+		//			  proj);
 
 		//finally update the header on the gpu
-
+		active_set->setupHeaders();
 	}
 
 
@@ -73,9 +126,9 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 	Matrix4f mvp = proj * pose_inv;
 
 	//all of these patches have to be valid...
-	vector<shared_ptr<Meshlet>> valid_mesh_patches = new_patches;
+	vector<shared_ptr<Meshlet>> valid_mesh_patches = meshlets;
 
-	for(shared_ptr<Meshlet> patch : new_patches) {
+	for(shared_ptr<Meshlet> patch : meshlets) {
 		for(shared_ptr<DoubleStitch> stitch : patch->double_stitches) {
 			if(stitch->patches[1].lock()->gpu.lock() == nullptr) {
 				assert(0);
@@ -105,7 +158,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 			}
 		}
 	}
-	vector<cv::Rect2f> bounds = mesh->genBoundsFromPatches(new_patches, pose,
+	vector<cv::Rect2f> bounds = mesh->genBoundsFromPatches(meshlets, pose,
 	                                                       proj, active_set);
 
 	for(size_t i = 0; i < bounds.size(); i++) {
@@ -113,7 +166,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 		if(max(bound.width, bound.height) > 1024) {
 			cout << "maybe download everything related to these bounds. "
 			        "we need to find out what is going on here" << endl;
-			shared_ptr<MeshletGpuHandle> gpu = new_patches[i]->gpu.lock();
+			shared_ptr<MeshletGpuHandle> gpu = meshlets[i]->gpu.lock();
 			int count = gpu->vertices_source->getSize();
 			GpuVertex vertices[count];
 			gpu->vertices_source->download(vertices);
@@ -131,9 +184,9 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 					mesh->gpu_geom_storage_.triangle_buffer->getGlName();
 			that_one_debug_rendering_thingy->tex_pos_buffer = 
 					mesh->gpu_geom_storage_.tex_pos_buffer->getGlName();
-			that_one_debug_rendering_thingy->addPatch(new_patches[i].get(), 1, 0, 0);
+			that_one_debug_rendering_thingy->addPatch(meshlets[i].get(), 1, 0, 0);
 
-			shared_ptr<Meshlet> debug_patch = new_patches[i];
+			shared_ptr<Meshlet> debug_patch = meshlets[i];
 			for(int i = 0; i < debug_patch->double_stitches.size(); i++) {
 				if(debug_patch->double_stitches[i]->patches[0].lock() != debug_patch) {
 					continue;
@@ -611,6 +664,17 @@ void TextureUpdater::genLookupTexGeom(MeshReconstruction* reconstruction,
 	genLookupTex(reconstruction,active_set, patches, textures,information_renderer);
 }
 
+void TextureUpdater::genLookupTexGeom(	InformationRenderer* information_renderer,
+										shared_ptr<ActiveSet> active_set,
+										vector<shared_ptr<Meshlet>> &meshlets,
+									 	 bool dilate) {
+	vector<shared_ptr<MeshTexture>> textures;
+	for(size_t i = 0; i < meshlets.size(); i++) {
+		textures.push_back(meshlets[i]->geom_tex_patch);
+	}
+
+}
+
 //TODO: maybe relocate this function into another class?
 //also maybe directly operate on the patch
 void TextureUpdater::genLookupTex(
@@ -666,6 +730,53 @@ void TextureUpdater::genLookupTex(
 		patches[i]->geom_tex_patch->ref_tex_filled = true;
 	}
 	 */
+}
+
+void TextureUpdater::genLookupTex(	InformationRenderer* information_renderer,
+									GpuStorage* gpu_storage,
+								 	vector<MeshletGPU*> meshlets_gpu,
+								  vector<TextureLayerGPU*> textures_gpu,
+								  bool dilate) {
+	vector<DilationDescriptor> dilations(meshlets_gpu.size());
+	information_renderer->bindRenderTriangleReferenceProgram(gpu_storage);
+
+	for(size_t i = 0; i < meshlets_gpu.size();i++) {
+		if(meshlets_gpu[i]->geom_lookup_tex == nullptr) {
+			cout << "[ScaleableMap::generateLookupTexGeom] "
+					"There is no texture on the gpu" << endl;
+			continue;
+		}
+
+		cv::Rect2i r = meshlets_gpu[i]->geom_lookup_tex->getRect();
+		//TODO: the scissor test probably is a little wasteful (a quad would be way better)
+
+		//to solve this we might want to draw a quad
+		information_renderer->renderReference(meshlets_gpu[i], textures_gpu[i]->coords,
+				meshlets_gpu[i]->geom_lookup_tex);
+		//how about imshowing the result
+
+		if(dilate) {
+			DilationDescriptor &dilation = dilations[i];
+			dilation.target = meshlets_gpu[i]->geom_lookup_tex->getCudaSurfaceObject();
+			dilation.width  = r.width;
+			dilation.height = r.height;
+			dilation.x      = r.x;
+			dilation.y      = r.y;
+		}
+	}
+
+	glFinish();//let the opengl stuff render before we download it.
+
+	//At last we dilate the lookup of
+	if(dilate) {
+		dilateLookupTextures(dilations);
+		cudaDeviceSynchronize();
+	}
+	for(size_t i = 0; i < meshlets_gpu.size(); i++) {
+		//meshlets[i]->geom_tex_patch->ref_tex_filled = true;
+	}
+
+
 }
 
 

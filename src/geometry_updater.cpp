@@ -301,6 +301,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 	new_active_set->setupHeaders();
 	texture_updater->generateGeomTex(reconstruction,
+			                        gpu_storage,
 			                        new_shared_mesh_patches, depth_pose_in,
 	                                proj_depth, d_std_tex, new_active_set,
 	                                information_renderer);

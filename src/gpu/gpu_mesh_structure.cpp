@@ -8,7 +8,7 @@
 
 GpuTextureInfo TextureLayerGPU::genGpuTextureInfo(){
 	GpuTextureInfo info;
-	assert(0);
+	info = tex->genTexInfo(coords->getStartingIndex());
 	return info;
 }
 

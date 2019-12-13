@@ -233,12 +233,8 @@ void ActiveSet::setupHeaders(){
 
 		//TODO: geometry texture
 		if(meshlet.std_tex.tex != nullptr){
-			info.std_texture.size;
-			info.std_texture._size;
-			info.std_texture.pos;
-			info.std_texture.tex_coord_start_ind;
-			info.std_texture.gl_tex_pointer = meshlet.std_tex.tex->getGlHandle();
-
+			info.std_texture = meshlet.std_tex.genGpuTextureInfo();
+			meshlet.std_tex.tex->getTex()->makeResidentInThisThread();
 		}
 	}
 

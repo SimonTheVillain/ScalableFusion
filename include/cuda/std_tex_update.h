@@ -58,6 +58,8 @@ struct DilationDescriptor {
 		cudaSurfaceObject_t target;
 		//theoretically output and input should be different but we do this to not have
 		//invalid references(red lines) in the lookup texture
+
+		//TODO: replace this with a cv::rect
 		int width;
 		int height;
 		int x;
@@ -68,7 +70,8 @@ struct InitDescriptor {
 		cudaSurfaceObject_t output;
 
 		cudaSurfaceObject_t reference_texture;
-		int vertex_start_ind;
+		//int vertex_start_ind;
+		GpuVertex *vertices;
 		cv::Point2i ref_offset;
 		cv::Point2i out_offset;
 		int width;
@@ -77,11 +80,19 @@ struct InitDescriptor {
 
 void dilateLookupTextures(const vector<DilationDescriptor> &descriptors);
 
+//old (remove)
+/*
 void stdTexInit(const cudaTextureObject_t input, 
                 const vector<InitDescriptor> &descriptors,
                 Matrix4f proj_pose,
                 GpuVertex *vertices, Vector2f *tex_pos,
                 GpuTriangle *triangles, GpuPatchInfo *patch_infos); //somehow we now need the gpu textures
+*/
+//new
+void stdTexInit(const cudaTextureObject_t input,
+				const vector<InitDescriptor> &descriptors,
+				Matrix4f proj_pose); //somehow we now need the gpu textures
+
 
 void shiftVerticesALittle(GpuVertex *vertices, size_t from, size_t to);
 

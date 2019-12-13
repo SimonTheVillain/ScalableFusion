@@ -25,10 +25,17 @@ public:
 						 shared_ptr<ActiveSet> active_set,
 						 InformationRenderer* information_renderer);
 
+	//old (REMOVE)
 	void projToGeomTex(ActiveSet *active_set, 
 	                   vector<shared_ptr<Meshlet> > &new_patches,
 	                   shared_ptr<gfx::GpuTex2D> geom_sensor_data,
 	                   Matrix4f pose, Matrix4f proj);
+
+	//new
+	void projToGeomTex(vector<MeshletGPU*> meshlets,
+					   shared_ptr<gfx::GpuTex2D> geom_sensor_data,
+					   Matrix4f pose, Matrix4f proj);
+
 
 	//TODO: put this to geometryUpdate else or split it up properly
 	void vertGeomTexUpdate(shared_ptr<gfx::GpuTex2D> d_std_tex,

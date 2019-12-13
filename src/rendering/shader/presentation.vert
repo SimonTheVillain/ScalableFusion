@@ -74,6 +74,7 @@ void main(void) {
 	tex_pos_out = vec2(tex_pos_out.x * tex_info.size.x,
 	                   tex_pos_out.y * tex_info.size.y);
 	tex_pos_out = tex_pos_out + tex_info.pos;
+	/*
 	if(color_mode == 4) {
 		//in this case we put out the (COME ON WHY CAN'T YOU FINISH COMMENTS)
 		tex_info = patch_info.std_texture;
@@ -86,6 +87,7 @@ void main(void) {
 		                   tex_pos_out.y * tex_info.size.y);
 		tex_pos_out = tex_pos_out + tex_info.ref_tex_pos_debug;
 	}
+	*/
 
 	interp_position = view_matrix * point;  //the position of the vertex in space (gets interpolated for the fragments)
 	interp_proj = proj_matrix * interp_position;

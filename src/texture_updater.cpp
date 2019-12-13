@@ -64,8 +64,6 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 					gpu_storage->tex_atlas_geom_lookup_->getTexAtlasPatch(size);
 
 
-
-
 			//setup the task for texture coordinate generation
 			task.coords = meshlet_gpu->std_tex.coords->getStartingPtr();
 			task.vertices = meshlet_gpu->vertices->getStartingPtr();
@@ -93,11 +91,9 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 					 meshlets_gpu, //for geometry
 					 texture_layers_gpu,//the texture layer the lookup is created for
 					 true);//dilate
-		//genLookupTexGeom(reconstruction, active_set.get(), valid_mesh_patches,information_renderer);
 
 		//std texture
-		//projToGeomTex(active_set.get(), valid_mesh_patches, geom_sensor_data, pose,
-		//			  proj);
+		projToGeomTex(meshlets_gpu,geom_sensor_data,pose,proj);
 
 		//finally update the header on the gpu
 		active_set->setupHeaders();
@@ -346,6 +342,41 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 	*/
 }
 
+void TextureUpdater::projToGeomTex(vector<MeshletGPU*> meshlets,
+								   shared_ptr<gfx::GpuTex2D> geom_sensor_data,
+								   Matrix4f pose, Matrix4f proj){
+	vector<InitDescriptor> commands(meshlets.size());
+	for(size_t i=0;i<meshlets.size();i++){
+		MeshletGPU* meshlet = meshlets[i];
+		InitDescriptor & command = commands[i];
+		cv::Rect2i rect = meshlet->std_tex.tex->getRect();
+
+		command.vertices = meshlet->vertices->getStartingPtr();
+		command.out_offset = rect.tl();
+		command.output = meshlet->std_tex.tex->getCudaSurfaceObject();
+		command.width = rect.width;
+		command.height = rect.height;
+
+		rect = meshlet->geom_lookup_tex->getRect();
+		command.reference_texture = meshlet->geom_lookup_tex->getCudaSurfaceObject();//SURFACE?
+		command.ref_offset = rect.tl();
+	}
+
+
+	Matrix4f pose_projected = proj * pose.inverse();
+	//TODO: get rid of this scaling?
+	Matrix4f scale;
+	float w = geom_sensor_data->getWidth();
+	float h = geom_sensor_data->getHeight();
+	scale << 1.0f / w,        0,    0,    0,
+			0, 1.0f / h,    0,    0,
+			0,        0, 1.0f,    0,
+			0,        0,    0, 1.0f;
+
+	stdTexInit(
+			geom_sensor_data->getCudaTextureObject(), commands,
+			scale * pose_projected);
+}
 
 void TextureUpdater::projToGeomTex(ActiveSet* active_set,
 								   vector<shared_ptr<Meshlet>> &new_patches,

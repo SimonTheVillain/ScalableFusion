@@ -80,6 +80,8 @@ void main(void) {
 		//presenting the standard deviation textures....
 		//multiplying with 10 is a good idea there
 		color.xyz = color.xyz * 10.0;
+		//color.xy = tex_pos_out;//debug!!!
+		//color.zw = vec2(0,1);
 	} else if(color_mode == 3) {
 		color = -normal * 0.5 + vec4(0.5, 0.5, 0.5, 0.5);
 		color.w = 1.0;
@@ -105,6 +107,8 @@ void main(void) {
 		color = vec4(tex_pos_out, 0, 1);//why is this flickering? why!!!!!!
 	}
 
+	//TODO: completely remove lighting modes
+	/*
 	//certain debug outputs
 	if(is_stitch != 0) {
 	}
@@ -130,7 +134,7 @@ void main(void) {
 	if(lighting_mode == 3) {
 		color = vec4(tex_pos_out, 0, 1);//debug
 	}
-
+	*/
 	//color = colorCode(patch_id);
 	if(render_wireframe != 0) {
 		color = mix(line_color, color, mix_val);

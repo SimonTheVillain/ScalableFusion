@@ -320,7 +320,7 @@ void dilateLookupTextures(const vector<DilationDescriptor> &descriptors) {
 	gpuErrchk(cudaPeekAtLastError());
 	cudaFree(descs);
 }
-
+/*
 __global__ 
 void stdTexInit_kernel(const cudaTextureObject_t input,
                        const InitDescriptor *descriptors,
@@ -420,6 +420,115 @@ void stdTexInit(const cudaTextureObject_t input,
 	if(grid.x != 0) {
 		stdTexInit_kernel<<<grid, block>>>(input, descs, proj_pose, vertices,
 		                                   tex_pos, triangles, patch_infos);
+	}
+	cudaDeviceSynchronize();
+	gpuErrchk(cudaPeekAtLastError());
+	//AS LONG AS WE ARE NOT REUPLOADING AND CREATING NEW REFERENCE TEXTURES TO THE GEOMETRY
+	//THIS JUST FAILS (HOPEFULLY,  BECAUSE THE REFERENCES ARE POINTING TO NOWHERE)
+
+	cudaFree(descs);
+}
+*/
+
+__global__
+void stdTexInit_kernel(const cudaTextureObject_t input,
+					   const InitDescriptor *descriptors,
+					   Matrix4f proj_pose) {
+
+	unsigned int k = blockIdx.x;
+	const InitDescriptor &descriptor  = descriptors[k];
+	const unsigned int required_pixel = descriptor.height * descriptor.width;
+	unsigned int i = threadIdx.x;
+
+	while(i < required_pixel) {
+		int x_ref = i % descriptor.width + descriptor.ref_offset.x;//derive the target pixel coordinates from k
+		int y_ref = i / descriptor.width + descriptor.ref_offset.y;
+		int x_out = i % descriptor.width + descriptor.out_offset.x;//derive the target pixel coordinates from k
+		int y_out = i / descriptor.width + descriptor.out_offset.y;
+
+		struct Ref{
+			int32_t vert_inds[3];
+			uint8_t bary[4];
+		};
+		Ref ref;
+		surf2Dread((float4*)&ref, descriptor.reference_texture, x_ref * 4 * 4, y_ref);
+		float scale = 1.0f / ((float)ref.bary[0] + (float)ref.bary[1] + (float)ref.bary[2]);
+		float bary[3] = {
+				(float)ref.bary[0] * scale,
+				(float)ref.bary[1] * scale,
+				(float)ref.bary[2] * scale};
+
+
+		if(ref.vert_inds[0] < 0) {
+			float4 color = make_float4(NAN, NAN, NAN, NAN);
+
+			ushort4 data = float4_2_half4_reinterpret_ushort4_rn(color);
+			surf2Dwrite(data, descriptor.output, x_out * sizeof(ushort4), y_out);//write some debug value to the output (seems to work)
+
+			i += blockDim.x;
+			continue;
+		}
+
+		Vector4f point(0, 0, 0, 0);
+		for(int j : {0,1,2}) {
+			point += descriptor.vertices[ref.vert_inds[j]].p * bary[j];
+		}
+
+		Vector4f tex_coord = proj_pose * point;//project (Non-normalized coordinates)
+		//TODO: depth test and reading of correct color/geom values
+		//are these normal values
+		float u = tex_coord[0] / tex_coord[3];
+		float v = tex_coord[1] / tex_coord[3];
+
+		//look at applyNewColorData in scaleableMapTexturing, there the creation of texture
+		//coordinates works well. why isn't it working here?
+
+		//if this is right do the projection and read the according values. (also do a depth test)
+
+		float4 color = make_float4(point[0], point[1], point[2], point[3]);
+		color = make_float4(u, v, 0.0f, 1.0f);
+		float4 sensor = tex2D<float4>(input, u, v);
+
+		//TODO: keep the standard deviations 1/1 but set the depth offset to zero, when there are NANs we
+		//set the values to the closest possible value
+		color.x = 0;//depth offset is zero,
+		color.y = sensor.y; // here we have to check if it is NAN... this would not be too awesome
+		color.z = sensor.z; // same here, i don't know what to do tough
+
+		ushort4 output = float4_2_half4_reinterpret_ushort4_rn(color);
+
+		surf2Dwrite(output, descriptor.output, x_out * sizeof(ushort4), y_out);
+
+		//do the next block
+		i += blockDim.x;
+	}
+}
+
+void stdTexInit(const cudaTextureObject_t input,
+				const vector<InitDescriptor> &descriptors,
+				Matrix4f proj_pose) {
+
+	InitDescriptor *descs = nullptr;
+	//create a buffer for all the commands:
+	//TODO: DELETE THIS DEBUG SHIT!!!!!
+	for(size_t i = 0; i < descriptors.size(); i++) {
+		InitDescriptor desc = descriptors[i];
+	}
+	cudaMalloc(&descs, descriptors.size() * sizeof(InitDescriptor));
+
+	gpuErrchk(cudaPeekAtLastError());
+	cudaMemcpy(descs, &descriptors[0],
+			   descriptors.size() * sizeof(InitDescriptor),
+			   cudaMemcpyHostToDevice);
+
+	gpuErrchk(cudaPeekAtLastError());
+
+	dim3 block(1024);//smaller is better for smaller images. how is it with bigger images?
+	//the ideal way would be to start blocks of different sizes. (or maybe use CUDAs dynamic parallelism)
+	//for higher resolution images 1024 or even higher threadcounts might be useful
+	dim3 grid(descriptors.size());
+	if(grid.x != 0) {
+		stdTexInit_kernel<<<grid, block>>>(input, descs, proj_pose);
 	}
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());

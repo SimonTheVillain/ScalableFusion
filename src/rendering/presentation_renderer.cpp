@@ -164,6 +164,9 @@ void PresentationRenderer::render(GpuStorage* gpu_storage, ActiveSet *active_set
 		MeshletGPU &meshlet = active_set->meshlets[i];
 		//firsts[i] = meshlet.triangles->getStartingIndex()*3;
 		counts[i] = meshlet.triangles->getSize()*3;
+
+
+		meshlet.std_tex.tex->getTex()->makeResidentInThisThread();
 	}
 	//cout <<"PRESENTATION_RENDERER::RENDER why is there only the first vertex of each meshlet rendered? " << endl;
 	glMultiDrawArrays(GL_TRIANGLES,&firsts[0],&counts[0], count); //GL_TRIANGLES

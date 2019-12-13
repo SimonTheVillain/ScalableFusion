@@ -14,6 +14,9 @@ using namespace std;
 
 namespace logging {
 
+class Logger;
+extern Logger *logger;
+
 enum Level {
 	STATUS  = 0,
 	ERROR   = 1,
@@ -26,7 +29,13 @@ string levelToStr(int lvl);
 class Logger {
 public:
 
-	Logger(Level lvl);
+	Logger(Level lvl)
+			: lvl_(lvl) {
+		#ifdef LOGFILE 
+			name_logfile_ = LOGFILE;
+		#endif
+		log(Level::STATUS, "Start logging : Level " + levelToStr(lvl));
+	}
 
 	~Logger();
 
@@ -34,9 +43,15 @@ public:
 		name_logfile_ = filename;
 	}
 
-	void log(Level lvl, string msg, const char *filename = nullptr, int line = 0);
+	void log(Level lvl, string msg, const char *filename = nullptr, int line = 0) {
+		#ifdef ENABLE_LOGGING
+			genLog_(lvl, msg, filename, line);
+		#endif
+	}
 
 private:
+
+	void genLog_(Level lvl, string msg, const char *filename, int line);
 
 	void writeLog_(string log_msg);
 
@@ -44,9 +59,13 @@ private:
 	string name_logfile_;
 };
 
-void initLogger(Level lvl);
-
-extern Logger *logger;
+inline void initLogger(Level lvl) {
+	#ifdef ENABLE_LOGGING
+		logger = new Logger(lvl);
+	#else
+		cout << "Logging disabled!" << endl;
+	#endif
+}
 
 } // namespace logging
 

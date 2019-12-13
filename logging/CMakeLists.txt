@@ -47,6 +47,7 @@ target_link_libraries(${PROJECT_NAME}_test
 
 # Install
 set(_include_install_dir "include/${LIB_NAME}")
+install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 # Install headers
 install(

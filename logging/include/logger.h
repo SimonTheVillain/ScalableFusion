@@ -24,7 +24,7 @@ enum Level {
 	INFO    = 3,
 	DEBUG   = 4
 };
-string levelToStr(int lvl);
+string levelToStr(Level lvl);
 
 class Logger {
 public:

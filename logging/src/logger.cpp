@@ -4,7 +4,7 @@ namespace logging {
 
 Logger *logger = nullptr;
 
-string levelToStr(int lvl) {
+string levelToStr(Level lvl) {
 	string loglevel;
 	switch(lvl) {
 		case Level::STATUS:  loglevel = "[STATUS]";  break;
@@ -15,6 +15,27 @@ string levelToStr(int lvl) {
 		default: break;
 	}
 	return loglevel;
+}
+void colourStringByLevel(Level lvl, string* msg) {
+	switch(lvl) {
+		case Level::STATUS:  
+			*msg = string("\033[1;32m") + *msg + string("\033[0m"); 
+			break;
+		case Level::ERROR:   
+			*msg = string("\033[1;31m") + *msg + string("\033[0m"); 
+			break;
+		case Level::WARNING: 
+			*msg = string("\033[1;33m") + *msg + string("\033[0m"); 
+			break;
+		case Level::INFO:    
+			*msg = string("\033[1;34m") + *msg + string("\033[0m"); 
+			break;
+		case Level::DEBUG:   
+			*msg = string("\033[1;35m") + *msg + string("\033[0m"); 
+			break;
+		default: 
+			break;
+	}
 }
 
 Logger::~Logger() {
@@ -38,10 +59,10 @@ void Logger::genLog_(Level lvl, string msg, const char *filename, int line) {
 	if(line != 0) 
 		log_msg	+= string(": ") + to_string(line);
 
-	log_msg += string("\n  -> ") + msg;
+	writeLog_(log_msg + string("\n          -> ") + msg);
 
-	writeLog_(log_msg);
-
+	colourStringByLevel(lvl, &msg);
+	log_msg += string("\n          -> ") + msg;
 	cout << log_msg << endl;
 }
 

@@ -9,7 +9,7 @@ string levelToStr(Level lvl) {
 	switch(lvl) {
 		case Level::STATUS:  loglevel = "[STATUS]";  break;
 		case Level::ERROR:   loglevel = "[ERROR]";   break;
-		case Level::WARNING: loglevel = "[WARNING"; break;
+		case Level::WARNING: loglevel = "[WARNING]"; break;
 		case Level::INFO:    loglevel = "[INFO]";    break;
 		case Level::DEBUG:   loglevel = "[DEBUG]";   break;
 		default: break;

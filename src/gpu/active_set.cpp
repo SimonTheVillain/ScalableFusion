@@ -228,7 +228,7 @@ void ActiveSet::setupHeaders(){
 		//TODO: textures
 		info.tex_layers = meshlet.textures.size();
 		for(size_t k=0;k<meshlet.textures.size();k++){
-
+			info.texture_infos[k] = meshlet.textures[k]->genGpuTextureInfo();
 		}
 
 		//TODO: geometry texture

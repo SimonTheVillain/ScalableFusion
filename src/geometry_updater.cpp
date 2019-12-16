@@ -318,9 +318,8 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	time_start = time_end;
 
 	// Add and fill new color patches to the surface
-	texture_updater->applyColorData(reconstruction,
+	texture_updater->applyColorData2(gpu_storage,
 			                        new_shared_mesh_patches,
-			                        low_detail_renderer,
 			                        rgb_tex,
 	                               color_pose_in, proj_1_color, new_active_set);
 

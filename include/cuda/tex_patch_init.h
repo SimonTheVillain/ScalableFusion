@@ -8,7 +8,7 @@
 
 struct CopyDescriptor {
 
-	cudaSurfaceObject_t output;
+	cudaSurfaceObject_t target;
 
 	/**
 	 * Discussion whats doable with a surface object and what is not:
@@ -39,7 +39,7 @@ struct CopyDescriptor {
 };
 
 //create an array of this copy descriptor for all the copies we want to make and start an kernel
-void copyToTinyPatches(const cudaTextureObject_t input,
+void copyToTexPatches(const cudaTextureObject_t input,
                        const std::vector<CopyDescriptor> &descriptors);
 
 #endif // FILE_TEX_PATCH_INIT_H

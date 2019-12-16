@@ -165,8 +165,13 @@ void PresentationRenderer::render(GpuStorage* gpu_storage, ActiveSet *active_set
 		//firsts[i] = meshlet.triangles->getStartingIndex()*3;
 		counts[i] = meshlet.triangles->getSize()*3;
 
-
+		//TODO: this would be cheaper to do it per texture in the GPU_STORAGE
+		//make standard deviation texture resident
 		meshlet.std_tex.tex->getTex()->makeResidentInThisThread();
+		for(size_t i = 0;i<meshlet.textures.size();i++){
+			// same for color textures
+			meshlet.textures[i]->tex->getTex()->makeResidentInThisThread();
+		}
 	}
 	//cout <<"PRESENTATION_RENDERER::RENDER why is there only the first vertex of each meshlet rendered? " << endl;
 	glMultiDrawArrays(GL_TRIANGLES,&firsts[0],&counts[0], count); //GL_TRIANGLES

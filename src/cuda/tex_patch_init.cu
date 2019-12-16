@@ -7,7 +7,7 @@
  * + maybe extend this for streams
  */
 __global__ 
-void copyToTinyPatches_kernel(const cudaTextureObject_t input,
+void copyToTexPatches_kernel(const cudaTextureObject_t input,
                               const CopyDescriptor *copies) {
 	unsigned int k = blockIdx.x;
 	const CopyDescriptor &copy = copies[k];
@@ -34,14 +34,14 @@ void copyToTinyPatches_kernel(const cudaTextureObject_t input,
 
 		uchar4 color_bytes = make_uchar4(color.x * 255, color.y * 255, 
 		                                 color.z * 255, color.w * 255);
-		surf2Dwrite(color_bytes, copy.output, x * 4, y);
+		surf2Dwrite(color_bytes, copy.target, x * 4, y);
 
 		//do the next block
 		i += blockDim.x;
 	}
 }
 
-void copyToTinyPatches(const cudaTextureObject_t input,
+void copyToTexPatches(const cudaTextureObject_t input,
                        const std::vector<CopyDescriptor> &descriptors) {
 	dim3 block(256);//smaller is better for smaller images. how is it with bigger images?
 	//the ideal way would be to start blocks of different sizes. (or maybe use CUDAs dynamic parallelism)
@@ -58,7 +58,7 @@ void copyToTinyPatches(const cudaTextureObject_t input,
 	           descriptors.size() * sizeof(CopyDescriptor), 
 	           cudaMemcpyHostToDevice);
 
-	copyToTinyPatches_kernel<<<grid, block>>>(input, descs);
+	copyToTexPatches_kernel<<<grid, block>>>(input, descs);
 
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());

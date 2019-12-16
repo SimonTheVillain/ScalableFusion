@@ -64,6 +64,8 @@ void main(void) {
 	} else {
 		sampler2D s = sampler2D(bindless_texture);
 		color = texture(s, tex_pos_out);
+		//color.xy = tex_pos_out;//debug
+		//color.zw = vec2(0,1);
 	}
 
 	//rendering the wireframe

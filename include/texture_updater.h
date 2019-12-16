@@ -48,12 +48,20 @@ public:
 	                    Matrix4f color_pose_in,
 	                    shared_ptr<ActiveSet> &active_set);
 
+	//old (REMOVE)
 	void applyColorData(MeshReconstruction* reconstruction,
 						vector<shared_ptr<Meshlet>> &visible_patches,
 						LowDetailRenderer* low_detail_renderer,
 	                    shared_ptr<gfx::GpuTex2D> rgb_in,
 	                    Matrix4f &pose, Matrix4f &proj, 
 	                    shared_ptr<ActiveSet> active_set);
+
+	//new
+	void applyColorData2(GpuStorage* gpu_storage,
+						vector<shared_ptr<Meshlet>> &visible_patches,
+						shared_ptr<gfx::GpuTex2D> rgb_in,
+						Matrix4f &pose, Matrix4f &proj,
+						shared_ptr<ActiveSet> active_set);
 
 	//old (REMOVE)
 	void genLookupTexGeom(MeshReconstruction* reconstruction,
@@ -67,13 +75,6 @@ public:
 							  vector<shared_ptr<Meshlet>> &meshlets,
 							  bool dilate = true);
 
-	//old (REMOVE):
-	void genLookupTex(MeshReconstruction* reconstruction,
-					  ActiveSet *active_set,
-					  vector<shared_ptr<Meshlet> > &patches,
-					  vector<shared_ptr<MeshTexture>> &textures,
-					  InformationRenderer* information_renderer,
-					  bool dilate = true);
 
 	//new
 	void genLookupTex(	InformationRenderer* information_renderer,

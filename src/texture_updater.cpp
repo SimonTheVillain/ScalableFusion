@@ -99,247 +99,6 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 		active_set->setupHeaders();
 	}
 
-
-
-	/*
-
-
-
-
-
-	//TODO: OLD! REMOVE THIS!!!!!
-	MeshReconstruction *mesh = reconstruction;
-	//TODO: even though commented out this still holds true
-
-	cout << "[ScaleableMap::generateGeomTexForNovelPatches] "
-			"i fear tex coordinates are still missing for vertices "
-			"without triangles! This is going to be a problem with the "
-			"texture update" << endl;
-
-	float scale = 2;
-
-	Matrix4f pose_inv = pose.inverse();
-	Matrix4f mvp = proj * pose_inv;
-
-	//all of these patches have to be valid...
-	vector<shared_ptr<Meshlet>> valid_mesh_patches = meshlets;
-
-	for(shared_ptr<Meshlet> patch : meshlets) {
-		for(shared_ptr<DoubleStitch> stitch : patch->double_stitches) {
-			if(stitch->patches[1].lock()->gpu.lock() == nullptr) {
-				assert(0);
-			}
-			if(stitch->patches[0].lock() != patch) {
-				continue;
-			}
-			if(!stitch->isPartOfActiveSet(active_set.get())) {
-				stitch->isPartOfActiveSet(active_set.get());
-				assert(0);
-			}
-		}
-		for(shared_ptr<TripleStitch> stitch : patch->triple_stitches) {
-			for(int i = 1; i < 3; i++) {
-				if(stitch->patches[i].lock()->gpu.lock() == nullptr) {
-					assert(0);
-				}
-			}
-			if(stitch->patches[0].lock() != patch) {
-				continue;
-			}
-			if(!stitch->isPartOfActiveSet(active_set.get())) {
-				stitch->isPartOfActiveSet(active_set.get());
-				assert(0);
-				// One explanation could be that we just do not care for loading the neighbouring patch
-				// into memory even though we should.
-			}
-		}
-	}
-	vector<cv::Rect2f> bounds = mesh->genBoundsFromPatches(meshlets, pose,
-	                                                       proj, active_set);
-
-	for(size_t i = 0; i < bounds.size(); i++) {
-		cv::Rect2f bound = bounds[i];
-		if(max(bound.width, bound.height) > 1024) {
-			cout << "maybe download everything related to these bounds. "
-			        "we need to find out what is going on here" << endl;
-			shared_ptr<MeshletGpuHandle> gpu = meshlets[i]->gpu.lock();
-			int count = gpu->vertices_source->getSize();
-			GpuVertex vertices[count];
-			gpu->vertices_source->download(vertices);
-
-			for(size_t j = 0; j < count; j++) {
-				cout << vertices[j].p << endl;
-			}
-
-			cv::namedWindow("test test");
-			that_one_debug_rendering_thingy->vertex_buffer = 
-					mesh->gpu_geom_storage_.vertex_buffer->getGlName();
-			that_one_debug_rendering_thingy->info_buffer = 
-					mesh->gpu_geom_storage_.patch_info_buffer->getGlName();
-			that_one_debug_rendering_thingy->triangle_buffer = 
-					mesh->gpu_geom_storage_.triangle_buffer->getGlName();
-			that_one_debug_rendering_thingy->tex_pos_buffer = 
-					mesh->gpu_geom_storage_.tex_pos_buffer->getGlName();
-			that_one_debug_rendering_thingy->addPatch(meshlets[i].get(), 1, 0, 0);
-
-			shared_ptr<Meshlet> debug_patch = meshlets[i];
-			for(int i = 0; i < debug_patch->double_stitches.size(); i++) {
-				if(debug_patch->double_stitches[i]->patches[0].lock() != debug_patch) {
-					continue;
-				}
-				if(debug_patch->double_stitches[i]->patches[1].lock()->gpu.lock() == nullptr) {
-					assert(0);
-				}
-				that_one_debug_rendering_thingy->addPatch(
-						debug_patch->double_stitches[i]->patches[1].lock().get(), 0, 0, 1);
-			}
-
-			//render the neighbouring patches.
-			while(true) {
-				// After setting up the debug rendering for this, we wait so the user can take a look at it
-				//cv::waitKey();
-			}
-			assert(0);
-		}
-	}
-
-	if(bounds.size() != valid_mesh_patches.size()) {
-		assert(0);
-	}
-
-	vector<TexCoordGen::Task> tex_gen_tasks;
-	tex_gen_tasks.reserve(valid_mesh_patches.size());
-
-	vector<shared_ptr<Meshlet>> mesh_patches_with_novel_tex;
-	mesh_patches_with_novel_tex.reserve(valid_mesh_patches.size());
-
-	for(size_t i = 0; i < valid_mesh_patches.size(); i++) {
-		shared_ptr<Meshlet>              patch = valid_mesh_patches[i];
-		shared_ptr<MeshletGpuHandle> gpu_patch = patch->gpu.lock();
-
-		shared_ptr<MeshTextureGpuHandle> gpu_texture = gpu_patch->geom_tex;
-		if(gpu_texture == nullptr) {
-			//create the gpu resources if they are not existant
-			int nr_coords = patch->geom_tex_patch->tex_coords.size();
-			if(bounds[i].width * scale < 0) {
-				//why are the bounds at this one negative?
-				continue;//do not continue with creating a new texture here!
-				assert(0);//the bounds failed
-			}
-			//this is where we get the size
-			gpu_texture = make_shared<MeshTextureGpuHandle>(
-					mesh->gpu_geom_storage_.tex_pos_buffer, nr_coords,
-					mesh->tex_atlas_geom_lookup_.get(), mesh->tex_atlas_stds_.get(),
-					int(bounds[i].width * scale), int(bounds[i].height * scale));
-			gpu_patch->geom_tex = gpu_texture;
-			patch->geom_tex_patch->gpu = gpu_texture;
-
-			//mark the texture as the most current source for data
-			//in case the container gets deleted.
-			//patch->geomTexPatch->texCoordsGpu = gpuTexture->coords;
-			patch->geom_tex_patch->gpu = gpu_texture;
-			gpu_texture->gpu_data_changed = true;
-		} else {
-			assert(0);//debug: i don't think the gpu texture should be existing
-			//already since this is part of the creation process of novel
-			//patches
-		}
-
-		//allocate textures and coordinates if necessary.
-		//+ create new tasks
-		TexCoordGen::Task task;
-		task.offset_x       = bounds[i].x - 0.5f / float(scale);
-		task.offset_y       = bounds[i].y - 0.5f / float(scale);
-		task.scale_x        = 1.0f / (bounds[i].width  + 1.0f / float(scale));
-		task.scale_y        = 1.0f / (bounds[i].height + 1.0f / float(scale));
-		task.coords         = gpu_texture->coords->getStartingPtr();
-		task.triangle_count = gpu_patch->triangles->getSize();
-		task.triangles      = gpu_patch->triangles->getStartingPtr();
-		tex_gen_tasks.push_back(task);
-
-		//now do all the stitches and so on:
-
-		for(shared_ptr<DoubleStitch> stitch : patch->double_stitches) {
-			if(stitch->patches[0].lock() != patch) {
-				continue;
-			}
-			if(!stitch->isPartOfActiveSet(active_set.get())) {
-				//TODO: we really need to figure out why this is happening
-				//the stitch must have both neighbours being part of this
-				stitch->isPartOfActiveSet(active_set.get());
-
-				#ifndef IGNORE_SERIOUS_BUG_5
-				assert(0);//This actually should not happen
-				#endif // IGNORE_SERIOUS_BUG_5
-				continue;
-			}
-			shared_ptr<TriangleBufConnector> gpu_stitch = stitch->triangles_gpu.lock();
-			if(gpu_stitch == nullptr) {
-				assert(0);
-				continue;
-			}
-
-			task.triangle_count = gpu_stitch->getSize();
-			task.triangles      = gpu_stitch->getStartingPtr();
-			tex_gen_tasks.push_back(task);
-		}
-
-		//also triple stitches
-		for(shared_ptr<TripleStitch> stitch : patch->triple_stitches) {
-			if(stitch->patches[0].lock() != patch) {
-				continue;
-			}
-			if(!stitch->isPartOfActiveSet(active_set.get())) {
-				//TODO: we really need to figure out why this is happening
-				assert(0); // again, i don't think this should happen
-				continue;
-			}
-			shared_ptr<TriangleBufConnector> gpu_stitch = stitch->triangles_gpu.lock();
-			if(gpu_stitch == nullptr) {
-				assert(0);
-				continue;
-			}
-
-			task.triangle_count = gpu_stitch->getSize();
-			task.triangles      = gpu_stitch->getStartingPtr();
-			tex_gen_tasks.push_back(task);
-		}
-	}
-
-	//execute the tasks on the gpu:
-	TexCoordGen::genTexCoords(
-			tex_gen_tasks, mvp, 
-			mesh->gpu_geom_storage_.patch_info_buffer->getCudaPtr(),
-			mesh->gpu_geom_storage_.vertex_buffer->getCudaPtr());
-
-	//we need headers pointing at the vertices
-	active_set->reuploadHeaders();
-
-	//this seems to have worked perfectly
-	genLookupTexGeom(reconstruction, active_set.get(), valid_mesh_patches,information_renderer);
-
-	projToGeomTex(active_set.get(), valid_mesh_patches, geom_sensor_data, pose, 
-	              proj);
-
-	//since the texture has data that needs to only exists on the gpu,
-	//we setup the texture to be downloaded as soon
-	for(shared_ptr<Meshlet> patch : valid_mesh_patches) {
-		shared_ptr<MeshTextureGpuHandle> tex = patch->gpu.lock()->geom_tex;
-		if(tex == nullptr) {
-			assert(0);
-		}
-		tex->gpu_data_changed = true;
-	}
-	//TODO: now initialize that stuff
-
-	//TODO: this actually should be capable of creating the ref textures
-	//as well as the initial content of the textures.
-	//pls!!!! do this here
-
-	//and after doing this we can update the patch header
-
-	active_set->setupHeaders();
-	*/
 }
 
 void TextureUpdater::projToGeomTex(vector<MeshletGPU*> meshlets,
@@ -468,7 +227,127 @@ void TextureUpdater::colorTexUpdate(MeshReconstruction* reconstruction,
 	reconstruction->cleanupGlStoragesThisThread_();
 	 */
 }
+void TextureUpdater::applyColorData2(GpuStorage* gpu_storage,
+									vector<shared_ptr<Meshlet>> &meshlets,
+									shared_ptr<gfx::GpuTex2D> rgb_in,
+									Matrix4f &pose, Matrix4f &proj,
+									shared_ptr<ActiveSet> active_set) {
 
+	//TODO: try not to use the reconstruction itself in here!
+	if(active_set == nullptr) {
+		return;
+	}
+
+
+	Vector4f cam_pos4 = pose * Vector4f(0, 0, 0, 1);
+	Vector3f cam_pos(cam_pos4[0], cam_pos4[1], cam_pos4[2]);
+
+
+	vector<cv::Rect2f> bounds = calcTexBounds(active_set, meshlets, pose, proj);
+	vector<TexCoordGen::Task> tex_coord_gen_tasks;
+	vector<CopyDescriptor> tex_copy_tasks;
+
+
+	int width        = rgb_in->getWidth();
+	float width_inv  = 1.0f / float(width);
+	int height       = rgb_in->getHeight();
+	float height_inv = 1.0f / float(height);
+	Matrix4f mvp = proj * pose.inverse();;
+
+
+	for(size_t i=0;i<meshlets.size();i++){
+		shared_ptr<Meshlet> meshlet = meshlets[i];
+		cv::Rect2i bound = bounds[i];
+		MeshletGPU* meshlet_gpu = active_set->getGpuMeshlet(meshlet);
+
+		//so what this is supposed to do is to check if the textures are in bound....
+		if(		bound.x < 0 ||  bound.y < 0 ||
+		        bound.x + bound.width  > (width - 1) ||
+				bound.y + bound.height > (height - 1) ) {
+			//if patch does not have valid points something went wrong
+			//most likely there are no triangles in said patch....
+			continue;
+		}
+
+		//and then check if the texture is empty already...
+		//and only then create a new texture
+		if(meshlet->tex_patches.size() != 0)
+			continue;
+
+		//apparently this patch qualifies for
+		tex_coord_gen_tasks.emplace_back();
+		TexCoordGen::Task &task = tex_coord_gen_tasks.back();
+
+		//create a texture on the cpu:
+		meshlet->tex_patches.emplace_back();
+		shared_ptr<MeshTexture> tex = meshlet->tex_patches[0];
+
+
+
+		//create a texture on the gpu:
+		meshlet_gpu->textures.emplace_back();
+		shared_ptr<TextureLayerGPU> &tex_gpu = meshlet_gpu->textures[0];
+		tex_gpu = make_shared<TextureLayerGPU>();
+		tex_gpu->coords = gpu_storage->tex_pos_buffer->getBlock(meshlet_gpu->vertices->getSize());
+		cv::Size2i size(bound.width + 0.5f,bound.height + 0.5f);
+		tex_gpu->tex = gpu_storage->tex_atlas_rgb_8_bit_->getTexAtlasPatch(size);
+		tex_gpu->token = make_unique<weak_ptr<MeshTexture>>(tex);
+
+
+		task.vertices = meshlet_gpu->vertices->getStartingPtr();
+		task.vertex_count = meshlet_gpu->vertices->getSize();
+		task.offset_x = bound.x - 0.5f;
+		task.offset_y = bound.y - 0.5f;
+		task.coords = tex_gpu->coords->getStartingPtr();
+		task.scale_x =  1.0f / (bounds[i].width + 1.0f);
+		task.scale_y = 1.0f / (bounds[i].height + 1.0f);
+
+
+
+		tex_copy_tasks.emplace_back();
+		CopyDescriptor &copy_task = tex_copy_tasks.back();
+		copy_task.x = bound.x * width_inv;
+		copy_task.y = bound.y * height_inv;
+		copy_task.width = bound.width * width_inv;
+		copy_task.height = bound.height * height_inv;
+		cv::Rect2i rect = tex_gpu->tex->getRect();
+		copy_task.target_height = rect.height;//REALLY?
+		copy_task.target_width = rect.width;//REALLY?
+		copy_task.target_x = rect.x;
+		copy_task.target_y = rect.y;
+		copy_task.target = tex_gpu->tex->getCudaSurfaceObject();
+
+
+	}
+
+
+	//generate texture coordinates
+	TexCoordGen::genTexCoords(tex_coord_gen_tasks, mvp);
+
+	//copy over the texture patches from the incoming rgb image
+	copyToTexPatches(rgb_in->getCudaTextureObject(), tex_copy_tasks); //1.milliseconds for a full image (should be way less if the images are smaller)
+
+
+	//copy over the textures!
+
+	active_set->setupHeaders();
+
+	return;
+	//debugging:
+	for(size_t i=0;i<meshlets.size();i++){
+		shared_ptr<Meshlet> meshlet = meshlets[i];
+		cv::Rect2i bound = bounds[i];
+		MeshletGPU* meshlet_gpu = active_set->getGpuMeshlet(meshlet);
+		if(meshlet_gpu->textures.size()){
+			cv::Rect2i r = meshlet_gpu->textures[0]->tex->getRect();
+			cv::Mat data(r.height,r.width,CV_8UC4);
+			meshlet_gpu->textures[0]->tex->downloadData(data.data);
+			cv::imshow("test",data);
+			cv::waitKey();
+		}
+	}
+
+}
 void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
 									vector<shared_ptr<Meshlet>> &visible_patches,
 									LowDetailRenderer* low_detail_renderer,
@@ -484,7 +363,7 @@ void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
 		return;
 	}
 
-	vector<cv::Rect2f> bounds = mesh->genBoundsFromPatches(visible_patches, pose, 
+	vector<cv::Rect2f> bounds = mesh->genBoundsFromPatches(visible_patches, pose,
 	                                                       proj, active_set);
 
 	Vector4f cam_pos4 = pose * Vector4f(0, 0, 0, 1);
@@ -688,17 +567,19 @@ void TextureUpdater::genLookupTexGeom(MeshReconstruction* reconstruction,
 									  ActiveSet *active_set,
 									  vector<shared_ptr<Meshlet>> &patches,
 									  InformationRenderer* information_renderer) {
+	assert(0);
 	vector<shared_ptr<MeshTexture>> textures;
 	for(size_t i = 0; i < patches.size(); i++) {
 		textures.push_back(patches[i]->geom_tex_patch);
 	}
-	genLookupTex(reconstruction,active_set, patches, textures,information_renderer);
+//	genLookupTex(reconstruction,active_set, patches, textures,information_renderer);
 }
 
 void TextureUpdater::genLookupTexGeom(	InformationRenderer* information_renderer,
 										shared_ptr<ActiveSet> active_set,
 										vector<shared_ptr<Meshlet>> &meshlets,
 									 	 bool dilate) {
+	assert(0);
 	vector<shared_ptr<MeshTexture>> textures;
 	for(size_t i = 0; i < meshlets.size(); i++) {
 		textures.push_back(meshlets[i]->geom_tex_patch);
@@ -706,62 +587,6 @@ void TextureUpdater::genLookupTexGeom(	InformationRenderer* information_renderer
 
 }
 
-//TODO: maybe relocate this function into another class?
-//also maybe directly operate on the patch
-void TextureUpdater::genLookupTex(
-		MeshReconstruction* reconstruction,
-		ActiveSet *active_set,
-		vector<shared_ptr<Meshlet>> &patches,
-		vector<shared_ptr<MeshTexture>> &textures,
-		InformationRenderer *information_renderer,
-		bool dilate) {
-	assert(0); //TODO: reinsert this functionality
-	/*
-	vector<DilationDescriptor> dilations;
-	dilations.reserve(patches.size());
-	information_renderer->bindRenderTriangleReferenceProgram(reconstruction);
-
-	for(size_t i = 0; i < patches.size();i++) {
-		shared_ptr<Meshlet>              patch = patches[i];
-		shared_ptr<MeshTexture>          texture = textures[i];
-		shared_ptr<MeshTextureGpuHandle> gpu_tex = texture->gpu.lock();
-		if(gpu_tex == nullptr) {
-			cout << "[ScaleableMap::generateLookupTexGeom] "
-			        "There is no texture on the gpu" << endl;
-			continue;
-		}
-
-		cv::Rect2i r = texture->getLookupRect();
-		//TODO: the scissor test probably is a little wasteful (a quad would be way better)
-
-		//to solve this we might want to draw a quad
-		information_renderer->renderTriangleReferencesForPatch(
-				active_set, patches[i], texture);
-		//how about imshowing the result
-
-		if(dilate) {
-			DilationDescriptor dilation;
-			dilation.target = gpu_tex->ref_tex->getCudaSurfaceObject();
-			dilation.width  = r.width;
-			dilation.height = r.height;
-			dilation.x      = r.x;
-			dilation.y      = r.y;
-			dilations.push_back(dilation);
-		}
-	}
-
-	glFinish();//let the opengl stuff render before we download it.
-
-	//At last we dilate the lookup of
-	if(dilate) {
-		dilateLookupTextures(dilations);
-		cudaDeviceSynchronize();
-	}
-	for(size_t i = 0; i < patches.size(); i++) {
-		patches[i]->geom_tex_patch->ref_tex_filled = true;
-	}
-	 */
-}
 
 void TextureUpdater::genLookupTex(	InformationRenderer* information_renderer,
 									GpuStorage* gpu_storage,

@@ -24,17 +24,17 @@ enum Level {
 	INFO    = 3,
 	DEBUG   = 4
 };
-string levelToStr(Level lvl);
+string levelToStr(logging::Level lvl);
 
 class Logger {
 public:
 
-	Logger(Level lvl)
+	Logger(logging::Level lvl)
 			: lvl_(lvl) {
 		#ifdef LOGFILE 
 			name_logfile_ = LOGFILE;
 		#endif
-		log(Level::STATUS, "Start logging : Level " + levelToStr(lvl));
+		log(logging::Level::STATUS, "Start logging : Level " + levelToStr(lvl));
 	}
 
 	~Logger();
@@ -43,7 +43,7 @@ public:
 		name_logfile_ = filename;
 	}
 
-	void log(Level lvl, string msg, const char *filename = nullptr, int line = 0) {
+	void log(logging::Level lvl, string msg, const char *filename = nullptr, int line = 0) {
 		#ifdef ENABLE_LOGGING
 			genLog_(lvl, msg, filename, line);
 		#endif
@@ -51,15 +51,15 @@ public:
 
 private:
 
-	void genLog_(Level lvl, string msg, const char *filename, int line);
+	void genLog_(logging::Level lvl, string msg, const char *filename, int line);
 
 	void writeLog_(string log_msg);
 
-	Level lvl_;
+	logging::Level lvl_;
 	string name_logfile_;
 };
 
-inline void initLogger(Level lvl) {
+inline void initLogger(logging::Level lvl) {
 	#ifdef ENABLE_LOGGING
 		logger = new Logger(lvl);
 	#else

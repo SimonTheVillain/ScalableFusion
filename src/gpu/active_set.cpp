@@ -171,7 +171,7 @@ ActiveSet::ActiveSet(GpuGeomStorage *storage,
 						shared_ptr<MeshPatchGpuHandle> gpu_this_pt = 
 								patch_map[pr.getPatch()];
 
-						#ifdef DEBUG
+						#ifdef VERSION_DEBUG
 						if(gpu_this_pt == nullptr) {
 							//no triangle should have any invalid reference
 							assert(0);

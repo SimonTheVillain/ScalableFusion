@@ -312,7 +312,7 @@ void MapExporter::storeGraph(MeshReconstruction *map, string file_path) {
 	file << index_map.size() << endl;
 	file << unique_stitches.size() << endl;
 	for(auto patch : map->patches_) {
-		Vector3f center = patch.second->getPos();
+		Vector3f center = patch.second->center();
 		file << center[0] << " " << center[1] << " " << center[2]  << endl;
 	}
 	for(auto stitch: unique_stitches) {
@@ -368,7 +368,7 @@ void MapExporter::storeDeformationGraph(MeshReconstruction *map,
 	file << index_map.size() << endl;
 	file << size << endl;
 	for(auto patch : map->patches_) {
-		Vector3f center = patch.second->getPos();
+		Vector3f center = patch.second->center();
 		file << center[0] << " " << center[1] << " " << center[2]  << endl;
 	}
 

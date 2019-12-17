@@ -62,6 +62,7 @@ file(GLOB CXX_SRCS
 		rendering/presentation_renderer.cpp
 		rendering/renderable_model.cpp
 		utils/gpu_norm_seg.cpp
+		utils/octree.cpp
 		utils/perf_meter.cpp
 		utils/principal_plane.cpp
 		segmentation/incremental_segmentation.cpp

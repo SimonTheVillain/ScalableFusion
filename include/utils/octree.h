@@ -1,698 +1,509 @@
-//https://geidav.wordpress.com/2014/08/18/advanced-octrees-2-node-representations/
-//https://geidav.wordpress.com/2014/11/18/advanced-octrees-3-non-static-octrees/
+//! Octree for storing objects for rendering
+/*! 
+ * Provides the tools for creating an octree which can be used to store
+ * objects with their respective positions and sizes. This can in turn be used
+ * for things like obtaining the objects relevant for rendering or similar.
+ *
+ * \file   octree.h
+ * \author Nikolaus Wagner
+ * \author Simon Schreiberhuber
+ * \date   6. 12. 2019
+ *
+ */
+
 #ifndef FILE_OCTREE_H
 #define FILE_OCTREE_H
 
 #include <vector>
 #include <memory>
 #include <mutex>
-#include <iostream>
 
 #include <Eigen/Eigen>
 
-//more than these and we split them up
-#define UPPER_LIMIT_OBJECTS 100
-//less than this and the node gets deleted
-#define LOWER_LIMIT_OBJECTS 10
-
-//the initial cube has the size of a 256 meters, this should be sufficient
-//for almost any map, should there be points outside of that we could either
-//add one layer on top or just add them to the top layer
-#define INITIAL_NODE_WIDTH 4000.0f
-
-//TODO: mutex system that allowes to easily traverse and change the octree without having
-//unnecessary lock states.
-//each node would have to have at least 1 mutex for securing the list of OctreeMembers
-//also each node would have at least 1 mutex for securing the list of subNodes.
-
-//also: MULTIPLE READERS SINGLE WRITERS LOCK
-//https://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock
-//std solution requires c++ 17
-//http://en.cppreference.com/w/cpp/thread/shared_mutex
-// also look up the difference between a mutex and a semaphore
-//http://www.geeksforgeeks.org/mutex-vs-semaphore/
+#include <logging/logger.h>
+#include <video_source/source.h>
 
 using namespace std;
 using namespace Eigen;
 
-template <class T>
-class OctreeNode;
- 
-template <class T>
+//! Everything concerning the octree used for storing objects for rendering
+namespace octree {
+
+// Forward declarations
+class Object;
+class Node;
 class Octree;
 
-template <class T>
-class OctreeMember {
-	friend Octree<T>;
-
+//! A camera Frustum
+/*! 
+ *  This class defines a camera Frustum (as defined by 6 planes) and helper
+ *  functions to determine whether or not an (octree-) Object is (fully/partly)
+ *  visible for this Frustum.
+ *
+ *  \todo Split the visibility checks into fully & partly visible
+ */
+class Frustum {
 public:
-
-	OctreeMember()
-			: octree_(nullptr),
-			  node_(nullptr) {
-	}
-
-	~OctreeMember() {
-		if(octree_ != nullptr && node_ != nullptr) {
-			Octree<T> *tree = octree_;
-			tree->mutex_.lock();
-			node_->removeObject(static_cast<T*>(this));
-			tree->mutex_.unlock();
-		}
-	}
-
-	bool isInsertedInOctree() {
-		return octree_ != nullptr && node_ != nullptr;
-	}
-
-	Vector3f getPos() {
-		return pos_;
-	}
-
-	float getRadius() {
-		return radius_;
-	}
-
-	void setOctreeNode(OctreeNode<T> *node) {
-		node_ = node;
-		assert(octree_ == nullptr || node_ != nullptr);
-		if(node_ == nullptr && octree_ != nullptr) {
-			assert(0);
-		}
-	}
-
-	void setOctree(Octree<T> *octree) {
-		octree_ = octree;
-	}
-
-	/**
-	 * @brief setSphere
-	 * changes the position of the object and puts it into the right place of the map already
-	 * @param pos
-	 * @param radius
-	 */
-	void setSphere(Vector3f new_pos, float new_radius) {
-
-		//set the values
-		pos_    = new_pos;
-		radius_ = new_radius;
-
-		if(octree_ != nullptr && node_ != nullptr) {
-			//lock the whole octree
-			Octree<T> *tree = octree_;
-			octree_->mutex_.lock();
-
-			//check if this object still is in the right octree node
-			Vector3f node_center = node_->getCenter();
-			float node_width_2 = node_->getHalfWidth();
-			if(!OctreeNode<T>::fitsWithinNode(new_pos, new_radius, node_center, 
-			                                  node_width_2)) {
-
-				//if  the object doesn't fit into this node anymore we have to relocate it
-				//first it has to be romoved from the current node
-				OctreeNode<T> *upper_node = node_;
-				OctreeNode<T> *old_node = node_;
-
-				//actually the object will be completely removed from the octree
-				// so node and octree references will be invalid
-				shared_ptr<T> shared = node_->removeObject(static_cast<T*>(this), 
-				                                           false); //do it without changing the node....
-
-				//assert(0); //removing object here could invalidate the upper node (which is this node right now)
-				//TODO: Solution might be to prevent remove object in this context from removing upper nodes since we are just moving
-				//the object
-
-				//follow the octree upwards and put putInPlace it from there.
-				while(upper_node != nullptr) {
-					Vector3f node_center = upper_node->getCenter();
-					float node_width_2 = upper_node->getHalfWidth();
-					if(OctreeNode<T>::fitsWithinNode(new_pos, new_radius, node_center,
-					                                 node_width_2) ||//if it fits into the node
-					   upper_node->parent_ == nullptr) {//or we are at the uppermost node
-						//we found a node where this object would fit in
-						setOctree(tree);//readd the object to the octree
-						upper_node->putInPlace(shared); //this has to be a shared pointer
-						break;
-					}
-					upper_node = upper_node->parent_;
-				}
-				//cleanup if ths original node still makes sense and cleanup everything
-				old_node->checkAndShrink();
-			}
-			//unlock the mutex
-			octree_->mutex_.unlock();
-		}
-	}
-
-	static bool checkVisibility(const Vector3f &center, const float &radius,
-	                            const Vector4f (&planes)[6], 
-	                            const Matrix4f &cam_pose, const float &max_dist);
-
-	void setPos(Vector3f pos) {
-		setSphere(pos, getRadius());
-	}
-	void setRadius(float radius) {
-		setSphere(getPos(), radius);
-	}
-	//TODO: somehow the octree node should be informed wheater this object gets changed or not
-
-private:
-	Octree<T> *octree_;
-	OctreeNode<T> *node_;
-	Vector3f pos_;
-	float radius_;
-
-};
-
-//TODO: check if this really is needed
-template<class T>
-class Octree {
-	friend OctreeMember<T>;
-
-public:
-
-	Octree();
-
-	~Octree();
-
-	/**
-	 * @brief getObjects
-	 * Given we have a camera position with intrinsics we test every object within the octree
-	 * if their bounding sphere is touching the frustum of the camera.
+	//! Constructor for a camera Frustum
+	/*!
+	 *  Given all the necessary information, this function will calculate the
+	 *  planes defining a camera Frustum.
 	 *
-	 * @param camPos
-	 * @param intrinsics
-	 * @param maxDist
-	 * @return
+	 *  \param pose The current camera pose
+	 *  \param intrinsics The intrinsic camera parameters
+	 *  \param resolution The number of pixels (width x height) the camera provides
+	 *  \param max_depth The distance at which the Frustum will be truncated
 	 */
-	vector<shared_ptr<T> > getObjects(Matrix4f cam_pos, Vector4f intrinsics,
-	                                  Vector2f resolution, float max_dist,
-	                                  float dilate_frustum = 0.0f);
+	Frustum(Matrix4f pose, video::Intrinsics intrinsics, Vector2f resolution,
+	        float max_depth);
 
-	void addObject(shared_ptr<T> object) {
-		mutex_.lock();
-		root_node_->putInPlace(object);
-		mutex_.unlock();
-	}
+	//! Visibility check for a spherical object
+	/*!
+	 *  Checks whether or not a spherical object is, at least partly, visible
+	 *  for this Frustum.
+	 *
+	 *  \param center The center of the object to be checked
+	 *  \param radius The radius of the object to be checked
+	 *
+	 *  \return Whether or not the object is visible
+	 */
+	bool contains(Vector3f center, float radius) const;
 
-	void addObjects(vector<shared_ptr<T>> objects) {
-		mutex_.lock();
-		for(size_t i = 0; i < objects.size(); i++) {
-			root_node_->putInPlace(objects[i]);
-		}
-		mutex_.unlock();
-	}
+	//! Visibility check for an abstract octree Object
+	/*!
+	 *  Checks whether or not an abstract octree Object is, at least partly, 
+	 *  visible for this Frustum.
+	 *
+	 *  \param object The octree Object to be checked
+	 *
+	 *  \return Whether or not the Object is visible
+	 */
+	bool contains(const Object *object) const;
 
-	void removeObject(shared_ptr<OctreeMember<T>> object) {
-		mutex_.lock();
-		object->node_->removeObject(object);
-		mutex_.unlock();
-	}
-
-	void removeObject(shared_ptr<T> object) {
-		mutex_.lock();
-		object->node_->removeObject(object);
-		mutex_.unlock();
-	}
+	//! Visibility check for an octree Node
+	/*!
+	 *  Checks whether or not an octree Node is, at least partly, visible
+	 *  for this Frustum.
+	 *
+	 *  \param node The octree Node to be checked
+	 *
+	 *  \return Whether or not the Node is visible
+	 */
+	bool contains(const Node *node) const;
 
 private:
-	
-	OctreeNode<T> *root_node_;
-
-	//actually there should be the possibilty to read from multiple threads
-	//but only write from one
-	mutex mutex_;
-
+	Vector4f planes_[6]; //!< The 6 planes defining the frustum
 };
 
-
-template <class T>
-class OctreeNode {
-	friend OctreeMember<T>;
-
+//! An (usually abstract) object for insertion into an octree
+/*! 
+ *  For implementation purposes, one can simply inherit from this object
+ *  and insert the subsequently created objects into an octree, where they
+ *  will be treated as objects of this base class.
+ *  These objects will be treated as spherical in the context of the octree.
+ */
+class Object : public enable_shared_from_this<Object> {
 public:
 
-	OctreeNode(OctreeNode<T> *parent, Vector3f center, float half_width);
+	//! Constructor for the abstract object
+	/*!
+	 *  Creates an (abstract, spherical) object for insertion into the octree.
+	 *
+	 *  \param center The geometrical center of the object
+	 *  \param radius The radius of the object
+	 */
+	Object(Vector3f center = Vector3f(0,0,0), float radius = 0.0f);
 
-	~OctreeNode();
+	virtual ~Object() = default;
 
-	//weak pointers is needed since we want to assemble lists of shared_ptr
-	vector<weak_ptr<T>> objects;
+	//! Checks whether the object geometrically fits inside an octree Node
+	/*!
+	 *  Check in all three dimensions whether the object fully fits inside an
+	 *  octree Node.
+	 *
+	 *  \param node The Node for which to perform the check
+	 *
+	 *  \param Whether this object fits inside the Node
+	 */
+	bool fitsWithinNode(Node *node) const;
 
-	Vector3f getCenter() {
+	//! Checks whether the Object is visible for a given Frustum
+	/*!
+	 *  Checks whether this Object is (at least partly) visible for a given
+	 *  Frustum.
+	 *
+	 *  \param frustum The frustum for which to check
+	 *
+	 *  \return Whether the Object is visible
+	 */
+	inline bool isVisible(Frustum *frustum) const {
+		return frustum->contains(this);
+	}
+
+	//! Move Object to another Node
+	/*!
+	 *  Try moving the Object to a given Node, if the Object does not fit, it will
+	 *  be moved to the best fitting Node in the Octree instead.
+	 *
+	 *  \param target_node The desired Node where the Object shall be moved to
+	 *  \param cleanup Whether or not to try to reduce the Octree after moving
+	 *         the Object
+	 *
+	 *  \return The actual Node where the Object was finally inserted
+	 */
+	Node* moveTo(Node *target_node, bool cleanup = true);
+
+	//! Set the bounding sphere of the Object
+	/*!
+	 *  Set the bounding sphere, i. e. the radius and center, of this Object
+	 *  and subsequently check whether it still fits into the Node it had 
+	 *  resided in so far. If it doesn't, try finding the new best fitting Node.
+	 *
+	 *	\param center The geometrical center of the new bounding sphere
+	 *  \param radius The radius of the the new bounding sphere
+	 *
+	 *  \return The best fitting Node for this Object
+	 */
+	Node* setSphere(Vector3f center, float radius);
+
+	//! Getter function for the host Node of this Object
+	/*!
+	 * \return The host Node this Object currently resides in
+	 */
+	inline Node* node() const {
+		return host_node_;
+	}
+
+	//! Getter function for the geometrical center of this Object
+	/*!
+	 * \return The geometrical center of the bounding sphere of this Object
+	 */
+	inline Vector3f center() const {
 		return center_;
 	}
 
-	float getHalfWidth() {
-		return half_width_;
+	//! Getter function for the radius of this Object
+	/*!
+	 * \return The radius of the bounding sphere of this Object
+	 */
+	inline float radius() const {
+		return radius_;
 	}
-
-	Vector3f getCenterAtIndex(int ind);
-
-	//splits the objects within this octree node up to where they belong
-	void split();
-
-	bool hasChildren() {
-		for(size_t i = 0; i < 8; i++) {
-			if(children_[i] != nullptr) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	bool isFull() {
-		return objects.size() > UPPER_LIMIT_OBJECTS;
-	}
-
-	bool isSparse() {
-		return (objects.size() < LOWER_LIMIT_OBJECTS) && !hasChildren();
-	}
-
-	void appendVisibleObjects(vector<shared_ptr<T>> &visible, 
-	                          const Vector4f (&planes)[6],
-	                          const Matrix4f &cam_pose,
-	                          const float &max_dist,
-	                          const float &dilate_frustum = 0.0f);
-
-	//if all the subnodes have too few elements we delete them and store the remaining objects in the
-	void eatChildren();//really necessary?
-
-	//if this node does not have any children and very little objects move it to the node above
-	void checkAndShrink();
-
-	void removeNode(OctreeNode<T> *child) {
-		for(size_t i = 0; i < 8; i++) {
-			if(children_[i] == child) {
-				children_[i] = nullptr;
-				return;
-			}
-		}
-		assert(0);//removing a node failed
-	}
-
-	void addObject(shared_ptr<T> object) {
-		objects.push_back(object);
-		object->setOctreeNode(this);
-	}
-
-	void putInPlace(shared_ptr<T> object);
-
-	void removeObject(shared_ptr<T> object);
-
-	shared_ptr<T> removeObject(T *object, bool check_and_shrink = true);
-
-	bool fitsWithinNode(shared_ptr<T> object);
-
-	bool childrenAreSparse();
-
-	bool childrenAreSparseNoGrandchildren();
-
-	static bool fitsWithinNode(Vector3f center, float radius, 
-	                           Vector3f node_center, float node_width_2);
 
 private:
+	Node *host_node_; //!< The octree node where this object currently resides
 
-	OctreeNode<T> *parent_ = nullptr;
-	OctreeNode<T> *children_[8];
-	Vector3f center_;
-	float half_width_;
-
+	Vector3f center_; //!< The geometrical center of this object
+	float radius_; //!< The radius of this object
 };
 
-template<class T>
-bool OctreeMember<T>::checkVisibility(const Vector3f &center, 
-                                      const float &radius,
-                                      const Vector4f (&planes)[6],
-                                      const Matrix4f &cam_pose,
-                                      const float &max_dist) {
-	for(size_t i = 0; i < 6; i++) {
-		Vector4f p = Vector4f(center[0], center[1], center[2], 1);
-		float distance = p.dot(planes[i]);
-		if(distance > radius) {
-			return false;
-		}
-	}
-	return true;
-}
+//! A single Node of an Octree
+/*! 
+ *  This class defines one cubical Node of an Octree which has knowledge about
+ *  its parent Node and child nodes, the Octree in which it resides 
+ *  and can store Objects. 
+ *  These Nodes are not supposed to be used on their own, but instead will be
+ *  automatically instantiated/destructed as needed by the encapsulating
+ *  Octree - class. 
+ */
+class Node {
+friend Octree; //!< octree::Octree
 
-template<class T>
-Octree<T>::Octree()
-		: root_node_(new OctreeNode<T>(nullptr, Vector3f(0, 0, 0), 
-		                               INITIAL_NODE_WIDTH / 2.0f)) {
-}
+public:
 
-template<class T>
-Octree<T>::~Octree() {
-	delete root_node_;
-}
+	//! Constructor
+	/*!
+	 *  \param center The geometrical center of this Node
+	 *  \param width The side length of this Node
+	 *  \param octree The Octree this node is part of
+	 *  \param parent Direct parent of this Node
+	 */
+	Node(Vector3f center, float width, Octree* octree, Node* parent = nullptr);
 
-template<class T>
-vector<shared_ptr<T> > Octree<T>::getObjects(Matrix4f cam_pos, 
-                                             Vector4f intrinsics,
-                                             Vector2f resolution,
-                                             float max_dist,
-                                             float dilate_frustum) {
-	//The plan here is to transform all the poins into the camera frame to then test if they
-	//are within the frustum
-	float &fx = intrinsics[0];
-	float &fy = intrinsics[1];
-	float &cx = intrinsics[2];
-	float &cy = intrinsics[3];
-	float &rx = resolution[0];
-	float &ry = resolution[1];
-
-	//TODO: don't transform the center points but transform the plane equation according to the camera
-	//list of objecs we are filling up here
-	vector<shared_ptr<T>> objects;
-
-	Matrix4f cam_pose = cam_pos.inverse();
-
-	//create planes which cut the frustrum
-	Vector4f alpha(0, 0, 0, 0);
-	Vector4f planes[6] = {Vector4f(  0,  fy,     -cy, 0),  //up
-	                      Vector4f(  0, -fy, cy - ry, 0),  //down
-	                      Vector4f( fx,   0,     -cx, 0),  //left
-	                      Vector4f(-fx,   0, cx - rx, 0),  //right
-	                      Vector4f(  0,   0,      -1, 0),  //near plane
-	                      Vector4f(  0,   0,       1, 0)}; //far plane maxDist
-
-	for(size_t i = 0; i < 6; i++) {
-		planes[i].block<3, 1>(0, 0).normalize();
-		planes[i].block<3, 1>(0, 0) = 
-				cam_pos.block<3, 3>(0, 0) * planes[i].block<3, 1>(0, 0);
-		float dist = planes[i].block<3, 1>(0, 0).dot(cam_pos.block<3, 1>(0, 3));
-		planes[i][3] = -dist;
-	}
-	planes[5][3] -= max_dist;
-
-	mutex_.lock();
-	root_node_->appendVisibleObjects(objects, planes, cam_pose, max_dist,
-	                                 dilate_frustum);
-	mutex_.unlock();
-	return objects;
-}
-
-template<class T>
-OctreeNode<T>::OctreeNode(OctreeNode<T> *parent, Vector3f center, 
-                          float half_width)
-		: parent_(parent),
-		  children_{nullptr, nullptr, nullptr, nullptr,
-		            nullptr, nullptr, nullptr, nullptr},
-		  center_(center),
-		  half_width_(half_width) {
-}
-
-template<class T>
-OctreeNode<T>::~OctreeNode() {
-	for(size_t i = 0; i < 8; i++) {
-		if(children_[i] != nullptr) {
+	//! Destructor
+	~Node() {
+		for(uint8_t i = 0; i < 8; i++)
 			delete children_[i];
-		}
 	}
-}
 
-template<class T>
-Vector3f OctreeNode<T>::getCenterAtIndex(int ind) {
-	const Vector3f vectors[8] = {Vector3f( -1, -1, -1),//actually we could derive this from the first 3 bits of ind
-	                             Vector3f( -1, -1,  1),//(don't know if this would be shorter or faster)
-	                             Vector3f( -1,  1, -1),
-	                             Vector3f( -1,  1,  1),
-	                             Vector3f(  1, -1, -1),
-	                             Vector3f(  1, -1,  1),
-	                             Vector3f(  1,  1, -1),
-	                             Vector3f(  1,  1,  1)};
+	//! Adds an Object to this Node
+	/*!
+	 *  Try adding an Object to this Node, if it fits. If it doesn't fit, the 
+	 *  Object will be added into the best fitting Node instead.
+	 *
+	 *  \param object The Object to be added to this Node
+	 *
+	 *  \return The Node the Object was finally added to, or nullptr if adding failed
+	 */
+	Node* add(shared_ptr<Object> object);
 
-	return center_ + half_width_ * 0.5f * vectors[ind];
-}
+	//! Remove an Object from this Node
+	/*!
+	 *  Try removing an Object from this Node. If the Object is not found in this
+	 *  Node, try removing it from all children. If this also fails, do nothing.
+	 *
+	 *  \param object The Object to be removed from the Node
+	 *  \param cleanup Whether or not to try merging after removing
+	 *
+	 *  \return The Node the Object was finally removed from, or nullptr if removing failed
+	 */
+	Node* remove(shared_ptr<Object> object, bool cleanup = true);
 
-template<class T>
-void OctreeNode<T>::split() {
-	if(parent_ == nullptr) {
-		cout << "debug" << endl;
-	}
-	//cout << "TODO: WE HAVE TO MUTEX THIS" << endl;
-	for(size_t i = 0; i < objects.size(); i++) {
-		shared_ptr<T> object = objects[i].lock();
-		if(object == nullptr) {
-			assert(0);//in our scheme this should not happen. every object in this list should be valid
-		}
-		for(size_t j = 0; j < 8; j++) {
-			float sub_width_2 = half_width_ / 2.0f;
-			Vector3f sub_center = getCenterAtIndex(j);
-			if(fitsWithinNode(object->getPos(), object->getRadius(), 
-			                  sub_center, sub_width_2)) {
-				//test if the object would fit into this child node
-				if(children_[j] == nullptr) {
-					//if the child node doesn't exist yet we create one
-					children_[j] = new OctreeNode(this, sub_center, sub_width_2);
-				}
+	//! Split this Node into 8 sub-Nodes
+	/*!
+	 *  Try splitting this Node up into 8 sub-Nodes, if it has enough Objects
+	 *  and then distribute the fitting Objects among the new children.
+	 */
+	void split();
 
-				//add to the according child
-				children_[j]->putInPlace(object);
-				object->setOctreeNode(children_[j]);
+	//! Merge children with this node
+	/*!
+	 *  Try merging this Node with its children, leaving only this parent Node.
+	 *  If there are any grandchildren or if there are too many objects to merge,
+	 *  do nothing.
+	 *  After merging this Node, try merging the next higher (parent) Node as
+	 *  well.
+	 */
+	void merge();
 
-				//and remove from this vector.....
-				//TODO: find out if this is the way to go
-				#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
-				cout << "we really have to test if this is doing what "
-				        "it is supposed to do" << endl;
-				#endif
-				objects[i] = objects[objects.size() - 1];
-				objects.pop_back();//remove the last element
-				break;
+	//! Get the visible objects of this node and its children
+	/*!
+	 *  Given a viewing Frustum, extract all visible Objects of this Node and
+	 *  all its descendants and append them to a vector.
+	 *
+	 *  \tparam T The type of the Objects that have been inserted into the Octree
+	 *  \param frustum The camera Frustum for which to extract the visible Objects
+	 *  \param visible_objects The vector of visible Objects to which all the visible
+	 *                         Objects of this Node and all its descendants will be appended
+	 */
+	template<class T>
+	void getVisibleObjects(Frustum* frustum, 
+	                       vector<shared_ptr<T>>* visible_objects) const {
+
+		// Check if this node is visible at all
+		if(!isVisible_(frustum))
+			return;
+
+		// Extract the visible objects of this node
+		for(auto object : objects_) {
+			if(object->isVisible(frustum)) {
+				visible_objects->push_back(dynamic_pointer_cast<T>(object));
 			}
 		}
-	}
-}
 
-template<class T>
-void OctreeNode<T>::appendVisibleObjects(vector<shared_ptr<T>> &visible,
-                                         const Vector4f (&planes)[6],
-                                         const Matrix4f &cam_pose,
-                                         const float &max_dist,
-                                         const float &dilate_frustum) {
-	//first test if this node is visible
-	if(!OctreeMember<T>::checkVisibility(center_,
-	                                     half_width_ * sqrt(3) + dilate_frustum,
-	                                     planes, cam_pose, max_dist)) {
-		//if not we just do nothing
+		// Extract the visible objects of the children
+		if(hasChildren_()) {
+			for(uint8_t i = 0; i < 8; i++) {
+				children_[i]->getVisibleObjects<T>(frustum, visible_objects);
+			}
+		}
+
 		return;
 	}
 
-	//if the node is visible do the same for all the objects:
-	for(size_t i = 0; i < objects.size(); i++) {
-		//check if the object is in place and append
-		shared_ptr<T> object = objects[i].lock();
-		if(object == nullptr) {
-			assert(0);
-		}
-		if(OctreeMember<T>::checkVisibility(object->getPos(),
-		                                    object->getRadius() + dilate_frustum,
-		                                    planes, cam_pose, max_dist)) {
-			visible.push_back(object);
-		}
+	//! Getter function for the geometrical center of this Node
+	/*!
+	 * \return The geometrical center of this Node
+	 */
+	inline Vector3f center() const {
+		return center_;
 	}
 
-	//when done with that we go trough all the childs
-	for(size_t i = 0; i < 8; i++) {
-		if(children_[i] != nullptr) {
-		   children_[i]->appendVisibleObjects(visible, planes, cam_pose, max_dist,
-		                                      dilate_frustum);
-		}
-	}
-}
-
-template<class T>
-void OctreeNode<T>::eatChildren() {
-	//cout << "WE HAVE TO MUTEX THIS" << endl;
-	for(size_t i = 0; i < 8; i++) {
-		if(children_[i] != nullptr) {
-			objects.insert(objects.end(), children_[i]->objects.begin(), 
-			               children_[i]->objects.end());
-			if(children_[i]->hasChildren()) {
-				assert(0);//when deleting a child node we want them to be empty
-			}
-			delete children_[i];
-			children_[i] = nullptr;
-		}
-	}
-	if(isSparse() && parent_ != nullptr) {
-		if(parent_->isSparse() && parent_->childrenAreSparse()) {
-			parent_->eatChildren();
-		}
-	}
-}
-
-template<class T>
-void OctreeNode<T>::checkAndShrink() {
-	if(isSparse() && childrenAreSparseNoGrandchildren()) {
-		eatChildren();
-	}
-	if(parent_ != nullptr) {
-		if(!hasChildren() && objects.size() == 0) {
-			parent_->removeNode(this);
-			parent_->checkAndShrink();
-			delete this;
-			return;
-		}
-		if(!hasChildren() && isSparse()) {
-			parent_->checkAndShrink();//check if we could be eaten by the parent
-		}
-	}
-}
-
-template<class T>
-void OctreeNode<T>::putInPlace(shared_ptr<T> object) {
-	//cout << "WE HAVE TO MUTEX THIS" << endl;
-	if(!hasChildren()) {
-		//only if the node doesn't have children and
-		//is not full we wan't to add the object directly here
-		if(!isFull()) {
-			//TODO: remove this debug shit
-			T *obj = object.get();
-			weak_ptr<T> wobj = object;
-			addObject(object);
-			return;
-		} else {
-			//if the node is full tough we want to relocate each object to where it belongs
-			//we have to split it up and create new child nodes.
-			split();
-		}
-	}
-	float sub_width_2 = half_width_ / 2.0f;
-	for(size_t i = 0; i < 8; i++) {
-		Vector3f sub_center=getCenterAtIndex(i);
-		//test if the object would fit into this child node
-		if(fitsWithinNode(object->getPos(),object->getRadius(), 
-		                  sub_center, sub_width_2)) {
-
-			//create a new Node if necessary
-			if(children_[i] == nullptr) {
-				//if the child node doesn't exist yet we create one
-				children_[i] = new OctreeNode<T>(this, sub_center, sub_width_2);
-			}
-			children_[i]->putInPlace(object);
-
-			return;
-		}
+	//! Getter function for the side length of this Node
+	/*!
+	 * \return The side length of this Node
+	 */
+	inline float width() const {
+		return width_;
 	}
 
-	//if the patch doesn't fit into one of the patches we put it in.
-	//(it propably is right at the border)
-	addObject(object);
-	if(!fitsWithinNode(object)) {
-		cout << "SERIOUS ERROR: actually this object doesn't fit in here either" << endl;
-		assert(0);
-	}
-}
+private:
 
-template <class T>
-shared_ptr<T> OctreeNode<T>::removeObject(T *object, bool check_and_shrink) {
-	shared_ptr<T> object_shared = nullptr;
-	//Iterate from end to beginning to remove the said object
-	bool debug_found_object = false;
-	for(int i = objects.size() - 1; i >= 0; i--) {
-		shared_ptr<T> obj = objects[i].lock();
-		T *raw = obj.get();
-		if(raw == object || raw == nullptr) {
-			object_shared = obj;
-			//remove object from list
-			objects[i] = objects[objects.size() - 1];
-			objects.pop_back();
-			debug_found_object = true;
-			break;
-		}
+	//! Calculate the location of the geometrical centers of the (possible) children of this Node
+	/*!
+	 *  \return The geometrical centers of the (possible) children of this Node
+	 */
+	inline array<Vector3f, 8> childrenCenters_() {
+		array<Vector3f, 8> children_centers = {
+				center_ + (Vector3f(-width_, -width_, -width_) / 4),
+				center_ + (Vector3f(-width_, -width_,  width_) / 4),
+				center_ + (Vector3f(-width_,  width_, -width_) / 4),
+				center_ + (Vector3f(-width_,  width_,  width_) / 4),
+				center_ + (Vector3f( width_, -width_, -width_) / 4),
+				center_ + (Vector3f( width_, -width_,  width_) / 4),
+				center_ + (Vector3f( width_,  width_, -width_) / 4),
+				center_ + (Vector3f( width_,  width_,  width_) / 4)};
+		return children_centers;
 	}
-	if(debug_found_object == false) {
-		//TODO: find out why this really does not work out
-		shared_ptr<T> obj = objects[objects.size() - 1].lock();
-		assert(0);
+
+	//! Check whether this Node has any children
+	/*!
+	 *  \return Whether this Node has any children
+	 */
+	inline bool hasChildren_() const {
+		for(uint8_t i = 0; i < 8; i++)
+			if(children_[i] != nullptr)
+				return true;
+
+		return false;
 	}
-	assert(debug_found_object); //the object hast to be in the list. if not we are screwed.
 
-	object->setOctree(nullptr);
-	object->setOctreeNode(nullptr);
-
-	if(!check_and_shrink) {
-		return object_shared;
+	//! Check whether this Node has a parent Node
+	/*!
+	 *  \return Whether this Node has a parent Node
+	 */
+	inline bool isRoot_() const {
+		return (parent_ == nullptr);
 	}
-	//then we check if this node is low on objects
-	if(isSparse() && !hasChildren()) {
-		//if it is and it has a parent node we check for the parent node
-		if(parent_ != nullptr) {
-			if(!objects.empty()) {
-				//remove the nodes upwards
-				parent_->removeNode(this);
-				parent_->checkAndShrink();//running check and shrink also means that this node might not exist anymore
-				delete this;
-				return object_shared;
-			}
-			//check if the parent and its child are also sparse
-			if(parent_->childrenAreSparseNoGrandchildren() && parent_->isSparse()) {
-				//we combine the children and put them in here.
-				assert(0);//TODO: check out why this is never reached
-				parent_->eatChildren();
-			}
-		}
+
+	//! Check whether this Node could be merged with its siblings into the parent Node
+	/*!
+	 *  \return Whether this Node has few enough Object to be merged and whether it has any child Nodes
+	 */
+	inline bool isSparse_() const {
+		return (objects_.size() < min_num_objects_) && !hasChildren_();
 	}
-	return object_shared;
-}
 
-template <class T>
-void OctreeNode<T>::removeObject(shared_ptr<T> object) {
-	//cout << "WE HAVE TO MUTEX THIS" << endl;
-	//first find object and remove it from vector
-	removeObject(object.get());
-}
-
-template <class T>
-bool OctreeNode<T>::fitsWithinNode(shared_ptr<T> object) {
-	return fitsWithinNode(object->getPos(), object->getRadius(), center_, 
-	                      half_width_);
-}
-
-template <class T>
-bool OctreeNode<T>::childrenAreSparse() {
-	//cout << "WE HAVE TO MUTEX THIS! DO WE REALLY????" << endl;
-	for(size_t i = 0; i < 8; i++) {
-		if(children_[i] != nullptr) {
-			if(!children_[i]->isSparse()) {
-				return false;
-			}
-		}
+	//! Check whether this Node contains enough Objects for it to be split up
+	/*!
+	 *  \return Whether this Node has more Objects than \ref max_num_objects_, thus
+	 *          whether or not it should be split up into sub-Nodes.
+	 */
+	inline bool isFull_() const {
+		// cannot be full if has children, as that would mess with our concept of storing too large objects in the parent node
+		return (objects_.size() >= max_num_objects_) && !hasChildren_(); 
 	}
-	return true;
-}
 
-template <class T>
-bool OctreeNode<T>::childrenAreSparseNoGrandchildren() {
-	//cout << "WE HAVE TO MUTEX THIS! DO WE REALLY????" << endl;
-	for(size_t i = 0; i < 8; i++) {
-		if(children_[i] != nullptr) {
-			if(!children_[i]->isSparse()) {
-				return false;
-			}
-			if(children_[i]->hasChildren()) {
-				return false;
-			}
-		}
+	//! Check whether this Node is (partially) visible
+	/*!
+	 *  Given a camera Frustum, check whether or not this Node is (at least partially)
+	 *  visible.
+	 *
+	 *  \param frustum The camera Frustum for which to check the visibility
+	 *
+	 *  \return Whether this Node is visible
+	 */
+	inline bool isVisible_(Frustum *frustum) const {
+		return frustum->contains(this);
 	}
-	return true;
-}
 
-template <class T>
-bool OctreeNode<T>::fitsWithinNode(Vector3f center, float radius,
-                                   Vector3f node_center, float node_width_2) {
-	for(size_t i = 0; i < 3; i++) {
-		if(center[i] + radius > node_center[i] + node_width_2) {
-			return false;
-		}
-		if(center[i] - radius < node_center[i] - node_width_2) {
-			return false;
-		}
+	const int min_num_objects_; //!< If the Node contains fewer Objects than this, we will try to merge it with its siblings
+	const int max_num_objects_; //!< If the Node contains more Objects than this, we will try to split it up
+
+	Octree *octree_; //!< The Octree in which this Node resides
+
+	Node *parent_; //!< The direct parent of this Node
+	Node *children_[8]; //!< The 8 direct children of a Node
+
+	Vector3f center_; //!< The geometrical center of a node
+	float width_; //!< The width of this Node
+
+	vector<shared_ptr<Object>> objects_; //!< The Objects stored in this Node
+
+};
+
+//! Meta-class defining an octree
+/*! 
+ *  This class encapsulates an octree consisting of separate nodes.
+ *  The main purpose of this class is to enable multithreading by encapsulating
+ *  all the relevant functions of the individual octree-nodes with mutexes.
+ */
+class Octree {
+friend Node; //!< octree::Node
+
+public:
+
+	//! Constructor
+	/*!
+	 *  \param center The geometrical center of the Octree's root Node
+	 *  \param width The side length of the Octree's root Node
+	 */
+	Octree(Vector3f center = Vector3f(0,0,0), float width = 512.0f)
+			: max_width_(1024.0f),
+			  root_node_(new Node(center, width, this)) {
+
 	}
-	return true;
-}
+
+	//! Destructor
+	~Octree() {
+		delete root_node_;
+	}
+
+	//! Add an object to the octree
+	/*!
+	 *  Traverse the octree top down and try to insert an object into the smallest
+	 *  possible descendant.
+	 *  If the root node is not large enough to store the object, the octree
+	 *  is recursively expanded upwards until the object can be inserted.
+	 *
+	 *  \param[in] object Pointer to the object to be inserted into the octree
+	 *
+	 *  \return Pointer to the node where the object was finally inserted
+	 */
+	Node* add(shared_ptr<Object> object);
+
+	//! Remove an Object from the Octree
+	/*!
+	 *  Try removing an Object from the root Node, which will recursively lead
+	 *  to an attempt of finding the Object in all of the descendant Nodes and removing
+	 *  it if it is found.
+	 *
+	 *  \param object The Object to be removed from the Octree
+	 *
+	 *  \return The Node from which the Object was finally removed
+	 */
+	inline Node* remove(shared_ptr<Object> object) {
+		mutex_.lock();
+		auto host = root_node_->remove(object);
+		mutex_.unlock();
+	}
+
+	//! Get the visible Objects of this Octree
+	/*!
+	 *  Given a viewing Frustum, extract all visible Objects of this Octree
+	 *  and append them to a vector.
+	 *
+	 *  \tparam T The type of the Objects that have been inserted into the Octree
+	 *  \param frustum The camera Frustum for which to extract the visible Objects
+	 *  \param visible_objects The vector of visible Objects to which all the visible
+	 *                         Objects will be appended
+	 */
+	template<class T>
+	inline void getVisibleObjects(Frustum* frustum, 
+	                              vector<shared_ptr<T>>* visible_objects) {
+		mutex_.lock();
+		root_node_->getVisibleObjects(frustum, visible_objects);
+		mutex_.unlock();
+	}
+
+	//! Getter function for the geometrical center of this Octree
+	/*!
+	 * \return The geometrical center of this Octree
+	 */
+	inline Vector3f center() {
+		mutex_.lock();
+		return root_node_->center();
+		mutex_.unlock();
+	}
+
+	//! Getter function for the side length of this Octree
+	/*!
+	 * \return The side length of this Octree
+	 */
+	inline float width() {
+		mutex_.lock();
+		return root_node_->width();
+		mutex_.unlock();
+	}
+
+private:
+	Node *root_node_; //!< The uppermost Node of the Octree
+
+	mutex mutex_; //!< Mutex for enabling multithreaded access of the Octree
+
+	float max_width_; //!< The maximum side lenght of the Octree, i. e. the root Node
+};
+
+} // namespace octree
 
 #endif // FILE_OCTREE_H

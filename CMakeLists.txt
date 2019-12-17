@@ -80,7 +80,7 @@ add_definitions(-DIGNORE_SERIOUS_BUG_3)
 #add_definitions(-DIGNORE_SERIOUS_BUG_5)//invalid stitches
 
 # logging
-add_definitions(-DENABLE_LOGGING)
+#add_definitions(-DENABLE_LOGGING)
 
 # Required packages
 find_package(ASSIMP REQUIRED)

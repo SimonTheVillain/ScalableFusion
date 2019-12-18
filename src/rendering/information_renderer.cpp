@@ -3,6 +3,7 @@
 #include <gpu/gl_utils.h>
 #include <mesh_reconstruction.h>
 #include <gpu/active_set.h>
+#include <gpu/camera.h>
 
 using namespace std;
 using namespace Eigen;
@@ -307,22 +308,36 @@ void InformationRenderer::renderDepth(ActiveSet *active_set,
 	//activate VBO
 	glBindFramebuffer(GL_FRAMEBUFFER, pt.depth_FBO);
 
+
+	gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderDepth] "
+									  "after binding framebuffer");
 	//there propably is a fbo bound somewhere already
 
 	glViewport(0, 0, width_, height_);
 	glClearColor(NAN, NAN, NAN, NAN);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
+	gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderDepth] "
+									  "Before clearing screen");
 	depth_program->use();
+
+	gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderDepth] "
+									  "after binding shader");
 
 	//after setting up the uniforms we set up all the possible
 	Matrix4f pose_tmp = pose.inverse();
-	Matrix4f projection_tmp = projection.inverse();
+	//Matrix4f projection_tmp = projection.inverse();
 	glUniformMatrix4fv(0, 1, false, (GLfloat*) &pose_tmp);
 	glUniformMatrix4fv(1, 1, false, (GLfloat*) &projection);
-	glUniformMatrix4fv(4, 1, false, (GLfloat*) &projection_tmp);//for as soon as i added this...
+	//glUniformMatrix4fv(3, 1, false, (GLfloat*) &projection_tmp);
+	gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderDepth] "
+									  "after setting up matrices");
 
 	if(active_set){
+		glUniform1i(2,active_set->headers->getStartingIndex());
+
+		gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderDepth] "
+										  "setting starting indes");
 		if(active_set->meshlets.size() == 0) {
 			//the active set is empty
 			glFinish();
@@ -333,6 +348,9 @@ void InformationRenderer::renderDepth(ActiveSet *active_set,
 		glFinish();
 		return;
 	}
+
+	gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderDepth] "
+									  "after setting up uniforms");
 	//the vertex buffer
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 
 	                 gpu_storage->vertex_buffer->getGlName());
@@ -350,12 +368,43 @@ void InformationRenderer::renderDepth(ActiveSet *active_set,
 					 gpu_storage->patch_info_buffer->getGlName());
 
 	cout << "LOOK AT WHAT THE PRESENTATION RENDERER DID AND REPEAT EXACTLY THAT" << endl;
-	assert(0); // the rendering method is not operational right now!!!!! drawMulti stuff is needed
+
+
+	vector<GLint> firsts(active_set->meshlets.size(),0);
+	vector<GLsizei> counts(firsts.size());
+	for(size_t i=0;i<active_set->meshlets.size();i++){
+		MeshletGPU & meshlet = active_set->meshlets[i];
+		counts[i] = meshlet.triangles->getSize() * 3;
+	}
+
+	gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderDepth] "
+									  "after issuing setup commands");
+	glMultiDrawArrays(GL_TRIANGLES,&firsts[0],&counts[0],firsts.size());
+	//assert(0); // the rendering method is not operational right now!!!!! drawMulti stuff is needed
 	//active_set->drawEverything();
 	gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderDepth] "
 	                                  "after issuing all render commands");
 
 	glFinish();
+}
+
+cv::Mat InformationRenderer::renderDepth(
+		shared_ptr<ActiveSet> active_set,
+		GpuStorage* gpu_storage,
+		Matrix4f pose,
+		Vector4f intrinsics) {
+	cv::Mat depth_f4(height_,width_,CV_32FC4);
+	cv::Mat depth(height_,width_,CV_16UC1);
+	Matrix4f proj = proj = Camera::genScaledProjMatrix(intrinsics,cv::Size2i(width_,height_));
+	renderDepth(active_set.get(),gpu_storage, proj, pose);
+	getDepthTexture()->downloadData(depth_f4.data);
+
+	for(size_t i=0;i<width_*height_;i++){
+		depth.at<uint16_t>(i) = depth_f4.at<cv::Vec4f>(i)[2] * 1000.0f; // transform to mm!
+	}
+
+	return depth;
+
 }
 
 void InformationRenderer::bindRenderTriangleReferenceProgram(GpuStorage* gpu_storage) {

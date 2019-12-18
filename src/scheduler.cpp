@@ -148,8 +148,27 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 			odometry->initICPModel((unsigned short*) depthu16.data, depth_cutoff);
 
 		} else {
-			cv::Mat reprojected_depth = 
-					reconstruction->generateDepthFromView(640, 480, information_renderer, accu_pose.cast<float>().matrix());
+			//TODO: use information renderer to render this:
+			active_sets_mutex.lock();
+			shared_ptr<ActiveSet> render_set = active_sets[0];
+			active_sets_mutex.unlock();
+			//TODO: use information_renderer to render
+			cv::Mat reprojected_depth =
+					information_renderer->renderDepth(
+							render_set,
+							gpu_storage_,
+							accu_pose.cast<float>().matrix(),
+							reconstruction->params.depth_fxycxy);
+
+			cv::imshow("rendered_depth",reprojected_depth);
+			cv::waitKey();
+			//information_renderer->renderDepth();//bla!
+
+
+
+			//TODO: don't use rendering provided by reconstruction!!!!
+			//cv::Mat reprojected_depth =
+			//		reconstruction->generateDepthFromView(640, 480, information_renderer, accu_pose.cast<float>().matrix());
 
 			odometry->initICPModel((unsigned short*) reprojected_depth.data, depth_cutoff);
 
@@ -212,28 +231,59 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		//now integrate everything new:
 		//Update the active set according to the current pose:
 		//map->debugCheckTriangleNeighbourConsistency(map->GetAllPatches());
-		shared_ptr<ActiveSet> active_set;// = make_shared<ActiveSet>();
-				        /*
-				reconstruction->genActiveSetFromPose(depth_pose,
-													 low_detail_renderer_, //that low detail renderer needs to be shared with
-						                             texture_updater,
-													 information_renderer);*/
-		//map->debugCheckTriangleNeighbourConsistency(map->GetAllPatches());
+		shared_ptr<ActiveSet> active_set;
+		/*
+		vector<shared_ptr<Meshlet>> visible_meshlets =
+				reconstruction->getVisibleMeshlets(
+						depth_pose,
+						reconstruction->params.rgb_fxycxy,
+						reconstruction->params.depth_res,
+						10.0f); // max distance the sensor can operate at
 
-		//don't ask me what this is doing here!TODO: find out
-		reconstruction->clearInvalidGeometry(active_set, depth, depth_pose);
+		//don't ask me what this is doing here!TODO: find out (or at least remove)
+		//reconstruction->clearInvalidGeometry(active_set, depth, depth_pose);
 
-		geometry_updater->update(gpu_storage_, d_std_tex, depth_pose, active_set);
 
+		active_set =
+				geometry_updater->update(
+						gpu_storage_,
+						visible_meshlets,
+						active_set,
+						this,
+						d_std_tex,
+						depth_pose);
+
+		active_sets_mutex.lock();
+		active_sets[0] = active_set;
+		active_sets_mutex.unlock();
+
+
+		//TODO: test this by not applying texture in extend step
+		shared_ptr<ActiveSet> tex_update_set =
+				texture_updater->colorTexUpdate(
+						gpu_storage_,
+						visible_meshlets,
+						this,
+						rgb_texture,
+						reconstruction->params.rgb_fxycxy,
+						rgb_pose);
+
+
+		active_sets_mutex.lock();
+		active_sets[0] = tex_update_set;
+		active_sets_mutex.unlock();
+		*/
+
+		/*
 		texture_updater->colorTexUpdate(reconstruction.get(),
 				rgb_texture,low_detail_renderer_, rgb_pose, active_set);
-
+		*/
 
 
 		//every now and then we add new geometry:
 		if(frame_count == expand_interval_ || first_lap) {
 
-
+			//TODO: think if this should really take a Active Set or a list of visible meshes
 			//expanding the existing geometry
 			shared_ptr<ActiveSet> updated_geometry_set = geometry_updater->extend(
 					this,

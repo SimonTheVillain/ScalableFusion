@@ -19,24 +19,21 @@ layout(location = 2) uniform int patch_info_start_ind;
 
 //some funny varyings altough some are flat
 out vec2 tex_pos_out;
-out vec4 interp_position;
-out vec4 interp_proj;
+//out vec4 interp_position;
+//out vec4 interp_proj;
+out vec4 pos_cam;
 flat out uint64_t bindless_texture;
-flat out int is_stitch;
 flat out int patch_id;
 flat out int tex_coord_slot_out;//debug
 out float z;
-
-vec2 res = vec2(1280, 800);
-out float distances[3];
 
 void main(void) {
 	//-------------new rendering----------------
 	int id          = gl_VertexID;
 	int point_id    = id % 3;
 	int triangle_id = id / 3;
-	const GpuTriangle triangle = triangles[triangle_id];
 	GpuPatchInfo patch_info = patches[patch_info_start_ind + gl_DrawID];
+	const GpuTriangle triangle = triangles[triangle_id+patch_info.triangle_start_ind];
 	patch_id = patch_info.patch_id;
 
 	int vertex_id = triangle.indices[point_id] +
@@ -46,7 +43,6 @@ void main(void) {
 	tex_coord_slot_out = int(tex_info.tex_coord_start_ind);//debug seems to be OK tough
 	bindless_texture = tex_info.tex_pointer_gl;
 
-	is_stitch = 1;//unfortunately as it is right now we can't tell if a triangle is stitching
 	//------------------------------------------
 
 	uint32_t tex_pos_ind = triangle.indices[point_id] +
@@ -57,9 +53,12 @@ void main(void) {
 	                   tex_pos_out.y * tex_info.size.y);
 	tex_pos_out = tex_pos_out + tex_info.pos;
 
-	interp_position = view_matrix * point;  //new rendering
-	interp_proj = proj_matrix * interp_position;
-	z = 1.0 / interp_position.z;
-	gl_Position = proj_matrix * interp_position;
+	pos_cam = view_matrix * point; //vertex positions in camera space!
+	//interp_proj = pos_cam;
+	z = 1.0 / pos_cam.z;
+	gl_Position = proj_matrix * pos_cam;
+	//gl_Position = pos_cam;
+	//gl_Position.xyz *= 0.7;
+	//gl_Position.z *=0.2;
 }
 )"

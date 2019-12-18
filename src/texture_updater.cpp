@@ -8,6 +8,7 @@
 #include <mesh_reconstruction.h>
 #include <gpu/camera.h>
 #include <gpu/gpu_mesh_structure.h>
+#include <scheduler.h>
 
 using namespace std;
 using namespace Eigen;
@@ -190,14 +191,30 @@ void TextureUpdater::projToGeomTex(ActiveSet* active_set,
 	 */
 }
 
-void TextureUpdater::colorTexUpdate(MeshReconstruction* reconstruction,
+shared_ptr<ActiveSet> TextureUpdater::colorTexUpdate(
+									GpuStorage* gpu_storage,
+									vector<shared_ptr<Meshlet>> requested_meshlets,
+									SchedulerBase* scheduler,
 									shared_ptr<gfx::GpuTex2D> rgba_tex,
-									LowDetailRenderer* low_detail_renderer,
-									Matrix4f color_pose_in,
-									shared_ptr<ActiveSet> &active_set) {
-	return;
-	assert(0);//TODO: reinsert this funcionality
+									Vector4f fxycxy, // intrinsics
+									Matrix4f color_pose_in){ //extrinsics
+
+	//TODO: this needs to:
+	//1) check the most current active set
+	//2) create a new one with space for the most current items
+	//3) fill the new textures with data
+	//4)return with an updated active set!
+	vector<shared_ptr<ActiveSet>> active_sets = scheduler->getActiveSets();
+	shared_ptr<ActiveSet> new_active_set =
+			make_shared<ActiveSet>(gpu_storage,
+								   requested_meshlets,
+								   scheduler->getActiveSets());
+	Matrix4f proj = Camera::genProjMatrix(fxycxy);
+	applyColorData2(gpu_storage,requested_meshlets,rgba_tex,color_pose_in,proj,new_active_set);
+
+	return new_active_set;
 	/*
+
 	int width = rgba_tex->getWidth();
 	int height = rgba_tex->getHeight();
 

@@ -148,8 +148,12 @@ public:
 											   LowDetailRenderer* low_detail_renderer,
 											   TextureUpdater* texture_updater,
 											   InformationRenderer* information_renderer);
-
 	 */
+	vector<shared_ptr<Meshlet>> getVisibleMeshlets(
+			Matrix4f pose,
+			Vector4f intrinsics,
+			cv::Size2i res,
+			float max_dist);
 	 vector<cv::Rect2f> genBoundsFromPatches(
 			vector<shared_ptr<Meshlet>> &patches, Matrix4f pose,
 			Matrix4f proj, shared_ptr<ActiveSet> active_set);

@@ -48,10 +48,13 @@ public:
 			Matrix4f color_pose_in);
 
 	//TODO: this!!!!
-	void update(GpuStorage* gpu_storage,
+	shared_ptr<ActiveSet> update(
+				GpuStorage* gpu_storage,
+				vector<shared_ptr<Meshlet>> requested_meshlets,
+				shared_ptr<ActiveSet> preexisting_set, // the active set(if existing) containing all requested meshlets
+				SchedulerBase* scheduler,//to generate a new active set with
 				shared_ptr<gfx::GpuTex2D> d_std_tex,
-	            Matrix4f depth_pose_in,
-	            shared_ptr<ActiveSet> &active_set);
+	            Matrix4f depth_pose_in);
 	
 	MeshReconstruction *mesh_reconstruction;
 	Mesher meshing;

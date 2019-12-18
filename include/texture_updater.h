@@ -13,11 +13,13 @@ using namespace Eigen;
 class MeshReconstruction;
 class MeshletGPU;
 class TextureLayerGPU;
+class SchedulerBase;
 
 class TextureUpdater {
 public:
 
-	void generateGeomTex(MeshReconstruction* reconstruction,
+	void generateGeomTex(
+						 MeshReconstruction* reconstruction,
 						 GpuStorage* gpu_storage,
 						 vector<shared_ptr<Meshlet> > &meshlets,
 						 Matrix4f pose, Matrix4f proj,
@@ -42,11 +44,13 @@ public:
 	                       Matrix4f depth_pose_in,
 	                       shared_ptr<ActiveSet> &active_set);
 
-	void colorTexUpdate(MeshReconstruction* reconstruction,
-						shared_ptr<gfx::GpuTex2D> rgba_tex,
-	                    LowDetailRenderer* low_detail_renderer,
-	                    Matrix4f color_pose_in,
-	                    shared_ptr<ActiveSet> &active_set);
+	shared_ptr<ActiveSet> colorTexUpdate(
+			GpuStorage* gpu_storage,
+			vector<shared_ptr<Meshlet>> requested_meshlets,
+			SchedulerBase* scheduler,
+			shared_ptr<gfx::GpuTex2D> rgba_tex,
+			Vector4f fxycxy, // intrinsics
+			Matrix4f color_pose_in);
 
 	//old (REMOVE)
 	void applyColorData(MeshReconstruction* reconstruction,

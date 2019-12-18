@@ -71,6 +71,12 @@ public:
 					 GpuStorage* gpu_storage,
 					 Matrix4f projection, Matrix4f pose);
 
+	cv::Mat renderDepth(
+			shared_ptr<ActiveSet> active_set,
+			GpuStorage* gpu_storage,
+			Matrix4f pose,
+			Vector4f intrinsics);
+
 	///TODO: create a renderer for which patch is used in which image!!!
 	//L.G. Debugging tool
 

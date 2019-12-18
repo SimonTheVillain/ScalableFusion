@@ -409,20 +409,13 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	return new_active_set;
 }
 
-void GeometryUpdater::update(	GpuStorage* gpu_storage,
-								shared_ptr<gfx::GpuTex2D> d_std_tex,
-							 	Matrix4f depth_pose_in,
-							 	shared_ptr<ActiveSet> &active_set
-							 ) {
-
-	MeshReconstruction *mesh = mesh_reconstruction;
-
-	if(active_set == nullptr) {
-		return;
-	}
-
-	int width  = d_std_tex->getWidth();
-	int height = d_std_tex->getHeight();
+shared_ptr<ActiveSet> GeometryUpdater::update(
+		GpuStorage* gpu_storage,
+		vector<shared_ptr<Meshlet>> requested_meshlets,
+		shared_ptr<ActiveSet> preexisting_set, // the active set(if existing) containing all requested meshlets
+		SchedulerBase* scheduler,//to generate a new active set with
+		shared_ptr<gfx::GpuTex2D> d_std_tex,
+		Matrix4f depth_pose_in) {
 
 	/**
 	 * weighting scheme:
@@ -437,6 +430,60 @@ void GeometryUpdater::update(	GpuStorage* gpu_storage,
 	 * the update of the old offset is still done on the old wieghts.
 	 * ok=(o/s + ok-1/sk-1)/( (s * sk-1)/(s + sk-1))
 	 */
+
+	if(requested_meshlets.size() == 0) {
+		return nullptr;//or return a empty active set
+	}
+
+	int width  = d_std_tex->getWidth();
+	int height = d_std_tex->getHeight();
+	vector<shared_ptr<ActiveSet>> active_sets = scheduler->getActiveSets();
+	if(preexisting_set == nullptr){
+		//create a set of pre existing
+
+		preexisting_set = make_shared<ActiveSet>(gpu_storage,requested_meshlets,active_sets);
+	}
+	vector<shared_ptr<Meshlet>> meshlets_to_update;
+	vector<bool> update_mask(requested_meshlets.size(),false);
+	for(size_t i=0;i<requested_meshlets.size();i++){
+		shared_ptr<Meshlet> &meshlet = requested_meshlets[i];
+		bool has_all_neighbours = true;
+		for(size_t j = 0; meshlet->neighbours.size();j++){
+			shared_ptr<Meshlet> nb = meshlet->neighbours[j].lock();
+			if(nb == nullptr)
+				continue;
+			if(preexisting_set->getGpuMeshlet(nb) == nullptr){
+				has_all_neighbours = false;
+				continue;
+			}
+			if(!has_all_neighbours)
+				continue;
+
+			//setup
+			update_mask[i] = true;
+			meshlets_to_update.push_back(meshlet);
+		}
+	}
+
+	shared_ptr<ActiveSet> updated_set =
+			make_shared<ActiveSet>(gpu_storage,requested_meshlets,active_sets,update_mask);
+
+	vector<gpu::UpdateDescriptor> update_descriptors(meshlets_to_update.size());
+	for(size_t i=0;i<meshlets_to_update.size();i++){
+		gpu::UpdateDescriptor &desc = update_descriptors[i];
+		shared_ptr<Meshlet> &meshlet = meshlets_to_update[i];
+		MeshletGPU* meshlet_gpu_src =
+				preexisting_set->getGpuMeshlet(meshlet);
+		MeshletGPU* meshlet_gpu_dst=
+				updated_set->getGpuMeshlet(meshlet);
+
+		//TODO: setup descriptors
+	}
+
+
+
+
+	return updated_set;
 	/*
 	Matrix4f proj = Camera::genProjMatrix(mesh->params.depth_fxycxy);
 	Matrix4f pose = depth_pose_in;

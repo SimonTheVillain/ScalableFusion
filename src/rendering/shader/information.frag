@@ -17,17 +17,19 @@ layout(location = 1) out vec4 color;
 
 //this location is asking for trouble!!!!!!
 //these should be in buffers not uniforms or even attributes??
-layout(location = 4) uniform mat4 proj_matrix_;
+//layout(location = 3) uniform mat4 proj_matrix_;
 //use the inverted projection matrix to restore the unprojected point coordinates.
 
 in vec2 tex_pos_out;
-in vec4 interp_position;//TODO!!!! interpolation like this is not the right for geometry
-in vec4 interp_proj;//debug is this the same as gl_FragCoord
+//in vec4 interp_position;//TODO!!!! interpolation like this is not the right for geometry
+in vec4 pos_cam;
+//in vec4 interp_proj;//debug is this the same as gl_FragCoord
 flat in uint64_t bindless_texture;
-flat in int is_stitch;
+
 in float z;
 void main(void) {
-    position = proj_matrix_ * interp_proj;
+    //position = proj_matrix_ * interp_proj; //TODO: remove the need for this multiplication
+    position = pos_cam;
     //bindless texture code:
     sampler2D s = sampler2D(bindless_texture);
     color = texture(s, tex_pos_out); //scale the texPos to see a more dramatic effect
@@ -37,5 +39,6 @@ void main(void) {
 
     color.x = z;
     color.x = color.x;
+    //color = vec4(1,0,0,1);
 }
 )"

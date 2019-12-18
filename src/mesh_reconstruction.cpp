@@ -615,7 +615,14 @@ void MeshReconstruction::clearInvalidGeometry(shared_ptr<ActiveSet> set,
 			proj_pose, tasks, gpu_geom_storage_.vertex_buffer->getCudaPtr());//vertices on gpu
 			*/
 }
-
+vector<shared_ptr<Meshlet>> MeshReconstruction::getVisibleMeshlets(Matrix4f pose, Vector4f intrinsics,cv::Size2i res,float max_dist) {
+	vector<shared_ptr<Meshlet>> visible_meshlets =
+			octree_.getObjects(pose, intrinsics,
+							   Vector2f(res.width,res.height),
+							   max_dist,
+							   0.0f);//don't dilate the frustum in this case
+    return visible_meshlets;
+}
 /*
 shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 		Matrix4f depth_pose,

@@ -232,17 +232,16 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		//Update the active set according to the current pose:
 		//map->debugCheckTriangleNeighbourConsistency(map->GetAllPatches());
 		shared_ptr<ActiveSet> active_set;
-		/*
+
 		vector<shared_ptr<Meshlet>> visible_meshlets =
 				reconstruction->getVisibleMeshlets(
 						depth_pose,
-						reconstruction->params.rgb_fxycxy,
+						reconstruction->params.depth_fxycxy,
 						reconstruction->params.depth_res,
 						10.0f); // max distance the sensor can operate at
 
 		//don't ask me what this is doing here!TODO: find out (or at least remove)
 		//reconstruction->clearInvalidGeometry(active_set, depth, depth_pose);
-
 
 		active_set =
 				geometry_updater->update(
@@ -259,7 +258,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 
 		//TODO: test this by not applying texture in extend step
-		shared_ptr<ActiveSet> tex_update_set =
+		active_set =
 				texture_updater->colorTexUpdate(
 						gpu_storage_,
 						visible_meshlets,
@@ -270,9 +269,9 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 
 		active_sets_mutex.lock();
-		active_sets[0] = tex_update_set;
+		active_sets[0] = active_set;
 		active_sets_mutex.unlock();
-		*/
+
 
 		/*
 		texture_updater->colorTexUpdate(reconstruction.get(),

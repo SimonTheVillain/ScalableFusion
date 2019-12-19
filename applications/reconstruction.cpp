@@ -201,6 +201,7 @@ int main(int argc, const char *argv[]) {
 	bool hd            = false;
 	int  skip_initial_frames = 0;
 	float depth_scale = 1.0f;
+	int width, height;
 
 	//Manage the applications input parameters
 	po::options_description desc("Allowed options");
@@ -282,7 +283,7 @@ int main(int argc, const char *argv[]) {
 	}
 	glfwMakeContextCurrent(window);
 
-	GarbageCollector garbage_collector;
+	//GarbageCollector garbage_collector;
 
 	GpuStorage *gpu_storage = new GpuStorage();
 
@@ -310,12 +311,17 @@ int main(int argc, const char *argv[]) {
 	scheduler->pause(paused);
 
 	//create an window with the necessary opengl context
-
-	//scalable_map->initInGLRenderingContext();
-
 	PresentationRenderer presentation_renderer;
-	InformationRenderer information_renderer;//TODO: setup low detail renderer
+	InformationRenderer information_renderer;
+	//TODO: setup low detail renderer
 
+	presentation_renderer.initInContext(scalable_map.get());
+	presentation_renderer.initInContext(640, 480, scalable_map.get()); //TODO: is this the right resolution?
+
+	information_renderer.initInContext(gpu_storage->garbage_collector_);
+	information_renderer.initInContext(1280,960,gpu_storage->garbage_collector_);
+
+	//set the framebuffer of the initial window
 
 	//initialize the debug outputs
 	that_one_debug_rendering_thingy = new RenderDebugInfo();
@@ -360,38 +366,26 @@ int main(int argc, const char *argv[]) {
 		presentation_renderer.shading_mode = shading_mode;
 
 
-		presentation_renderer.initInContext(scalable_map.get());
-		presentation_renderer.initInContext(640, 480, scalable_map.get()); //TODO: is this the right resolution?
 
 		low_detail_renderer.initInGlContext();
 		if(!disable_rendering) {
 			shared_ptr<ActiveSet> set =
 					scheduler->getActiveSetRendering();
 			presentation_renderer.render(gpu_storage,set.get(),proj,view);
-
-			/*
-			presentation_renderer.renderInWindow(gpu_storage,
-												 scalable_map.get(),
-												 view, proj,
-												 render_high_detail,
-												 invisible_window,
-												 &information_renderer,
-												 &low_detail_renderer,
-												 &texture_updater);
-												 */
 		}
+		//TODO: reinsert block
+
 		if(read_out_surface_info == true) {
 			cout << "Reading out the clicked patch to get further info" << endl;
 			int patch_ind;
 			int triangle_ind;
+			vector<shared_ptr<ActiveSet>> sets;
+			sets.push_back(scheduler->getActiveSetRendering());
 			Vector4f clicked_point =
 					information_renderer.renderAndExtractInfo(
-							scalable_map.get(),
-							nullptr,//active set
+							sets,//active set
 							gpu_storage,
-							view, proj, &low_detail_renderer,
-							render_high_detail, // render stuff thats visible from camera perspective
-							invisible_window, 1280, 800,
+							view, proj, width,height,
 							static_cast<int>(xpos_old), static_cast<int>(ypos_old),
 							&patch_ind, &triangle_ind);
 			if(!isnan(clicked_point[0])) {
@@ -406,20 +400,21 @@ int main(int argc, const char *argv[]) {
 
 		if(center_camera == true) {
 			cout << "Reading out the clicked patch to get further info and center the camera" << endl;
+			vector<shared_ptr<ActiveSet>> sets;
+			sets.push_back(scheduler->getActiveSetRendering());
 			Vector4f center =
 					information_renderer.renderAndExtractInfo(
-							scalable_map.get(),
-							nullptr,
+							sets,
 							gpu_storage,
 							view, proj,
-							&low_detail_renderer,
-							render_high_detail, invisible_window, 1280, 800,
+							width, height,
 							static_cast<int>(xpos_old), static_cast<int>(ypos_old));
 			if(!isnan(center[0])) {
 				trans = -center.block<3, 1>(0, 0);
 			}
 			center_camera = false;
 		}
+
 
 		cam_model.pose = scheduler->getLastKnownDepthPose();
 		Matrix4f proj_view = proj * view;
@@ -430,13 +425,15 @@ int main(int argc, const char *argv[]) {
 		that_one_debug_rendering_thingy->render(proj, view);
 
 		//display everything that got rendered
+		glFinish();//TODO: remove the finish
 		glfwSwapBuffers(window);
-		garbage_collector.collect();
+		gpu_storage->garbage_collector_->collect();
+
 		//react to any user input
 		glfwPollEvents();
 
 		//setting the camera parameters... maybe it is wise to set this only when the window size changes
-		int width, height;
+
 		glfwGetWindowSize(window, &width, &height);
 		arcball.setFramebufferData(width, height);
 	}

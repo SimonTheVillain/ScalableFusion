@@ -70,6 +70,8 @@ void InformationRenderer::initInContext(int width, int height,
 }
 
 void InformationRenderer::initInContext(GarbageCollector* garbage_collector) {
+	GLuint screen_FBO;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*) &screen_FBO);
 	//assert(0); //make this multithreading capable: (it depends on the VAO i think)
 	//but also on the texture..... both of them need to be thread specific
 	gfx::GLUtils::checkForOpenGLError("[RenderMapInformations::initInContext] start");
@@ -289,7 +291,8 @@ void InformationRenderer::initInContext(GarbageCollector* garbage_collector) {
 
 		per_thread_gl_objects_[id] = pt;
 	}
-	return;
+
+	glBindFramebuffer(GL_FRAMEBUFFER,screen_FBO);
 }
 
 shared_ptr<gfx::GpuTex2D> InformationRenderer::getDepthTexture() {
@@ -656,7 +659,7 @@ void InformationRenderer::render(	ActiveSet *active_set,
 									Matrix4f projection,
 								 	Matrix4f pose, cv::Mat *depth, cv::Mat *normals,
 								 	cv::Mat *color, cv::Mat *labels) {
-
+	assert(0);
 	PerThread_ pt = per_thread_gl_objects_[this_thread::get_id()];
 	//activate VBO
 	glBindFramebuffer(GL_FRAMEBUFFER, pt.combined_FBO);
@@ -719,24 +722,15 @@ void InformationRenderer::render(	ActiveSet *active_set,
 }
 
 Vector4f InformationRenderer::renderAndExtractInfo(
-		MeshReconstruction* reconstruction,
-		ActiveSet* active_set,
+		vector<shared_ptr<ActiveSet>> active_sets,
 		GpuStorage* gpu_storage,
-		Matrix4f view, Matrix4f proj, LowDetailRenderer* low_detail_renderer, bool render_visible_from_cam,
-		GLFWwindow *root_context, int width, int height, int x, int y, 
+		Matrix4f view, Matrix4f proj, int width, int height, int x, int y,
 		int *patch_ind, int *triangle_ind) {
-	assert(0);//this needs a bigger overhaul
-	/*
+	//assert(0);//this needs a bigger overhaul
+
 	gfx::GLUtils::checkForOpenGLError(
 		"[InformationRenderer::renderInfo] Before rendering");
 
-	reconstruction->active_set_update_mutex.lock();
-	shared_ptr<ActiveSet> active_set1 = reconstruction->active_set_update;
-	reconstruction->active_set_update_mutex.unlock();
-
-	reconstruction->active_set_rendering_mutex_.lock();
-	shared_ptr<ActiveSet> active_set2 = reconstruction->active_set_rendering_;
-	reconstruction->active_set_rendering_mutex_.unlock();
 
 	GLuint screen_FBO;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*) &screen_FBO);
@@ -787,22 +781,60 @@ Vector4f InformationRenderer::renderAndExtractInfo(
 	glClearColor(NAN, NAN, NAN, NAN);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	//set one certain buffer to something.....
+
+	int clear[] = {-1, -1, -1, -1};
+	glClearBufferiv(GL_COLOR, 0, clear);//formerly 2
+	float clear2[] = {0, 0, 1.0f, 0}; // try it with float debugwise
+	//float clear2[] = {NAN, NAN, NAN, NAN}; // try it with float debugwise
+	glClearBufferfv(GL_COLOR, 1, clear2);//formerly 3
+
+	/* //DEBUG
+	int clear[] = {255,255,255,255};
+	glClearBufferiv(GL_COLOR, 0, clear);
+	float clear2[] = {0, 0, 1.0f, 1.0f}; // try it with float debugwise
+	glClearBufferfv(GL_COLOR, 1, clear2);
+	 */
+
+	triangle_ref_depth_prog_->use();
+
+
+	//Matrix4f pose_inv = view.inverse();
+	glUniformMatrix4fv(0, 1, false, (GLfloat*) &view);
+	glUniformMatrix4fv(1, 1, false, (GLfloat*) &proj);
+
 	gfx::GLUtils::checkForOpenGLError(
 			"[ScaleableMap::renderInfo] Setting up stuff");
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
+					 gpu_storage->vertex_buffer->getGlName());
 
-	if(render_visible_from_cam) {
-		if(active_set1 != nullptr) {
-			renderTriangleReferencesAndDepth(
-					active_set1.get(), proj, view);
+	//bind texture coordinates
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
+					 gpu_storage->tex_pos_buffer->getGlName());
+
+	//the triangle buffer
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
+					 gpu_storage->triangle_buffer->getGlName());
+
+	//the patch information
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
+					 gpu_storage->patch_info_buffer->getGlName());
+
+	gfx::GLUtils::checkForOpenGLError(
+			"[ScaleableMap::renderInfo] Setting up stuff");
+	for(shared_ptr<ActiveSet> set : active_sets){
+		if(set == nullptr)
+			continue;
+		vector<GLint> firsts(set->meshlets.size(),0);
+		vector<GLsizei> counts(set->meshlets.size());
+		for(size_t i=0;i < set->meshlets.size();i++){
+			counts[i] = set->meshlets[i].triangles->getSize()*3;
 		}
-		if(active_set2 != nullptr) {
-			renderTriangleReferencesAndDepth(
-					active_set2.get(), proj, view);
-		}
+		glUniform1i(2,set->headers->getStartingIndex());
+		gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderAndExtractInfo right before rendering");
+		glMultiDrawArrays(GL_TRIANGLES,&firsts[0],&counts[0],firsts.size());
+		gfx::GLUtils::checkForOpenGLError("[InformationRenderer::renderAndExtractInfo right after rendering");
 	}
-	//TODO: also render the low detail stuff... at least do it for the
-	low_detail_renderer->renderGeometry(proj, view);
-
 	glFinish();
 
 	cv::Mat cpu_tri_ref(height, width, CV_32FC4);
@@ -813,7 +845,14 @@ Vector4f InformationRenderer::renderAndExtractInfo(
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, cpu_tri_ref.data);
 	glBindTexture(GL_TEXTURE_2D, geom_tex);
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, cpu_geom_ref.data);
+	gfx::GLUtils::checkForOpenGLError(
+			"[InformationRenderer::renderAndExtractInfo] after downloading");
 
+	/*
+	cv::imshow("pos_world",cpu_geom_ref);
+	cv::imshow("indices",cpu_tri_ref);
+	cv::waitKey();
+	 */
 	//rebind the original screen framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, screen_FBO);
 
@@ -821,6 +860,9 @@ Vector4f InformationRenderer::renderAndExtractInfo(
 	glDeleteTextures(1, &ref_tex);
 	glDeleteTextures(1, &geom_tex);
 	glDeleteFramebuffers(1, &FBO);
+	gfx::GLUtils::checkForOpenGLError(
+			"[RenderVerySimpleModel::render] Right before rendering "
+			"some very simple geometry.");
 
 	//now read out the required data.... because we need it
 	cout << "clicked on pixel" << x << " x " << y << endl;
@@ -842,5 +884,5 @@ Vector4f InformationRenderer::renderAndExtractInfo(
 		*triangle_ind = ref[1];
 	}
 	return point;
-	 */
+
 }

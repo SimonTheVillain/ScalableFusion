@@ -15,7 +15,6 @@ layout(location = 1) out vec4 geometry;
 //this guy seems to have a good approach to uniforms:
 //https://www.opengl.org/discussion_boards/showthread.php/177593-Nvidia-bindless-textures-first-experiences-and-bugs
 
-flat in int is_stitch;//maybe later
 flat in int patch_id;
 flat in int triangle_index;
 
@@ -27,5 +26,9 @@ void main(void) {
 	tex_ref.x = intBitsToFloat(patch_id);
 	tex_ref.y = intBitsToFloat(triangle_index);
 	geometry  = point_world;
+
+	//DEBUG:
+	//geometry = vec4(1,1,1,1);
+	//tex_ref = vec4(1,0,0,1);
 }
 )"

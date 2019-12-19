@@ -102,17 +102,14 @@ public:
 	            cv::Mat *depth = nullptr, cv::Mat *normals = nullptr, 
 	            cv::Mat *color = nullptr, cv::Mat *labels = nullptr);
 
-	Vector4f renderAndExtractInfo(MeshReconstruction* reconstruction,
-			                      ActiveSet* active_set, //TODO: make this a whole list of active sets
-			                      GpuStorage* gpu_storage,
-			                      Matrix4f view, Matrix4f proj,
-								  LowDetailRenderer* low_detail_renderer,
-	                              bool render_visible_from_cam,
-	                              GLFWwindow *root_context, 
-	                              int width, int height,
-	                              int x, int y,
-	                              int *patch_ind = nullptr,
-	                              int *triangle_ind = nullptr);
+	Vector4f renderAndExtractInfo(
+				vector<shared_ptr<ActiveSet>> active_sets,//TODO: make this a whole list of active sets
+			    GpuStorage* gpu_storage,
+			    Matrix4f view, Matrix4f proj,
+			    int width, int height,
+			    int x, int y,
+			    int *patch_ind = nullptr,
+			    int *triangle_ind = nullptr);
 
 	//TODO: remove, just for debug purposes
 	shared_ptr<gfx::GpuTex2D> m_debug_texture;

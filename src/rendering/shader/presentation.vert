@@ -14,7 +14,7 @@ layout(std430, binding = 3) buffer PatchBuffer {
 };
 
 layout (location = 0) uniform mat4 view_matrix;//one matrix is taking up 4 locations
-layout (location = 1) uniform mat4 proj_matrix;
+layout (location = 1) uniform mat4 proj_matrix;//TODO: rework this!?
 layout (location = 4) uniform int  render_wireframe;
 layout (location = 5) uniform int  color_mode;
 layout (location = 6) uniform int  lighting_mode;

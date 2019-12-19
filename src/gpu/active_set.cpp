@@ -80,11 +80,12 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 				//TODO: all the other textures
 				for(size_t k=0;k<candidate.textures.size();k++){
 					auto &candid_texture = candidate.textures[k];
-					if(most_current.textures.size()-1 >= i){
-						//when there is no old texture in this patch we just copy over
-						most_current.textures[i] = candidate.textures[i];
+					if(most_current.textures.size() > i){
+						//TODO: check version number and such!
+						most_current.textures[k] = candidate.textures[k];
 					}else{
-						//TODO: go by version number and such!
+						//TODO: check version number and such!
+						most_current.textures.push_back(candidate.textures[k]);
 					}
 				}
 

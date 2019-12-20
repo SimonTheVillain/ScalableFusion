@@ -28,36 +28,36 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
                           GpuTriangle* triangles,GpuPatchInfo* patch_infos) {
 
 	const int k = blockIdx.x;
-	gpu::UpdateDescriptor &descriptor = descriptors[k];
+	gpu::UpdateDescriptor &desc = descriptors[k];
 
 	int i = threadIdx.x;
-	uint32_t vertex_source_offset = descriptor.vertex_source_start_ind;
-	uint32_t vertex_dest_offset = descriptor.vertex_destination_start_ind;
+	//uint32_t vertex_source_offset = desc.vertex_source_start_ind;
+	//uint32_t vertex_dest_offset = desc.vertex_destination_start_ind;
 
-	int absolute_pix_count = 
-			descriptor.destination.height * descriptor.destination.width;
+	int absolute_pix_count =
+			desc.destination.height * desc.destination.width;
 	while(i < absolute_pix_count) {
-		int x = i % descriptor.destination.width;
-		int y = i / descriptor.destination.width;
+		int x = i % desc.destination.width;
+		int y = i / desc.destination.width;
 
 		//get the pixel coordinate (not normalized)
-		int x_dest = x + descriptor.destination.x;
-		int y_dest = y + descriptor.destination.y;
+		int x_dest = x + desc.destination.x;
+		int y_dest = y + desc.destination.y;
 
-		int x_ref = x + descriptor.reference_offset.x;
-		int y_ref = y + descriptor.reference_offset.y;
+		int x_ref = x + desc.reference_offset.x;
+		int y_ref = y + desc.reference_offset.y;
 
 		//the propable source coordinate (not normalized)
-		float x_source = 
-				(x * descriptor.source.width) / descriptor.destination.width + 
-				descriptor.source.x;
-		float y_source = 
-				(y * descriptor.source.height) / descriptor.destination.height + 
-				descriptor.source.y;
+		float x_source =
+				(x * desc.source.width) / desc.destination.width +
+				desc.source.x;
+		float y_source =
+				(y * desc.source.height) / desc.destination.height +
+				desc.source.y;
 
 		//read from the reference texture
 		float4 ref;
-		surf2Dread(&ref, descriptor.destination_references, 
+		surf2Dread(&ref, desc.destination_references,
 		           x_ref * sizeof(Vector4f), y_ref);
 
 		//TODO: if the  vertex doesn't have a triangle within this patch
@@ -71,15 +71,15 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
 			i += blockDim.x;
 			continue;
 		}
-		GpuTriangle &triangle = triangles[triangle_id];
+		GpuTriangle &triangle = desc.triangles[triangle_id];
 
 		//read out the vertices
 		Vector4f point(0, 0, 0, 0);
 		Vector4f point_updated(0, 0, 0, 0);
 		for(int j = 0; j < 3; j++) {
-			point += vertices[vertex_source_offset + triangle.indices[j]].p * bary[j];
+			point += desc.src_verts[triangle.indices[j]].p * bary[j];
 			point_updated += 
-					vertices[vertex_dest_offset + triangle.indices[j]].p * bary[j];
+					desc.dst_verts[triangle.indices[j]].p * bary[j];
 		}
 
 		//project:
@@ -95,17 +95,17 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
 		sensor = readSensor(u, v, geometry_input, width, height, 0.05f);//5cm threshold
 
 		float4 surface_k;
-		if(descriptor.destination.width  == descriptor.source.width &&
-		   descriptor.destination.height == descriptor.source.height) {
+		if(desc.destination.width == desc.source.width &&
+		   desc.destination.height == desc.source.height) {
 			//if the source and the destRect
 			//texture have the same resolution we handle all of this differently
-			surface_k = readFloat4F16(descriptor.source_geometry, x_source, y_source);
+			surface_k = readFloat4F16(desc.source_geometry, x_source, y_source);
 
 		} else {
-			surface_k = readBilinear16F(x_source, y_source, 
-			                            descriptor.source_geometry,
-			                            descriptor.source_size.width,
-			                            descriptor.source_size.height);
+			surface_k = readBilinear16F(x_source, y_source,
+										desc.source_geometry,
+										desc.source_size.width,
+										desc.source_size.height);
 		}
 
 		//hopefully the border for this readout will be NON
@@ -114,15 +114,15 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
 			//sensor data. (hoping that this is better than nothing)
 			//actually this should have a visibility test (TODO)
 			writeResult(make_float4(0, sensor.y, sensor.z, sensor.w),
-			            descriptor.destination_geometry,
-			            x_dest, y_dest);
+						desc.destination_geometry,
+						x_dest, y_dest);
 			i += blockDim.x;
 			continue;
 		}
 		if(isnan(sensor.y)) {
 			//the sensor doesn't have any valid values
 			//keep the old surface parameter
-			writeResult(surface_k, descriptor.destination_geometry, x_dest, y_dest);
+			writeResult(surface_k, desc.destination_geometry, x_dest, y_dest);
 			i += blockDim.x;
 			continue;
 		}
@@ -143,14 +143,14 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
 		if(abs(d - sensor.x) > threshold) {
 			//if the surface is hidden by some other surface.
 			//keep the old surface parameter
-			writeResult(surface_k, descriptor.destination_geometry, x_dest, y_dest);
+			writeResult(surface_k, desc.destination_geometry, x_dest, y_dest);
 			i += blockDim.x;
 			continue;
 		}
 
 		float4 surface_k1 = calcSurfaceUpdate(surface_k, sensor, //the vector of sensor data and of what is on the surface
 		                                      d, d_up);
-		writeResult(surface_k1, descriptor.destination_geometry, x_dest, y_dest);
+		writeResult(surface_k1, desc.destination_geometry, x_dest, y_dest);
 
 		i += blockDim.x;
 	}
@@ -446,6 +446,7 @@ void stdTexInit_kernel(const cudaTextureObject_t input,
 		int x_out = i % descriptor.width + descriptor.out_offset.x;//derive the target pixel coordinates from k
 		int y_out = i / descriptor.width + descriptor.out_offset.y;
 
+		/*
 		struct Ref{
 			int32_t vert_inds[3];
 			uint8_t bary[4];
@@ -457,9 +458,15 @@ void stdTexInit_kernel(const cudaTextureObject_t input,
 				(float)ref.bary[0] * scale,
 				(float)ref.bary[1] * scale,
 				(float)ref.bary[2] * scale};
-
-
-		if(ref.vert_inds[0] < 0) {
+		*/
+		struct Ref{
+			int32_t tri_ind;
+			float bary[3];
+		};
+		Ref ref;
+		surf2Dread((float4*)&ref, descriptor.reference_texture, x_ref * 4 * 4, y_ref);
+		GpuTriangle tri = descriptor.triangles[ref.tri_ind];
+		if(tri.indices[0] < 0) {
 			float4 color = make_float4(NAN, NAN, NAN, NAN);
 
 			ushort4 data = float4_2_half4_reinterpret_ushort4_rn(color);
@@ -471,7 +478,7 @@ void stdTexInit_kernel(const cudaTextureObject_t input,
 
 		Vector4f point(0, 0, 0, 0);
 		for(int j : {0,1,2}) {
-			point += descriptor.vertices[ref.vert_inds[j]].p * bary[j];
+			point += descriptor.vertices[tri.indices[j]].p * ref.bary[j];
 		}
 
 		Vector4f tex_coord = proj_pose * point;//project (Non-normalized coordinates)

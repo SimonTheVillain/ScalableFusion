@@ -41,13 +41,18 @@ namespace gpu {
 
 		cv::Point2i reference_offset;
 
-		int vertex_source_start_ind;
-		int vertex_destination_start_ind;
+		GpuVertex* src_verts;
+		GpuVertex* dst_verts;
+		GpuTriangle* triangles;
+		Eigen::Vector2f* src_tex_coords;
+		//GpuVertex *
+		//int vertex_source_start_ind;
+		//int vertex_destination_start_ind;
 		int vertex_count;
 
-		int patch_info_slot;
-		int triangle_slot;
-		int triangle_count;
+		//int patch_info_slot;
+		//int triangle_slot;
+		//int triangle_count;
 
 		bool update_texture = false;//when all the neighbours are updloaded we also update the texture
 	};

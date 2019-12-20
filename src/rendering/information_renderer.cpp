@@ -848,7 +848,7 @@ Vector4f InformationRenderer::renderAndExtractInfo(
 	gfx::GLUtils::checkForOpenGLError(
 			"[InformationRenderer::renderAndExtractInfo] after downloading");
 
-	/*
+	/* //DEBUG
 	cv::imshow("pos_world",cpu_geom_ref);
 	cv::imshow("indices",cpu_tri_ref);
 	cv::waitKey();

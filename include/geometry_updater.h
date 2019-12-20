@@ -54,7 +54,8 @@ public:
 				shared_ptr<ActiveSet> preexisting_set, // the active set(if existing) containing all requested meshlets
 				SchedulerBase* scheduler,//to generate a new active set with
 				shared_ptr<gfx::GpuTex2D> d_std_tex,
-	            Matrix4f depth_pose_in);
+	            Matrix4f depth_pose_in,
+	            Matrix4f depth_proj);
 	
 	MeshReconstruction *mesh_reconstruction;
 	Mesher meshing;

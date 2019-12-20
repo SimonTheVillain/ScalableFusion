@@ -415,7 +415,8 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 		shared_ptr<ActiveSet> preexisting_set, // the active set(if existing) containing all requested meshlets
 		SchedulerBase* scheduler,//to generate a new active set with
 		shared_ptr<gfx::GpuTex2D> d_std_tex,
-		Matrix4f depth_pose_in) {
+		Matrix4f depth_pose_in,
+		Matrix4f depth_proj) {
 
 	/**
 	 * weighting scheme:
@@ -448,7 +449,7 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 	for(size_t i=0;i<requested_meshlets.size();i++){
 		shared_ptr<Meshlet> &meshlet = requested_meshlets[i];
 		bool has_all_neighbours = true;
-		for(size_t j = 0; meshlet->neighbours.size();j++){
+		for(size_t j = 0; j<meshlet->neighbours.size();j++){
 			shared_ptr<Meshlet> nb = meshlet->neighbours[j].lock();
 			if(nb == nullptr)
 				continue;
@@ -456,13 +457,14 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 				has_all_neighbours = false;
 				continue;
 			}
-			if(!has_all_neighbours)
-				continue;
-
-			//setup
-			update_mask[i] = true;
-			meshlets_to_update.push_back(meshlet);
 		}
+
+		if(!has_all_neighbours)
+			continue;
+
+		//setup
+		update_mask[i] = true;
+		meshlets_to_update.push_back(meshlet);
 	}
 
 	shared_ptr<ActiveSet> updated_set =
@@ -477,8 +479,41 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 		MeshletGPU* meshlet_gpu_dst=
 				updated_set->getGpuMeshlet(meshlet);
 
+
+		desc.destination;
+		desc.destination_n;
+		desc.destination_size;
+		desc.destination_geometry =
+				meshlet_gpu_dst->std_tex.tex->getCudaSurfaceObject(); //texture surface object
+
+
+		desc.source;
+		desc.source_n;
+		desc.source_size;
+		desc.source_geometry =
+				meshlet_gpu_src->std_tex.tex->getCudaSurfaceObject();
+
+		cv::Point2i reference_offset;//what? why?
+
+
+
+
 		//TODO: setup descriptors
 	}
+
+	Vector4f cam_pos = Camera::calcCamPosFromExtrinsic(depth_pose_in);
+	Matrix4f proj_pose; //TODO
+	gpu::updateGeometry(
+			d_std_tex->getCudaSurfaceObject(),
+			d_std_tex->getWidth(),d_std_tex->getHeight(),
+			update_descriptors,
+			cam_pos,
+			depth_pose_in,
+			depth_proj,
+			gpu_storage->vertex_buffer->getCudaPtr(),//TODO. get rid of these buffers
+			gpu_storage->tex_pos_buffer->getCudaPtr(),
+			gpu_storage->triangle_buffer->getCudaPtr(),
+			gpu_storage->patch_info_buffer->getCudaPtr());
 
 
 

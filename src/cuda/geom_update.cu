@@ -58,6 +58,8 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 	                                      vertices, tex_pos,
 	                                      triangles, patch_infos);
 
+
+	//TODO: fix the updates on the borders
 	//then we update the texture.
 	//why is this crashing????
 

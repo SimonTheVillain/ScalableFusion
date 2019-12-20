@@ -112,6 +112,7 @@ void TextureUpdater::projToGeomTex(vector<MeshletGPU*> meshlets,
 		cv::Rect2i rect = meshlet->std_tex.tex->getRect();
 
 		command.vertices = meshlet->vertices->getStartingPtr();
+		command.triangles = meshlet->triangles->getStartingPtr();
 		command.out_offset = rect.tl();
 		command.output = meshlet->std_tex.tex->getCudaSurfaceObject();
 		command.width = rect.width;

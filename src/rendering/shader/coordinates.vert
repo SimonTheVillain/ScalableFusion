@@ -19,6 +19,7 @@ layout(location = 0) uniform int start_tris;
 layout(location = 1) uniform int start_tex_coords;
 //todo: The output for the whole shader is going to be a texture with triangle indices and
 //a parametrized position on the textures
+flat out int tri_ind;
 flat out int vert_ind1;
 flat out int vert_ind2;
 flat out int vert_ind3;
@@ -29,6 +30,7 @@ void main(void) {
 	int id          = gl_VertexID;
 	int point_id    = id % 3;
 	int triangle_id = id / 3;
+	tri_ind = triangle_id;
 	const GpuTriangle triangle = triangles[triangle_id + start_tris];
 
 	vert_ind1 = triangle.indices[0];

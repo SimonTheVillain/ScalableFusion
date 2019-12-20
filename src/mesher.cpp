@@ -58,21 +58,21 @@ Mesher::TriangleReference Mesher::addTriangle(	Vertex* pr1,
 
 		if(patch_1 != patch_2){
 			//add neighbourhood between patch_1 and patch_2
-			if(patch_1->isNeighbourWith(patch_2)){
+			if(!patch_1->isNeighbourWith(patch_2)){
 				patch_1->addNeighbour(patch_2->getWeakSelf());
 				patch_2->addNeighbour(patch_1->getWeakSelf());
 			}
 		}
 		if(patch_1 != patch_2){
 			//add neighbourhood between patch1 and patch 3
-			if(patch_1->isNeighbourWith(patch_3)){
+			if(!patch_1->isNeighbourWith(patch_3)){
 				patch_1->addNeighbour(patch_3->getWeakSelf());
 				patch_3->addNeighbour(patch_1->getWeakSelf());
 			}
 		}
 		if(patch_2 != patch_3){
 			//add neighbourhood between patch2 and patch3
-			if(patch_2->isNeighbourWith(patch_3)){
+			if(!patch_2->isNeighbourWith(patch_3)){
 				patch_2->addNeighbour(patch_3->getWeakSelf());
 				patch_3->addNeighbour(patch_2->getWeakSelf());
 			}

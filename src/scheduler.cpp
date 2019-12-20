@@ -17,6 +17,7 @@
 #include <gpu/garbage_collector.h>
 #include <mesh_reconstruction.h>
 #include <gpu/active_set.h>
+#include <gpu/camera.h>
 
 using namespace std;
 using namespace Eigen;
@@ -242,7 +243,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 		//don't ask me what this is doing here!TODO: find out (or at least remove)
 		//reconstruction->clearInvalidGeometry(active_set, depth, depth_pose);
-
+		Matrix4f depth_proj = Camera::genProjMatrix(source->intrinsicsDepth());
 		active_set =
 				geometry_updater->update(
 						gpu_storage_,
@@ -250,7 +251,8 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 						active_set,
 						this,
 						d_std_tex,
-						depth_pose);
+						depth_pose,
+						depth_proj);
 
 		active_sets_mutex.lock();
 		active_sets[0] = active_set;

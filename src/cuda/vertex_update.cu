@@ -19,15 +19,15 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 	uint32_t k = blockIdx.x;
 	uint32_t i = threadIdx.x;
 
-	gpu::UpdateDescriptor &descriptor = descriptors[k];
-	GpuPatchInfo &info = patch_infos[descriptor.patch_info_slot];
-	uint32_t vertex_source_offset = descriptor.vertex_source_start_ind;
-	uint32_t vertex_dest_offset = descriptor.vertex_destination_start_ind;
+	gpu::UpdateDescriptor &desc = descriptors[k];
+	//GpuPatchInfo &info = patch_infos[descriptor.patch_info_slot];
+	//uint32_t vertex_source_offset = descriptor.vertex_source_start_ind;
+	//uint32_t vertex_dest_offset = descriptor.vertex_destination_start_ind;
 	
-	uint32_t tex_pos_offset = info.std_texture.tex_coord_start_ind;
-	while(i < descriptor.vertex_count) {
-		GpuVertex &vert_in = vertices[vertex_source_offset + i];
-		GpuVertex &vert_out = vertices[vertex_dest_offset + i];
+	//uint32_t tex_pos_offset = info.std_texture.tex_coord_start_ind;
+	while(i < desc.vertex_count) {
+		GpuVertex &vert_in = desc.src_verts[i];
+		GpuVertex &vert_out = desc.dst_verts[i];
 
 		//most of the vertex is the same anyway (therefore we just copy it)
 		vert_out = vert_in;
@@ -58,12 +58,12 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 		Vector4f front(to_cam_n[0], to_cam_n[1], to_cam_n[2], 0);
 
 		//read the current value of the texture
-		Vector2f tex_coord = tex_pos[tex_pos_offset + vert_in.tex_ind_in_main_patch];
+		Vector2f tex_coord = desc.src_tex_coords[i];
 
 		//this tex coordinate still has to be adapted for the texture atlas
 		float2 tex_atlas_coord = make_float2(
-				tex_coord[0] * descriptor.source_n.width  + descriptor.source_n.x,
-				tex_coord[1] * descriptor.source_n.height + descriptor.source_n.y);
+				tex_coord[0] * desc.source_n.width  + desc.source_n.x,
+				tex_coord[1] * desc.source_n.height + desc.source_n.y);
 
 		//TODO: we need a function that explicitely handles reading textures from this type of texture
 
@@ -77,12 +77,12 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 									descriptor.sourceSize.width,descriptor.sourceSize.height);
 		*/
 		float2 uv = unnormalizeTexCoords(make_float2(tex_coord[0], tex_coord[1]),
-		                                             descriptor.source);
+										 desc.source);
 		float4 surface_k;
 		{
 			vert_out.n = Vector3f(0, 0, 1);
 			__half surface_data[4];
-			surf2Dread((ushort4*) surface_data, descriptor.source_geometry, 
+			surf2Dread((ushort4*) surface_data, desc.source_geometry,
 			           int(uv.x) * sizeof(ushort4), int(uv.y));
 			surface_k = make_float4(__half2float(surface_data[0]),
 			                        __half2float(surface_data[1]),
@@ -101,15 +101,15 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 			ushort4 surface_data = float4_2_half4_reinterpret_ushort4_rn(update);
 
 			//TODO: reinsert this
-			surf2Dwrite(surface_data, descriptor.source_geometry, 
+			surf2Dwrite(surface_data, desc.source_geometry,
 			            int(uv.x) * sizeof(ushort4), int(uv.y));
 
 			//TODO: Important!!! Make sure that also the reference is set properly (otherwise we will not see an update)
 
-			if(int(uv.x) < descriptor.source.x ||
-			   int(uv.x) - descriptor.source.x >= descriptor.source.width ||
-			   int(uv.y) < descriptor.source.y ||
-			   int(uv.y) - descriptor.source.y >= descriptor.source.height) {
+			if(int(uv.x) < desc.source.x ||
+			   int(uv.x) - desc.source.x >= desc.source.width ||
+			   int(uv.y) < desc.source.y ||
+			   int(uv.y) - desc.source.y >= desc.source.height) {
 				vert_out.n = Vector3f(0, 1, 0);
 			} else {
 				vert_out.n = Vector3f(1, 0, 0);
@@ -173,18 +173,18 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 			
 			update.x = 0;
 			ushort4 surface_data = float4_2_half4_reinterpret_ushort4_rn(update);
-			surf2Dwrite(surface_data, descriptor.destination_geometry, 
+			surf2Dwrite(surface_data, desc.destination_geometry,
 			            int(uv.x) * sizeof(ushort4), int(uv.y));
 
 			//TODO: make sure to at some point update the normals by sensible means
 			vert_out.n = Vector3f(0, 1, 0);
 		}
 
-		if(int(uv.x) < descriptor.source.x ||
-		   int(uv.x) - descriptor.source.x >= descriptor.source.width ||
-		   int(uv.y) < descriptor.source.y ||
-		   int(uv.y) - descriptor.source.y >= descriptor.source.height) {
-			//set the normal to a debug color?
+		if(int(uv.x) < desc.source.x ||
+		   int(uv.x) - desc.source.x >= desc.source.width ||
+		   int(uv.y) < desc.source.y ||
+		   int(uv.y) - desc.source.y >= desc.source.height) {
+			//set the normal to a debug color!
 			vert_out.n = Vector3f(1, 1, 1);
 		}
 

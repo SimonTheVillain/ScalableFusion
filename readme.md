@@ -4,6 +4,12 @@ The advantage over surfel or tsdf based methods is that this allows to store col
 Coupling between geometrical and color resolution is broken up.
 It also features a mechanism which offloads data from the GPU to system memory.
 
+**Warning** This whole thing is far from being finished, we don't recommend using this in its current state.
+Issues we are currently encountering:
+* random crashes (especially during integration of novel geometry)
+* extremely brittle tracking.
+* memory leaks
+* Nonfunctional multithreading-mode
 
 See paper: ScalableFusion: High-resolution Mesh-based Real-time 3D Reconstruction (https://ieeexplore.ieee.org/document/8793654)
 
@@ -22,7 +28,7 @@ See paper: ScalableFusion: High-resolution Mesh-based Real-time 3D Reconstructio
 * Ceres 1.13 and up compiled with new version of eigen
 * Sophus: (for cudaicp)
 * Radical (https://github.com/taketwo/radical): Photometric calibration
-* OpenCV 3.1 (min) compiled with CUDA 10 and a very new version of eigen
+* OpenCV 3.1 (min)
 * GLFW3.2 (to create the opengl context)
 * PCL
     * hope to get rid of this dependency

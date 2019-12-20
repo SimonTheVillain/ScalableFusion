@@ -480,21 +480,52 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 				updated_set->getGpuMeshlet(meshlet);
 
 
-		desc.destination;
-		desc.destination_n;
-		desc.destination_size;
+		shared_ptr<gfx::GpuTex2D> tex = meshlet_gpu_dst->std_tex.tex->getTex();
+		cv::Rect2i rect = meshlet_gpu_dst->std_tex.tex->getRect();
+		float width  = tex->getWidth();
+		float height = tex->getHeight();
+		desc.destination = rect;
+		desc.destination_n = cv::Rect2f(float(rect.x) / width,
+										float(rect.y) / height,
+										float(rect.width) / width,
+										float(rect.height) / height);
+		desc.destination_size = cv::Size2i(width, height);
 		desc.destination_geometry =
 				meshlet_gpu_dst->std_tex.tex->getCudaSurfaceObject(); //texture surface object
 
 
-		desc.source;
-		desc.source_n;
-		desc.source_size;
+
+		tex = meshlet_gpu_src->std_tex.tex->getTex();
+		rect = meshlet_gpu_src->std_tex.tex->getRect();
+		width  = tex->getWidth();
+		height = tex->getHeight();
+
+		desc.source = rect;
+		desc.source_n = cv::Rect2f(float(rect.x) / width,
+								   float(rect.y) / height,
+								   float(rect.width) / width,
+								   float(rect.height) / height);
+		desc.source_size = cv::Size2i(width, height);
+		desc.source = rect;
+		desc.source_n = cv::Rect2f(float(rect.x) / width,
+								   float(rect.y) / height,
+								   float(rect.width) / width,
+								   float(rect.height) / height);
+		desc.source_size = cv::Size2i(width, height);
 		desc.source_geometry =
 				meshlet_gpu_src->std_tex.tex->getCudaSurfaceObject();
 
-		cv::Point2i reference_offset;//what? why?
 
+		desc.destination_references = meshlet_gpu_dst->geom_lookup_tex->getCudaSurfaceObject();
+		desc.reference_offset = meshlet_gpu_dst->geom_lookup_tex->getRect().tl();
+
+
+		desc.src_verts = meshlet_gpu_src->vertices->getStartingPtr();
+		desc.dst_verts = meshlet_gpu_dst->vertices->getStartingPtr();
+		desc.triangles = meshlet_gpu_src->triangles->getStartingPtr();
+		desc.vertex_count = meshlet_gpu_src->vertices->getSize();
+
+		desc.update_texture = true;
 
 
 

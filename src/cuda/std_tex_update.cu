@@ -435,6 +435,14 @@ void stdTexInit_kernel(const cudaTextureObject_t input,
 					   const InitDescriptor *descriptors,
 					   Matrix4f proj_pose) {
 
+	/*
+	 *  Invalid __global__ read of size 4
+=========     at 0x00000430 in stdTexInit_kernel(unsigned __int64, InitDescriptor const *, Eigen::Matrix<float, int=4, int=4, int=0, int=4, int=4>)
+=========     by thread (335,0,0) in block (0,0,0)
+=========     Address 0x7fa2f3a000c8 is out of bounds
+
+	 */
+
 	unsigned int k = blockIdx.x;
 	const InitDescriptor &descriptor  = descriptors[k];
 	const unsigned int required_pixel = descriptor.height * descriptor.width;
@@ -465,6 +473,11 @@ void stdTexInit_kernel(const cudaTextureObject_t input,
 		};
 		Ref ref;
 		surf2Dread((float4*)&ref, descriptor.reference_texture, x_ref * 4 * 4, y_ref);
+		if(ref.tri_ind == -1){
+			i += blockDim.x;
+			continue;
+		}
+		//printf("%d \n",ref.tri_ind);
 		GpuTriangle tri = descriptor.triangles[ref.tri_ind];
 		if(tri.indices[0] < 0) {
 			float4 color = make_float4(NAN, NAN, NAN, NAN);

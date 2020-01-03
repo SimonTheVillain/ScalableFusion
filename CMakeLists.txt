@@ -44,9 +44,20 @@ if(CMAKE_BUILD_TYPE MATCHES DEBUG)
 	set(CMAKE_CUDA_FLAGS
 			"${CMAKE_CUDA_FLAGS} \
 			--generate-line-info \
-			-O3 \
+			-lineinfo
+			--device-debug \
 		"
 			) #--device-debug #everything fails at device-debug
+
+#	set(CMAKE_CUDA_FLAGS
+#			"${CMAKE_CUDA_FLAGS} \
+#			--generate-line-info \
+#			-lineinfo
+#			--device-debug \
+#			-O3 \
+#		"
+#			) #--device-debug #everything fails at device-debug
+	#https://stackoverflow.com/questions/27277365/unspecified-launch-failure-on-memcpy/27278218#27278218
 endif()
 
 

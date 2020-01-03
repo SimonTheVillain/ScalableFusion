@@ -32,6 +32,11 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 		//most of the vertex is the same anyway (therefore we just copy it)
 		vert_out = vert_in;
 
+		//DEBUG:
+		if(false){
+			i += blockDim.x;
+			continue;
+		}
 		Vector4f pos = vert_in.p;
 		pos[3] = 1; //just to be sure;
 
@@ -93,6 +98,14 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 
 		vert_out.n = Vector3f(0, 1, 0);
 
+
+		//DEBUG:
+		if(false){
+			i += blockDim.x;
+			continue;
+		}
+
+		//DEBUG: not crashing till here! (REMOVE COMMENT)
 		if(isnan(surface_k.w)) {//actually this should be 1
 			//if this surface element is invalid we store the sensor input at the position that is lacking
 
@@ -100,7 +113,9 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 
 			ushort4 surface_data = float4_2_half4_reinterpret_ushort4_rn(update);
 
+			//printf("uv.x %f uv.y %f \n",uv.x,uv.y);
 			//TODO: reinsert this
+
 			surf2Dwrite(surface_data, desc.source_geometry,
 			            int(uv.x) * sizeof(ushort4), int(uv.y));
 
@@ -118,6 +133,12 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 			i += blockDim.x;
 			continue;
 		}
+		//DEBUG:
+		if(false){
+			i += blockDim.x;
+			continue;
+		}
+
 
 		float threshold = xtionStdToThresholdSeg(max(sensor.z, surface_k.z));//the second one is the surface
 		if(abs(d - d_s) > threshold) {
@@ -155,8 +176,16 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 			continue;
 		}
 
+		//DEBUG:
+		{
+			i += blockDim.x;
+			continue;
+		}
+
 		//only the position changes
 		vert_out.p = vert_in.p + dev_k1 * front;
+
+
 
 		//if we are points that do not really belong to a triangle
 		//we store the standard deviation within one pixel

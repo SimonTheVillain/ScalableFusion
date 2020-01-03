@@ -71,16 +71,26 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 					// token taken from most current vertex
 					most_current.vertex_token = move(candidate.vertex_token);
 
+					//lookup and geometry texture
+					{
+						most_current.geom_lookup_tex = candidate.geom_lookup_tex;
+						auto &candid_texture = candidate.std_tex;
+						if(candid_texture.version >= most_current.std_tex.version){
+							most_current.std_tex.coords = candid_texture.coords;
+							most_current.std_tex.version = candid_texture.version;
+							most_current.std_tex.tex = candid_texture.tex;
+							most_current.std_tex.token = move(candid_texture.token);
+						}
+
+					}
+
 				}
-
-				//TODO: geometry texture!!!
-
 
 
 				//TODO: all the other textures
 				for(size_t k=0;k<candidate.textures.size();k++){
 					auto &candid_texture = candidate.textures[k];
-					if(most_current.textures.size() > i){
+					if(most_current.textures.size() > k){
 						//TODO: check version number and such!
 						most_current.textures[k] = candidate.textures[k];
 					}else{
@@ -102,6 +112,13 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 			//TODO: reallocate the new vertices
 			most_current.vertex_version ++;
 			most_current.vertices = storage->vertex_buffer->getBlock(most_current.vertices->getSize());
+
+			if(most_current.std_tex.version == -1)
+				assert(0);
+			most_current.std_tex.version ++;
+			cv::Size2i size = most_current.std_tex.tex->getRect().size();
+			most_current.std_tex.tex = storage->tex_atlas_stds_->getTexAtlasPatch(size);
+
 		}
 		//check if we already have new data
 		if(most_current.triangle_version != -1)

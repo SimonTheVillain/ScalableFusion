@@ -44,7 +44,7 @@ public:
 
 	shared_ptr<TexCoordBufConnector> coords;
 	shared_ptr<TexAtlasPatch> tex;
-	int version;
+	int version = -1;
 	unique_ptr<weak_ptr<MeshTexture>> token;
 
 	//TODO:this might also need a version of traingles...

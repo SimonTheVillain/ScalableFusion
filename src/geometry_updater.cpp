@@ -136,6 +136,8 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	//the same as the one above but with shared elements
 	for(int i = 0; i < seg_count; i++) {
 		shared_ptr<Meshlet> mesh_patch = reconstruction->genMeshlet();
+		mesh_patch->vertices_version = 1;
+		mesh_patch->triangles_version = 1;
 		new_shared_mesh_patches.push_back(mesh_patch);//storing all shared_ptr to the next reconstruction patch
 	}
 	for(int i = 0; i < seg.rows; i++) {

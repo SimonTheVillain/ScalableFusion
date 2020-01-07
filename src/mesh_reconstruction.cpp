@@ -747,7 +747,7 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 	                                 params.depth_res.height), 
 	                        getMaxDistance());
 	vector<shared_ptr<MeshPatch>> visible_shared_patches;
-	octree_.getVisibleObjects(&frustum, &visible_shared_patches);//don't dilate the frustum in this case
+	octree_.getVisibleObjects<MeshPatch>(&frustum, &visible_shared_patches);//don't dilate the frustum in this case
 
 	for(shared_ptr<MeshPatch> patch : visible_shared_patches) {
 		//TODO: test patch

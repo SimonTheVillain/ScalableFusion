@@ -164,7 +164,7 @@ static bool close_request = false;//TODO: message this to the scheduler
 
 namespace po = boost::program_options;
 int main(int argc, const char *argv[]) {
-	START_LOGGING(logging::Level::DEBUG);
+	START_LOGGING(logging::Level::WARNING);
 
 	google::InitGoogleLogging(argv[0]);
 

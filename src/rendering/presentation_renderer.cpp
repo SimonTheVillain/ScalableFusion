@@ -245,7 +245,7 @@ void PresentationRenderer::renderInWindow(MeshReconstruction* reconstruction,
 			intrinsics_buff = intrinsics;
 			octree::Frustum frustum(inv_cam_pose, intrinsics_buff, res, view_distance);
 			vector<shared_ptr<MeshPatch>> visible_patches;
-			reconstruction_local->octree_.getVisibleObjects(&frustum, &visible_patches);
+			reconstruction_local->octree_.getVisibleObjects<MeshPatch>(&frustum, &visible_patches);
 
 			cudaDeviceSynchronize();
 			gpuErrchk(cudaPeekAtLastError());

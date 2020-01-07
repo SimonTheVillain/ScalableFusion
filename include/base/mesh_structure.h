@@ -272,7 +272,7 @@ public:
  * different threads.
  */
 class MeshPatch : public GeometryBase,
-                  public octree::Object, //The name of this pattern is CRTP https://stackoverflow.com/questions/4030224/whats-the-use-of-the-derived-class-as-a-template-parameter
+                  public octree::Object,
                   public LowDetailPoint {
 public:
 

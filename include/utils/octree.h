@@ -418,7 +418,7 @@ public:
 	 *  \param center The geometrical center of the Octree's root Node
 	 *  \param width The side length of the Octree's root Node
 	 */
-	Octree(Vector3f center = Vector3f(0,0,0), float width = 512.0f)
+	Octree(Vector3f center = Vector3f(0,0,0), float width = 2048.0f)
 			: max_width_(1024.0f),
 			  root_node_(new Node(center, width, this)) {
 

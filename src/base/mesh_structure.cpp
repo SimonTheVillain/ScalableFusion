@@ -11,7 +11,7 @@ using namespace Eigen;
 
 ///TODO: replace this with something that returns the pointer not the shared_ptr
 MeshPatch::MeshPatch(octree::Octree *octree) {
-	octree->add(shared_from_this());
+	//octree->add(shared_from_this());
 
 	//TODO: get this from a constant... essentially it should speed up the process
 	triangles.reserve(800);

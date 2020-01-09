@@ -234,7 +234,7 @@ ActiveSet::~ActiveSet() {
 }
 
 void ActiveSet::setupHeaders(){
-	cout << "TODO: (IMPLEMENT THIS) ActiveSet::setupHeaders" << endl;
+	//cout << "TODO: (IMPLEMENT THIS) ActiveSet::setupHeaders" << endl;
 	vector<GpuPatchInfo> infos(meshlets.size());
 	for(size_t i=0;i<meshlets.size();i++){
 		GpuPatchInfo & info = infos[i];

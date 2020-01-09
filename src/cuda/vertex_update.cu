@@ -25,6 +25,9 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 	//uint32_t vertex_dest_offset = descriptor.vertex_destination_start_ind;
 	
 	//uint32_t tex_pos_offset = info.std_texture.tex_coord_start_ind;
+	if(i==0){
+		//printf("0x%p 0x%p %d\n",desc.src_verts, desc.dst_verts,desc.vertex_count);
+	}
 	while(i < desc.vertex_count) {
 		GpuVertex &vert_in = desc.src_verts[i];
 		GpuVertex &vert_out = desc.dst_verts[i];
@@ -51,7 +54,13 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 
 		float4 sensor = readSensor(u, v, geometry_input, sensor_width, 
 		                           sensor_height, 0.05);//threshold =0.1
-
+		//printf("u %f v %f \n",u,v);
+		//printf("sensor data %f %f %f %f \n", sensor.x,sensor.y,sensor.z,sensor.w);
+		//DEBUG:
+		if(false){
+			i += blockDim.x;
+			continue;
+		}
 		//extract the depth from the readout data
 		float d = pos_cam_frame[2];
 		float d_s = sensor.x;
@@ -70,6 +79,20 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 				tex_coord[0] * desc.source_n.width  + desc.source_n.x,
 				tex_coord[1] * desc.source_n.height + desc.source_n.y);
 
+
+		//printf("uv.x %f uv.y %f \n",tex_coord[0],tex_coord[1]);
+		//DEBUG:
+		if(false){
+			i += blockDim.x;
+			continue;
+		}
+
+		/*
+=========     at 0x000006b0 in vertexUpdate_kernel(unsigned __int64, int, int, gpu::UpdateDescriptor*, Eigen::Matrix<float, int=4, int=1, int=0, int=4, int=1>, Eigen::Matrix<float, int=4, int=4, int=0, int=4, int=4>, Eigen::Matrix<float, int=4, int=4, int=0, int=4, int=4>, GpuVertex*, Eigen::Matrix<float, int=2, int=1, int=0, int=2, int=1>*, GpuTriangle*, GpuPatchInfo*)
+=========     by thread (16,0,0) in block (9,0,0)
+=========     Address 0x00000080 is out of bounds
+=========     Saved host backtrace up to driver entry
+		 */
 		//TODO: we need a function that explicitely handles reading textures from this type of texture
 
 		//texture atlas
@@ -83,6 +106,15 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 		*/
 		float2 uv = unnormalizeTexCoords(make_float2(tex_coord[0], tex_coord[1]),
 										 desc.source);
+
+		//printf("uv.x %f uv.y %f \n",uv.x,uv.y);
+		//DEBUG:
+		if(false){
+			i += blockDim.x;
+			continue;
+		}
+
+
 		float4 surface_k;
 		{
 			vert_out.n = Vector3f(0, 0, 1);
@@ -98,6 +130,8 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 
 		vert_out.n = Vector3f(0, 1, 0);
 
+		//printf("uv.x %f uv.y %f \n",uv.x,uv.y);
+		//printf("sensor data %f %f %f %f \n", surface_k.x,surface_k.y,surface_k.z,surface_k.w);
 
 		//DEBUG:
 		if(false){
@@ -116,18 +150,19 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 			//printf("uv.x %f uv.y %f \n",uv.x,uv.y);
 			//TODO: reinsert this
 
+			/*
 			surf2Dwrite(surface_data, desc.source_geometry,
 			            int(uv.x) * sizeof(ushort4), int(uv.y));
-
+			*/
 			//TODO: Important!!! Make sure that also the reference is set properly (otherwise we will not see an update)
 
 			if(int(uv.x) < desc.source.x ||
 			   int(uv.x) - desc.source.x >= desc.source.width ||
 			   int(uv.y) < desc.source.y ||
 			   int(uv.y) - desc.source.y >= desc.source.height) {
-				vert_out.n = Vector3f(0, 1, 0);
+				vert_out.n = Vector3f(0, 1, 0);// debug
 			} else {
-				vert_out.n = Vector3f(1, 0, 0);
+				vert_out.n = Vector3f(1, 0, 0);// debug
 			}
 			//obviously this vertex had no correct pixel yet therefore we set a pixel in there
 			i += blockDim.x;
@@ -177,7 +212,7 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 		}
 
 		//DEBUG:
-		{
+		if(false){
 			i += blockDim.x;
 			continue;
 		}

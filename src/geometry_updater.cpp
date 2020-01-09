@@ -525,7 +525,9 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 		desc.src_verts = meshlet_gpu_src->vertices->getStartingPtr();
 		desc.dst_verts = meshlet_gpu_dst->vertices->getStartingPtr();
 		desc.triangles = meshlet_gpu_src->triangles->getStartingPtr();
+		desc.src_tex_coords = meshlet_gpu_src->std_tex.coords->getStartingPtr();
 		desc.vertex_count = meshlet_gpu_src->vertices->getSize();
+		//desc.dst_tex_coords = meshlet_gpu_dst->std_tex.coords->getStartingPtr();
 
 		desc.update_texture = true;
 

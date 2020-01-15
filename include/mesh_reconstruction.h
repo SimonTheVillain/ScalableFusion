@@ -142,6 +142,9 @@ public:
 
 	bool hasGeometry();
 
+	void checkNeighbourhoodConsistency();
+	void checkTriangleVerticesConsistency();
+
 	//pls describe these
 	/*
 	shared_ptr<ActiveSet> genActiveSetFromPose(Matrix4f depth_pose,

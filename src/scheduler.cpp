@@ -162,7 +162,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 							reconstruction->params.depth_fxycxy);
 
 			cv::imshow("rendered_depth",reprojected_depth);
-			cv::waitKey();
+			cv::waitKey(1);
 			//information_renderer->renderDepth();//bla!
 
 
@@ -300,7 +300,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 			active_sets_mutex.unlock();
 
 			//after the first step we wait (DEBUG).
-			cv::waitKey();
+			cv::waitKey(1);
 
 
 			frame_count = 0;

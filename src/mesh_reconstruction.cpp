@@ -35,6 +35,51 @@ bool MeshReconstruction::removePatch(shared_ptr<Meshlet> patch) {
 	return false;
 }
 
+void MeshReconstruction::checkNeighbourhoodConsistency() {
+
+	int k=0;
+	for(auto p : patches_){
+		auto patch = p.second;
+		int l = 0;
+		for(auto &tri : patch->triangles){
+			for(int i : { 0, 1, 2}){
+				Triangle* tri1 = &tri;
+				if(tri.neighbours[i].ptr == nullptr)
+					continue;
+				Triangle* tri2 = tri.neighbours[i].ptr;
+				Triangle* tri2_1 = tri.neighbours[i].ptr->neighbours[tri.neighbours[i].pos].ptr;
+				assert(tri.neighbours[i].ptr->neighbours[tri.neighbours[i].pos].ptr == &tri);
+			}
+			l++;
+		}
+		k++;
+	}
+}
+void MeshReconstruction::checkTriangleVerticesConsistency(){
+
+	int k=0;
+	for(auto p : patches_){
+		auto patch = p.second;
+		for(int i = 0;i<patch->vertices.size();i++){
+			Vertex &vert = patch->vertices[i];
+			for(int j = 0;j<vert.triangles.size();j++){
+				assert( &vert ==
+						vert.triangles[j].triangle->vertices[vert.triangles[j].ind_in_triangle]);
+			}
+		}
+		/*
+		for(int i = 0;i<patch->triangles.size();i++){
+			Triangle &tri = patch->triangles[i];
+			for(int j : {0,1,2}){
+				Vertex *vert = tri.vertices[j];
+				for(int l = 0;l<vert->triangles.size())
+			}
+		}
+		 */
+		k++;
+	}
+}
+
 cv::Mat MeshReconstruction::generateColorCodedTexture_(cv::Mat segmentation) {
 
 	cv::Mat color_map(1, 64 * 48, CV_8UC4);

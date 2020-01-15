@@ -178,6 +178,9 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 		new_shared_mesh_patches[i]->updateSphereRadius();
 	}
 
+	reconstruction->checkNeighbourhoodConsistency();
+	reconstruction->checkTriangleVerticesConsistency();
+
 	auto time_end = chrono::system_clock::now();
 	auto time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start_all);
 	//present

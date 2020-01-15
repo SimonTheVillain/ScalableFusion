@@ -260,15 +260,14 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 
 
 __global__
-void transcribe_stitch_vertices_kernel(gpu::GeometryUpdate::TranscribeStitchTask* tasks,
-									   GpuVertex*** gpu_neighbour_vertices){//pointer chasing deluxe!
+void transcribe_stitch_vertices_kernel(gpu::GeometryUpdate::TranscribeStitchTask* tasks){//pointer chasing deluxe!
 	uint32_t k = blockIdx.x;
 	uint32_t i = threadIdx.x;
 	gpu::GeometryUpdate::TranscribeStitchTask &task = tasks[k];
 
 	while(i<task.count){
-		task.local_vertices[task.task->ind_local] =
-				gpu_neighbour_vertices[i][task.task->ind_neighbour][task.task->ind_in_neighbour];
+		task.local_vertices[task.task[i].ind_local] =
+				task.nb_vertices[task.task[i].ind_neighbour][task.task[i].ind_in_neighbour];
 
 		i+=blockDim.x;
 	}

@@ -15,6 +15,7 @@ using namespace Eigen;
 int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor input adapted by standard deviations
                         int width, int height, //sensor resolution
                         const vector<gpu::UpdateDescriptor> &descriptors,
+						const vector<GeometryUpdate::TranscribeStitchTask> & transcribe_tasks,
                         Vector4f cam_pos,
                         Matrix4f pose, // because we want the vertex position relative to the camera
                         Matrix4f proj_pose, //to get the position of the point on the image.
@@ -24,6 +25,7 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 	if(descriptors.empty()) {
 		return-1;
 	}
+	assert(descriptors.size() == transcribe_tasks.size());
 
 	dim3 block(256);// using 1024); works on desktops but it is killing the tegra
 	dim3 grid(descriptors.size());
@@ -49,11 +51,6 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 	cudaDeviceSynchronize();//just for debug!!!
 	gpuErrchk(cudaPeekAtLastError());
 
-	//TODO: transcribe vertices at stitches
-	//	transcribe_stitch_vertices_kernel<<<grid, block>>>();
-	cudaDeviceSynchronize();//just for debug!!!
-	gpuErrchk(cudaPeekAtLastError());
-
 	updateGeomTex_kernel<<<grid, block>>>(geometry_input, //the sensor input adapted by standard deviations
 	                                      width, height, //sensor resolution
 	                                      descs,
@@ -63,6 +60,21 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 	                                      vertices, tex_pos,
 	                                      triangles, patch_infos);
 
+	cudaDeviceSynchronize();//just for debug!!!
+	gpuErrchk(cudaPeekAtLastError());
+
+	GeometryUpdate::TranscribeStitchTask *transcribe_tasks_gpu;
+	int byte_count = transcribe_tasks.size() * sizeof(GeometryUpdate::TranscribeStitchTask);
+	cudaMalloc(&transcribe_tasks_gpu, byte_count);
+	cudaMemcpy(transcribe_tasks_gpu, &transcribe_tasks[0],
+			   byte_count,
+			   cudaMemcpyHostToDevice);
+
+	cudaDeviceSynchronize();//just for debug!!!
+	gpuErrchk(cudaPeekAtLastError());
+
+	block.x = 64; //most of these meshlets have only 60 or less stitching vertices
+	transcribe_stitch_vertices_kernel<<<grid, block>>>(transcribe_tasks_gpu);
 
 	//TODO: fix the updates on the borders
 	//then we update the texture.

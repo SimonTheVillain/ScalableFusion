@@ -89,6 +89,10 @@ public:
 	size_t gpu_transcribe_task_count = 0;
 	vector<MeshletGPU> meshlets;
 	shared_ptr<PatchInfoBufConnector> headers;
+
+
+
+	vector<gpu::GeometryUpdate::TranscribeStitchTask> transcribe_tasks;
 	//the key is the patch id (maybe share patch id with stitch ids)
 	//value is the index in the according vectors
 	unordered_map<int,int> meshlet_inds; // to p

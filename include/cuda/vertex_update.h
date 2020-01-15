@@ -20,6 +20,10 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
                          GpuVertex *vertices, Vector2f *tex_pos,
                          GpuTriangle *triangles, GpuPatchInfo *patch_infos);
 
+
+__global__
+void transcribe_stitch_vertices_kernel(gpu::GeometryUpdate::TranscribeStitchTask* tasks);
+
 __global__ 
 void calcCenter_kernel(gpu::GeometryUpdate::CalcCenterTask *tasks,
                        Vector4f *centers);

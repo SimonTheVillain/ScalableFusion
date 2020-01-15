@@ -71,6 +71,7 @@ namespace gpu {
 
 		struct TranscribeStitchTask {
 			MeshletGPU::TranscribeBorderVertTask* task;
+			GpuVertex** nb_vertices;
 			//GpuPatchInfo* local;
 			GpuVertex* local_vertices;
 			uint32_t count;
@@ -121,6 +122,7 @@ namespace gpu {
 	int updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor input adapted by standard deviations
 	                   int width, int height, //sensor resolution
 	                   const vector<UpdateDescriptor> &descriptors,
+	                   const vector<GeometryUpdate::TranscribeStitchTask> & transcribe_tasks,
 	                   Vector4f cam_pos,
 	                   Matrix4f pose, // because we want the vertex position relative to the camera
 	                   Matrix4f proj_pose, //to get the position of the point on the image.

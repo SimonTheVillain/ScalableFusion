@@ -541,11 +541,15 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 	}
 
 	Vector4f cam_pos = Camera::calcCamPosFromExtrinsic(depth_pose_in);
-	Matrix4f proj_pose; //TODO
+	Matrix4f proj_pose;
+
+
+	//TODO
 	gpu::updateGeometry(
 			d_std_tex->getCudaSurfaceObject(),
 			d_std_tex->getWidth(),d_std_tex->getHeight(),
 			update_descriptors,
+			updated_set->transcribe_tasks,
 			cam_pos,
 			depth_pose_in,
 			depth_proj,

@@ -296,6 +296,7 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 			MeshletGPU* nb_gpu = getGpuMeshlet(nb);
 			if(nb == nullptr)
 				assert(0);
+
 			meshlets_to_ind[meshlet->neighbours[j].lock().get()] = j;
 			vertices_ptr_gpu[j] = nb_gpu->vertices->getStartingPtr();
 		}
@@ -330,7 +331,7 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 			tasks[count].ind_in_neighbour = ind_in_neighbour;//check if these indices make sense
 			tasks[count].ind_neighbour = 0;
 			if(meshlets_to_ind.count(vert.first->meshlet)){
-				tasks[count].ind_neighbour = meshlet_inds[vert.first->meshlet->id];
+				tasks[count].ind_neighbour = meshlets_to_ind[vert.first->meshlet];
 			}else{
 				assert(0);
 			}
@@ -357,16 +358,21 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 		task.local_vertices = meshlet_gpu.vertices->getStartingPtr();
 		task.task = meshlet_gpu.gpu_vert_transcribe_tasks;
 		task.count = meshlet_gpu.gpu_vert_transcribe_task_count;
+		task.nb_vertices = meshlet_gpu.gpu_neighbour_vertices;
 
 		transcribe_tasks.push_back(task);
 
 
 	}
+	this->transcribe_tasks = std::move(transcribe_tasks);
+	/*
 	int byte_count = sizeof(gpu::GeometryUpdate::TranscribeStitchTask) * transcribe_tasks.size();
 	cudaMalloc(&gpu_transcribe_tasks,byte_count);
 	gpu_transcribe_task_count = transcribe_tasks.size();
 	cudaMemcpy(gpu_transcribe_tasks,&transcribe_tasks[0],byte_count,cudaMemcpyHostToDevice);
-	/*
+	*/
+
+	 /*
 	gpu::GeometryUpdate::TranscribeStitchTask* tasksGpu;
 	size_t bytes = sizeof(gpu::GeometryUpdate::TranscribeStitchTask) * tasks.size();
 	cudaMalloc(&tasksGpu,bytes);

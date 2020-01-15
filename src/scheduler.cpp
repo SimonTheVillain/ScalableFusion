@@ -256,6 +256,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 		active_sets_mutex.lock();
 		active_sets[0] = active_set;
+		active_sets[1] = active_set;
 		active_sets_mutex.unlock();
 
 

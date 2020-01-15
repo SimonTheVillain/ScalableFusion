@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <cuda/coalesced_memory_transfer.h>
+#include <cuda/geom_update.h>
 #include "tex_atlas.h"
 #include "gpu_mesh_structure.h"
 
@@ -53,7 +54,6 @@ public:
 	//TODO: is it better retaining it here compared to retaining it in the actual gpumesh structure?
 	//vector<shared_ptr<MeshTextureGpuHandle>> retainedMeshTextureGpuHandles;
 
-public:
 
 	/*
 	ActiveSet(GpuStorage *storage, vector<shared_ptr<Meshlet>> patches,
@@ -78,16 +78,20 @@ public:
 				vector<bool> allocate_new_verts = {});
 
 
+
+
 	void setupHeaders();
+	void setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshlets_requested);
 	GLuint getHeaderBuffer();
 
 
-
+	gpu::GeometryUpdate::TranscribeStitchTask* gpu_transcribe_tasks = nullptr;
+	size_t gpu_transcribe_task_count = 0;
 	vector<MeshletGPU> meshlets;
 	shared_ptr<PatchInfoBufConnector> headers;
 	//the key is the patch id (maybe share patch id with stitch ids)
 	//value is the index in the according vectors
-	unordered_map<int,int> patch_inds; // to p
+	unordered_map<int,int> meshlet_inds; // to p
 	//separate textures
 
 
@@ -109,6 +113,11 @@ public:
 	void upload(shared_ptr<TriangleBufConnector> &buf, vector<Triangle> &triangles);
 
 	void uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Meshlet* meshlet);
+
+	bool containsNeighbours(shared_ptr<Meshlet> meshlet);
+
+
+
 
 };
 

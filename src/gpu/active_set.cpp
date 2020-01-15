@@ -10,6 +10,7 @@
 #include <cuda/gpu_errchk.h>
 #include <cuda/float16_utils.h>
 #include <mesh_reconstruction.h>
+#include <cuda/geom_update.h>
 
 using namespace std;
 using namespace Eigen;
@@ -44,7 +45,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 		if(!allocate_new_verts.empty()){
 			reallocate = allocate_new_verts[i];
 		}
-		patch_inds[meshlet->id] = meshlets.size();
+		meshlet_inds[meshlet->id] = meshlets.size();
 		meshlets.emplace_back();
 		MeshletGPU &most_current = meshlets.back();
 		most_current.id = meshlet->id;
@@ -53,10 +54,10 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 		for(auto active_set : active_sets){
 			if(active_set == nullptr)
 				continue;
-			if(active_set->patch_inds.count(meshlet->id) == 0)
+			if(active_set->meshlet_inds.count(meshlet->id) == 0)
 				continue;
 			int id = meshlet->id;
-			int ind = active_set->patch_inds[id];
+			int ind = active_set->meshlet_inds[id];
 
 			MeshletGPU &candidate = active_set->meshlets[ind];
 
@@ -150,13 +151,16 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 
 	headers = storage->patch_info_buffer->getBlock(meshlets.size());
 	setupHeaders();
+
+
+	setupTranscribeStitchesTasks(meshlets_requested);
 	/*
 	//todo: fill the most current maps
 	for(auto active_set : active_sets){
 
 		if(active_set == nullptr)
 			continue;
-		for(auto id_ind : active_set->patch_inds){
+		for(auto id_ind : active_set->meshlet_inds){
 			int id = id_ind.first;
 			int ind = id_ind.second;
 
@@ -197,7 +201,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 		if(most_current_meshlets.count(meshlet->id)){
 			//there is a meshlet on the GPU
 			//TODO: check if it is sufficient and in case generate it
-			patch_inds[meshlet->id] = meshlets.size();
+			meshlet_inds[meshlet->id] = meshlets.size();
 			meshlets.push_back(most_current_meshlets[meshlet->id]);
 
 		}else{
@@ -208,7 +212,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 
 
 		}
-		patch_inds[meshlet->id] = index;
+		meshlet_inds[meshlet->id] = index;
 	}
 	*/
 	/*
@@ -218,8 +222,8 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 		int most_current_triangle = -1;
 		int most_current_vertices = -1;
 		for(auto old_set : active_sets){
-			if(old_set->patch_inds.count(patch->id)){
-				int ind = old_set->patch_inds[patch->id];
+			if(old_set->meshlet_inds.count(patch->id)){
+				int ind = old_set->meshlet_inds[patch->id];
 				//if
 			}
 		}
@@ -230,7 +234,11 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 
 
 ActiveSet::~ActiveSet() {
-
+	if(gpu_transcribe_tasks != nullptr){
+		cudaFree(gpu_transcribe_tasks);
+		gpu_transcribe_tasks = nullptr;
+		gpu_transcribe_task_count = 0;
+	}
 }
 
 void ActiveSet::setupHeaders(){
@@ -261,6 +269,115 @@ void ActiveSet::setupHeaders(){
 
 }
 
+void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshlets_requested){
+	//TODO: setting this up every update might be overly expensive
+
+
+	cudaDeviceSynchronize();
+	gpuErrchk(cudaPeekAtLastError());
+	vector<gpu::GeometryUpdate::TranscribeStitchTask> transcribe_tasks;
+	//unordered_map<Meshlet,int> meshlets_to_ind;
+	//vector<GpuVertex*> vertices_ptr_gpu(meshlets.size());
+
+
+
+	for(int i=0;i<meshlets.size();i++){
+		auto &meshlet_gpu = meshlets[i];
+		auto &meshlet = meshlets_requested[i];
+
+		if(!containsNeighbours(meshlet))
+			continue;
+
+		unordered_map<Meshlet*,int> meshlets_to_ind;
+		vector<GpuVertex*> vertices_ptr_gpu(meshlet->neighbours.size());
+		for(size_t j=0;j<meshlet->neighbours.size();j++){
+			weak_ptr<Meshlet> nb_weak = meshlet->neighbours[j];
+			shared_ptr<Meshlet> nb = nb_weak.lock();
+			MeshletGPU* nb_gpu = getGpuMeshlet(nb);
+			if(nb == nullptr)
+				assert(0);
+			meshlets_to_ind[meshlet->neighbours[j].lock().get()] = j;
+			vertices_ptr_gpu[j] = nb_gpu->vertices->getStartingPtr();
+		}
+
+
+		//vertices_ptr_gpu[i] = meshlet_gpu.vertices->getStartingPtr();
+
+		//tasks.emplace_back();
+		//auto & task = tasks.back();
+		//setup the copying task
+
+		//only do the following if all the neighbours are uploaded
+
+
+
+		unordered_map<Vertex*,int> vertex_indices;
+		for(int j=0;j<meshlet->triangles.size();j++){
+			Triangle &tri = meshlet->triangles[j];
+			for(int k : {0, 1, 2}){
+				if(tri.vertices[k]->meshlet != meshlet.get()){
+					//we need to add this vertex to the list
+					vertex_indices[tri.vertices[k]] = tri.local_indices[k];
+				}
+			}
+		}
+		vector<MeshletGPU::TranscribeBorderVertTask> tasks(vertex_indices.size());
+		int count = 0;
+		for(auto vert : vertex_indices){
+			tasks[count].ind_local = vert.second;
+			int ind_in_neighbour = vert.first - &vert.first->meshlet->vertices[0];
+			//cout << ind_in_neighbour << endl;
+			tasks[count].ind_in_neighbour = ind_in_neighbour;//check if these indices make sense
+			tasks[count].ind_neighbour = 0;
+			if(meshlets_to_ind.count(vert.first->meshlet)){
+				tasks[count].ind_neighbour = meshlet_inds[vert.first->meshlet->id];
+			}else{
+				assert(0);
+			}
+			count ++;
+		}
+		int byte_count = sizeof(GpuVertex*) * vertices_ptr_gpu.size();
+		cudaMalloc(&meshlet_gpu.gpu_neighbour_vertices,byte_count);
+		cudaMemcpy(meshlet_gpu.gpu_neighbour_vertices,&vertices_ptr_gpu[0],byte_count,cudaMemcpyHostToDevice);
+
+		cudaDeviceSynchronize();
+		gpuErrchk(cudaPeekAtLastError());
+
+		byte_count = sizeof(MeshletGPU::TranscribeBorderVertTask) * vertex_indices.size();
+		cudaMalloc(&meshlet_gpu.gpu_vert_transcribe_tasks,byte_count);
+		cudaMemcpy(meshlet_gpu.gpu_vert_transcribe_tasks,&tasks[0],byte_count,cudaMemcpyHostToDevice);
+
+
+		cudaDeviceSynchronize();
+		gpuErrchk(cudaPeekAtLastError());
+
+		meshlet_gpu.gpu_vert_transcribe_task_count = vertex_indices.size();
+
+		gpu::GeometryUpdate::TranscribeStitchTask task;
+		task.local_vertices = meshlet_gpu.vertices->getStartingPtr();
+		task.task = meshlet_gpu.gpu_vert_transcribe_tasks;
+		task.count = meshlet_gpu.gpu_vert_transcribe_task_count;
+
+		transcribe_tasks.push_back(task);
+
+
+	}
+	int byte_count = sizeof(gpu::GeometryUpdate::TranscribeStitchTask) * transcribe_tasks.size();
+	cudaMalloc(&gpu_transcribe_tasks,byte_count);
+	gpu_transcribe_task_count = transcribe_tasks.size();
+	cudaMemcpy(gpu_transcribe_tasks,&transcribe_tasks[0],byte_count,cudaMemcpyHostToDevice);
+	/*
+	gpu::GeometryUpdate::TranscribeStitchTask* tasksGpu;
+	size_t bytes = sizeof(gpu::GeometryUpdate::TranscribeStitchTask) * tasks.size();
+	cudaMalloc(&tasksGpu,bytes);
+	cudaMemcpy(tasksGpu,&tasks[0],bytes,cudaMemcpyHostToDevice);
+	*/
+
+
+	cudaDeviceSynchronize();
+	gpuErrchk(cudaPeekAtLastError());
+
+}
 
 void ActiveSet::upload(shared_ptr<VertexBufConnector> &buf, vector<Vertex> &vertices) {
 	assert(0);//it is not as trivial as this makes it seem
@@ -385,12 +502,25 @@ void ActiveSet::uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Mes
 
 }
 MeshletGPU* ActiveSet::getGpuMeshlet(shared_ptr<Meshlet> meshlet) {
-	if(patch_inds.count(meshlet->id)){
-		int ind = patch_inds[meshlet->id];
+	if(meshlet_inds.count(meshlet->id)){
+		int ind = meshlet_inds[meshlet->id];
 		return &meshlets[ind];
 	}
 	return nullptr;
 
+}
+
+bool ActiveSet::containsNeighbours(shared_ptr<Meshlet> meshlet) {
+	for(auto nb : meshlet->neighbours){
+		shared_ptr<Meshlet> nb_shared = nb.lock();
+		if(nb_shared == nullptr){
+			assert(0);
+		}
+		if(meshlet_inds.count(nb_shared->id) == 0){
+			return false; // found neighbour not contained in this active set
+		}
+	}
+	return true;
 }
 /*
 ActiveSet::ActiveSet(GpuStorage *storage,

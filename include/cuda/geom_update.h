@@ -10,6 +10,10 @@
 #include "gpu_mesh_structure.h"
 #include "gpu_errchk.h"
 
+//TODO: this is nob beautiful rename either one of these files.
+#include "../gpu/gpu_mesh_structure.h"
+
+
 using namespace std;
 using namespace Eigen;
 
@@ -62,6 +66,13 @@ namespace gpu {
 
 		struct CalcCenterTask {
 			GpuVertex *vertices;
+			uint32_t count;
+		};
+
+		struct TranscribeStitchTask {
+			MeshletGPU::TranscribeBorderVertTask* task;
+			//GpuPatchInfo* local;
+			GpuVertex* local_vertices;
 			uint32_t count;
 		};
 

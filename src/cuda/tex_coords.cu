@@ -236,6 +236,8 @@ vector<cv::Rect2f> TexCoordGen::getTexCoordBounds(
 		vector<cv::Rect2f> empty;
 		return empty;
 	}
+
+
 	TexCoordGen::BoundTask *gpu_tasks;
 	cudaMalloc(&gpu_tasks, sizeof(TexCoordGen::BoundTask) * tasks.size());
 	Eigen::Vector4f *gpu_results;

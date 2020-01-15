@@ -119,7 +119,7 @@ public:
 public:
 
 
-	int32_t tex_ind_in_main_patch = -1;
+	//int32_t tex_ind_in_main_patch = -1;
 
 	vector<VertexInTriangle> triangles;
 public:
@@ -147,7 +147,7 @@ public:
 		p = gpu_vertex.p;
 		n = gpu_vertex.n;
 		meshlet = nullptr;
-		tex_ind_in_main_patch = gpu_vertex.tex_ind_in_main_patch;
+		//tex_ind_in_main_patch = gpu_vertex.tex_ind_in_main_patch;
 	}
 
 	~Vertex(){
@@ -219,7 +219,7 @@ public:
 		GpuVertex vert;
 		vert.p = p;
 		vert.n = n;
-		vert.tex_ind_in_main_patch = static_cast<int16_t>(tex_ind_in_main_patch);
+		//vert.tex_ind_in_main_patch = static_cast<int16_t>(tex_ind_in_main_patch);
 		return vert;
 	}
 
@@ -987,7 +987,7 @@ inline Vertex::Vertex ( Vertex && o) noexcept{
 	meshlet = o.meshlet;
 	p = o.p;
 	n = o.n;
-	tex_ind_in_main_patch  = o.tex_ind_in_main_patch;
+//	tex_ind_in_main_patch  = o.tex_ind_in_main_patch;
 	triangles = std::move(o.triangles);
 	for(auto triangle : triangles){
 		//set old references to this vertex to the new position

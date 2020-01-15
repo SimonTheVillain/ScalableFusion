@@ -46,7 +46,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	//extract the visible patches from the active set
 	vector<shared_ptr<Meshlet>> visible_meshlets;
 	if(active_set_of_formerly_visible_patches){
-		for(auto bla : active_set_of_formerly_visible_patches->patch_inds){
+		for(auto bla : active_set_of_formerly_visible_patches->meshlet_inds){
 			shared_ptr<Meshlet> meshlet =
 					reconstruction->getMeshlet(bla.first);
 			visible_meshlets.push_back(meshlet);
@@ -300,6 +300,10 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	        time_elapsed.count() << "ms" << endl;
 
 	time_start = time_end;
+
+
+	cudaDeviceSynchronize();
+	gpuErrchk(cudaPeekAtLastError());
 
 	new_active_set->setupHeaders();
 	texture_updater->generateGeomTex(reconstruction,

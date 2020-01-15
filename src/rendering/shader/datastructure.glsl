@@ -12,7 +12,8 @@ const int GPU_MAX_TEX_PER_PATCH = 10;
 struct GpuVertex {
 	vec4 p;
 	vec3 n;
-	int16_t tex_index; //the texture index within the texture associated with its patch
+	int16_t padding;
+	//int16_t tex_index; //the texture index within the texture associated with its patch
 	int16_t valid;
 };
 

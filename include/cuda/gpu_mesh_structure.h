@@ -20,8 +20,9 @@ struct GpuVertex {
 	Vector4f p;
 	Vector3f n;
 
+	int16_t padding;
 	// The texture index in the tex coordinates of the main patch
-	int16_t tex_ind_in_main_patch;//could also be 16 bit int
+	//int16_t tex_ind_in_main_patch;//could also be 16 bit int
 
 	// If any of a triangle vertex is invalid we should not render it
 	int16_t valid = 1;

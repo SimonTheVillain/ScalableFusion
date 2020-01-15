@@ -46,4 +46,15 @@ MeshletGPU::~MeshletGPU(){
 	//TODO: remove everything needed to transcribe neighbouring vertex positions to this patch!!!
 
 
+	if(gpu_vert_transcribe_tasks != nullptr){
+		cudaFree(gpu_vert_transcribe_tasks);
+		gpu_vert_transcribe_tasks = nullptr;
+		gpu_vert_transcribe_task_count = 0;
+	}
+	if(gpu_neighbour_vertices != nullptr){
+		cudaFree(gpu_neighbour_vertices );
+		gpu_neighbour_vertices = nullptr;
+	}
+
+
 }

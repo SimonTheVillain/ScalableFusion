@@ -49,6 +49,11 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 	cudaDeviceSynchronize();//just for debug!!!
 	gpuErrchk(cudaPeekAtLastError());
 
+	//TODO: transcribe vertices at stitches
+	//	transcribe_stitch_vertices_kernel<<<grid, block>>>();
+	cudaDeviceSynchronize();//just for debug!!!
+	gpuErrchk(cudaPeekAtLastError());
+
 	updateGeomTex_kernel<<<grid, block>>>(geometry_input, //the sensor input adapted by standard deviations
 	                                      width, height, //sensor resolution
 	                                      descs,

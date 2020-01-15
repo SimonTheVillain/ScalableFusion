@@ -104,10 +104,18 @@ public:
 	struct TranscribeBorderVertTask{
 		int ind_local; //index of vertex in this meshlet
 		int ind_in_neighbour; //index of the "same" vertex in the neighbouring meshlet
-		int ind_neighbour;//references to gpu_neighbour_start_ind
+
+		//this stays valid as long as the neighbours stay valid and their indices the same
+		int ind_neighbour;//references to gpu_neighbour_vertices
 	};
 	int gpu_vert_transcribe_task_count = -1;
+	//resides on the GPU: needs to be updated only when one o the neighbours changes
 	TranscribeBorderVertTask *gpu_vert_transcribe_tasks = nullptr;
+
+	//resides on GPU: this needs to be updated with every update of the active set
+	GpuVertex** gpu_neighbour_vertices = nullptr;
+	vector<weak_ptr<Meshlet>> gpu_neighbour_meshlets;//list
+
 
 	//the starting indices for the triangle buffer. They have to be updated every frame.
 	int *gpu_neighbour_start_ind = nullptr;

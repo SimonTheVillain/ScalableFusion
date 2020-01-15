@@ -3,6 +3,7 @@
 #include <cuda/surface_read.h>
 #include <cuda/xtion_camera_model.h>
 #include <cuda/float16_utils.h>
+#include <gpu/gpu_mesh_structure.h>
 
 using namespace Eigen;
 
@@ -255,6 +256,24 @@ void vertexUpdate_kernel(const cudaSurfaceObject_t geometry_input, //the sensor 
 		//just in case we have more vertices than threads:
 		i += blockDim.x;
 	}
+}
+
+
+__global__
+void transcribe_stitch_vertices_kernel(gpu::GeometryUpdate::TranscribeStitchTask* tasks,
+									   GpuVertex*** gpu_neighbour_vertices){//pointer chasing deluxe!
+	uint32_t k = blockIdx.x;
+	uint32_t i = threadIdx.x;
+	gpu::GeometryUpdate::TranscribeStitchTask &task = tasks[k];
+
+	while(i<task.count){
+		task.local_vertices[task.task->ind_local] =
+				gpu_neighbour_vertices[i][task.task->ind_neighbour][task.task->ind_in_neighbour];
+
+		i+=blockDim.x;
+	}
+
+
 }
 
 __global__ 

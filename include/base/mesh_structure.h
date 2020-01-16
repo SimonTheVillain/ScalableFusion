@@ -880,10 +880,10 @@ struct Edge {
 
 	//borderlist is used in case a edge is already registered in the triangle
 	bool getOtherEdge(int endpoint, Edge &result, 
-	                  vector<vector<Edge>> &border_list) {
+	                  vector<vector<Edge>> &border_list,bool debug = false) {
 
 		Triangle* current_triangle = triangle;
-		Triangle* current_triangle_ref = triangle;
+		//Triangle* current_triangle_ref = triangle;
 		int current_edge_ind_in_triangle = pos;
 
 		int ttl = 10000;//TODO: put that back to 100.... we will not have than 16 or so triangles for a point
@@ -906,19 +906,22 @@ struct Edge {
 				}
 
 				Edge res;
-				res.triangle = current_triangle_ref;
+				res.triangle = current_triangle;
 				res.pos = current_edge_ind_in_triangle;
 				result = res;
 				return true;
 			}
 
-
+			Triangle* old_triangle = current_triangle;
+			current_triangle = current_triangle->neighbours[current_edge_ind_in_triangle].ptr;
 			current_edge_ind_in_triangle =
-					current_triangle->neighbours[current_edge_ind_in_triangle].pos;
-			current_triangle = current_triangle_ref;
+					old_triangle->neighbours[current_edge_ind_in_triangle].pos;
+			if(debug){
+				cout << current_triangle << " at " << current_edge_ind_in_triangle	 << endl;
+			}
 		}
 
-		getOtherEdge(endpoint, result, border_list);//debug... this should never happen
+		getOtherEdge(endpoint, result, border_list,true);//debug... this should never happen
 		assert(0);//more than 100 triangles on this node means something is off!!!
 		return false;
 	}

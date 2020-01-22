@@ -18,13 +18,14 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 						const vector<GeometryUpdate::TranscribeStitchTask> & transcribe_tasks,
                         Vector4f cam_pos,
                         Matrix4f pose, // because we want the vertex position relative to the camera
-                        Matrix4f proj_pose, //to get the position of the point on the image.
-                        GpuVertex *vertices, Vector2f *tex_pos,
-                        GpuTriangle *triangles, GpuPatchInfo *patch_infos) { //pointer to the geometric data
+                        Matrix4f proj_pose) { //to get the position of the point on the image.
+
 
 	if(descriptors.empty()) {
 		return-1;
 	}
+	int debug_1 = descriptors.size();
+	int debug_2 = transcribe_tasks.size();
 	assert(descriptors.size() == transcribe_tasks.size());
 
 	dim3 block(256);// using 1024); works on desktops but it is killing the tegra
@@ -44,9 +45,8 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 	                                     descs,
 	                                     cam_pos,
 	                                     pose, // because we want the vertex position relative to the camera
-	                                     proj_pose, //to get the position of the point on the image.
-	                                     vertices, tex_pos,
-	                                     triangles, patch_infos);
+	                                     proj_pose); //to get the position of the point on the image.
+
 
 	cudaDeviceSynchronize();//just for debug!!!
 	gpuErrchk(cudaPeekAtLastError());
@@ -56,9 +56,7 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 	                                      descs,
 	                                      cam_pos,
 	                                      pose, // because we want the vertex position relative to the camera
-	                                      proj_pose, //to get the position of the point on the image.
-	                                      vertices, tex_pos,
-	                                      triangles, patch_infos);
+	                                      proj_pose);//to get the position of the point on the image.
 
 	cudaDeviceSynchronize();//just for debug!!!
 	gpuErrchk(cudaPeekAtLastError());
@@ -73,8 +71,31 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 	cudaDeviceSynchronize();//just for debug!!!
 	gpuErrchk(cudaPeekAtLastError());
 
-	block.x = 64; //most of these meshlets have only 60 or less stitching vertices
-	transcribe_stitch_vertices_kernel<<<grid, block>>>(transcribe_tasks_gpu);
+	//DEBUG VIA ALTERNATIVE PATH
+	//TODO: reinsert this and find fucking bug!
+	/*
+	if(false){
+
+		block.x = 64; //most of these meshlets have only 60 or less stitching vertices
+		grid.x = transcribe_tasks.size();
+		transcribe_stitch_vertices_kernel<<<grid, block>>>(transcribe_tasks_gpu);
+	}else{
+
+		for(int i=0;i< transcribe_tasks.size();i++){
+
+			block.x = 64; //most of these meshlets have only 60 or less stitching vertices
+			grid.x = 1;
+			transcribe_stitch_vertices_kernel<<<grid, block>>>(&	transcribe_tasks_gpu[i]);
+
+			cudaDeviceSynchronize();
+			gpuErrchk(cudaPeekAtLastError());
+			cudaFree(descs);
+
+		}
+
+	}
+	 */
+
 
 	//TODO: fix the updates on the borders
 	//then we update the texture.

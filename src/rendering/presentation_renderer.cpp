@@ -167,7 +167,10 @@ void PresentationRenderer::render(GpuStorage* gpu_storage, ActiveSet *active_set
 
 		//TODO: this would be cheaper to do it per texture in the GPU_STORAGE
 		//make standard deviation texture resident
-		meshlet.std_tex.tex->getTex()->makeResidentInThisThread();
+#ifdef IGNORE_MISSING_STD
+		if(meshlet.std_tex.tex != nullptr)
+#endif
+		meshlet.std_tex.tex->getTex()->makeResidentInThisThread(); //actually the std_tex should always be there
 		for(size_t i = 0;i<meshlet.textures.size();i++){
 			// same for color textures
 			meshlet.textures[i]->tex->getTex()->makeResidentInThisThread();

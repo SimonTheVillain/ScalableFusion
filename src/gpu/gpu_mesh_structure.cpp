@@ -4,6 +4,7 @@
 
 #include <gpu/gpu_mesh_structure.h>
 #include <base/mesh_structure.h>
+#include <cuda/float16_utils.h>
 
 
 GpuTextureInfo TextureLayerGPU::genGpuTextureInfo(){
@@ -19,7 +20,7 @@ MeshletGPU::~MeshletGPU(){
 
 	shared_ptr<Meshlet> meshlet = vertex_token->lock();
 	if(meshlet == nullptr)
-		return; //the meshlet we would have stored back the data doesn't exist anymore
+		return; //the meshlet 	we would have stored back the data doesn't exist anymore
 
 	meshlet->vertices_mutex.lock(); //TODO: maybe make this a shared mutex so the vertices can be read nonetheless
 
@@ -57,4 +58,111 @@ MeshletGPU::~MeshletGPU(){
 	}
 
 
+}
+
+TextureLayerGPU::~TextureLayerGPU(){
+	if(tex == nullptr)
+		return;
+	if(coords == nullptr)
+		return;
+	if(token == nullptr)
+		return;
+	shared_ptr<MeshTexture> cpu_tex = token->lock();
+	if(cpu_tex == nullptr)
+		return;
+
+	cv::Rect2i rect = tex->getRect();
+	int internal_format = tex->getTex()->getGlInternalFormat();
+	cv::Mat data;
+	if(		internal_format == GL_RGBA16F||
+			   internal_format == GL_RGB16F ||
+			   internal_format == GL_RG16F  ||
+			   internal_format == GL_R16F) {
+
+		uint8_t* data_gpu;
+		int channels = tex->getTex()->getChannelCount();
+		size_t byte_count = sizeof(float) * rect.width*rect.height * channels;
+		cudaMalloc(&data_gpu,byte_count);
+
+		castF16SurfaceToF32Buffer(tex->getTex()->getCudaSurfaceObject(),
+								  rect.x,rect.y,rect.width,rect.height,
+								  (float*)data_gpu,
+								  tex->getTex()->getChannelCount());
+
+		data = cv::Mat(rect.height,rect.width,CV_32FC(channels));
+		cudaMemcpy(data.data,data_gpu,rect.width*rect.height,cudaMemcpyDeviceToHost);
+		cudaFree(data_gpu);
+
+	}else{
+		//assert(0);
+		data = cv::Mat(rect.height,rect.width,tex->cvType());
+		tex->downloadData(data.data);
+	}
+	//TODO: something about a version
+	vector<Vector2f> tex_coords(coords->getSize());
+	coords->download(&tex_coords[0]);
+
+	cpu_tex->mat_mutex.lock();
+	cpu_tex->mat = data;
+	cpu_tex->tex_coords = tex_coords;
+	cpu_tex->tex_coord_version = tex_coord_version;
+	cpu_tex->tex_version = tex_version;
+	cpu_tex->mat_mutex.unlock();
+
+
+
+
+
+	//assert(0);
+}
+
+
+
+
+void TextureLayerGPU::create(MeshTexture* cpu_texture, TexAtlas* tex_atlas,GpuBuffer<Eigen::Vector2f>* coord_buffer) {
+
+
+	//upload the image
+	cv::Mat data = cpu_texture->mat;
+	cv::Size2i size = data.size();
+	shared_ptr<TexAtlasPatch> patch = tex_atlas->getTexAtlasPatch(size);
+	int internal_format = patch->getTex()->getGlInternalFormat();
+	if(		internal_format == GL_RGBA16F||
+			   internal_format == GL_RGB16F ||
+			   internal_format == GL_RG16F  ||
+			   internal_format == GL_R16F) {
+
+		int byte_count = patch->getTex()->getChannelCount() * sizeof(float) * size.width * size.height;
+		uint8_t* data_gpu;
+		cudaMalloc(&data_gpu,byte_count);
+		cudaMemcpy(data_gpu,data.data,byte_count,cudaMemcpyHostToDevice);
+
+		cv::Rect2i rect = patch->getRect();
+		castF32BufferToF16Surface(patch->getTex()->getCudaSurfaceObject(),
+								  rect.x,rect.y,rect.width,rect.height,
+								  (float*)data_gpu,
+								  patch->getTex()->getChannelCount());
+		cudaFree(data_gpu);
+
+
+	}else{
+		patch->uploadData(data.data);
+	}
+
+
+	//upload the tex coordinates
+	shared_ptr<GpuBufferConnector<Vector2f>> buffer = coord_buffer->getBlock(cpu_texture->tex_coords.size());
+	buffer->upload(&cpu_texture->tex_coords[0]);
+
+	//set the members
+	tex = patch;
+	coords = buffer;
+	tex_coord_version = cpu_texture->tex_coord_version;
+	tex_version = cpu_texture->tex_version;
+
+	//create vertex buffer and upload to that as well
+	//upload float32 to float16 (depending on the datatype)
+	//patch->uploadData();
+
+	//assert(0);
 }

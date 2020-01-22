@@ -9,12 +9,15 @@
  */
 #include <memory>
 #include "gpu_buffer.h"
+#include <opencv2/core.hpp>
+
 
 
 class Meshlet;
 class MeshTexture;
 class GpuStorage;
 class TexAtlasPatch;
+class TexAtlas;
 
 /*
 struct VertexToken{
@@ -34,23 +37,30 @@ public:
 	TextureLayerGPU(TextureLayerGPU &&o) :
 			coords(move(o.coords)),
 			tex(move(o.tex)),
-			version(move(o.version)),
+			tex_coord_version(move(o.tex_coord_version)),
+			tex_version(move(o.tex_version)),
 			token(move(o.token)){
 
 	}
 
 
-	~TextureLayerGPU(){}
+	~TextureLayerGPU();
 
 	shared_ptr<TexCoordBufConnector> coords;
+	int tex_coord_version = -1;
 	shared_ptr<TexAtlasPatch> tex;
-	int version = -1;
+	int tex_version = -1;
 	unique_ptr<weak_ptr<MeshTexture>> token;
 
 	//TODO:this might also need a version of traingles...
 	//also the triangle version of its neighbours
 
 	GpuTextureInfo genGpuTextureInfo();
+
+
+	void create(cv::Mat &data,TexAtlas* tex_atlas);
+
+	void create(MeshTexture* cpu_texture,TexAtlas* tex_atlas,GpuBuffer<Eigen::Vector2f>* coord_buffer);
 
 };
 
@@ -94,6 +104,8 @@ public:
 	//TODO: triangle version of neighbours might be needed
 	vector<shared_ptr<TextureLayerGPU>> textures;
 	TextureLayerGPU std_tex;
+
+	int debug = -1;
 
 	//TODO: add all the mechanisms necessary to ensure the consistency between these tasks and the result
 	//the geometry lookup part is tricky! (thanks past simon! this is really helping!)

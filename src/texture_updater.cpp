@@ -52,7 +52,9 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 			//setup data containers for standard deviation texture
 			meshlet_gpu->std_tex.coords =
 					gpu_storage->tex_pos_buffer->getBlock(meshlet_gpu->vertices->getSize());
-			meshlet_gpu->std_tex.version = 1; //initial version!
+			meshlet_gpu->std_tex.tex_version = 1; //initial version!
+			meshlet_gpu->std_tex.tex_coord_version = meshlet_gpu->triangle_version;
+
 			if(meshlet->geom_tex_patch == nullptr){
 				meshlet->geom_tex_patch = make_shared<MeshTexture>(MeshTexture::Type::STANDARD_DEVIATION);
 			}

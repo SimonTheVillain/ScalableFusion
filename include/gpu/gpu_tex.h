@@ -41,6 +41,7 @@ public:
 	static vector<GpuTex2D*> getTexList();
 	int                      getWidth() {return width_;}
 	int                      getHeight() {return height_;}
+	int 					 getChannelCount() {return channel_count_;}
 
 	void uploadData(void *data); //if size == 0 we only load
 	void uploadData(void *data, int width, int height);

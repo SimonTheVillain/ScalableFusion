@@ -47,9 +47,8 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
                           gpu::UpdateDescriptor *descriptors,
                           Vector4f cam_pos, //camera position
                           Matrix4f _pose, // because we want the vertex position relative to the camera
-                          Matrix4f proj_pose, //to get the position of the point on the image.
-                          GpuVertex *vertices, Vector2f *tex_pos,
-                          GpuTriangle *triangles, GpuPatchInfo *patch_infos);
+                          Matrix4f proj_pose); //to get the position of the point on the image.
+
 #endif
 
 //TODO: a simple dilation kernel

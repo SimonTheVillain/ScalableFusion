@@ -66,19 +66,19 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 	information_renderer->getStdTexture()->downloadData(proj_depth_std.data);
 
-	//TODO: DEBUG: //check all the points if they have still edges assigned to them:
 
 	/*******************************************STITCHING NEW********/
-	//TODO: fill a list of borders with edges...(without having to )
 	vector<vector<Edge>> borders;
 	Matrix4f proj_pose = proj_depth * depth_pose_in.inverse();
 
+	//TODO: comment back in obviously
+	/*
 	stitching.genBorderList(
 			visible_meshlets, borders,
 			proj_pose);
 	stitching.reloadBorderGeometry(borders);
 	stitching.rasterBorderGeometry(borders, depth_pose_in, proj_depth, ex_geom);
-
+	*/
 	//this is a premilary measure to get the geometry adding running....
 	float geometry_assign_threshold = 0.05f;//every point within 5cm of existing geometry is considered part of that geometry
 
@@ -191,6 +191,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 	/*********************************Initial Stitching!! NEW***************************/
 
+	/*
 	vector<weak_ptr<GeometryBase>> stitch_list;
 
 	//TODO: reinsert code and fix bugs
@@ -201,6 +202,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	                          mesh_pointers, vertex_indices, stitch_list);
 
 	stitching.freeBorderList(borders);
+	*/
 
 	/******************************************Initial Stitching!! NEW***********************/
 
@@ -215,6 +217,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 	time_start = time_end;
 
+	/******************************REMOVAL OF UNCONNECTED VERTS TRIS and PATCHES***********/
 	//remove patches with zero triangles. Even when they pose as a source for stitches
 	vector<shared_ptr<Meshlet>> list_of_mesh_patches_to_keep;
 	vector<shared_ptr<Meshlet>> set_of_patches_to_be_removed;
@@ -231,6 +234,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 					Meshlet *target_meshlet = nullptr;
 					for(int l : {0,1,2}){
 						if(triangle->vertices[l]->meshlet != patch.get()){
+							//found a neighbouring meshlet to house the meshlet
 							target_meshlet = triangle->vertices[l]->meshlet;
 							break;
 						}
@@ -238,6 +242,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 					//we found a suitable  spot for the vertex. so we move it
 					if(target_meshlet){
 						target_meshlet->vertices.push_back(move(vertex));
+						cout << "MOVING VERTICES TO OTHER MESHLET" << endl;
 						break;
 					}
 
@@ -259,8 +264,11 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 		// Any unconnected or deleted but empty (of triangle) patch
 		// gets deleted now.
 		reconstruction->removePatch(set_of_patches_to_be_removed[i]);
+		cout << "REMOVING PATCH" << endl;
 	}
 	set_of_patches_to_be_removed.clear();
+
+	/******************************REMOVAL OF UNCONNECTED VERTS TRIS and PATCHES***********/
 
 	time_end = chrono::system_clock::now();
 	time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
@@ -294,7 +302,6 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 					*/
 	new_active_set->name = "createdInApplyNewData";
 
-	/*************************************TOOOODOOOOO************************/
 
 	time_end = chrono::system_clock::now();
 	time_elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start);
@@ -420,6 +427,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 shared_ptr<ActiveSet> GeometryUpdater::update(
 		GpuStorage* gpu_storage,
+		InformationRenderer* information_renderer,
 		vector<shared_ptr<Meshlet>> requested_meshlets,
 		shared_ptr<ActiveSet> preexisting_set, // the active set(if existing) containing all requested meshlets
 		SchedulerBase* scheduler,//to generate a new active set with
@@ -427,6 +435,7 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 		Matrix4f depth_pose_in,
 		Matrix4f depth_proj) {
 
+	//return preexisting_set;
 	/**
 	 * weighting scheme:
 	 * o..... offset from triangulated surface
@@ -448,11 +457,34 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 	int width  = d_std_tex->getWidth();
 	int height = d_std_tex->getHeight();
 	vector<shared_ptr<ActiveSet>> active_sets = scheduler->getActiveSets();
-	if(preexisting_set == nullptr){
+	//TODO: reinsert this
+	//if(preexisting_set == nullptr){
+		cout << "Setting up an active set because the old one is empty" << endl;
 		//create a set of pre existing
-
 		preexisting_set = make_shared<ActiveSet>(gpu_storage,requested_meshlets,active_sets);
+		active_sets.push_back(preexisting_set); // in case we had to create a new active set put it to the list
+	//}
+
+	//preexisting_set->assertAllGeometry();
+	{
+		for(MeshletGPU &meshlet_gpu : preexisting_set->meshlets){
+			if(meshlet_gpu.std_tex.tex == nullptr){
+				for(int i=0;i<requested_meshlets.size();i++){
+					if(requested_meshlets[i]->id == meshlet_gpu.id){
+						shared_ptr<Meshlet> requested_meshlet = requested_meshlets[i];
+						assert(0);
+					}
+				}
+				assert(0);
+			}
+			if(meshlet_gpu.vertices == nullptr)
+				assert(0);
+			if(meshlet_gpu.triangles == nullptr)
+				assert(0);
+		}
 	}
+
+	assert(preexisting_set->hasAllGeometry());
 	vector<shared_ptr<Meshlet>> meshlets_to_update;
 	vector<bool> update_mask(requested_meshlets.size(),false);
 	for(size_t i=0;i<requested_meshlets.size();i++){
@@ -461,7 +493,7 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 		for(size_t j = 0; j<meshlet->neighbours.size();j++){
 			shared_ptr<Meshlet> nb = meshlet->neighbours[j].lock();
 			if(nb == nullptr)
-				continue;
+				continue; // should barely ever happen
 			if(preexisting_set->getGpuMeshlet(nb) == nullptr){
 				has_all_neighbours = false;
 				continue;
@@ -473,14 +505,26 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 
 		//setup
 		update_mask[i] = true;
+
 		meshlets_to_update.push_back(meshlet);
 	}
+
+	cout << "GeometryUpdater requested " << requested_meshlets.size() << " vs updated " << meshlets_to_update.size() << endl;
 
 	shared_ptr<ActiveSet> updated_set =
 			make_shared<ActiveSet>(gpu_storage,requested_meshlets,active_sets,update_mask);
 
 	vector<gpu::UpdateDescriptor> update_descriptors(meshlets_to_update.size());
+	vector<gpu::GeometryUpdate::TranscribeStitchTask> transcribe_tasks(meshlets_to_update.size());
+
+	//in some instances we need to create new lookup textures.
+	vector<DilationDescriptor> dilations;
+	information_renderer->bindRenderTriangleReferenceProgram(gpu_storage);
+
 	for(size_t i=0;i<meshlets_to_update.size();i++){
+		if(i == 2){
+			cout << "DEBUG: is this the meshlet where the update fails?" << endl;
+		}
 		gpu::UpdateDescriptor &desc = update_descriptors[i];
 		shared_ptr<Meshlet> &meshlet = meshlets_to_update[i];
 		MeshletGPU* meshlet_gpu_src =
@@ -524,8 +568,26 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 		desc.source_geometry =
 				meshlet_gpu_src->std_tex.tex->getCudaSurfaceObject();
 
+		//TODO: extend this criteria to things like triangle_version and other more fundamental updates
+		if(meshlet_gpu_dst->geom_lookup_tex == nullptr){
+			// create a new reference texture here (since it will be needed)
+			cv::Size2f s = rect.size();
+			meshlet_gpu_dst->geom_lookup_tex = gpu_storage->tex_atlas_geom_lookup_->getTexAtlasPatch(s);
+			cv::Rect2i r = meshlet_gpu_dst->geom_lookup_tex->getRect();
 
-		desc.destination_references = meshlet_gpu_dst->geom_lookup_tex->getCudaSurfaceObject();
+			information_renderer->renderReference(meshlet_gpu_dst, meshlet_gpu_dst->std_tex.coords,
+												  meshlet_gpu_dst->geom_lookup_tex);
+
+			dilations.emplace_back();
+			DilationDescriptor& dil_desc = dilations.back();
+			dil_desc.target = meshlet_gpu_dst->geom_lookup_tex->getCudaSurfaceObject();
+			dil_desc.width  = r.width;
+			dil_desc.height = r.height;
+			dil_desc.x      = r.x;
+			dil_desc.y      = r.y;
+		}else{
+			desc.destination_references = meshlet_gpu_dst->geom_lookup_tex->getCudaSurfaceObject();
+		}
 		desc.reference_offset = meshlet_gpu_dst->geom_lookup_tex->getRect().tl();
 
 
@@ -537,29 +599,41 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 		//desc.dst_tex_coords = meshlet_gpu_dst->std_tex.coords->getStartingPtr();
 
 		desc.update_texture = true;
-
-
-
 		//TODO: setup descriptors
+
+
+		gpu::GeometryUpdate::TranscribeStitchTask & transcribe_task = transcribe_tasks[i];
+
+		transcribe_task.local_vertices = meshlet_gpu_dst->vertices->getStartingPtr();
+		if(meshlet_gpu_dst->gpu_vert_transcribe_tasks == nullptr) { // some meshlets don't contain anything
+			bool debug = updated_set->containsNeighbours(meshlet);
+			//assert(0);
+		}
+		transcribe_task.task = meshlet_gpu_dst->gpu_vert_transcribe_tasks;
+		transcribe_task.count = meshlet_gpu_dst->gpu_vert_transcribe_task_count;
+		transcribe_task.nb_vertices = meshlet_gpu_dst->gpu_neighbour_vertices;
+
+
 	}
+
+
+	//TODO: dilate the rendered lookup textures
+	dilateLookupTextures(dilations);
+	cudaDeviceSynchronize();
+
 
 	Vector4f cam_pos = Camera::calcCamPosFromExtrinsic(depth_pose_in);
 	Matrix4f proj_pose;
 
-
-	//TODO
+	cout << "DEBUG: Geometry Update" << endl;
 	gpu::updateGeometry(
 			d_std_tex->getCudaSurfaceObject(),
 			d_std_tex->getWidth(),d_std_tex->getHeight(),
 			update_descriptors,
-			updated_set->transcribe_tasks,
+			transcribe_tasks,//updated_set->transcribe_tasks,
 			cam_pos,
 			depth_pose_in,
-			depth_proj,
-			gpu_storage->vertex_buffer->getCudaPtr(),//TODO. get rid of these buffers
-			gpu_storage->tex_pos_buffer->getCudaPtr(),
-			gpu_storage->triangle_buffer->getCudaPtr(),
-			gpu_storage->patch_info_buffer->getCudaPtr());
+			depth_proj);
 
 
 

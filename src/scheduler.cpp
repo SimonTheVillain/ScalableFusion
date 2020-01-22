@@ -232,7 +232,10 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		//now integrate everything new:
 		//Update the active set according to the current pose:
 		//map->debugCheckTriangleNeighbourConsistency(map->GetAllPatches());
-		shared_ptr<ActiveSet> active_set;
+
+		active_sets_mutex.lock();
+		shared_ptr<ActiveSet> active_set = active_sets[0];
+		active_sets_mutex.unlock();
 
 		vector<shared_ptr<Meshlet>> visible_meshlets =
 				reconstruction->getVisibleMeshlets(
@@ -244,9 +247,11 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		//don't ask me what this is doing here!TODO: find out (or at least remove)
 		//reconstruction->clearInvalidGeometry(active_set, depth, depth_pose);
 		Matrix4f depth_proj = Camera::genProjMatrix(source->intrinsicsDepth());
+
 		active_set =
 				geometry_updater->update(
 						gpu_storage_,
+						information_renderer,
 						visible_meshlets,
 						active_set,
 						this,
@@ -261,6 +266,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 
 		//TODO: test this by not applying texture in extend step
+
 		active_set =
 				texture_updater->colorTexUpdate(
 						gpu_storage_,
@@ -274,6 +280,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		active_sets_mutex.lock();
 		active_sets[0] = active_set;
 		active_sets_mutex.unlock();
+
 
 
 		/*

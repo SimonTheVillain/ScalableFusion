@@ -208,6 +208,9 @@ public:
 
 	vector<Vector2f> tex_coords;
 
+	int tex_coord_version = -1; // important to match triangles withe
+	int tex_version = -1;
+
 	///TODO: might be needed for gpuGeomstorage !It is actually needed to check if the residency of this patch still is required.
 	Meshlet *parent_patch = nullptr;
 

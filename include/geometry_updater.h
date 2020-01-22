@@ -50,6 +50,7 @@ public:
 	//TODO: this!!!!
 	shared_ptr<ActiveSet> update(
 				GpuStorage* gpu_storage,
+				InformationRenderer* information_renderer,
 				vector<shared_ptr<Meshlet>> requested_meshlets,
 				shared_ptr<ActiveSet> preexisting_set, // the active set(if existing) containing all requested meshlets
 				SchedulerBase* scheduler,//to generate a new active set with

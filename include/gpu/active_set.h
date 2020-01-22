@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+//#include <thread>
 
 #include <cuda/coalesced_memory_transfer.h>
 #include <cuda/geom_update.h>
@@ -37,6 +38,7 @@ class ActiveSet {
 
 public:
 
+	static std::mutex mutex;
 	~ActiveSet();
 
 	string name;
@@ -85,14 +87,14 @@ public:
 	GLuint getHeaderBuffer();
 
 
-	gpu::GeometryUpdate::TranscribeStitchTask* gpu_transcribe_tasks = nullptr;
-	size_t gpu_transcribe_task_count = 0;
+	//gpu::GeometryUpdate::TranscribeStitchTask* gpu_transcribe_tasks = nullptr;
+	//size_t gpu_transcribe_task_count = 0;
 	vector<MeshletGPU> meshlets;
 	shared_ptr<PatchInfoBufConnector> headers;
 
 
 
-	vector<gpu::GeometryUpdate::TranscribeStitchTask> transcribe_tasks;
+	//vector<gpu::GeometryUpdate::TranscribeStitchTask> transcribe_tasks;
 	//the key is the patch id (maybe share patch id with stitch ids)
 	//value is the index in the according vectors
 	unordered_map<int,int> meshlet_inds; // to p
@@ -121,6 +123,9 @@ public:
 	bool containsNeighbours(shared_ptr<Meshlet> meshlet);
 
 
+	bool hasAllGeometry();
+
+	void assertAllGeometry();
 
 
 };

@@ -103,6 +103,7 @@ public:
 	}
 
 	int countPatches();
+	int cvType() { return cv_type_;}
 
 	mutex tex_atlas_tex_mutex;
 	
@@ -210,6 +211,8 @@ public:
 
 	//test if this patch is required to
 	bool isGpuResidencyRequired();
+
+	int cvType() {return tex_->cvType();}
 
 private:
 	

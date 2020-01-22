@@ -77,12 +77,14 @@ set(SCALFU_VERSION_LIB "${SCALFU_VERSION_MAJOR}.${SCALFU_VERSION_MINOR}.${SCALFU
 add_definitions(-DGL_MEMORY_LEAK_WORKAROUND)
 
 add_definitions(-DLOG_FRAMERATE)
+#add_definitions(-DDEBUG_PICKY)
 
 #TODO: everything other than this is deprecated:!!!!
 #therefore we should get rid of this definition
 add_definitions(-DUSE_FLOAT16_GEOM_TEX)
 #add_definitions(-DSHOW_SERIOUS_DEBUG_OUTPUTS)
 add_definitions(-DPROPHYLACTIC_GPU_SYNC)#TODO: Implement this
+#add_definitions(-DIGNORE_MISSING_STD)
 
 add_definitions(-DIGNORE_SERIOUS_BUG_1)
 #add_definitions(-DIGNORE_SERIOUS_BUG_2)

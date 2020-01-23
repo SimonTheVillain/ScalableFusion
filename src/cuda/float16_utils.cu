@@ -122,7 +122,7 @@ void castF16SurfaceToF32Buffers(vector<F16SurfBufCastDesc> tasks,
 	cudaFree(gpu_tasks);
 }
 
-void castF32BufferToF16Surface(cudaSurfaceObject_t surface, int x, int y,
+void castF32CPUBufferToF16Surface(cudaSurfaceObject_t surface, int x, int y,
                                int width, int height, float *buffer, 
                                int channels) {
 
@@ -138,7 +138,7 @@ void castF32BufferToF16Surface(cudaSurfaceObject_t surface, int x, int y,
 	tasks.push_back(task);
 	vector<uint8_t*> data;
 	data.push_back((uint8_t*) buffer);
-	castF32BufferToF16Surfaces(tasks, data, channels);
+	castF32CPUBufferToF16Surfaces(tasks, data, channels);
 }
 
 template<int Channels> __global__
@@ -177,13 +177,19 @@ void castF32BufferToF16Surface_kernel(F16SurfBufCastDesc *tasks,
 				                         __float2half_rn(var[2]),
 				                         __float2half_rn(var[3])),
 				            desc.surface, x * sizeof(uint16_t) * Channels, y);
+				//printf("Does this run?%f %f %f %f     %d %d %d \n",var[0],var[1],var[2],var[3],x,y,(int)desc.surface);
+				surf2Dwrite(make_ushort4(__float2half_rn(1.0f),
+										 __float2half_rn(1.0f),
+										 __float2half_rn(1.0f),
+										 __float2half_rn(1.0f)),
+							desc.surface, x * sizeof(uint16_t) * Channels, y);
 				break;
 		}
 		i += blockDim.x;
 	}
 }
 
-void castF32BufferToF16Surfaces(vector<F16SurfBufCastDesc> tasks,
+void castF32CPUBufferToF16Surfaces(vector<F16SurfBufCastDesc> tasks,
                                 vector<uint8_t*> data, int channels) {
 	if(tasks.empty()) {
 		return;
@@ -196,10 +202,12 @@ void castF32BufferToF16Surfaces(vector<F16SurfBufCastDesc> tasks,
 		tasks[i].offset = pixel_count;
 		pixel_count += tasks[i].width * tasks[i].height;
 	}
+
+	cudaMemcpy(gpu_tasks, &tasks[0], sizeof(F16SurfBufCastDesc) * tasks.size(),
+			   cudaMemcpyHostToDevice);
+
 	float *targets;
 	cudaMalloc(&targets, sizeof(float) * pixel_count * channels);
-	cudaMemcpy(gpu_tasks, &tasks[0], sizeof(F16SurfBufCastDesc) * tasks.size(),
-	           cudaMemcpyHostToDevice);
 
 	//also upload the images from the cpu to the gpu buffer
 	for(size_t i = 0; i < tasks.size(); i++) {

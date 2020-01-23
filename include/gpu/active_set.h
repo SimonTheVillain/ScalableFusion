@@ -82,7 +82,7 @@ public:
 
 
 
-	void setupHeaders();
+	void setupHeaders(bool debug = false);
 	void setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshlets_requested);
 	GLuint getHeaderBuffer();
 

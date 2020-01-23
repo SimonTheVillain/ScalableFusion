@@ -16,9 +16,9 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
                         int width, int height, //sensor resolution
                         const vector<gpu::UpdateDescriptor> &descriptors,
 						const vector<GeometryUpdate::TranscribeStitchTask> & transcribe_tasks,
-                        Vector4f cam_pos,
-                        Matrix4f pose, // because we want the vertex position relative to the camera
-                        Matrix4f proj_pose) { //to get the position of the point on the image.
+                        const Vector4f& cam_pos,
+                        const Matrix4f& pose, // because we want the vertex position relative to the camera
+                        const Matrix4f& proj_pose) { //to get the position of the point on the image.
 
 
 	if(descriptors.empty()) {

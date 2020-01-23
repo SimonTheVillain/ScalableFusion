@@ -123,9 +123,9 @@ namespace gpu {
 	                   int width, int height, //sensor resolution
 	                   const vector<UpdateDescriptor> &descriptors,
 	                   const vector<GeometryUpdate::TranscribeStitchTask> & transcribe_tasks,
-	                   Vector4f cam_pos,
-	                   Matrix4f pose, // because we want the vertex position relative to the camera
-	                   Matrix4f proj_pose); //to get the position of the point on the image.
+	                   const Vector4f& cam_pos,
+	                   const Matrix4f& pose, // because we want the vertex position relative to the camera
+	                   const Matrix4f& proj_pose); //to get the position of the point on the image.
 
 
 } // namespace gpu

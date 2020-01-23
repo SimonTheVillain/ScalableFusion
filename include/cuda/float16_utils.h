@@ -30,11 +30,11 @@ void castF16SurfaceToF32Buffer(cudaSurfaceObject_t surface, int x, int y,
 void castF16SurfaceToF32Buffers(vector<F16SurfBufCastDesc> tasks, 
                                 vector<uint8_t*> data, int channels);
 
-void castF32BufferToF16Surface(cudaSurfaceObject_t surface, int x, int y,
+void castF32CPUBufferToF16Surface(cudaSurfaceObject_t surface, int x, int y,
                                int width, int height, float *buffer, 
                                int channels);
 
-void castF32BufferToF16Surfaces(vector<F16SurfBufCastDesc> tasks,
+void castF32CPUBufferToF16Surfaces(vector<F16SurfBufCastDesc> tasks,
                                 vector<uint8_t*> data, int channels);
 
 #ifdef __CUDACC__

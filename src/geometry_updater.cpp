@@ -635,7 +635,7 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 			depth_pose_in,
 			depth_proj);
 
-
+	updated_set->setupHeaders(true);
 
 
 	return updated_set;

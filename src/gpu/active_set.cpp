@@ -74,7 +74,8 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 					most_current.vertices = candidate.vertices;
 
 					// token taken from most current vertex
-					most_current.vertex_token = move(candidate.vertex_token);
+					if(most_current.vertex_token == nullptr)
+						most_current.vertex_token = move(candidate.vertex_token);
 
 					//lookup and geometry texture
 					{
@@ -86,7 +87,8 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 
 							most_current.std_tex.tex_version = candid_texture.tex_version;
 							most_current.std_tex.tex = candid_texture.tex;
-							most_current.std_tex.token = move(candid_texture.token);
+							if(most_current.std_tex.token == nullptr)
+								most_current.std_tex.token = move(candid_texture.token);
 						}
 
 					}
@@ -195,7 +197,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 				most_current.debug = 2;
 				if(!meshlet->geom_tex_patch->mat.empty()){
 					most_current.debug = 3;
-					most_current.std_tex.create(meshlet->geom_tex_patch.get(),storage->tex_atlas_stds_,storage->tex_pos_buffer);
+					most_current.std_tex.create(meshlet->geom_tex_patch,storage->tex_atlas_stds_,storage->tex_pos_buffer);
 				}
 			}
 		}
@@ -326,7 +328,7 @@ ActiveSet::~ActiveSet() {
 	mutex.unlock();
 }
 
-void ActiveSet::setupHeaders(){
+void ActiveSet::setupHeaders(bool debug){
 	//cout << "TODO: (IMPLEMENT THIS) ActiveSet::setupHeaders" << endl;
 	vector<GpuPatchInfo> infos(meshlets.size());
 	for(size_t i=0;i<meshlets.size();i++){
@@ -346,6 +348,12 @@ void ActiveSet::setupHeaders(){
 		if(meshlet.std_tex.tex != nullptr){
 			info.std_texture = meshlet.std_tex.genGpuTextureInfo();
 			meshlet.std_tex.tex->getTex()->makeResidentInThisThread();
+		}else{
+			if(debug){
+				cout << "[ActiveSet::setupHeaders] there is no std_tex yet" << endl;
+				//this should be ok as long as this only happens within an extend step.
+				assert(0);
+			}
 		}
 	}
 
@@ -510,67 +518,10 @@ void ActiveSet::upload(shared_ptr<TriangleBufConnector> &buf, vector<Triangle> &
 
 void ActiveSet::uploadGeometry(GpuStorage *storage, MeshletGPU &meshlet_gpu, Meshlet* meshlet){
 
-	//TODO: check if we really need this! DELETE in case!
-	/*
-	vector<GpuTriangle> gpu_triangles(meshlet->triangles.size());
-	unordered_map<Vertex*,int> additional_verts;
-	int offset = meshlet->vertices.size();
-	int debug_triangle_count = meshlet->triangles.size();
-	int count = 0;
-	for(size_t k=0;k<meshlet->triangles.size();k++){
-		auto & triangle = meshlet->triangles[k];
-		for(auto i : {0,1,2}){
-			if(triangle.vertices[i]->meshlet == meshlet){
-				//vertex within this meshlet:
-				//get index
-				size_t ind = 	(reinterpret_cast<size_t>(triangle.vertices[i]) -
-								reinterpret_cast<size_t>(&meshlet->vertices[0]))/sizeof(Vertex);
-				gpu_triangles[k].indices[i] = ind;//TODO: check if this really works
-			}else if(additional_verts.count(triangle.vertices[i])){
-				//the vertex already is part of the additional vertices
-				gpu_triangles[k].indices[i] = additional_verts[triangle.vertices[i]] + offset;
-			} else{
-				//the vertex has to be added to the additional vertices
-				gpu_triangles[k].indices[i] = count + offset;
-				assert(triangle.vertices[i]->p[3] == 1.0f);
-				additional_verts[triangle.vertices[i]] = count;
-				count ++;
-			}
-		}
-	}
-
-	vector<GpuVertex> gpu_verts(meshlet->vertices.size() + additional_verts.size());
-
-	for(size_t i=0;i<meshlet->vertices.size();i++){
-		gpu_verts[i] = meshlet->vertices[i].genGpuVertex();
-	}
-	for(auto pair : additional_verts){
-		gpu_verts[pair.second + offset] = pair.first->genGpuVertex();
-
-		assert(gpu_verts[pair.second + offset].p[3] == 1.0f);//debug remove
-	}
-	//debug measure
-	int debug_count=0;
-	for(auto vert : gpu_verts){
-		cout << vert.p<< endl;
-		debug_count++;
-		assert(!isnan(vert.p[3]));
-		int debug_size = meshlet->vertices.size();
-		assert(vert.p[3] == 1.0f);
-	}
-
-	//reserve and upload vertices
-	meshlet_gpu.vertices = storage->vertex_buffer->getBlock(gpu_verts.size());
-	meshlet_gpu.vertices->upload(&gpu_verts[0]);
-
-	//reserve and upload triangles
-	meshlet_gpu.triangles = storage->triangle_buffer->getBlock(gpu_triangles.size());
-	meshlet_gpu.triangles->upload(&gpu_triangles[0]);
-	*/
 	vector<GpuTriangle> gpu_triangles(meshlet->triangles.size());
 	int max_local_vertex_index = 0;
 	for(auto & tri : meshlet->triangles)
-		for(size_t i : {0,1,2})
+		for(size_t i : {0 ,1 ,2})
 			max_local_vertex_index =
 					std::max(max_local_vertex_index,tri.local_indices[i]);
 

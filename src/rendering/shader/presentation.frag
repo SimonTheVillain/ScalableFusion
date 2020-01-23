@@ -81,7 +81,11 @@ void main(void) {
 	} else if(color_mode == 2) {
 		//presenting the standard deviation textures....
 		//multiplying with 10 is a good idea there
+
 		color.xyz = color.xyz * 10.0;
+		if(bindless_texture == 0){
+			color = vec4(0.5, 0.5, 0, 1);
+		}
 		//color.xy = tex_pos_out;//debug!!!
 		//color.zw = vec2(0,1);
 	} else if(color_mode == 3) {

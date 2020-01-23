@@ -38,13 +38,13 @@ struct GpuTriangle {
 
 ///TODO: maybe we add slots for CUDA surfaces and stuff like that.
 struct GpuTextureInfo {
-	uint64_t gl_ref_tex_ptr_DEBUG; // only used for rendering a debug view
+	uint64_t gl_ref_tex_ptr_DEBUG = 0; // only used for rendering a debug view
 	Vector2f ref_tex_pos_DEBUG; // same
 
 
-	uint64_t gl_tex_pointer;
-	uint32_t tex_coord_start_ind;//could also be 16 bit int
-	uint32_t padding;
+	uint64_t gl_tex_pointer = 0;
+	uint32_t tex_coord_start_ind = 0;//could also be 16 bit int
+	uint32_t padding = 0;
 
 	/**
 	 * Since the texture itself is shared with multiple other patches

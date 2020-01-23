@@ -5,6 +5,7 @@
 #include <gpu/gpu_mesh_structure.h>
 #include <base/mesh_structure.h>
 #include <cuda/float16_utils.h>
+#include <cuda/gpu_errchk.h>
 
 
 GpuTextureInfo TextureLayerGPU::genGpuTextureInfo(){
@@ -78,9 +79,9 @@ TextureLayerGPU::~TextureLayerGPU(){
 			   internal_format == GL_RGB16F ||
 			   internal_format == GL_RG16F  ||
 			   internal_format == GL_R16F) {
-
-		uint8_t* data_gpu;
 		int channels = tex->getTex()->getChannelCount();
+		/*
+		uint8_t* data_gpu;
 		size_t byte_count = sizeof(float) * rect.width*rect.height * channels;
 		cudaMalloc(&data_gpu,byte_count);
 
@@ -90,8 +91,17 @@ TextureLayerGPU::~TextureLayerGPU(){
 								  tex->getTex()->getChannelCount());
 
 		data = cv::Mat(rect.height,rect.width,CV_32FC(channels));
-		cudaMemcpy(data.data,data_gpu,rect.width*rect.height,cudaMemcpyDeviceToHost);
+		cudaMemcpy(data.data,data_gpu,byte_count,cudaMemcpyDeviceToHost);
+		cudaDeviceSynchronize();
+		cv::imshow("downloaded std_tex_patch",data);
+		cv::waitKey(1);
+		//assert(0);//if this happens the first few frames something is really off
 		cudaFree(data_gpu);
+		*/
+
+		data = cv::Mat(rect.height,rect.width,CV_16UC(channels));
+		tex->downloadData(data.data);
+
 
 	}else{
 		//assert(0);
@@ -119,7 +129,7 @@ TextureLayerGPU::~TextureLayerGPU(){
 
 
 
-void TextureLayerGPU::create(MeshTexture* cpu_texture, TexAtlas* tex_atlas,GpuBuffer<Eigen::Vector2f>* coord_buffer) {
+void TextureLayerGPU::create(shared_ptr<MeshTexture> cpu_texture, TexAtlas* tex_atlas,GpuBuffer<Eigen::Vector2f>* coord_buffer) {
 
 
 	//upload the image
@@ -132,18 +142,49 @@ void TextureLayerGPU::create(MeshTexture* cpu_texture, TexAtlas* tex_atlas,GpuBu
 			   internal_format == GL_RG16F  ||
 			   internal_format == GL_R16F) {
 
-		int byte_count = patch->getTex()->getChannelCount() * sizeof(float) * size.width * size.height;
-		uint8_t* data_gpu;
-		cudaMalloc(&data_gpu,byte_count);
-		cudaMemcpy(data_gpu,data.data,byte_count,cudaMemcpyHostToDevice);
+		//int byte_count = patch->getTex()->getChannelCount() * sizeof(float) * size.width * size.height;
+		//uint8_t* data_gpu;
+		//cudaMalloc(&data_gpu,byte_count);
+		//cudaMemcpy(data_gpu,data.data,byte_count,cudaMemcpyHostToDevice);
+		patch->uploadData(data.data);
+		/*
+		cv::imshow("upload std_tex_patch",data);
+		cv::waitKey(1);
 
 		cv::Rect2i rect = patch->getRect();
-		castF32BufferToF16Surface(patch->getTex()->getCudaSurfaceObject(),
+		castF32CPUBufferToF16Surface(patch->getTex()->getCudaSurfaceObject(),
 								  rect.x,rect.y,rect.width,rect.height,
-								  (float*)data_gpu,
+								  (float*)data.data,
 								  patch->getTex()->getChannelCount());
-		cudaFree(data_gpu);
+		//cudaFree(data_gpu);
+		cudaDeviceSynchronize();//just for debug!!!
+		gpuErrchk(cudaPeekAtLastError());
 
+
+		//TODO: remove everything below this!!!!!!!
+		//DEBUG test if what we uploaded can be downloaded as well
+		uint8_t* data_gpu2;
+		rect = patch->getRect();
+		int channels = patch->getTex()->getChannelCount();
+		size_t byte_count2 = sizeof(float) * rect.width*rect.height * channels;
+		cudaMalloc(&data_gpu2,byte_count2);
+
+		castF16SurfaceToF32Buffer(patch->getTex()->getCudaSurfaceObject(),
+								  rect.x,rect.y,rect.width,rect.height,
+								  (float*)data_gpu2,
+								  patch->getTex()->getChannelCount());
+
+		data = cv::Mat(rect.height,rect.width,CV_32FC(channels));
+		cudaMemcpy(data.data,data_gpu2,byte_count2,cudaMemcpyDeviceToHost);
+		cudaDeviceSynchronize();
+		cv::imshow("Re-downloaded std_tex_patch",data);
+		cv::waitKey();
+		//assert(0);//if this happens the first few frames something is really off
+		cudaFree(data_gpu2);
+
+		 */
+		cudaDeviceSynchronize();//just for debug!!!
+		gpuErrchk(cudaPeekAtLastError());
 
 	}else{
 		patch->uploadData(data.data);
@@ -159,6 +200,10 @@ void TextureLayerGPU::create(MeshTexture* cpu_texture, TexAtlas* tex_atlas,GpuBu
 	coords = buffer;
 	tex_coord_version = cpu_texture->tex_coord_version;
 	tex_version = cpu_texture->tex_version;
+
+	token = make_unique<weak_ptr<MeshTexture>>(cpu_texture);
+	//weak_ptr<MeshTexture> weak_cpu_tex = cpu_texture;
+	//token = make_unique<weak_ptr<MeshTexture>>(weak_cpu_tex);
 
 	//create vertex buffer and upload to that as well
 	//upload float32 to float16 (depending on the datatype)

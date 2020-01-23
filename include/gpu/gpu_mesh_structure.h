@@ -60,7 +60,7 @@ public:
 
 	void create(cv::Mat &data,TexAtlas* tex_atlas);
 
-	void create(MeshTexture* cpu_texture,TexAtlas* tex_atlas,GpuBuffer<Eigen::Vector2f>* coord_buffer);
+	void create(shared_ptr<MeshTexture> cpu_texture,TexAtlas* tex_atlas,GpuBuffer<Eigen::Vector2f>* coord_buffer);
 
 };
 

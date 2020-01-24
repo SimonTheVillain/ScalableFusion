@@ -300,9 +300,10 @@ void TextureUpdater::applyColorData2(GpuStorage* gpu_storage,
 
 		//create a texture on the cpu:
 		meshlet->tex_patches.emplace_back();
-		shared_ptr<MeshTexture> tex = meshlet->tex_patches[0];
-
-
+		shared_ptr<MeshTexture> &tex = meshlet->tex_patches[0];
+		tex = make_shared<MeshTexture>(MeshTexture::Type::COLOR8);
+		tex->tex_version = 1;
+		tex->tex_coord_version = meshlet->triangles_version;
 
 		//create a texture on the gpu:
 		meshlet_gpu->textures.emplace_back();
@@ -312,7 +313,8 @@ void TextureUpdater::applyColorData2(GpuStorage* gpu_storage,
 		cv::Size2i size(bound.width + 0.5f,bound.height + 0.5f);
 		tex_gpu->tex = gpu_storage->tex_atlas_rgb_8_bit_->getTexAtlasPatch(size);
 		tex_gpu->token = make_unique<weak_ptr<MeshTexture>>(tex);
-
+		tex_gpu->tex_coord_version = meshlet->triangles_version; //triangle version of meshlet
+		tex_gpu->tex_version = 1; // the very first version of this texture
 
 		task.vertices = meshlet_gpu->vertices->getStartingPtr();
 		task.vertex_count = meshlet_gpu->vertices->getSize();
@@ -375,6 +377,7 @@ void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
 									Matrix4f &pose, Matrix4f &proj,
 									shared_ptr<ActiveSet> active_set) {
 	cout<< "TextureUpdater::applyColorData reimplement this" << endl;
+	assert(0);
 	return;
 	assert(0); //TODO: reimplement this functionality
 	/*

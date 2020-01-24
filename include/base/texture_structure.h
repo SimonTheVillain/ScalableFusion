@@ -211,8 +211,8 @@ public:
 	int tex_coord_version = -1; // important to match triangles withe
 	int tex_version = -1;
 
-	///TODO: might be needed for gpuGeomstorage !It is actually needed to check if the residency of this patch still is required.
-	Meshlet *parent_patch = nullptr;
+	///TODO: might be needed to check if a GPU residency of the texture is required / if the tex coords are up to date
+	//Meshlet *parent_patch = nullptr;
 
 	mutex mat_mutex;
 	cv::Mat mat;

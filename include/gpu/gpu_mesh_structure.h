@@ -58,7 +58,7 @@ public:
 	GpuTextureInfo genGpuTextureInfo();
 
 
-	void create(cv::Mat &data,TexAtlas* tex_atlas);
+	//void create(cv::Mat &data,TexAtlas* tex_atlas);
 
 	void create(shared_ptr<MeshTexture> cpu_texture,TexAtlas* tex_atlas,GpuBuffer<Eigen::Vector2f>* coord_buffer);
 

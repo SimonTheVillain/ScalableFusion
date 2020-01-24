@@ -133,22 +133,6 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 		}
 
 		most_current.debug = 0;
-		//upload geometry texture if we are on the cpu.
-		if(most_current.std_tex.tex == nullptr){
-			most_current.debug = 1;
-			if(meshlet->geom_tex_patch != nullptr){
-				most_current.debug = 2;
-				if(!meshlet->geom_tex_patch->mat.empty()){
-					most_current.debug = 3;
-					most_current.std_tex.create(meshlet->geom_tex_patch,storage->tex_atlas_stds_,storage->tex_pos_buffer);
-				}
-			}
-		}
-
-		//TODO: textures
-		for(size_t k=0;k<meshlet->tex_patches.size();k++){
-			//upload new textures
-		}
 
 
 		if(most_current.vertex_token == nullptr){
@@ -162,9 +146,18 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 		for(size_t k=0;k<meshlet->tex_patches.size();k++){
 			//TODO: check if token for the textures exist or got lost
 			//recreate token if they got lost somehow
+
+		}
+		for(size_t k = 0; k < most_current.textures.size();k++){
+			if(most_current.textures[k] == nullptr){
+				assert(0);
+			}
+			if(most_current.textures[k]->token == nullptr){
+				assert(0); // should not happen. at this point we already want some
+			}
 		}
 
-		//check if we already have new data
+		//upload geometry data if there was none on the GPU
 		if(most_current.triangle_version == -1){
 			//no geometry found on the gpu: upload from cpu
 
@@ -187,8 +180,40 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 			}
 		}
 
+		//upload geometry texture if there was none on the GPU
+		if(most_current.std_tex.tex == nullptr){
+			most_current.debug = 1;
+			if(meshlet->geom_tex_patch != nullptr){
+				most_current.debug = 2;
+				if(!meshlet->geom_tex_patch->mat.empty()){
+					most_current.debug = 3;
+					most_current.std_tex.create(meshlet->geom_tex_patch,storage->tex_atlas_stds_,storage->tex_pos_buffer);
+				}
+			}
+		}
+
+		//upload color textures if there was none on the GPU
+		if(most_current.textures.size() == 0){
+
+			for(size_t k=0;k<meshlet->tex_patches.size();k++){
+				//upload new textures
+				shared_ptr<MeshTexture> &tex_cpu = meshlet->tex_patches[k];
+
+
+				most_current.textures.emplace_back();
+				shared_ptr<TextureLayerGPU> &tex_gpu = most_current.textures[k];
+				tex_gpu = make_shared<TextureLayerGPU>();
+				tex_gpu->create(tex_cpu,storage->tex_atlas_rgb_8_bit_,storage->tex_pos_buffer);
+
+			}
+
+		}
+
+
+
 		if(most_current.vertex_token == nullptr){
 			cout << " all this fuzz and still no valid token?" << endl;
+			assert(0);
 			//create a vertex token if it got lost somehow
 			//	most_current.vertex_token = make_unique<weak_ptr<Meshlet>>(meshlet);
 		}

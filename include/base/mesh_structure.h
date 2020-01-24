@@ -325,29 +325,6 @@ public:
 	void removeTexPatch(shared_ptr<MeshTexture> tex_patch);
 	void removeTexPatches(vector<shared_ptr<MeshTexture>> tex_patches);
 
-
-	/*
-	int addActiveSet(ActiveSet* active_set);
-	int removeActiveSet(ActiveSet *active_set);
-
-	shared_ptr<DoubleStitch> getDoubleStitchWith(Meshlet *other_patch);
-	void addStitchReference(shared_ptr<DoubleStitch> stitch);
-	void removeStitchReference(shared_ptr<DoubleStitch> stitch);
-
-
-	shared_ptr<TripleStitch> getTripleStitchWith(Meshlet *other_patch_1,
-	                                             Meshlet *other_patch_2);
-	void addStitchReference(shared_ptr<TripleStitch> stitch);
-	void removeStitchReference(shared_ptr<TripleStitch> stitch);
-
-	set<shared_ptr<Meshlet>> getNeighbours();
-
-	shared_ptr<DoubleStitch> getDoubleStitchTo(shared_ptr<Meshlet> patch);
-	shared_ptr<TripleStitch> getTripleStitchTo(shared_ptr<Meshlet> patch);
-
-	bool isGeometryFullyAllocated();
-	 */
-
 	mutex neighbour_mutex;
 	vector<weak_ptr<Meshlet>> neighbours;
 	void addNeighbour(weak_ptr<Meshlet> nb){

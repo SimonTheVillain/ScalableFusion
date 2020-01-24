@@ -621,19 +621,24 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 	dilateLookupTextures(dilations);
 	cudaDeviceSynchronize();
 
+	//TODO: remove this desparate attempt to debugging
+	//Matrix4f temp = depth_pose_in;
+	//depth_pose_in = temp.inverse();
+
 
 	Vector4f cam_pos = Camera::calcCamPosFromExtrinsic(depth_pose_in);
-	Matrix4f proj_pose;
+	Matrix4f depth_pose = depth_pose_in.inverse();
+	Matrix4f proj_pose = depth_proj * depth_pose_in.inverse();
 
-	cout << "DEBUG: Geometry Update" << endl;
+	cout << "DEBUG: Geometry Update: " << update_descriptors.size() << " vs " << updated_set->meshlets.size() << endl;
 	gpu::updateGeometry(
 			d_std_tex->getCudaSurfaceObject(),
 			d_std_tex->getWidth(),d_std_tex->getHeight(),
 			update_descriptors,
 			transcribe_tasks,//updated_set->transcribe_tasks,
 			cam_pos,
-			depth_pose_in,
-			depth_proj);
+			depth_pose,
+			proj_pose);
 
 	updated_set->setupHeaders(true);
 
@@ -642,230 +647,5 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 	active_sets.clear();
 
 	return updated_set;
-	/*
-	Matrix4f proj = Camera::genProjMatrix(mesh->params.depth_fxycxy);
-	Matrix4f pose = depth_pose_in;
-	Matrix4f pose_tmp = pose.inverse();
-	Matrix4f proj_pose = proj * pose_tmp;
 
-	// Get the position of the depth camera
-	Vector4f cam_pos = Camera::calcCamPosFromExtrinsic(pose_tmp);
-
-	vector<shared_ptr<Meshlet>> patches = active_set->retained_mesh_patches_cpu;
-
-	// Creation of the descriptors for this job
-	vector<gpu::UpdateDescriptor> descriptors;
-	vector<shared_ptr<Meshlet>> updated_patches;
-
-	vector<shared_ptr<TexAtlasPatch>> dest_tex_handles; //retain the destination tex handles for this function
-
-	for(size_t i = 0; i < patches.size(); i++) {
-
-		//TODO: maybe we should not update every visible patch. we might want
-		//to check if it really is feasible on every patch. some of them
-		//might be hidden or some of them might be too far away and the surface
-		//estimate is already waaay better than what the sensor could deliver.
-		//?????
-		//TODO: maybe the generation of this descriptor fits into
-		//the mesh patch class.
-		shared_ptr<Meshlet> patch = patches[i];
-
-		shared_ptr<MeshletGpuHandle> gpu = patch->gpu.lock();
-		if(!patch->isPartOfActiveSetWithNeighbours(active_set.get())) {
-			continue;
-		}
-
-		shared_ptr<MeshTextureGpuHandle> geom_tex_gpu_handle = 
-				patch->geom_tex_patch->gpu.lock();
-		if(geom_tex_gpu_handle == nullptr) {
-			MeshTextureGpuHandle *debug_tex =
-					active_set->retained_mesh_patches[i]->geom_tex.get();
-			cout << "how come this is not initialized yet?" << endl;
-			assert(0);
-			continue;//actually this can happen in multithreaded mode
-			assert(0);
-		}
-		if(geom_tex_gpu_handle->tex == nullptr) {
-			continue;
-		}
-
-		if(!geom_tex_gpu_handle->checkRefTexDependencies()) {
-			//assert(0) because we might want to fix the dependencies before entering this loop
-			//maybe even before entering this method because the refTexCould be fixed during
-			//creation of the activeSet
-			assert(0);//should basically do the same as the tests after
-		}
-		bool expired = false;
-		//TODO: Shorten this by putting it into a method of the geometryBase class
-		if(geom_tex_gpu_handle->ref_tex_dependencies.empty()) {
-			assert(0);
-			continue;//don't do a update since the refTex obviously is not set (indicated by it having no dependencies)
-			//TODO: create/update the refTex if all the necessary neighbours are also part of this set
-		}
-		for(size_t j = 0; j < geom_tex_gpu_handle->ref_tex_dependencies.size(); j++) {
-			MeshTextureGpuHandle::Dependency dependency = 
-					geom_tex_gpu_handle->ref_tex_dependencies[j];
-
-			shared_ptr<GeometryBase> dependence_geom = dependency.geometry.lock();
-			if(dependence_geom == nullptr ||
-			   dependence_geom->getMostCurrentGpuTriangles() == nullptr) {
-				assert(0);
-				//this should not happen at any time!!!!!!!!!
-			}
-
-			if(dependence_geom->triangles_version != dependency.triangles_version) {
-				expired = true;
-				assert(0);
-			}
-			shared_ptr<TriangleBufConnector> dependence_tris = dependence_geom->getMostCurrentGpuTriangles();
-			int debug = dependence_tris->getStartingIndex();
-			if(dependence_tris->getStartingIndex() != dependency.triangle_position_on_gpu) {
-				expired = true;
-				assert(0);
-			}
-		}
-		if(expired) {
-			//TODO: rebuild the reference texture. (which is supposed to be done in the ActiveSet creation process!)
-			assert(0);
-		}
-
-		//also not run this if the reference texture is not filled
-		if(!patch->geom_tex_patch->ref_tex_filled) {
-			assert(0);
-			continue;
-		}
-		updated_patches.push_back(patch);
-
-		gpu::UpdateDescriptor desc;
-		shared_ptr<gfx::GpuTex2D> tex = geom_tex_gpu_handle->tex->getTex();
-		cv::Rect2i rect = geom_tex_gpu_handle->tex->getRect();
-		float width  = tex->getWidth();
-		float height = tex->getHeight();
-		desc.source_geometry = tex->getCudaSurfaceObject();
-
-		//wow, this really has to be streamlined
-		desc.source = rect;
-		desc.source_n = cv::Rect2f(float(rect.x) / width,
-		                           float(rect.y) / height,
-		                           float(rect.width) / width,
-		                           float(rect.height) / height);
-		desc.source_size = cv::Size2i(width, height);
-
-		desc.patch_info_slot = gpu->patch_infos->getStartingIndex();
-
-		//set the references to the vertex data.
-		desc.vertex_source_start_ind = gpu->vertices_source->getStartingIndex();
-
-		desc.vertex_count = gpu->vertices_source->getSize();
-		desc.vertex_destination_start_ind = gpu->vertices_dest->getStartingIndex();
-
-		desc.triangle_slot  = gpu->triangles->getStartingIndex();
-		desc.triangle_count = gpu->triangles->getSize();
-
-		//now go for the destRect textures
-		shared_ptr<TexAtlasPatch> dest_tex = 
-				gpu_storage->tex_atlas_stds_->getTexAtlasPatch(rect.size());
-		//assert(0); // TODO: also copy over the  dependencies belonging to the referenceTexture if we are really copying
-
-		tex  = dest_tex->getTex();
-		rect = dest_tex->getRect();
-		//width and height of the atlas texture
-		width  = tex->getWidth();
-		height = tex->getHeight();
-
-		desc.destination_geometry = tex->getCudaSurfaceObject();
-		desc.destination = rect;
-		desc.destination_n = cv::Rect2f(float(rect.x) / width,
-		                                float(rect.y) / height,
-		                                float(rect.width) / width,
-		                                float(rect.height) / height);
-		desc.destination_size = cv::Size2i(width, height);
-
-		desc.destination_references = 
-				geom_tex_gpu_handle->ref_tex->getCudaSurfaceObject();
-
-		rect = geom_tex_gpu_handle->ref_tex->getRect();
-		desc.reference_offset = rect.tl();
-
-		descriptors.push_back(desc);
-		dest_tex_handles.push_back(dest_tex);
-	}
-
-	//make the according buffers resident on the gpu
-
-	auto time_start = chrono::high_resolution_clock::now();
-
-	if(dest_tex_handles.size() != updated_patches.size()) {
-		assert(0);
-	}
-
-	//desperate debug measure
-	for(auto patch : patches) {
-		shared_ptr<MeshletGpuHandle> gpuPatch = patch->gpu.lock();
-		if(gpuPatch == nullptr) {
-			assert(0);
-		}
-		if(gpuPatch->geom_tex == nullptr) {
-			assert(0);
-		}
-		if(gpuPatch->geom_tex->tex == nullptr) {
-			assert(0);
-		}
-		if(gpuPatch->geom_tex->ref_tex == nullptr) {
-			assert(0);
-		}
-	}
-
-	int debug = updateGeometry(
-			d_std_tex->getCudaSurfaceObject(), width, height, descriptors, cam_pos, 
-			pose_tmp, proj_pose, 
-			(GpuVertex*) gpu_storage->vertex_buffer->getCudaPtr(),
-			(Vector2f*) gpu_storage->tex_pos_buffer->getCudaPtr(),
-			(GpuTriangle*) gpu_storage->triangle_buffer->getCudaPtr(),
-			(GpuPatchInfo* )gpu_storage->patch_info_buffer->getCudaPtr());
-
-	//cout << "here we should first do the vertex update and then the std texture update" << endl;
-
-	gpu::GeometryUpdate::calcCenterAndRadius(patches);
-
-	cudaDeviceSynchronize();
-
-	//unmap the graphics ressources.
-
-	//after updating the target we want to switch target and source
-	for(size_t i = 0; i < updated_patches.size(); i++) {
-		shared_ptr<Meshlet> patch = updated_patches[i];
-		shared_ptr<MeshletGpuHandle> gpu = patch->gpu.lock();
-		shared_ptr<MeshTextureGpuHandle> gpu_tex_patch =
-				patch->geom_tex_patch->gpu.lock();
-
-		gpu->geom_tex->tex = dest_tex_handles[i];//swap the std texture
-		gpu->swapSrcDst();//swap the vertices
-		//TODO: get this swap to gpu header
-
-		//TODO: get rid of all the rest!?
-
-		//we trigger the reupload(update) of the patch header on the gpu
-		patch->cpu_tex_patch_ahead = true;//maybe we want to do this update with a separate kernel call
-
-		//TODO: get this swap to gpu header
-		//TODO: and instead of swapping
-		//gpu->swapSrcDst();
-		//gpu->geomTex->swapSrcDst(); // forgot to swap the textures
-		//patch->swapVertexTargetSource();
-		patch->cpu_info_ahead = true;//maybe we want to do this update with a separate kernel call
-
-		//trigger download of geometry in this case.
-		gpu->gpu_vertices_changed = true;
-		gpu->download_to_when_finished = patch;
-
-		//mask the newly updated geom texture as something that should be downloaded
-		//patch->geomTexPatch->gpuContentAhead = true;
-
-		//enable the download of mesh textures
-		//gpuTexPatch->downloadToWhenFinished = patch->geomTexPatch;
-		gpu_tex_patch->gpu_data_changed = true;
-	}
-	mesh_reconstruction->cleanupGlStoragesThisThread_();
-	*/
 }

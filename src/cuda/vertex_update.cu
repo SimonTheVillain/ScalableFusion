@@ -263,10 +263,21 @@ void transcribe_stitch_vertices_kernel(gpu::GeometryUpdate::TranscribeStitchTask
 	uint32_t k = blockIdx.x;
 	uint32_t i = threadIdx.x;
 	gpu::GeometryUpdate::TranscribeStitchTask &task = tasks[k];
-
+	if(i == 0){
+		//printf("task.count%d \n",task.count);
+	}
 	while(i<task.count){
+		//check for the destination:
+		//Vector4f p = task.local_vertices[task.task[i].ind_local].p;
+		//printf("task.task[i].ind_local %d \n p %f %f %f %f \n",task.task[i].ind_local,p[0],p[1],p[2],p[3]);
+
+		//check for the source
+
+
+
 		task.local_vertices[task.task[i].ind_local] =
 				task.nb_vertices[task.task[i].ind_neighbour][task.task[i].ind_in_neighbour];
+
 
 		i+=blockDim.x;
 	}

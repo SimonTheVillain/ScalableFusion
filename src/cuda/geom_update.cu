@@ -73,8 +73,8 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 
 	//DEBUG VIA ALTERNATIVE PATH
 	//TODO: reinsert this and find fucking bug!
-	/*
-	if(false){
+
+	if(true){
 
 		block.x = 64; //most of these meshlets have only 60 or less stitching vertices
 		grid.x = transcribe_tasks.size();
@@ -94,7 +94,7 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 		}
 
 	}
-	 */
+
 
 
 	//TODO: fix the updates on the borders

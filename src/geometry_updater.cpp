@@ -637,6 +637,9 @@ shared_ptr<ActiveSet> GeometryUpdater::update(
 
 	updated_set->setupHeaders(true);
 
+	//explicitely clear some references to find a bug
+	preexisting_set = nullptr;
+	active_sets.clear();
 
 	return updated_set;
 	/*

@@ -69,7 +69,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 				//store the most current versions of texture + vertices
 				most_current.triangle_version = candidate.triangle_version;
 				most_current.triangles = candidate.triangles;
-				if(candidate.vertex_version > most_current.vertex_version){
+				if(candidate.vertex_version >= most_current.vertex_version){
 					most_current.vertex_version = candidate.vertex_version;
 					most_current.vertices = candidate.vertices;
 
@@ -117,63 +117,6 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 		//reallocate does only really apply if there has been data before. if there has not been. we want
 		if(reallocate){
 			if(most_current.vertex_version == -1){
-				//TODO: remove! This is only to find some bugs.
-				/*
-				for(auto active_set : active_sets){
-					if(active_set == nullptr)
-						continue;
-					if(active_set->meshlet_inds.count(meshlet->id) == 0)
-						continue;
-					int id = meshlet->id;
-					int ind = active_set->meshlet_inds[id];
-
-					MeshletGPU &candidate = active_set->meshlets[ind];
-
-					if(candidate.triangle_version == meshlet->triangles_version){
-						//store the most current versions of texture + vertices
-						most_current.triangle_version = candidate.triangle_version;
-						most_current.triangles = candidate.triangles;
-						if(candidate.vertex_version > most_current.vertex_version){
-							most_current.vertex_version = candidate.vertex_version;
-							most_current.vertices = candidate.vertices;
-
-							// token taken from most current vertex
-							most_current.vertex_token = move(candidate.vertex_token);
-
-							//lookup and geometry texture
-							{
-								most_current.geom_lookup_tex = candidate.geom_lookup_tex;
-								auto &candid_texture = candidate.std_tex;
-								if(candid_texture.version >= most_current.std_tex.version){
-									most_current.std_tex.coords = candid_texture.coords;
-									most_current.std_tex.version = candid_texture.version;
-									most_current.std_tex.tex = candid_texture.tex;
-									most_current.std_tex.token = move(candid_texture.token);
-								}
-
-							}
-
-						}
-
-
-						//TODO: all the other textures
-						for(size_t k=0;k<candidate.textures.size();k++){
-							auto &candid_texture = candidate.textures[k];
-							if(most_current.textures.size() > k){
-								//TODO: check version number and such!
-								most_current.textures[k] = candidate.textures[k];
-							}else{
-								//TODO: check version number and such!
-								most_current.textures.push_back(candidate.textures[k]);
-							}
-						}
-
-					}else if(candidate.triangle_version > meshlet->triangles_version){
-						//the triangle version on the GPU should never be greater than on the CPU
-						assert(0);//this really should not happen
-					}
-				}
-				 */
 				assert(0);
 
 			}
@@ -208,30 +151,47 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 		}
 
 
+		if(most_current.vertex_token == nullptr){
+			//create a vertex token if it got lost somehow
+			most_current.vertex_token = make_unique<weak_ptr<Meshlet>>(meshlet);
+		}
+		if(most_current.std_tex.token == nullptr){
+			//create a new token if it got lost somehow
+			most_current.std_tex.token = make_unique<weak_ptr<MeshTexture>>(meshlet->geom_tex_patch);
+		}
+		for(size_t k=0;k<meshlet->tex_patches.size();k++){
+			//TODO: check if token for the textures exist or got lost
+			//recreate token if they got lost somehow
+		}
+
 		//check if we already have new data
-		if(most_current.triangle_version != -1)
-			continue;
+		if(most_current.triangle_version == -1){
+			//no geometry found on the gpu: upload from cpu
 
-		//also create token and such!
-		if(reallocate){
-			//reallocate only if there is no initial allocation
-			assert(0);
+			//also create token and such!
+			if(reallocate){
+				//reallocate only if there is no initial allocation
+				assert(0);
+			}
+
+
+			most_current.triangle_version = meshlet->triangles_version;
+			most_current.vertex_version = meshlet->vertices_version;
+			uploadGeometry(storage,most_current,meshlet.get());
+
+			most_current.vertex_token = make_unique<weak_ptr<Meshlet>>(meshlet);
+
+
+			if(meshlet->triangles.size()){
+				assert(most_current.triangles != nullptr);
+			}
 		}
 
-
-		most_current.triangle_version = meshlet->triangles_version;
-		most_current.vertex_version = meshlet->vertices_version;
-		uploadGeometry(storage,most_current,meshlet.get());
-		
-		most_current.vertex_token = make_unique<weak_ptr<Meshlet>>(meshlet);
-
-
-		if(meshlet->triangles.size()){
-			assert(most_current.triangles != nullptr);
+		if(most_current.vertex_token == nullptr){
+			cout << " all this fuzz and still no valid token?" << endl;
+			//create a vertex token if it got lost somehow
+			//	most_current.vertex_token = make_unique<weak_ptr<Meshlet>>(meshlet);
 		}
-
-
-
 	}
 
 
@@ -240,82 +200,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 
 
 	setupTranscribeStitchesTasks(meshlets_requested);
-	/*
-	//todo: fill the most current maps
-	for(auto active_set : active_sets){
 
-		if(active_set == nullptr)
-			continue;
-		for(auto id_ind : active_set->meshlet_inds){
-			int id = id_ind.first;
-			int ind = id_ind.second;
-
-
-			if(map_requested.count(id) == 0)
-				break;// the meshlet in question is not requested to be in this active set
-
-
-			MeshletGPU &most_current = most_current_meshlets[id];
-			MeshletGPU &candidate = active_set->meshlets[ind];
-
-			//if(candidate.triangle_version == meshlets)
-			if(false){
-				if(most_current_meshlets.count(id)){
-					//check which one is the newest
-					MeshletGPU &most_current = most_current_meshlets[id];
-					MeshletGPU &candidate = active_set->meshlets[ind];
-					//TODO: at this point it would be appropriate to test for triangle_version
-					if(candidate.vertex_version > most_current.vertex_version){
-						//most_current_meshlets[id] = candidate;
-						most_current = candidate;
-					}
-				}else{
-					MeshletGPU meshletGpu;
-					meshlet
-							most_current_meshlets[id] = active_set->meshlets[ind];
-				}
-			}
-
-
-			//TODO: what to do about the textures?
-			//maybe we create a GPUMeshlet that collects the newest elements of neighbouring meshlets
-		}
-	}
-	//upload / convert list to ne
-	for(auto meshlet : meshlets_requested){
-		int index = 0;
-		if(most_current_meshlets.count(meshlet->id)){
-			//there is a meshlet on the GPU
-			//TODO: check if it is sufficient and in case generate it
-			meshlet_inds[meshlet->id] = meshlets.size();
-			meshlets.push_back(most_current_meshlets[meshlet->id]);
-
-		}else{
-			//there is no meshlet on the GPU
-			//at least allocate the memory for this meshlet!
-			//upload...
-			MeshletGPU meshletGpu;
-
-
-		}
-		meshlet_inds[meshlet->id] = index;
-	}
-	*/
-	/*
-	for(auto patch : patches){
-
-		shared_ptr<MeshletGPU> most_current = nullptr;
-		int most_current_triangle = -1;
-		int most_current_vertices = -1;
-		for(auto old_set : active_sets){
-			if(old_set->meshlet_inds.count(patch->id)){
-				int ind = old_set->meshlet_inds[patch->id];
-				//if
-			}
-		}
-	}
-	for(auto patch:)
-	 */
 }
 
 

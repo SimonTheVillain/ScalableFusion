@@ -259,6 +259,10 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 						depth_pose,
 						depth_proj);
 
+		if(active_set!=nullptr){
+			active_set->name = "geometry_updated_set";
+		}
+
 		active_sets_mutex.lock();
 		active_sets[0] = active_set;
 		active_sets[1] = active_set;
@@ -275,7 +279,9 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 						rgb_texture,
 						reconstruction->params.rgb_fxycxy,
 						rgb_pose);
-
+		if(active_set!= nullptr){
+			active_set->name = "color_updated_set";
+		}
 
 		active_sets_mutex.lock();
 		active_sets[0] = active_set;
@@ -300,6 +306,8 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 					gpu_storage_,
 					active_set, d_std_tex, d_std_mat, depth_pose,
 					rgb_texture, rgb_pose);
+
+			updated_geometry_set->name = "geometry update set";
 
 			active_sets_mutex.lock();
 			active_sets[0] = updated_geometry_set;

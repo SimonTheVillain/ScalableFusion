@@ -101,6 +101,8 @@ TextureLayerGPU::~TextureLayerGPU(){
 
 		data = cv::Mat(rect.height,rect.width,CV_16UC(channels));
 		tex->downloadData(data.data);
+		//cv::imshow("downloaded std_tex_patch",data);
+		//cv::waitKey();
 
 
 	}else{

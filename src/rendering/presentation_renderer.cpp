@@ -237,12 +237,15 @@ void PresentationRenderer::renderInWindow(MeshReconstruction* reconstruction,
 		};
 		auto task = [&](Matrix4f inv_cam_pose, Vector4f intrinsics,
 		                Vector2f res, float view_distance,
-						MeshReconstruction* reconstruction_local,
+		                MeshReconstruction* reconstruction_local,
 		                LowDetailRenderer* low_detail_renderer_local,
 		                TextureUpdater* texture_updater_local,
 		                InformationRenderer* information_renderer_local) {
-			vector<shared_ptr<MeshPatch>> visible_patches =
-					reconstruction_local->octree_.getObjects(inv_cam_pose, intrinsics, res, view_distance);
+			video::Intrinsics intrinsics_buff;
+			intrinsics_buff = intrinsics;
+			octree::Frustum frustum(inv_cam_pose, intrinsics_buff, res, view_distance);
+			vector<shared_ptr<MeshPatch>> visible_patches;
+			reconstruction_local->octree_.getVisibleObjects<MeshPatch>(&frustum, &visible_patches);
 
 			cudaDeviceSynchronize();
 			gpuErrchk(cudaPeekAtLastError());

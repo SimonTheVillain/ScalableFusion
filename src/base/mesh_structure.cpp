@@ -10,8 +10,8 @@ using namespace std;
 using namespace Eigen;
 
 ///TODO: replace this with something that returns the pointer not the shared_ptr
-MeshPatch::MeshPatch(Octree<MeshPatch> *octree) {
-	setOctree(octree);
+MeshPatch::MeshPatch(octree::Octree *octree) {
+	//octree->add(shared_from_this());
 
 	//TODO: get this from a constant... essentially it should speed up the process
 	triangles.reserve(800);
@@ -34,19 +34,20 @@ void MeshPatch::updateCenterPoint() {
 	for(size_t i = 0; i < vertices.size(); i++) {
 		c += vertices[i].p.cast<double>();
 	}
-	setPos((c * (1.0 / double(vertices.size()))).block<3, 1>(0, 0).cast<float>());
+	setSphere((c * (1.0 / double(vertices.size()))).block<3, 1>(0, 0).cast<float>(),
+	          radius());
 }
 
 void MeshPatch::updateSphereRadius() {
 	float r = 0;
-	Vector3f p = getPos();
-	Vector4f center(p[0], p[1], p[2], 0);
+	Vector3f p = center();
+	Vector4f p_center(p[0], p[1], p[2], 0);
 	for(size_t i = 0; i < vertices.size(); i++) {
-		Vector4f diff = center - vertices[i].p;
+		Vector4f diff = p_center - vertices[i].p;
 		float dist = Vector3f(diff[0], diff[1], diff[2]).norm();
 		r = max(r, dist);
 	}
-	setRadius(r);
+	setSphere(center(), r);
 }
 
 void MeshPatch::updatePrincipalPlaneAndCenter() {
@@ -58,9 +59,9 @@ void MeshPatch::updatePrincipalPlaneAndCenter() {
 		}
 	}
 	principal_plane = accumulator.plane();
-	Vector4f center = accumulator.centerPoint();
-	setPos(Vector3f(center[0], center[1], center[2]));
-	if(isnan(center[0])) {
+	Vector4f p_center = accumulator.centerPoint();
+	setSphere(Vector3f(p_center[0], p_center[1], p_center[2]), radius());
+	if(isnan(p_center[0])) {
 		cout << "[MeshPatch::updatePrincipalPlaneAndCenter] why is this nan?" << endl;
 	}
 }

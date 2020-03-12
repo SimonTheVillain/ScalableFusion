@@ -11,6 +11,7 @@
 #include <GLFW/glfw3.h>
 #include <glog/logging.h>
 
+#include <logging/logger.h>
 #include <video_source/include/source.h>
 #include <gfx/camera.h>
 #include <mesh_reconstruction.h>
@@ -163,6 +164,7 @@ static bool close_request = false;//TODO: message this to the scheduler
 
 namespace po = boost::program_options;
 int main(int argc, const char *argv[]) {
+	START_LOGGING(logging::Level::WARNING);
 
 	google::InitGoogleLogging(argv[0]);
 
@@ -182,7 +184,7 @@ int main(int argc, const char *argv[]) {
 	//"/home/simon/datasets/tum/output/fine.ply";
 
 	float replay_speed = 0.1f;
-#ifdef DEBUG
+#ifdef VERSION_DEBUG
 	replay_speed = 0.1f;
 #else
 	replay_speed = 1.0f;
@@ -386,8 +388,8 @@ int main(int argc, const char *argv[]) {
 			if(!isnan(clicked_point[0])) {
 				shared_ptr<MeshPatch> patch = scalable_map->getPatchById(patch_ind);
 				if(patch != nullptr) {
-					wire_sphere_model.setPosition(patch->getPos());
-					wire_sphere_model.setRadius(patch->getRadius());
+					wire_sphere_model.setPosition(patch->center());
+					wire_sphere_model.setRadius(patch->radius());
 				}
 			}
 			read_out_surface_info = false;
@@ -471,5 +473,7 @@ int main(int argc, const char *argv[]) {
 	cudaMalloc(&ptr, 10240);
 	cout << "DEBUG now exiting the program but purposefully leaving a tiny leak (cuda-memcheck sanity check)" << endl;
 	cudaDeviceReset();//this is necessary for a proper memory leak analysis with cuda-memcheck
+	
+	STOP_LOGGING();
 	return 0;
 }

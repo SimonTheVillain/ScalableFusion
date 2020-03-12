@@ -195,7 +195,7 @@ private:
 	//shouldnt that be a shared pointer
 	mutex patches_mutex_;
 	map<int, shared_ptr<MeshPatch>> patches_;
-	Octree<MeshPatch> octree_;//stores the objects in a spacial manner
+	octree::Octree octree_;//stores the objects in a spatial manner
 	int current_max_patch_id_ = 0;//this basically is the number of patches currently in use
 
 	//TODO: completely get rid of the concept of recycler

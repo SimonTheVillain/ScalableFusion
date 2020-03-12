@@ -206,7 +206,7 @@ void LowDetailRenderer::addPatches(vector<shared_ptr<MeshPatch> > &patches_in,
 			continue;
 		}
 		shared_ptr<MeshPatch> patch = new_patches[i].lock();
-		Vector3f p3 = patch->getPos();
+		Vector3f p3 = patch->center();
 		new_vertices[i].p = Vector4f(p3[0], p3[1], p3[2], 1.0f);
 		new_vertices[i].n = Vector4f(NAN, NAN, NAN, NAN);//placeholder
 		new_vertices[i].c = Vector4f(1, 0, 0, 1);//red placeholder
@@ -708,10 +708,10 @@ bool CoarseTriangle::isConnectingSame3Patches(shared_ptr<MeshPatch> p1,
 }
 
 bool CoarseTriangle::flipToFacePos(Vector3f pos) {
-	Vector3f to_camera =  pos - patches[0].lock()->getPos();
+	Vector3f to_camera =  pos - patches[0].lock()->center();
 
-	Vector3f v1 = patches[1].lock()->getPos() - patches[0].lock()->getPos();
-	Vector3f v2 = patches[2].lock()->getPos() - patches[0].lock()->getPos();
+	Vector3f v1 = patches[1].lock()->center() - patches[0].lock()->center();
+	Vector3f v2 = patches[2].lock()->center() - patches[0].lock()->center();
 	if(v1.cross(v2).dot(to_camera) < 0) {
 		swap(patches[1], patches[2]);
 		swap(double_stitches[1], double_stitches[2]);

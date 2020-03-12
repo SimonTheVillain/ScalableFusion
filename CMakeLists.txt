@@ -25,7 +25,7 @@ set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_BUILD_TYPE Release)
 string(TOLOWER ${CMAKE_BUILD_TYPE} LOWERCASE_CMAKE_BUILD_TYPE)
 if(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
-	add_definitions(-DDEBUG)
+	add_definitions(-DVERSION_DEBUG)
 endif(LOWERCASE_CMAKE_BUILD_TYPE MATCHES debug)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
@@ -79,6 +79,9 @@ add_definitions(-DIGNORE_SERIOUS_BUG_3)
 #add_definitions(-DIGNORE_SERIOUS_BUG_4)
 #add_definitions(-DIGNORE_SERIOUS_BUG_5)//invalid stitches
 
+# logging
+add_definitions(-DENABLE_LOGGING)
+
 # Required packages
 find_package(ASSIMP REQUIRED)
 find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
@@ -116,6 +119,7 @@ set(SCALFU_LIBRARIES
 		radical
 		dataset_loader
 		video_source
+		logging
 		${ASSIMP_LIBRARIES}
 		${Boost_LIBRARIES}
 		${OPENGL_gl_LIBRARY}
@@ -135,6 +139,7 @@ set(SCALFU_LIBRARY_DIRS
 # Add subprojects
 add_subdirectory(dataset_loader)
 add_subdirectory(video_source)
+add_subdirectory(logging)
 add_subdirectory(icp_cuda)
 add_subdirectory(src)
 add_subdirectory(applications)

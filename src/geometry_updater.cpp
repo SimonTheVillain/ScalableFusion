@@ -374,7 +374,8 @@ void GeometryUpdater::extend(
 	cout << "[GeometryUpdate::Extend] Time consumed by projecting the geometry to the geometry texture:" <<
 	        time_elapsed.count() << "ms" << endl;
 
-	reconstruction->octree_.addObjects(new_shared_mesh_patches);
+	for(auto patch : new_shared_mesh_patches)
+		reconstruction->octree_.add(patch);
 
 	//TODO: remove
 	//check if the newly created active set is completely loaded
@@ -408,7 +409,7 @@ void GeometryUpdater::extend(
 	vector<DeformationNode::NodePixPos> nodes(visible_patches.size());
 	for(size_t i = 0; i < visible_patches.size(); i++) {
 		shared_ptr<MeshPatch> patch = visible_patches[i];
-		Vector3f pos = patch->getPos();
+		Vector3f pos = patch->center();
 		Vector4f pos4(pos[0], pos[1], pos[2], 1.0f);
 		pos4 = proj_pose * pos4;
 		pos4 *= 1.0f / pos4[3];

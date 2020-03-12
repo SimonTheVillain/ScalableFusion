@@ -740,12 +740,14 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 		InformationRenderer* information_renderer
 		) {
 
-	vector<shared_ptr<MeshPatch>> visible_shared_patches = 
-			octree_.getObjects(depth_pose, params.depth_fxycxy, 
-			                   Vector2f(params.depth_res.width, 
-			                            params.depth_res.height), 
-			                   getMaxDistance(),
-			                   0.0f);//don't dilate the frustum in this case
+	video::Intrinsics intrinsics;
+	intrinsics = params.depth_fxycxy;
+	octree::Frustum frustum(depth_pose, intrinsics,
+	                        Vector2f(params.depth_res.width, 
+	                                 params.depth_res.height), 
+	                        getMaxDistance());
+	vector<shared_ptr<MeshPatch>> visible_shared_patches;
+	octree_.getVisibleObjects<MeshPatch>(&frustum, &visible_shared_patches);//don't dilate the frustum in this case
 
 	for(shared_ptr<MeshPatch> patch : visible_shared_patches) {
 		//TODO: test patch
@@ -772,7 +774,7 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 				//continue;
 			}
 			shared_ptr<MeshPatch> neighbour = stitch->patches[1].lock();
-			if(neighbour->isInsertedInOctree()) {
+			if(neighbour->node() != nullptr) {
 				patches_including_neighbours.insert(neighbour);
 			}
 		}
@@ -782,7 +784,7 @@ shared_ptr<ActiveSet> MeshReconstruction::genActiveSetFromPose(
 			}
 			for(size_t i = 1; i < 3; i++) {
 				shared_ptr<MeshPatch> neighbour = stitch->patches[i].lock();
-				if(neighbour->isInsertedInOctree()) {
+				if(neighbour->node() != nullptr) {
 					patches_including_neighbours.insert(neighbour);
 				}
 			}

@@ -48,7 +48,7 @@ int checkForOpenGLError(string msg) {
 		ret_code = 1;
 		gl_error = glGetError();
 
-		#ifdef DEBUG
+		#ifdef VERSION_DEBUG
 		assert(0);
 		#endif
 	}
@@ -94,7 +94,7 @@ int checkOpenGLFramebufferStatus(string msg, GLenum tgt_FBO) {
 
 		cout << msg << "Error: " << error_msg << endl;
 
-		#ifdef DEBUG
+		#ifdef VERSION_DEBUG
 		assert(0);
 		#endif
 	}

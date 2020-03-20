@@ -10,9 +10,10 @@ using namespace std;
 using namespace Eigen;
 
 ///TODO: replace this with something that returns the pointer not the shared_ptr
-Meshlet::Meshlet(int id,Octree<Meshlet> *octree) :
+Meshlet::Meshlet(int id, octree::Octree *octree) :
 				id(id){
-	setOctree(octree);
+	//TODO: get rid of the octree here? or figure out what to do about it
+	//setOctree(octree);
 
 	//TODO: get this from a constant... essentially it should speed up the process
 	//triangles.reserve(500);
@@ -41,7 +42,7 @@ void Meshlet::updateSphereRadius() {
 	Vector3f p = center();
 	Vector4f p_center(p[0], p[1], p[2], 0);
 	for(size_t i = 0; i < vertices.size(); i++) {
-		Vector4f diff = center - vertices[i].getP();
+		Vector4f diff = p_center - vertices[i].getP();
 		float dist = Vector3f(diff[0], diff[1], diff[2]).norm();
 		r = max(r, dist);
 	}
@@ -58,7 +59,7 @@ void Meshlet::updatePrincipalPlaneAndCenter() {
 	}
 	principal_plane = accumulator.plane();
 	Vector4f center = accumulator.centerPoint();
-	setPos(Vector3f(center[0], center[1], center[2]));
+	setSphere(Vector3f(center[0], center[1], center[2]),radius());
 	if(isnan(center[0])) {
 		cout << "[Meshlet::updatePrincipalPlaneAndCenter] why is this nan?" << endl;
 	}

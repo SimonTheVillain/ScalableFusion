@@ -409,7 +409,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	vector<DeformationNode::NodePixPos> nodes(visible_meshlets.size());
 	for(size_t i = 0; i < visible_meshlets.size(); i++) {
 		shared_ptr<Meshlet> patch = visible_meshlets[i];
-		Vector3f pos = patch->getPos();
+		Vector3f pos = patch->center();
 		Vector4f pos4(pos[0], pos[1], pos[2], 1.0f);
 		pos4 = proj_pose * pos4;
 		pos4 *= 1.0f / pos4[3];

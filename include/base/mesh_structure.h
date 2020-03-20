@@ -297,11 +297,12 @@ public:
  * different threads.
  */
 class Meshlet : public GeometryBase,
-				public OctreeMember<Meshlet>, //The name of this pattern is CRTP https://stackoverflow.com/questions/4030224/whats-the-use-of-the-derived-class-as-a-template-parameter
-                  public LowDetailPoint {
+				public octree::Object,//OctreeMember<Meshlet>, //The name of this pattern is CRTP https://stackoverflow.com/questions/4030224/whats-the-use-of-the-derived-class-as-a-template-parameter
+				public LowDetailPoint {
 public:
 
-	Meshlet(int id, Octree<Meshlet> *octree);
+	//TODO: get rid of octree in this constructor
+	Meshlet(int id, octree::Octree* octree);//Octree<Meshlet> *octree);
 
 
 	~Meshlet();

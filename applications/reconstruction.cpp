@@ -11,7 +11,7 @@
 #include <GLFW/glfw3.h>
 #include <glog/logging.h>
 
-#include <logging/logger.h>
+#include <logging/include/logger.h>
 #include <video_source/include/source.h>
 #include <gfx/camera.h>
 #include <mesh_reconstruction.h>
@@ -275,7 +275,7 @@ int main(int argc, const char *argv[]) {
 			make_shared<MeshReconstruction>(invisible_window, &garbage_collector,
 											multithreaded, 640, 480);
 
-	video::TuwDataset dataset(dataset_path, true);
+	video::TuwDataset dataset(dataset_path, hd, use_dataset_trajectory);
 
 	shared_ptr<IncrementalSegmentation> incremental_segmentation =
 			make_shared<EdithSegmentation>();

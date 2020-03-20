@@ -305,6 +305,10 @@ protected:
 	}
 	//! Implementation of Source::readExposure_()
 	bool readExposure_() {
+		if(exposure_times_.size() == 0){
+			frame.exposure_time = 1.0f;
+			return false;
+		}
 		frame.exposure_time = exposure_times_[frame_idx_];
 		return true;
 	}
@@ -332,7 +336,7 @@ protected:
  */
 class TumDataset : public Dataset {
 public:
-	TumDataset(string source_dir, bool is_high_res);
+	TumDataset(string source_dir, bool is_high_res, bool provides_odometry = false);
 
 protected:
 	bool is_high_res_; //!< Whether the dataset provides High-Res-images
@@ -345,7 +349,7 @@ protected:
  */
 class TuwDataset : public TumDataset {
 public: 
-	TuwDataset(string source_dir, bool is_high_res);
+	TuwDataset(string source_dir, bool is_high_res, bool provides_odometry = false);
 };
 
 } // namespace video

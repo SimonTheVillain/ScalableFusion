@@ -20,7 +20,7 @@
 
 #include <Eigen/Eigen>
 
-#include <logging/logger.h>
+#include <logging/include/logger.h>
 #include <video_source/source.h>
 
 using namespace std;

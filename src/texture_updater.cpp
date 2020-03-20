@@ -431,7 +431,7 @@ void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
 		patch->tex_patches_mutex.lock();
 
 		//i don't trust the patch position
-		float dist = (patch->getPos() - cam_pos).norm();
+		float dist = (patch->center() - cam_pos).norm();
 
 		bool create_this_texture = false;
 		if(patch->tex_patches.size() != 0) {
@@ -443,7 +443,7 @@ void TextureUpdater::applyColorData(MeshReconstruction* reconstruction,
 				Vector3f cam_pos_at_capture = 
 						cam_pos_at_capture4.block<3, 1>(0, 0);
 
-				float dist_at_capture = (patch->getPos() - cam_pos_at_capture).norm();
+				float dist_at_capture = (patch->center() - cam_pos_at_capture).norm();
 				if(dist_at_capture * mesh->params.max_depth_factor_thresh_for_tex_adding > 
 				   dist) {
 					//now the camera is so close that the new texture is of

@@ -72,8 +72,8 @@ bool video::Dataset::readFrame() {
 	return true;
 }
 
-video::TumDataset::TumDataset(string source_dir, bool is_high_res)
-		: Dataset(source_dir, true, true, false, false, false),
+video::TumDataset::TumDataset(string source_dir, bool is_high_res, bool provides_odometry)
+		: Dataset(source_dir, true, true, false, false, provides_odometry),
 		  is_high_res_(is_high_res) {
 
 	// Read RGB-Depth-associations from file:
@@ -166,22 +166,25 @@ video::TumDataset::TumDataset(string source_dir, bool is_high_res)
 	intrinsics_rgb_   = Vector4f(535.4, 539.2, 320.1, 247.6);
 	intrinsics_depth_ = intrinsics_rgb_;
 
+
 }
 
-video::TuwDataset::TuwDataset(string source_dir, bool is_high_res) 
-		: TumDataset(source_dir, is_high_res) {
+video::TuwDataset::TuwDataset(string source_dir, bool is_high_res, bool provides_odometry)
+		: TumDataset(source_dir, is_high_res, provides_odometry) {
 
 	ifstream file_exposure;
 	is_high_res_ ? file_exposure.open(source_dir_ + "/rgb_ids_exposure.txt") :
 	               file_exposure.open(source_dir_ + "/rgb_exposure.txt");
 	if(!file_exposure.is_open()) {
 		cout << "Could not open open exposure file" << endl;
-		assert(0);
-	}
-	string line;
-	while(getline(file_exposure, line)) {
-		exposure_times_.push_back(atof(line.c_str()));
-		// TODO: Sort exposure times and assign to correct frames
+		//assert(0);
+	}else{
+		string line;
+		while(getline(file_exposure, line)) {
+			exposure_times_.push_back(atof(line.c_str()));
+			// TODO: Sort exposure times and assign to correct frames
+		}
+
 	}
 
 	if(is_high_res_) {
@@ -209,6 +212,18 @@ video::TuwDataset::TuwDataset(string source_dir, bool is_high_res)
 	}
 	intrinsics_depth_ = Vector4f(568, 568, 320, 240); // the structure sensor
 	//intrinsics_depth_ = Vector4f(570, 570, 320, 240); // xtion
+
+	{//load in data if
+		cv::FileStorage fs(source_dir + "/intrinsics.yml", cv::FileStorage::READ);
+		if(fs.isOpened()){
+			cv::Vec4f c, d;
+			fs["rgb"] >> c;
+			fs["depth"] >> d;
+			fs.release();
+			intrinsics_rgb_ = Vector4f( c[0], c[1], c[2], c[3]);
+			intrinsics_depth_ = Vector4f( d[0], d[1], d[2], d[3]);
+		}
+	}
 
 	if(is_high_res) {
 		// TRACK 16 - 19 should work with these settings:
@@ -247,8 +262,12 @@ video::TuwDataset::TuwDataset(string source_dir, bool is_high_res)
 		radiometric_response_ = new radical::RadiometricResponse(source_dir_ + "/../rgb_ids.crf");
 		vignetting_response_  = new radical::VignettingResponse(source_dir_ + "/../rgb_ids.vgn");
 	} else {
-		radiometric_response_ = new radical::RadiometricResponse(source_dir_ + "/../rgb.crf");
-		vignetting_response_  = new radical::VignettingResponse(source_dir_ + "/../rgb.vgn");
+		try{
+			radiometric_response_ = new radical::RadiometricResponse(source_dir_ + "/../rgb.crf");
+			vignetting_response_  = new radical::VignettingResponse(source_dir_ + "/../rgb.vgn");
+		}catch (exception &e){
+			//there is no radiometric response or vignetting response function for this dataset/sensor
+		}
 	}
 
 }

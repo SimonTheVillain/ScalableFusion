@@ -1,6 +1,3 @@
-
-#define ENABLE_LOGGING
-#define LOGFILE "./log.txt"
 #include <logger.h>
 
 int main(void) {

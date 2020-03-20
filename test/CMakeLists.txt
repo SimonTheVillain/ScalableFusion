@@ -73,3 +73,6 @@ target_link_libraries(vec4_cuda_aligned
 		${SCALFU_LIBRARIES})
 
 
+add_executable(file_storage_test file_storage.cpp)
+target_link_libraries(file_storage_test
+						${SCALFU_LIBRARIES})

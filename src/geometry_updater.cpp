@@ -391,7 +391,8 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	cout << "[GeometryUpdate::Extend] Time consumed by projecting the geometry to the geometry texture:" <<
 	        time_elapsed.count() << "ms" << endl;
 
-	reconstruction->octree_.addObjects(new_shared_mesh_patches);
+	for(auto patch : new_shared_mesh_patches)
+		reconstruction->octree_.add(patch);
 
 
 	time_end = chrono::system_clock::now();

@@ -722,10 +722,10 @@ bool CoarseTriangle::isConnectingSame3Patches(shared_ptr<Meshlet> p1,
 }
 
 bool CoarseTriangle::flipToFacePos(Vector3f pos) {
-	Vector3f to_camera =  pos - patches[0].lock()->getPos();
+	Vector3f to_camera =  pos - patches[0].lock()->center();
 
-	Vector3f v1 = patches[1].lock()->getPos() - patches[0].lock()->getPos();
-	Vector3f v2 = patches[2].lock()->getPos() - patches[0].lock()->getPos();
+	Vector3f v1 = patches[1].lock()->center() - patches[0].lock()->center();
+	Vector3f v2 = patches[2].lock()->center() - patches[0].lock()->center();
 	if(v1.cross(v2).dot(to_camera) < 0) {
 		swap(patches[1], patches[2]);
 		/*

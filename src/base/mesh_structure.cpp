@@ -32,19 +32,20 @@ void Meshlet::updateCenterPoint() {
 	for(size_t i = 0; i < vertices.size(); i++) {
 		c += vertices[i].getP().cast<double>();
 	}
-	setPos((c * (1.0 / double(vertices.size()))).block<3, 1>(0, 0).cast<float>());
+	setSphere((c * (1.0 / double(vertices.size()))).block<3, 1>(0, 0).cast<float>(),
+	          radius());
 }
 
 void Meshlet::updateSphereRadius() {
 	float r = 0;
-	Vector3f p = getPos();
-	Vector4f center(p[0], p[1], p[2], 0);
+	Vector3f p = center();
+	Vector4f p_center(p[0], p[1], p[2], 0);
 	for(size_t i = 0; i < vertices.size(); i++) {
 		Vector4f diff = center - vertices[i].getP();
 		float dist = Vector3f(diff[0], diff[1], diff[2]).norm();
 		r = max(r, dist);
 	}
-	setRadius(r);
+	setSphere(center(), r);
 }
 
 void Meshlet::updatePrincipalPlaneAndCenter() {

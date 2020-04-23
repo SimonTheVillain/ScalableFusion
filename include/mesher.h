@@ -52,10 +52,13 @@ public:
 	                              Neighbour &n3,
 	                              int &rotated);
 
-	void meshIt(cv::Mat points, cv::Mat mesh_pointers, cv::Mat vertex_indices,
-	            cv::Mat sensor_std, float max_depth_step, //deprecate this
+	void meshify(cv::Mat points, cv::Mat mesh_pointers, cv::Mat vertex_indices,
+				 cv::Mat sensor_std, float max_depth_step, //deprecate this
 	            Eigen::Matrix4f depth_pose);
 
+	void colorize(	std::vector<std::shared_ptr<Meshlet>> meshlets,cv::Mat color,
+					Eigen::Matrix4f depth_pose, Eigen::Matrix4f color_pose,
+					Eigen::Vector4f depth_intrinsics, Eigen::Vector4f color_intrinsics);
 
 	// TODO: move fillNovelPatchesWithTexIndices here! (because it is a terrible function name
 	void genTexIndices(vector<shared_ptr<Meshlet> > &patches);

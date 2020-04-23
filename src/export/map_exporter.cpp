@@ -11,6 +11,10 @@
 #include <graph/deformation_node.h>
 #include <mesh_reconstruction.h>
 
+#include <iostream>
+#include <fstream>
+#include <string>
+
 using namespace std;
 using namespace Eigen;
 
@@ -93,7 +97,7 @@ void MapExporter::storeCoarse(MeshReconstruction *map, LowDetailRenderer* low_de
 	}
 }
 */
-void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
+void MapExporter::storeFine(MeshReconstruction *map, string file_path, bool fix_ply_meshlab) {
 
 
 	set<Triangle*> triangles;//don't think it will be needed
@@ -167,7 +171,6 @@ void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 			face_iter++;
 		}
 	}
-	size_t vert_iter = 0;
 	for(pair<Vertex*, int> vert_ind : vertex_indices){
 		Vertex* vert = vert_ind.first;
 		int ind = vert_ind.second;
@@ -181,26 +184,78 @@ void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 		vec.z = vec.z * 0.5f + 0.5f;
 		p_mesh->mTextureCoords[0][ind] = vec;
 		aiColor4D c;
-		c.a = 1.0f;
-		c.r = 1.0f;
-		c.g = 0.0f;
-		c.b = 0.0f;
+		c.r = vert->color[0];
+		c.g = vert->color[1];
+		c.b = vert->color[2];
+		c.a = vert->color[3];
 		p_mesh->mColors[0][ind] = c;
 
 	}
 
 
-	Assimp::Exporter exporter;
-	aiReturn result = exporter.Export(&scene, "ply", file_path.c_str());
-	if(result == aiReturn_SUCCESS) {
-		cout << "file stored in " << file_path << endl;
-	}else if(result == aiReturn_OUTOFMEMORY) {
-		cout << "storing file " << file_path << 
-		        " failed due to running out of memory" << endl;
-	}else if(result == aiReturn_FAILURE) {
-		cout << "storing file " << file_path << " failed" << 
-		        exporter.GetErrorString() << endl;
+	if(!fix_ply_meshlab){
+		Assimp::Exporter exporter;
+		aiReturn result = exporter.Export(&scene, "ply", file_path.c_str());
+		if(result == aiReturn_SUCCESS) {
+			cout << "file stored in " << file_path << endl;
+		}else if(result == aiReturn_OUTOFMEMORY) {
+			cout << "storing file " << file_path <<
+				 " failed due to running out of memory" << endl;
+		}else if(result == aiReturn_FAILURE) {
+			cout << "storing file " << file_path << " failed" <<
+				 exporter.GetErrorString() << endl;
+		}
+	}else{
+		export_scene_ply_meshlab(&scene, file_path);
 	}
+}
+
+void MapExporter::export_scene_ply_meshlab(aiScene *scene, string path) {
+	ofstream file(path, std::ios::out);
+
+	if(file.is_open())
+	{
+		file << "ply \n"
+				"format ascii 1.0\n"
+				"comment Only for you Edith! I hope you aknowledge my effort of writing the dirties ply exporter ever!"
+				<< endl;
+		file << "element vertex " << scene->mMeshes[0]->mNumVertices << endl;
+		file << "property float x\n"
+				"property float y\n"
+				"property float z\n"
+				"property float s\n"
+				"property float t\n"
+				"property uchar red\n"
+				"property uchar green\n"
+				"property uchar blue\n"
+				"property uchar alpha" << endl;
+		file << "element face " << scene->mMeshes[0]->mNumFaces << endl;
+		file << "property list uchar int vertex_index \n end_header" << endl;
+
+		for(int i=0;i<scene->mMeshes[0]->mNumVertices;i++){
+			int r, g, b, a;
+			r = 255 * scene->mMeshes[0]->mColors[0][i].r;
+			g = 255 * scene->mMeshes[0]->mColors[0][i].g;
+			b = 255 * scene->mMeshes[0]->mColors[0][i].b;
+			a = 255 * scene->mMeshes[0]->mColors[0][i].a;
+			file << scene->mMeshes[0]->mVertices[i].x << " " <<
+					scene->mMeshes[0]->mVertices[i].y << " " <<
+					scene->mMeshes[0]->mVertices[i].z << " " <<
+					scene->mMeshes[0]->mTextureCoords[0][i].x << " " <<
+					scene->mMeshes[0]->mTextureCoords[0][i].y << " " <<
+					r << " " << g << " " << b << " " << a << endl;
+		}
+
+		for(int i=0;i<scene->mMeshes[0]->mNumFaces;i++){
+			file << "3 " << scene->mMeshes[0]->mFaces[i].mIndices[0] << " " <<
+							scene->mMeshes[0]->mFaces[i].mIndices[1] << " " <<
+							scene->mMeshes[0]->mFaces[i].mIndices[2] << endl;
+
+		}
+	}
+	else cerr<<"Unable to open file";
+
+
 }
 /*
 void MapExporter::exportMapTest(string file_path) {

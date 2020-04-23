@@ -115,8 +115,10 @@ public:
 	Vector4f p;
 	Vector3f n;
 
+	Vector4f color;
+
 	Meshlet* meshlet = nullptr;
-public:
+
 
 
 	//int32_t tex_ind_in_main_patch = -1;
@@ -137,6 +139,7 @@ public:
 		p = o.p;
 		n = o.n;
 		meshlet = o.meshlet;
+		color = o.color;
 		//the other elements are better not copied since they are highly dependant on the
 		//vertex retaining its position in memory
 	}
@@ -147,6 +150,8 @@ public:
 		p = gpu_vertex.p;
 		n = gpu_vertex.n;
 		meshlet = nullptr;
+
+		color = gpu_vertex.color;
 		//tex_ind_in_main_patch = gpu_vertex.tex_ind_in_main_patch;
 	}
 
@@ -219,6 +224,7 @@ public:
 		GpuVertex vert;
 		vert.p = p;
 		vert.n = n;
+		vert.color = color;
 		//vert.tex_ind_in_main_patch = static_cast<int16_t>(tex_ind_in_main_patch);
 		return vert;
 	}
@@ -968,6 +974,7 @@ inline Vertex::Vertex ( Vertex && o) noexcept{
 	meshlet = o.meshlet;
 	p = o.p;
 	n = o.n;
+	color = o.color;
 //	tex_ind_in_main_patch  = o.tex_ind_in_main_patch;
 	triangles = std::move(o.triangles);
 	for(auto triangle : triangles){

@@ -15,6 +15,7 @@ struct GpuVertex {
 	int16_t padding;
 	//int16_t tex_index; //the texture index within the texture associated with its patch
 	int16_t valid;
+	vec4 color;
 };
 
 struct GpuTriangle {

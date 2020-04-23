@@ -279,9 +279,9 @@ Mesher::TriangleReference Mesher::addTriangle(	Vertex* pr1,
 	 */
 }
 
-void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
-					cv::Mat vertex_indices, cv::Mat sensor_std,
-					float max_depth_step, //deprecate this
+void Mesher::meshify(cv::Mat points, cv::Mat mesh_pointers,
+					 cv::Mat vertex_indices, cv::Mat sensor_std,
+					 float max_depth_step, //deprecate this
                      Matrix4f depth_pose) {
 	int width  = points.cols;
 	int height = points.rows;
@@ -550,6 +550,31 @@ void Mesher::meshIt(cv::Mat points, cv::Mat mesh_pointers,
 	}
 	cv::imshow("debug",debug*127);
 	cv::waitKey(100);
+}
+
+void Mesher::colorize(	std::vector<std::shared_ptr<Meshlet>> meshlets,cv::Mat color,
+						  Eigen::Matrix4f depth_pose, Eigen::Matrix4f color_pose,
+						  Eigen::Vector4f depth_intrinsics, Eigen::Vector4f color_intrinsics){
+	Matrix4f to_color = color_pose.inverse();
+	float fx = color_intrinsics[0];
+	float fy = color_intrinsics[1];
+	float cx = color_intrinsics[2];
+	float cy = color_intrinsics[3];
+	for(shared_ptr<Meshlet> meshlet : meshlets){
+		for(Vertex &vert : meshlet->vertices){
+			Vector4f p_l = to_color * vert.p;
+			Vector2f p(p_l[0] * fx / p_l[2] + cx, p_l[1] * fy / p_l[2] + cy);
+			int i = p[0];
+			int j = p[1];
+			if( i < 0 || i >= color.cols || j < 0 || j >= color.rows){
+				vert.color = Vector4f(0.5f, 0.5f, 0, 1.0f);
+				continue;
+			}
+			cv::Vec4b c = color.at<cv::Vec4b>(j, i);
+			vert.color = Vector4f( c[0]/255.0f,c[1]/255.0f, c[2]/255.0f, c[3]/255.0f );
+
+		}
+	}
 }
 
 struct VertexTexConn {

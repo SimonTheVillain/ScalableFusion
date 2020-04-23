@@ -12,8 +12,7 @@ using namespace Eigen;
 
 // TODO: 
 //   maybe p could be a Vector3f,
-//   n could be 3 bytes and
-//   the tex index in main patch..... if this would not be used it could half
+//   n could be 3 bytes (uint8)
 //   the space needed (forget it then!)
 struct GpuVertex {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -26,6 +25,9 @@ struct GpuVertex {
 
 	// If any of a triangle vertex is invalid we should not render it
 	int16_t valid = 1;
+
+	//TODO: remove this, since it is not very optimal to store vertex colors
+	Vector4f color;
 };
 
 //triangle with references to everything. since the first referenced patch(patch slot) is the one we get

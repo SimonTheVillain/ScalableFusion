@@ -131,7 +131,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	int seg_count = gpu_pre_seg_.getSegCount();
 
 	//*****************************************TOOOOODOOOOOO*********************
-	//TODO: put this piece of code into the meshIt part!!!!!
+	//TODO: put this piece of code into the meshify part!!!!!
 	vector<shared_ptr<Meshlet>> new_shared_mesh_patches;
 	//the same as the one above but with shared elements
 	for(int i = 0; i < seg_count; i++) {
@@ -169,8 +169,15 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	cv::Mat vertex_indices(height, width, CV_32SC1);
 	vertex_indices.setTo(cv::Scalar(-1)); // TODO: remove this line, should not be necessary
 
-	meshing.meshIt(points, mesh_pointers, vertex_indices, d_std_mat,
-				   reconstruction->params.max_depth_step, depth_pose_in);
+	meshing.meshify(points, mesh_pointers, vertex_indices, d_std_mat,
+					reconstruction->params.max_depth_step, depth_pose_in);
+
+	cv::Mat rgb_mat(rgb_tex->getHeight(),rgb_tex->getWidth(),CV_8UC4);
+	rgb_tex->downloadData(rgb_mat.data);
+
+	meshing.colorize(new_shared_mesh_patches, rgb_mat,
+			depth_pose_in, color_pose_in,
+			reconstruction->params.depth_fxycxy, reconstruction->params.rgb_fxycxy);
 
 	for(size_t i = 0; i < new_shared_mesh_patches.size(); i++) {
 		//TODO: unify these functions and maybe do this at the very end of everything!!!!!

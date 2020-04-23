@@ -8,6 +8,8 @@ using namespace std;
 class MeshReconstruction;
 class LowDetailRenderer;
 
+class aiScene;
+
 class MapExporter {
 private:
 	//texturing while reducing mesh resolution
@@ -33,10 +35,12 @@ public:
 	                       Properties_ properties) {}
 
 	static void storeCoarse(MeshReconstruction *map,LowDetailRenderer* lowDetailRenderer, string file_path);
-	static void storeFine(MeshReconstruction *map, string file_path);// {}
+	static void storeFine(MeshReconstruction *map, string file_path, bool fix_ply_meshlab = false);// {}
 
 	static void storeGraph(MeshReconstruction *map, string file_path) {}
 	static void storeDeformationGraph(MeshReconstruction *map, string file_path) {}
+
+	static void export_scene_ply_meshlab(aiScene* scene,string path);
 };
 
 #endif // FILE_EXPORT_MAP_H

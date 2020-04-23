@@ -201,6 +201,7 @@ int main(int argc, const char *argv[]) {
 	bool multithreaded = false;
 	bool store_result  = true;
 	bool hd            = false;
+	bool fix_ply_mshl  = false;
 	int  skip_initial_frames = 0;
 	float depth_scale = 1.0f;
 	int width, height;
@@ -225,6 +226,8 @@ int main(int argc, const char *argv[]) {
 			 "Storing the reconstruction in this folder. Full reconstruction with "
 			 "coarse and detailled reconstruction + "
 			 "textures (not implemented).")
+			("ply_meshlab_fix", po::bool_switch(&fix_ply_mshl),
+			 "Fix the resulting ply file so vertex colors can be read by meshlab.")
 			("coarse", po::value<string>(&coarse_output_file),
 			 "File to store the coarse representation in. Preferrably a ply file.")
 			("detailed", po::value<string>(&detailed_output_file),
@@ -461,7 +464,7 @@ int main(int argc, const char *argv[]) {
 		//assert(0);//TODO: reinsert this functionality
 		//MapExporter::storeFine(scalable_map.get(), detailed_output_file);
 
-		MapExporter::storeFine(scalable_map.get(), detailed_output_file);
+		MapExporter::storeFine(scalable_map.get(), detailed_output_file, fix_ply_mshl);
 	}
 
 	close_request =  true;

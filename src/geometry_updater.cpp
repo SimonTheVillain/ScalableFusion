@@ -263,7 +263,9 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 		// and therefore they would not get deleted until now.
 		// Any unconnected or deleted but empty (of triangle) patch
 		// gets deleted now.
-		reconstruction->removePatch(set_of_patches_to_be_removed[i]);
+		cout << "TODO: Put this back in!" << endl;
+		//TODO: fix and reinsert the removal of invalid patches
+		//reconstruction->removePatch(set_of_patches_to_be_removed[i]);
 		cout << "REMOVING PATCH" << endl;
 	}
 	set_of_patches_to_be_removed.clear();

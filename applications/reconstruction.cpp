@@ -451,12 +451,17 @@ int main(int argc, const char *argv[]) {
 		//store the stupid reconstruction somewhere
 		assert(0); // TODO: reinsert this functionality
 		//MapExporter::storeCoarse(scalable_map.get(), &low_detail_renderer, coarse_output_file);
+
+
+
 	}
 
 	if(!detailed_output_file.empty()) {
 		//store the stupid reconstruction somewhere
-		assert(0);//TODO: reinsert this functionality
+		//assert(0);//TODO: reinsert this functionality
 		//MapExporter::storeFine(scalable_map.get(), detailed_output_file);
+
+		MapExporter::storeFine(scalable_map.get(), detailed_output_file);
 	}
 
 	close_request =  true;

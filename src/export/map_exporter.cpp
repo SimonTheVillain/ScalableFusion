@@ -92,13 +92,9 @@ void MapExporter::storeCoarse(MeshReconstruction *map, LowDetailRenderer* low_de
 		        exporter.GetErrorString() << endl;
 	}
 }
-
+*/
 void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 
-	//todo: iterate over all patches download their data from gpu to cpu
-
-	set<shared_ptr<DoubleStitch>> double_stitches;
-	set<shared_ptr<TripleStitch>> triple_stitches;
 
 	set<Triangle*> triangles;//don't think it will be needed
 	vector<Vertex> vertices;
@@ -108,26 +104,21 @@ void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 	size_t triangle_count = 0;
 	size_t vertex_count = 0;
 	map->patches_mutex_.lock();
+	std::unordered_map<Vertex*,int> vertex_indices;
 	for(pair<int, shared_ptr<Meshlet>> id_patch : map->patches_) {//of course auto would be valid here as well
-		shared_ptr<Meshlet> patch = id_patch.second;
-		start_indices[id_patch.first] = vertex_count;
-		triangle_count += patch->triangles.size();
-		vertex_count += patch->vertices.size();
-		for(size_t i = 0; i < patch->double_stitches.size(); i++) {
-			double_stitches.insert(patch->double_stitches[i]);
+		shared_ptr<Meshlet> meshlet = id_patch.second;
+		for(Triangle &triangle : meshlet->triangles){
+			triangle_count++;
+			for(int i : {0, 1, 2}){
+				Vertex* vert = triangle.vertices[i];
+				if(!vertex_indices.count(vert)){
+					vertex_indices[vert] = vertex_count;
+					vertex_count++;
+				}
+
+			}
 		}
-		for(size_t i = 0; i < patch->triple_stitches.size(); i++) {
-			triple_stitches.insert(patch->triple_stitches[i]);
-		}
-		//download the most current vertices and so on
 	}
-	for(auto double_stitch : double_stitches) {
-		triangle_count += double_stitch->triangles.size();
-	}
-	for(auto triple_stitch : triple_stitches) {
-		triangle_count += triple_stitch->triangles.size();
-	}
-	//how to store
 
 	map->patches_mutex_.unlock();
 
@@ -154,54 +145,50 @@ void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 	p_mesh->mVertices = new aiVector3D[vertex_count];
 	p_mesh->mNumVertices = vertex_count;
 	p_mesh->mTextureCoords[0] = new aiVector3D[vertex_count];
+	p_mesh->mColors[0] = new aiColor4D[vertex_count];
 
 	p_mesh->mFaces = new aiFace[triangle_count];
 	p_mesh->mNumFaces = triangle_count;
 
-	size_t j = 0;
-	size_t k = 0;
-	auto appendTrianglesAsFaces = [&k, &start_indices, &p_mesh] (
-			vector<Triangle> triangles) {
-		for(Triangle &triangle : triangles) {
+
+	size_t face_iter = 0;
+	for(pair<int, shared_ptr<Meshlet>> id_patch : map->patches_) {
+		shared_ptr<Meshlet> meshlet = id_patch.second;
+
+		for(Triangle &triangle : meshlet->triangles){
 			aiFace face;
 			face.mIndices = new unsigned int[3];
 			face.mNumIndices = 3;
-			for(size_t l = 0; l < 3; l++) {
-				unsigned int offset = start_indices[triangle.points[l].getPatch()->id];
-				unsigned int index = triangle.points[l].getIndex() + offset;
-				face.mIndices[l] = index;
+			for(size_t i : {0, 1, 2}){
+				face.mIndices[i] =
+						vertex_indices[triangle.vertices[i]];
 			}
-			p_mesh->mFaces[k]=face;
-			k++;
+			p_mesh->mFaces[face_iter] = face;
+			face_iter++;
 		}
-	};
+	}
+	size_t vert_iter = 0;
+	for(pair<Vertex*, int> vert_ind : vertex_indices){
+		Vertex* vert = vert_ind.first;
+		int ind = vert_ind.second;
+		aiVector3D vec;
+		vec.x = vert->p[0];
+		vec.y = vert->p[1];
+		vec.z = vert->p[2];
+		p_mesh->mVertices[ind] = vec;
+		vec.x = vec.x * 0.5f + 0.5f;
+		vec.y = vec.y * 0.5f + 0.5f;
+		vec.z = vec.z * 0.5f + 0.5f;
+		p_mesh->mTextureCoords[0][ind] = vec;
+		aiColor4D c;
+		c.a = 1.0f;
+		c.r = 1.0f;
+		c.g = 0.0f;
+		c.b = 0.0f;
+		p_mesh->mColors[0][ind] = c;
 
-	for(pair<int, shared_ptr<Meshlet>> id_patch : map->patches_) {
-		shared_ptr<Meshlet> patch = id_patch.second;
-		for(int i = 0 ; i < patch->vertices.size(); i++) {
-			aiVector3D vec;
-			vec.x = patch->vertices[i].p[0];
-			vec.y = patch->vertices[i].p[1];
-			vec.z = patch->vertices[i].p[2];
-			p_mesh->mVertices[j] = vec;
-			vec.x = vec.x * 0.5f + 0.5f;
-			vec.y = vec.y * 0.5f + 0.5f;
-			vec.z = vec.z * 0.5f + 0.5f;
-			p_mesh->mTextureCoords[0][j] = vec;
-			j++;
-		}
-		appendTrianglesAsFaces(patch->triangles);
 	}
 
-	auto appendFaces = [&k, &start_indices, &p_mesh, &appendTrianglesAsFaces] (
-			set<shared_ptr<GeometryBase>> &geoms) {
-		for(auto geom : geoms) {
-			appendTrianglesAsFaces(geom->triangles);
-		}
-	};
-	shared_ptr<GeometryBase> base = *(double_stitches.begin());
-	appendFaces(reinterpret_cast<set<shared_ptr<GeometryBase>>&>(double_stitches));
-	appendFaces(reinterpret_cast<set<shared_ptr<GeometryBase>>&>(triple_stitches));
 
 	Assimp::Exporter exporter;
 	aiReturn result = exporter.Export(&scene, "ply", file_path.c_str());
@@ -215,7 +202,7 @@ void MapExporter::storeFine(MeshReconstruction *map, string file_path) {
 		        exporter.GetErrorString() << endl;
 	}
 }
-
+/*
 void MapExporter::exportMapTest(string file_path) {
 	cout << "Assimp " << aiGetVersionMajor() << "." << aiGetVersionMinor() << endl;
 

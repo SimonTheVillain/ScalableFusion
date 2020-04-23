@@ -286,20 +286,17 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 
 
 	for(int i=0;i<meshlets.size();i++){
-		if(i == 552){
-			//cout << "is it here where everything breaks apart?" << endl;
-		}
 
 		auto &meshlet_gpu = meshlets[i];
 		auto &meshlet = meshlets_requested[i];
-		if(meshlet->id == 99){
-			cout << "is it here where everything breaks apart?" << endl;
-		}
 
 		if(!containsNeighbours(meshlet))
 			continue;
 
+		//mapping from (neighbouring) meshlets (CPU) to index in the list of neighbours
 		unordered_map<Meshlet*,int> meshlets_to_ind;
+
+		//pointer to each neighbours vertices on gpu
 		vector<GpuVertex*> vertices_ptr_gpu(meshlet->neighbours.size());
 		for(size_t j=0;j<meshlet->neighbours.size();j++){
 			weak_ptr<Meshlet> nb_weak = meshlet->neighbours[j];
@@ -312,47 +309,42 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 			vertices_ptr_gpu[j] = nb_gpu->vertices->getStartingPtr();
 		}
 
-
-		//vertices_ptr_gpu[i] = meshlet_gpu.vertices->getStartingPtr();
-
-		//tasks.emplace_back();
-		//auto & task = tasks.back();
-		//setup the copying task
-
-		//only do the following if all the neighbours are uploaded
-
-
-
+		//map from CPU vertex pointers to their indices within the given meshlets (only if they are neighbours though)
 		unordered_map<Vertex*,int> vertex_indices;
 		Meshlet* meshlet_ptr = meshlet.get();
 		for(int j=0;j<meshlet->triangles.size();j++){
 			Triangle &tri = meshlet->triangles[j];
 			for(int k : {0, 1, 2}){
 				if(tri.vertices[k]->meshlet != meshlet_ptr){
-					//we need to add this vertex to the list
+					//we need to add this vertex to the map of neighbouring vertices
 					vertex_indices[tri.vertices[k]] = tri.local_indices[k];
 				}
 			}
 		}
 		int task_count = vertex_indices.size();
+
+		//TODO: 2020 Simon! Find out whats going on here!
 		//TODO: DELETE AFTER FIXED! invalid next size (fast) happening here! (at the destructor)
 		vector<MeshletGPU::TranscribeBorderVertTask> tasks(task_count);
 
 		int count = 0;
-		for(auto vert : vertex_indices){
+		for(auto vert : vertex_indices){ //iterate over all vertices that are not local
 			tasks[count].ind_local = vert.second;
+			//calculate index by subtracting pointers (ptr(vertex) - ptr(first vert of according meshlet)
 			int ind_in_neighbour = vert.first - &vert.first->meshlet->vertices[0];
 			//cout << ind_in_neighbour << endl;
 			tasks[count].ind_in_neighbour = ind_in_neighbour;//check if these indices make sense
 			tasks[count].ind_neighbour = 0;
+
+			//check if the neighbour even exists in our list of neighbours
 			if(meshlets_to_ind.count(vert.first->meshlet)){
 				tasks[count].ind_neighbour = meshlets_to_ind[vert.first->meshlet];
 			}else{
+				cout << "DEBUG:!!!! That vertex is probably part of an invalid meshlet" << endl;
 				assert(0);
 			}
 			count ++;
 		}
-		//TODO: put back in, removed for debug purposes
 
 		int byte_count = sizeof(GpuVertex*) * vertices_ptr_gpu.size();
 		cudaMalloc(&meshlet_gpu.gpu_neighbour_vertices,byte_count);
@@ -371,7 +363,7 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 
 		meshlet_gpu.gpu_vert_transcribe_task_count = vertex_indices.size();
 
-
+		//TODO: put that back in! the transcribe tasks are supposed to be important
 		/*
 		gpu::GeometryUpdate::TranscribeStitchTask task;
 		task.local_vertices = meshlet_gpu.vertices->getStartingPtr();

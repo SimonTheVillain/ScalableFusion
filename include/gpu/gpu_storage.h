@@ -132,9 +132,9 @@ public:
 	int upload_calls_tex_pos     = 0;
 
 	bool debug_outputs = false;
-	uint32_t debug = 1;
-	//TODO: we should get this from the scaleableMap parameter structure
-	//the assumption is that the average patch has 400 triangles
+	//TODO: this debug should be back to 1
+	uint32_t debug = 4; //1
+
 	uint32_t max_nr_patches = 1024 * 5 * 2  * debug;//5k patches is reasonable
 	//*2 for debug because we are fragmenting too much.
 	//debug because we are fragmenting too much

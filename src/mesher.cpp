@@ -571,7 +571,7 @@ void Mesher::colorize(	std::vector<std::shared_ptr<Meshlet>> meshlets,cv::Mat co
 				continue;
 			}
 			cv::Vec4b c = color.at<cv::Vec4b>(j, i);
-			vert.color = Vector4f( c[0]/255.0f,c[1]/255.0f, c[2]/255.0f, c[3]/255.0f );
+			vert.color = Vector4f( c[2]/255.0f,c[1]/255.0f, c[0]/255.0f, c[3]/255.0f );
 
 		}
 	}

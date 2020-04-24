@@ -328,7 +328,7 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 		vector<MeshletGPU::TranscribeBorderVertTask> tasks(task_count);
 
 		int count = 0;
-		for(auto vert : vertex_indices){ //iterate over all vertices that are not local
+		for(auto vert : vertex_indices){ //iterate over all vertices that are not local to this patch
 			tasks[count].ind_local = vert.second;
 			//calculate index by subtracting pointers (ptr(vertex) - ptr(first vert of according meshlet)
 			int ind_in_neighbour = vert.first - &vert.first->meshlet->vertices[0];
@@ -346,6 +346,8 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 			count ++;
 		}
 
+
+		//setting up transcribe tasks on a per gpu meshlet basis
 		int byte_count = sizeof(GpuVertex*) * vertices_ptr_gpu.size();
 		cudaMalloc(&meshlet_gpu.gpu_neighbour_vertices,byte_count);
 		cudaMemcpy(meshlet_gpu.gpu_neighbour_vertices,&vertices_ptr_gpu[0],byte_count,cudaMemcpyHostToDevice);
@@ -363,35 +365,8 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 
 		meshlet_gpu.gpu_vert_transcribe_task_count = vertex_indices.size();
 
-		//TODO: put that back in! the transcribe tasks are supposed to be important
-		/*
-		gpu::GeometryUpdate::TranscribeStitchTask task;
-		task.local_vertices = meshlet_gpu.vertices->getStartingPtr();
-		task.task = meshlet_gpu.gpu_vert_transcribe_tasks;
-		task.count = meshlet_gpu.gpu_vert_transcribe_task_count;
-		task.nb_vertices = meshlet_gpu.gpu_neighbour_vertices;
-
-		transcribe_tasks.push_back(task);
-		*/
-
-		//cout << "right before end of block " << i << endl;
 
 	}
-	//this->transcribe_tasks = std::move(transcribe_tasks);
-
-	/*
-	int byte_count = sizeof(gpu::GeometryUpdate::TranscribeStitchTask) * transcribe_tasks.size();
-	cudaMalloc(&gpu_transcribe_tasks,byte_count);
-	gpu_transcribe_task_count = transcribe_tasks.size();
-	cudaMemcpy(gpu_transcribe_tasks,&transcribe_tasks[0],byte_count,cudaMemcpyHostToDevice);
-	*/
-
-	 /*
-	gpu::GeometryUpdate::TranscribeStitchTask* tasksGpu;
-	size_t bytes = sizeof(gpu::GeometryUpdate::TranscribeStitchTask) * tasks.size();
-	cudaMalloc(&tasksGpu,bytes);
-	cudaMemcpy(tasksGpu,&tasks[0],bytes,cudaMemcpyHostToDevice);
-	*/
 
 
 	cudaDeviceSynchronize();

@@ -62,6 +62,8 @@ void MeshReconstruction::checkTriangleVerticesConsistency(){
 		auto patch = p.second;
 		for(int i = 0;i<patch->vertices.size();i++){
 			Vertex &vert = patch->vertices[i];
+			//check if the vertex is referencing to the correct meshlet
+			assert(vert.meshlet == patch.get());
 			for(int j = 0;j<vert.triangles.size();j++){
 				assert( &vert ==
 						vert.triangles[j].triangle->vertices[vert.triangles[j].ind_in_triangle]);

@@ -248,9 +248,15 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 					}
 					//we found a suitable  spot for the vertex. so we move it
 					if(target_meshlet){
+						//put the vertex into another meshlet
+						vertex.meshlet = target_meshlet;//this is cruical because it is not done by the move operator
 						target_meshlet->vertices.push_back(move(vertex));
+						//TODO: make move private and provide a method that only allows the valid way of doing this
 						cout << "MOVING VERTICES TO OTHER MESHLET" << endl;
 						break;
+					} else{
+						//It should be guaranteed that there is a suitable target meshlet
+						assert(0);
 					}
 
 				}
@@ -270,12 +276,16 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 		// and therefore they would not get deleted until now.
 		// Any unconnected or deleted but empty (of triangle) patch
 		// gets deleted now.
-		cout << "TODO: Put this back in!" << endl;
+		//cout << "TODO: Put this back in!" << endl;
 		//TODO: fix and reinsert the removal of invalid patches
-		//reconstruction->removePatch(set_of_patches_to_be_removed[i]);
+		reconstruction->removePatch(set_of_patches_to_be_removed[i]);
 		cout << "REMOVING PATCH" << endl;
 	}
 	set_of_patches_to_be_removed.clear();
+
+	//TODO: check consistency on the whole reconstruction
+
+	reconstruction->checkTriangleVerticesConsistency();
 
 	/******************************REMOVAL OF UNCONNECTED VERTS TRIS and PATCHES***********/
 

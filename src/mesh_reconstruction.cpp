@@ -23,22 +23,22 @@ bool MeshReconstruction::removePatch(shared_ptr<Meshlet> patch) {
 	}
 
 	patch->neighbours.clear();
-	patches_mutex_.lock();
-	for(auto it = patches_.begin(); it != patches_.end(); ++it) {
+	meshlet_mutex_.lock();
+	for(auto it = meshlets_.begin(); it != meshlets_.end(); ++it) {
 		if(it->second == patch) {
-			patches_.erase(it);
-			patches_mutex_.unlock();
+			meshlets_.erase(it);
+			meshlet_mutex_.unlock();
 			return true;
 		}
 	}
-	patches_mutex_.unlock();
+	meshlet_mutex_.unlock();
 	return false;
 }
 
 void MeshReconstruction::checkNeighbourhoodConsistency() {
 
 	int k=0;
-	for(auto p : patches_){
+	for(auto p : meshlets_){
 		auto patch = p.second;
 		int l = 0;
 		for(auto &tri : patch->triangles){
@@ -58,7 +58,7 @@ void MeshReconstruction::checkNeighbourhoodConsistency() {
 void MeshReconstruction::checkTriangleVerticesConsistency(){
 
 	int k=0;
-	for(auto p : patches_){
+	for(auto p : meshlets_){
 		auto patch = p.second;
 		for(int i = 0;i<patch->vertices.size();i++){
 			Vertex &vert = patch->vertices[i];
@@ -166,22 +166,29 @@ MeshReconstruction::MeshReconstruction(int depth_width, int depth_height,
 //we assume that the opengl context still exists when running the destructor
 // (otherwise the opengl stuff would not behave nicely)
 MeshReconstruction::~MeshReconstruction() {
+	// first delete all the triangles before we delete the vertices
+	// Deleting triangles and abandoning the vertices is a better idea generally
+	// than deleting vertices and not caring for triangles referencing to them.
+	// (there is a check in place to prevent that anyways)
+	for(std::pair<int, shared_ptr<Meshlet>> id_meshlet : meshlets_){
+		id_meshlet.second->triangles.clear();
+	}
 }
 
 shared_ptr<Meshlet> MeshReconstruction::genMeshlet() {
-	patches_mutex_.lock();
+	meshlet_mutex_.lock();
 	current_max_patch_id_ ++;
 	auto meshlet = make_shared<Meshlet>(current_max_patch_id_,&octree_);
 	meshlet->weak_self = meshlet;
-	patches_[current_max_patch_id_] = meshlet;
-	patches_mutex_.unlock();
+	meshlets_[current_max_patch_id_] = meshlet;
+	meshlet_mutex_.unlock();
 	return meshlet;
 }
 
 shared_ptr<Meshlet> MeshReconstruction::getMeshlet(int id){
-	patches_mutex_.lock();
-	auto result = patches_[id];
-	patches_mutex_.unlock();
+	meshlet_mutex_.lock();
+	auto result = meshlets_[id];
+	meshlet_mutex_.unlock();
 	return result;
 }
 
@@ -201,10 +208,11 @@ void MeshReconstruction::setDepthIntrinsics(Vector4f fxycxy) {
 }
 
 bool MeshReconstruction::hasGeometry() {
-	return patches_.size() > 0;
+	return meshlets_.size() > 0;
 }
 
 //TODO: get rid of this method
+/*
 void MeshReconstruction::erase() {
 	//The scheduler should be closed at this point
 	cout << "erase... this function does not do what you expect it to do" << endl;
@@ -212,13 +220,13 @@ void MeshReconstruction::erase() {
 	vector<shared_ptr<Meshlet>> shared_patches;//collect weak pointers to that stuff to see what of this is still existent
 
 	int debug = 0 ;
-	for(auto patch : patches_) {
+	for(auto patch : meshlets_) {
 		debug++;
 		patches.push_back(patch.second);
 		shared_patches.push_back(patch.second);
 	}
 
-	patches_.clear();
+	meshlets_.clear();
 
 	for(int i = 0; i < debug; i++) {
 		shared_patches.pop_back();
@@ -238,10 +246,11 @@ void MeshReconstruction::erase() {
 	//TODO: mechanism to delete all fbos that are used in thread
 	glFinish();
 }
+ */
 
 vector<shared_ptr<Meshlet>> MeshReconstruction::GetAllPatches() {
 	vector<shared_ptr<Meshlet>> patches;
-	for(auto patch : patches_) {
+	for(auto patch : meshlets_) {
 		patches.push_back(patch.second);
 	}
 	return patches;

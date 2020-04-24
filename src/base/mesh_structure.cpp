@@ -23,6 +23,8 @@ Meshlet::Meshlet(int id, octree::Octree *octree) :
 }
 
 Meshlet::~Meshlet() {
+	triangles.clear();
+	vertices.clear();
 	//cout << "[Meshlet::MeshletDEBUG: destructor got called." << endl;
 	//cout << "THE TRIANGLES ARE NOT DELETED!!!!!" << endl;
 }

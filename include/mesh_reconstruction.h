@@ -103,9 +103,9 @@ public:
 	bool removePatch(shared_ptr<Meshlet> patch);
 
 	shared_ptr<Meshlet> getPatchById(int id) {
-		patches_mutex_.lock();
-		shared_ptr<Meshlet> patch = patches_[id];
-		patches_mutex_.unlock();
+		meshlet_mutex_.lock();
+		shared_ptr<Meshlet> patch = meshlets_[id];
+		meshlet_mutex_.unlock();
 		return patch;
 	}
 	vector<shared_ptr<Meshlet>> GetAllPatches();
@@ -161,8 +161,9 @@ public:
 			vector<shared_ptr<Meshlet>> &patches, Matrix4f pose,
 			Matrix4f proj, shared_ptr<ActiveSet> active_set);
 
-	//Free everything
-	void erase();
+	//Free everything (forget it, freeing cpu resources should work by deleting gpu storgae
+	// also the forced download of geometry should be done by that
+	//void erase();
 
 	Parameters params;
 	shared_ptr<Meshlet> getMeshlet(int id);
@@ -201,8 +202,8 @@ private:
 	//GarbageCollector *garbage_collector_;
 
 	//shouldnt that be a shared pointer
-	mutex patches_mutex_;
-	unordered_map<int, shared_ptr<Meshlet>> patches_;
+	mutex meshlet_mutex_;
+	unordered_map<int, shared_ptr<Meshlet>> meshlets_;
 	octree::Octree octree_;//stores the objects in a spacial manner
 	int current_max_patch_id_ = 0;//this basically is the number of patches currently in use
 

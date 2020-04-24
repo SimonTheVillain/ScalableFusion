@@ -316,15 +316,15 @@ int main(int argc, const char *argv[]) {
 	scheduler->pause(paused);
 
 	//create an window with the necessary opengl context
-	PresentationRenderer presentation_renderer;
-	InformationRenderer information_renderer;
+	shared_ptr<PresentationRenderer> presentation_renderer = make_shared<PresentationRenderer>();
+	shared_ptr<InformationRenderer> information_renderer = make_shared<InformationRenderer>();
 	//TODO: setup low detail renderer
 
-	presentation_renderer.initInContext(scalable_map.get());
-	presentation_renderer.initInContext(640, 480, scalable_map.get()); //TODO: is this the right resolution?
+	presentation_renderer->initInContext(scalable_map.get());
+	presentation_renderer->initInContext(640, 480, scalable_map.get()); //TODO: is this the right resolution?
 
-	information_renderer.initInContext(gpu_storage->garbage_collector_);
-	information_renderer.initInContext(1280,960,gpu_storage->garbage_collector_);
+	information_renderer->initInContext(gpu_storage->garbage_collector_);
+	information_renderer->initInContext(1280,960,gpu_storage->garbage_collector_);
 
 	//set the framebuffer of the initial window
 
@@ -366,9 +366,9 @@ int main(int argc, const char *argv[]) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
 
-		presentation_renderer.show_wireframe = render_wireframe;
-		presentation_renderer.color_mode = color_mode;
-		presentation_renderer.shading_mode = shading_mode;
+		presentation_renderer->show_wireframe = render_wireframe;
+		presentation_renderer->color_mode = color_mode;
+		presentation_renderer->shading_mode = shading_mode;
 
 
 
@@ -376,7 +376,7 @@ int main(int argc, const char *argv[]) {
 		if(!disable_rendering) {
 			shared_ptr<ActiveSet> set =
 					scheduler->getActiveSetRendering();
-			presentation_renderer.render(gpu_storage,set.get(),proj,view);
+			presentation_renderer->render(gpu_storage,set.get(),proj,view);
 		}
 		//TODO: reinsert block
 
@@ -387,7 +387,7 @@ int main(int argc, const char *argv[]) {
 			vector<shared_ptr<ActiveSet>> sets;
 			sets.push_back(scheduler->getActiveSetRendering());
 			Vector4f clicked_point =
-					information_renderer.renderAndExtractInfo(
+					information_renderer->renderAndExtractInfo(
 							sets,//active set
 							gpu_storage,
 							view, proj, width,height,
@@ -408,7 +408,7 @@ int main(int argc, const char *argv[]) {
 			vector<shared_ptr<ActiveSet>> sets;
 			sets.push_back(scheduler->getActiveSetRendering());
 			Vector4f center =
-					information_renderer.renderAndExtractInfo(
+					information_renderer->renderAndExtractInfo(
 							sets,
 							gpu_storage,
 							view, proj,
@@ -443,6 +443,13 @@ int main(int argc, const char *argv[]) {
 		arcball.setFramebufferData(width, height);
 	}
 
+
+	//when deleting the GPU storage, updated data will be downloaded to CPU memory.
+	close_request =  true;
+	delete scheduler;
+	gpu_storage->garbage_collector_->forceCollect();
+	delete gpu_storage;
+
 	if(!graph_output_file.empty()) {
 		//MapExporter::storeDeformationGraph(scaleableMap.get(),graphOutputFile);
 		//MapExporter::storeGraph(scaleableMap.get(),graphOutputFile);
@@ -467,23 +474,22 @@ int main(int argc, const char *argv[]) {
 		MapExporter::storeFine(scalable_map.get(), detailed_output_file, fix_ply_mshl);
 	}
 
-	close_request =  true;
 
 	cout << "[main] DEBUG everything should be deleted" << endl;
-	gpu_storage->garbage_collector_->forceCollect();
-	delete scheduler;
 
 	//erase active sets and patches so really nothing should be on the gpu
-	scalable_map->erase();
+	//scalable_map->erase();
 
 	scalable_map.reset();
 
-	delete gpu_storage;
 
 	cout << "DEBUG:most resources should be freed here! look at nvidia-smi (but in fact nothing is freed)" << endl;
 
 	cout << "Debug:set brakepoint here, the next key on the opencv window should quit the app" << endl;
 
+
+	presentation_renderer.reset();
+	information_renderer.reset();
 	glfwDestroyWindow(window);
 	glfwDestroyWindow(invisible_window);
 	glfwTerminate();

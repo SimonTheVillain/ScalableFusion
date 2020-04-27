@@ -923,8 +923,8 @@ public:
 	}
 
 	//borderlist is used in case a edge is already registered in the triangle
-	bool getOtherEdge(int endpoint, Edge* &result, bool debug = false){
-	                  //vector<vector<Edge>> &border_list,bool debug = false) {
+	bool getOrAttachNextEdge(int endpoint, Edge* &result, //bool debug = false){
+	                  vector<Edge> &edge_list, bool debug = false) {
 
 		//Meshlet* current_meshlet = meshlet;
 		//int current_triangle_ind = triangle_ind_meshlet;
@@ -950,13 +950,11 @@ public:
 
 					// if the edge already exists in the list:
 					result = current_triangle->edges[current_edge_ind_in_triangle];
-					//assert(result.triangle != nullptr);
 					return true;
 				}else{
 					// if we need to create a new edge:
-					Edge* edge = new Edge(current_triangle, current_edge_ind_in_triangle);
-					//assert(result == nullptr);//we assume that the returning object doesn't exist
-					result = edge;
+					edge_list.emplace_back(current_triangle, current_edge_ind_in_triangle);
+					result = &edge_list.back();
 					return true;
 				}
 			}
@@ -970,8 +968,8 @@ public:
 			}
 		}
 
-		getOtherEdge(endpoint, result,true);//debug... this should never happen
-		//getOtherEdge(endpoint, result, border_list,true);//debug... this should never happen
+		getOrAttachNextEdge(endpoint, result, edge_list, true);//debug... this should never happen
+		//getOrAttachNextEdge(endpoint, result, border_list,true);//debug... this should never happen
 		assert(0);//more than 100 triangles on this node means something is off!!!
 		return false;
 	}

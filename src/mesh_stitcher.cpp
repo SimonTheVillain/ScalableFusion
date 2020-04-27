@@ -169,7 +169,7 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 		Edge* debug_last_edge = current_edge;
 		while(following_border) {
 			Edge* result;
-			current_edge->getOtherEdge(0, result);//, border_list);
+			current_edge->getOrAttachNextEdge(0, result, forward);
 			current_edge = result;
 			renderEdge(*current_edge); //debug
 
@@ -196,22 +196,18 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 
 						}
 					}
-					debug_last_edge->getOtherEdge(0, current_edge);//, border_list);
+					debug_last_edge->getOrAttachNextEdge(0, current_edge, forward);
 					assert(0);//only the initial triangle should be registered
 				} else {
 					ran_in_circle = true;
 				}
 			} else {
 
-				//new logic: put new edge into forward list but do not register it yet
-				forward.push_back(std::move(*current_edge));
 
 				if(current_edge == initialEdge()){
 					assert(0);//the initial edge should be registered so we should never be in this branch
 				}
-				delete current_edge;
-				current_edge = &forward.back(); // let the current edge point to where it belongs...
-				//TODO: update the getOtherEdge method to initialize the new edge directly in the list
+				//TODO: update the getOrAttachNextEdge method to initialize the new edge directly in the list
 				//this would remove the need to delete the current edge, and also the need for the move operator
 
 
@@ -239,7 +235,7 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 			current_edge = initialEdge();
 			while(following_border) {
 				Edge* result;
-				current_edge->getOtherEdge(1, result);//, border_list);//other direction
+				current_edge->getOrAttachNextEdge(1, result, backward);//other direction
 				current_edge = result;
 				renderEdge(*current_edge);
 				if(meshlets.count(current_edge->triangle->getMeshlet()) != 1) {
@@ -269,10 +265,10 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 						Triangle *current_triangle = current_edge->triangle;
 						Triangle *last_triangle    = debug_last_edge->triangle;
 						Edge *new_edge = nullptr;
-						debug_last_edge->getOtherEdge(1, new_edge);//, border_list);
+						debug_last_edge->getOrAttachNextEdge(1, new_edge, backward);
 
 						Edge *new_edge2 = nullptr;
-						debug_last_edge->getOtherEdge(1, new_edge2);//, border_list);
+						debug_last_edge->getOrAttachNextEdge(1, new_edge2, backward);
 
 						assert(0);// this should not happen!!!!!
 					} else {
@@ -280,9 +276,9 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 					}
 				} else {
 					//new approach: add the new edge to the list
-					backward.push_back(std::move(*current_edge));
-					delete current_edge;
-					current_edge = &backward.back();
+					//backward.push_back(std::move(*current_edge));
+					//delete current_edge;
+					//current_edge = &backward.back();
 					//TODO: see if this is still needed and delete if not/put back in if it is
 					/*
 					//register the new edge:
@@ -924,7 +920,7 @@ void MeshStitcher::stitchOnBorders(
 							//get next edge
 							edge.already_used_for_stitch = true;
 							Edge other_edge;
-							current_sewing_edge.getOtherEdge(1, other_edge, borders);
+							current_sewing_edge.getOrAttachNextEdge(1, other_edge, borders);
 							current_sewing_edge = other_edge;
 							last_sewing_pr = current_sewing_pr;
 							last_sewing_p = current_sewing_p;

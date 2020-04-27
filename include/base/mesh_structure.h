@@ -544,7 +544,8 @@ struct Triangle {
 	//these should also be used for
 	int32_t local_indices[3] = {-1, -1, -1};
 
-	EdgeReference   edges[3];
+	//EdgeReference   edges[3];
+	Edge* edges[3] = {nullptr, nullptr, nullptr};
 	//VertexReference points[3];
 	Vertex* 		vertices[3] = {nullptr, nullptr, nullptr};
 	Neighbour       neighbours[3];
@@ -552,28 +553,13 @@ struct Triangle {
 	Triangle() { }
 
 	//move constructor
-	Triangle(Triangle &&o) noexcept{
+	Triangle(Triangle && o) noexcept ;
 
-		for(auto i : {0,1,2}){
-			Neighbour &nb = neighbours[i];
-			nb = o.neighbours[i];
-			//update the neighbours reference pointing at this
-			if(nb.ptr){
-				nb.ptr->neighbours[nb.pos].ptr = this;
-				o.neighbours[i].invalidate();//invalidating the move source
-			}
-			debug_nr = o.debug_nr;
-			assert(o.vertices[i]->p[3] == 1.0f);
-			vertices[i] = o.vertices[i];
-			o.vertices[i] = nullptr;//invalidate at source (maybe not necessary)
-			assert(vertices[i]);
-			vertices[i]->replaceTriangle(&o,this);
-
-
-			//TODO: edges!
-
-		}
+private:
+	Triangle(Triangle &o){
+		assert(0); // we don't really like copies of triangles (only moves, references and pointers)
 	}
+public:
 
 	Meshlet* getMeshlet(){
 		return vertices[0]->meshlet;
@@ -592,6 +578,23 @@ struct Triangle {
 		//TODO: edges!
 	}
 
+	bool containsPoint(Vertex* vert){
+		for(Vertex* vertex : vertices){
+			if(vertex == vert){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	int getPointIndex(Vertex* vert){
+		for(size_t i : {0, 1, 2}){
+			if(vertices[i] == vert){
+				return i;
+			}
+		}
+		return -1;
+	}
 	//TODO: fix and reinsert these (used a lot in meshing and stitching)
 	/*
 	bool containsPoint(VertexReference& p) {
@@ -845,30 +848,90 @@ struct Edge {
 
 	Edge() { }
 
+	/*
+	Edge(Meshlet* meshlet, int triangle_ind_meshlet, int ind_in_triangle){
+		this->meshlet = meshlet;
+		this->triangle_ind_meshlet = triangle_ind_meshlet;
+		this->pos = ind_in_triangle;
+	}*/
+
+	//move constructor
+	Edge(Edge && o){
+		this->triangle = o.triangle;
+		this->pos = o.pos;
+		this->is_registered = o.is_registered;
+		//update the reference of the triangles to this edge
+		if(this->triangle != nullptr && this->is_registered){
+			this->triangle->edges[this->pos] = this;
+		}
+
+		o.triangle = nullptr;
+		o.pos = -1;
+		o.is_registered = false;
+	}
+	Edge& operator=(const Edge && o){
+		this->triangle = o.triangle;
+		this->pos = o.pos;
+		this->is_registered = o.is_registered;
+		//update the reference of the triangles to this edge
+		if(this->triangle != nullptr && this->is_registered){
+			this->triangle->edges[this->pos] = this;
+		}
+
+	}
+private:
+	Edge(Edge & o){
+		assert(0); //We don't really want copies of an edge. References, pointers / move only.
+	}
+public:
+
+
+	/*
+	Triangle* triangle() const{
+		return &meshlet->triangles[triangle_ind_meshlet];
+	}
+	 */
+
 	Edge(Triangle* tri, int index_in_triangle) {
 		triangle = tri;
 		pos = index_in_triangle;
 	}
 
+
+	/*
 	void registerInTriangle(int border_ind, int ind) {
 		is_registered = true;
 		triangle->edges[pos].border_ind = border_ind;
 		triangle->edges[pos].ind = ind;
+	}*/
+	void registerInTriangle(){
+		triangle->edges[pos] = this;
+		is_registered = true;
 	}
 
+	/*
 	void unregister() {
 		assert(is_registered);
 		triangle->edges[pos].invalidate();//invalidate the reference to this edge
 		is_registered=false;
+	}*/
+
+	void unregister(){
+		assert(is_registered);
+		triangle->edges[pos] = nullptr;
+		is_registered=false;
 	}
 
 	//borderlist is used in case a edge is already registered in the triangle
-	bool getOtherEdge(int endpoint, Edge &result, 
-	                  vector<vector<Edge>> &border_list,bool debug = false) {
+	bool getOtherEdge(int endpoint, Edge* &result, bool debug = false){
+	                  //vector<vector<Edge>> &border_list,bool debug = false) {
+
+		//Meshlet* current_meshlet = meshlet;
+		//int current_triangle_ind = triangle_ind_meshlet;
+		int current_edge_ind_in_triangle = pos;
 
 		Triangle* current_triangle = triangle;
-		//Triangle* current_triangle_ref = triangle;
-		int current_edge_ind_in_triangle = pos;
+
 
 		int ttl = 10000;//TODO: put that back to 100.... we will not have than 16 or so triangles for a point
 		while(ttl--) {
@@ -883,17 +946,19 @@ struct Edge {
 			}
 			//if the current edge is free we will return it
 			if(!current_triangle->neighbours[current_edge_ind_in_triangle].valid()) {
-				if(current_triangle->edges[current_edge_ind_in_triangle].valid()) {
-					result = *current_triangle->edges[current_edge_ind_in_triangle].get(border_list);
-					assert(result.triangle != nullptr);
+				if(current_triangle->edges[current_edge_ind_in_triangle] != nullptr) {
+
+					// if the edge already exists in the list:
+					result = current_triangle->edges[current_edge_ind_in_triangle];
+					//assert(result.triangle != nullptr);
+					return true;
+				}else{
+					// if we need to create a new edge:
+					Edge* edge = new Edge(current_triangle, current_edge_ind_in_triangle);
+					//assert(result == nullptr);//we assume that the returning object doesn't exist
+					result = edge;
 					return true;
 				}
-
-				Edge res;
-				res.triangle = current_triangle;
-				res.pos = current_edge_ind_in_triangle;
-				result = res;
-				return true;
 			}
 
 			Triangle* old_triangle = current_triangle;
@@ -905,7 +970,8 @@ struct Edge {
 			}
 		}
 
-		getOtherEdge(endpoint, result, border_list,true);//debug... this should never happen
+		getOtherEdge(endpoint, result,true);//debug... this should never happen
+		//getOtherEdge(endpoint, result, border_list,true);//debug... this should never happen
 		assert(0);//more than 100 triangles on this node means something is off!!!
 		return false;
 	}
@@ -926,6 +992,13 @@ struct Edge {
 		int ind = pos + i;
 		if(ind == 3) {
 			ind = 0;
+		}
+		return triangle->vertices[ind];
+	}
+	Vertex* oppositePoint(){
+		int ind = pos - 1;
+		if(ind == -1) {
+			ind = 2;
 		}
 		return triangle->vertices[ind];
 	}
@@ -954,6 +1027,8 @@ struct Edge {
 	bool already_used_for_stitch = false;
 
 	Triangle* triangle;
+	//Meshlet* meshlet;
+	//int triangle_ind_meshlet;
 	int pos;//edge index within this triangle
 
 	bool is_registered=false;
@@ -980,6 +1055,38 @@ inline Vertex::Vertex ( Vertex && o) noexcept{
 	for(auto triangle : triangles){
 		//set old references to this vertex to the new position
 		triangle.triangle->vertices[triangle.ind_in_triangle] = this;
+	}
+}
+
+
+inline Triangle::Triangle(Triangle && o) noexcept{
+
+	for(auto i : {0,1,2}){
+		Neighbour &nb = neighbours[i];
+		nb = o.neighbours[i];
+		//update the neighbours reference pointing at this
+		if(nb.ptr){
+			nb.ptr->neighbours[nb.pos].ptr = this;
+			o.neighbours[i].invalidate();//invalidating the move source
+		}
+		debug_nr = o.debug_nr;
+
+
+		assert(o.vertices[i]->p[3] == 1.0f);
+		//update the vertices and the pointer from them
+		vertices[i] = o.vertices[i];
+		o.vertices[i] = nullptr;//invalidate at source (maybe not necessary)
+		assert(vertices[i]);
+		vertices[i]->replaceTriangle(&o,this);
+
+
+		//Update the references of edges to the triangles.
+		edges[i] = o.edges[i];
+		if(edges[i]){
+			edges[i]->triangle = this;
+		}
+		o.edges[i] = nullptr; // invalidate at source (maybe not necessary)
+
 	}
 }
 

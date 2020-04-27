@@ -72,13 +72,15 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	Matrix4f proj_pose = proj_depth * depth_pose_in.inverse();
 
 	//TODO: comment back in obviously
-	/*
+
 	stitching.genBorderList(
 			visible_meshlets, borders,
 			proj_pose);
 	stitching.reloadBorderGeometry(borders);
+	//cv::imshow("DEBUG:geom_before", ex_geom);
 	stitching.rasterBorderGeometry(borders, depth_pose_in, proj_depth, ex_geom);
-	*/
+	//cv::imshow("DEBUG:geom_after_rastering", ex_geom);
+	//cv::waitKey();
 	//this is a premilary measure to get the geometry adding running....
 	float geometry_assign_threshold = 0.05f;//every point within 5cm of existing geometry is considered part of that geometry
 
@@ -198,7 +200,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 	/*********************************Initial Stitching!! NEW***************************/
 
-	/*
+
 	vector<weak_ptr<GeometryBase>> stitch_list;
 
 	//TODO: reinsert code and fix bugs
@@ -209,7 +211,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	                          mesh_pointers, vertex_indices, stitch_list);
 
 	stitching.freeBorderList(borders);
-	*/
+
 
 	/******************************************Initial Stitching!! NEW***********************/
 

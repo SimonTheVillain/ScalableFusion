@@ -319,7 +319,7 @@ public:
 
 	//TODO: make this obsolete with https://en.cppreference.com/w/cpp/memory/enable_shared_from_this
 	weak_ptr<Meshlet> getWeakSelf() {
-		return weak_self;
+		return weak_self; //TODO: replace with shared_from_this
 	}
 
 	//iterates over all the geometry and updates the octree accordingly
@@ -499,7 +499,7 @@ struct Triangle {
 
 		//position in neighbour
 		int pos = -1;
-		Triangle* ptr;
+		Triangle* ptr = nullptr;
 		bool debug = false;
 
 		//TODO: write proper move constructor
@@ -840,6 +840,19 @@ struct TripleStitch: public Stitch {
 };
   */
 
+
+
+ //TODO: remove if it stays unused
+ struct UnregisteredEdge{
+	 UnregisteredEdge() {}
+
+	 //Keep in mind that as long as this unregistered
+	 Meshlet* meshlet = nullptr;
+	 int triangle_ind = -1;
+	 int pos = -1;
+
+ };
+
 /**
  * @brief The Edge struct
  * Stores the connection between two points at a border (therefore there is only one triangle
@@ -869,6 +882,7 @@ struct Edge {
 		o.pos = -1;
 		o.is_registered = false;
 	}
+	//move asign:
 	Edge& operator=(const Edge && o){
 		this->triangle = o.triangle;
 		this->pos = o.pos;

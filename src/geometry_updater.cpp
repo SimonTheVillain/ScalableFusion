@@ -85,6 +85,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	float geometry_assign_threshold = 0.05f;//every point within 5cm of existing geometry is considered part of that geometry
 
 	/**
+	 * Invalidating invalid pixel that for some reasons are not invalidated already
 	 * TODO: get rid of this code: It is done in the segmentation part anyway.
 	 * Altough the code for projecting points should be separate from this.
 	 *
@@ -116,13 +117,17 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	}
 	cv::imshow("points",points);
 	cv::waitKey(1);
+	/********************************************************END WORKAROUND*****************************************/
+
+
 
 	#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
 	cv::imshow("novel geometry", points);
 	cv::waitKey(); // This is a debug measure.... because everything is shit
 	#endif
 
-	cv::Mat mesh_pointers(height, width, CV_32SC2); // Actually we store pointers in this
+	// Actually we store pointers in this
+	cv::Mat mesh_pointers(height, width, CV_32SC2);
 
 	gpu_pre_seg_.fxycxy       = reconstruction->params.depth_fxycxy;
 	gpu_pre_seg_.max_distance = reconstruction->getMaxDistance();
@@ -204,14 +209,19 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	vector<weak_ptr<GeometryBase>> stitch_list;
 
 	//TODO: reinsert code and fix bugs
-	//debugCheckTriangleNeighbourConsistency(GetAllPatches());
+	cout << "TODO: reinsert this code and fix bugs" << endl;
+	/*
 	stitching.stitchOnBorders(borders, depth_pose_in, proj_depth, proj_depth_std, 
 	                          ex_geom, points, d_std_mat, 
 	                          reconstruction->generateColorCodedTexture_(mesh_pointers),
 	                          mesh_pointers, vertex_indices, stitch_list);
+	*/
 
 	stitching.freeBorderList(borders);
 
+	reconstruction->checkLeftoverEdges();// there shouldn't be edges left (seemingly stitchOnBorders isn't really clean)
+	reconstruction->checkNeighbourhoodConsistency();
+	reconstruction->checkTriangleVerticesConsistency();
 
 	/******************************************Initial Stitching!! NEW***********************/
 
@@ -288,6 +298,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	//TODO: check consistency on the whole reconstruction
 
 	reconstruction->checkTriangleVerticesConsistency();
+	reconstruction->checkNeighbourhoodConsistency();
 
 	/******************************REMOVAL OF UNCONNECTED VERTS TRIS and PATCHES***********/
 

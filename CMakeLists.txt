@@ -115,7 +115,7 @@ find_package(CUDA REQUIRED)
 
 set(SCALFU_INCLUDE_DIRS
 		"${CMAKE_SOURCE_DIR}/include"
-		#"${CMAKE_SOURCE_DIR}/videl_source/include"
+		#"${CMAKE_SOURCE_DIR}/video_source/include"
 		${CMAKE_SOURCE_DIR}
 		${CUDA_INCLUDE_DIRS}
 		${EIGEN3_INCLUDE_DIRS}
@@ -123,6 +123,8 @@ set(SCALFU_INCLUDE_DIRS
 		${GLEW_INCLUDE_DIRS}
 		${OpenCV_INCLUDE_DIRS}
 		${OPENGL_INCLUDE_DIR}
+		${Sophus_INCLUDE_DIRS}
+		${radical_INCLUDE_DIRS}
 		"${CMAKE_SOURCE_DIR}/logging/include"
 		)
 set(SCALFU_LIBRARIES

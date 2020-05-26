@@ -82,3 +82,30 @@ void Meshlet::removeTexPatches(vector<shared_ptr<MeshTexture>> tex_patches) {
 	}
 }
 
+
+bool Vertex::encompassed(){
+	if(triangles.size() <2){
+		return false;
+	}
+	int running = 1000;
+	Triangle* tri = triangles[0].triangle;
+	int ind = triangles[0].ind_in_triangle;
+	while(running--){
+		ind--;
+		if(ind==-1){
+			ind=2;
+		}
+		if(!tri->neighbours[ind].valid()){
+			return false;
+		}
+		int ind_new = tri->neighbours[ind].pos;
+		tri = tri->neighbours[ind].ptr;
+		ind = ind_new;
+		if(tri == triangles[0].triangle){
+			return true;
+		}
+
+	}
+	assert(0);
+	return false;
+}

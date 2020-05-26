@@ -198,7 +198,11 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 			for(size_t k=0;k<meshlet->tex_patches.size();k++){
 				//upload new textures
 				shared_ptr<MeshTexture> &tex_cpu = meshlet->tex_patches[k];
-
+				if(tex_cpu->tex_coords.size()==0){
+					cout <<  "TODO: why is this even the case? why does the meshlet have a tex_patch "
+			 				 "while not being filled with data?" << endl;
+					continue;
+				}
 
 				most_current.textures.emplace_back();
 				shared_ptr<TextureLayerGPU> &tex_gpu = most_current.textures[k];
@@ -324,7 +328,6 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 		int task_count = vertex_indices.size();
 
 		//TODO: 2020 Simon! Find out whats going on here!
-		//TODO: DELETE AFTER FIXED! invalid next size (fast) happening here! (at the destructor)
 		vector<MeshletGPU::TranscribeBorderVertTask> tasks(task_count);
 
 		int count = 0;
@@ -341,7 +344,7 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 				tasks[count].ind_neighbour = meshlets_to_ind[vert.first->meshlet];
 			}else{
 				cout << "DEBUG:!!!! That vertex is probably part of an invalid meshlet" << endl;
-				assert(0);
+				assert(0); //TODO: Triangle is referencing to meshlet that is not neighbour of this meshlet.
 			}
 			count ++;
 		}

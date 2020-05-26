@@ -69,16 +69,34 @@ void MeshReconstruction::checkTriangleVerticesConsistency(){
 						vert.triangles[j].triangle->vertices[vert.triangles[j].ind_in_triangle]);
 			}
 		}
-		/*
+
+		//testing if one of the triangles is referencing a vertex thats not part of this or one of the neighbouring
+		//meshlets
 		for(int i = 0;i<patch->triangles.size();i++){
 			Triangle &tri = patch->triangles[i];
 			for(int j : {0,1,2}){
 				Vertex *vert = tri.vertices[j];
-				for(int l = 0;l<vert->triangles.size())
+				if(vert->meshlet != patch.get()){
+					if(!patch->isNeighbourWith(vert->meshlet)){
+						assert(0);
+					};
+				}
 			}
 		}
-		 */
+
 		k++;
+	}
+}
+void MeshReconstruction::checkLeftoverEdges() {
+
+	for(auto p : meshlets_){
+		for(auto &tri : p.second->triangles){
+			for(int i : {0, 1, 2}){
+				if(tri.edges[i] != nullptr){
+					assert(0);
+				}
+			}
+		}
 	}
 }
 
@@ -278,53 +296,100 @@ Triangle* MeshReconstruction::addTriangle_(Vertex* pr1,
 
 //Creating a new triangle just from vertex references.
 //used in the inter frame stitching process
-//int debug_global_stitch_triangle_ctr = 0;
+int debug_global_stitch_triangle_ctr = 0;
 //TripleStitch *debug_quenstionable_triplestitch = nullptr;
 
 Triangle* MeshReconstruction::addTriangle_(
-		Vertex* pr1, Vertex* pr2, Vertex* pr3,
+		Vertex* v1, Vertex* v2, Vertex* v3,
 		vector<weak_ptr<GeometryBase>> &debug_new_stitches) {
-assert(0);
-/*
-	//TODO: remove this debug output
-	//cout << "This method is untested when it comes to its ability to register triangles" << endl;
-	Triangle triangle;
-	triangle.vertices[0] = pr1;
-	triangle.vertices[1] = pr2;
-	triangle.vertices[2] = pr3;
+
+	//TODO: what would be nice would be something similar/using the same as in the mesher class:
+	//providing points and neighbour references(triangle ptr + index)
+
+	v1->meshlet->triangles.emplace_back();
+	Triangle &triangle = v1->meshlet->triangles.back();
+	triangle.vertices[0] = v1;
+	triangle.vertices[1] = v2;
+	triangle.vertices[2] = v3;
 	triangle.debug_is_stitch = true;
 	triangle.debug_nr = debug_global_stitch_triangle_ctr;
-	if(triangle.debug_nr == 11757) {
-		cout << "bad bad triangle! debug here!" << endl;
-	}
 	debug_global_stitch_triangle_ctr++;
 
-	if(pr1.getPatch() == pr2.getPatch() && pr1.getPatch() == pr3.getPatch()) {
+	auto getNeighbour = [](Vertex* v1,Vertex* v2) -> Triangle::Neighbour{
+		Triangle::Neighbour nb;
+		for(auto tri : v1->triangles){
+			// check the edges before or after:
+			//TODO: make assumptions about clockwise /ccw to reduce cost.
+			//after
+			int ind = tri.ind_in_triangle + 1;
+			if(ind == 3)
+				ind = 0;
+			if(tri.triangle->vertices[ind] == v2){
+				nb.ptr = tri.triangle;
+				nb.pos = tri.ind_in_triangle;
+				return nb;
+			}
+			//check the edges before
+			ind = tri.ind_in_triangle - 1;
+			if(ind == -1)
+				ind = 2;
+			if(tri.triangle->vertices[ind] == v2){
+				nb.ptr = tri.triangle;
+				nb.pos = ind;
+				return nb;
+			}
+		}
+		// return invalid neighbour if nothing is found
+		return nb;
+	};
+	//this seems expensive
+	if(v1->meshlet != v2->meshlet){
+		if(!v1->meshlet->isNeighbourWith(v2->meshlet)){
+			shared_ptr<Meshlet> sp = std::static_pointer_cast<Meshlet>(v2->meshlet->shared_from_this());
+			v1->meshlet->addNeighbour(sp);
+			v2->meshlet->addNeighbour(std::static_pointer_cast<Meshlet>(v1->meshlet->shared_from_this()));
+		}
+	}
+	if(v1->meshlet != v3->meshlet){
+		if(!v1->meshlet->isNeighbourWith(v3->meshlet)){
+			v1->meshlet->addNeighbour(std::static_pointer_cast<Meshlet>(v3->meshlet->shared_from_this()));
+			v3->meshlet->addNeighbour(std::static_pointer_cast<Meshlet>(v1->meshlet->shared_from_this()));
+		}
+	}
+	if(v2->meshlet != v3->meshlet){
+		if(!v2->meshlet->isNeighbourWith(v3->meshlet)){
+			v2->meshlet->addNeighbour(std::static_pointer_cast<Meshlet>(v3->meshlet->shared_from_this()));
+			v3->meshlet->addNeighbour(std::static_pointer_cast<Meshlet>(v2->meshlet->shared_from_this()));
+		}
+	}
+	triangle.neighbours[0] = getNeighbour(v1, v2);
+	triangle.neighbours[1] = getNeighbour(v2, v3);
+	triangle.neighbours[2] = getNeighbour(v3, v1);
+	triangle.registerSelf();
+	return &triangle;
+/*
+
+	if(v1->meshlet == v2->meshlet && v1->meshlet == v3->meshlet) {
 		cout << "ERROR [scaleableMapStitching:createnewTriangle] the points of"
 		        " these triangles should never be from the same patch." << endl;
 		//this method is usually called during stitching so we don't expect this to be called for trianlges of this source
 		assert(0);
-		TriangleReference tr;
-		tr.index = triangle.points[0].getPatch()->triangles.size();
-		tr.container = triangle.points[0].getPatch();
-		triangle.points[0].getPatch()->triangles.push_back(triangle);
-		Triangle::registerTriangle(tr,true);
-		triangle.points[0].getPatch()->cpu_tex_patch_ahead=true;
+		Triangle* tr;
 		return tr;
 	}
 
 	bool double_stitch = false;
 	bool triple_stitch = false;
-	if(pr1.getPatch() == pr2.getPatch() && pr1.getPatch() != pr3.getPatch() ||//p3 is different
-	   pr1.getPatch() != pr2.getPatch() && pr1.getPatch() == pr3.getPatch() ||//p2 is different
-	   pr1.getPatch() != pr2.getPatch() && pr2.getPatch() == pr3.getPatch()) {
+	if(v1.getPatch() == v2.getPatch() && v1.getPatch() != v3.getPatch() ||//p3 is different
+	   v1.getPatch() != v2.getPatch() && v1.getPatch() == v3.getPatch() ||//p2 is different
+	   v1.getPatch() != v2.getPatch() && v2.getPatch() == v3.getPatch()) {
 		double_stitch = true;
 
 	} else {
 		//TODO: test if it is a triple stitch
-		if(pr1.getPatch() != pr2.getPatch() &&
-		   pr1.getPatch() != pr3.getPatch() &&
-		   pr2.getPatch() != pr3.getPatch()) {
+		if(v1.getPatch() != v2.getPatch() &&
+		   v1.getPatch() != v3.getPatch() &&
+		   v2.getPatch() != v3.getPatch()) {
 			triple_stitch = true;
 
 		} else {
@@ -339,21 +404,21 @@ assert(0);
 		//find a fitting double stitch or create one
 		TriangleReference tr;
 		Meshlet *patch2 = nullptr;
-		if(pr1.getPatch() != pr2.getPatch()) {
-			patch2 = pr2.getPatch();
-		} else if(pr1.getPatch() != pr3.getPatch()) {
-			patch2 = pr3.getPatch();
+		if(v1.getPatch() != v2.getPatch()) {
+			patch2 = v2.getPatch();
+		} else if(v1.getPatch() != v3.getPatch()) {
+			patch2 = v3.getPatch();
 		}
 
-		shared_ptr<DoubleStitch> stitch = pr1.getPatch()->getDoubleStitchWith(patch2);
+		shared_ptr<DoubleStitch> stitch = v1.getPatch()->getDoubleStitchWith(patch2);
 		//add triangle to the according stitch
 		if(!stitch) {
 			stitch = make_shared<DoubleStitch>();
 			stitch->weak_self = stitch;
-			stitch->patches[0] = pr1.getPatch()->weak_self;
+			stitch->patches[0] = v1.getPatch()->weak_self;
 			stitch->patches[1] = patch2->weak_self;
 
-			pr1.getPatch()->addStitchReference(stitch);
+			v1.getPatch()->addStitchReference(stitch);
 			patch2->addStitchReference(stitch);
 			debug_new_stitches.push_back(stitch);
 
@@ -386,17 +451,17 @@ assert(0);
 		//all 3 points are from a different point
 		//find a fitting triple stitch
 		shared_ptr<TripleStitch> stitch =
-				pr1.getPatch()->getTripleStitchWith(pr2.getPatch(), pr3.getPatch());
+				v1.getPatch()->getTripleStitchWith(v2.getPatch(), v3.getPatch());
 		if(!stitch) {
 			stitch = make_shared<TripleStitch>();
 			stitch->weak_self = stitch;
-			stitch->patches[0] = pr1.getPatch()->weak_self;
-			stitch->patches[1] = pr2.getPatch()->weak_self;
-			stitch->patches[2] = pr3.getPatch()->weak_self;
+			stitch->patches[0] = v1.getPatch()->weak_self;
+			stitch->patches[1] = v2.getPatch()->weak_self;
+			stitch->patches[2] = v3.getPatch()->weak_self;
 
-			pr1.getPatch()->addStitchReference(stitch);
-			pr2.getPatch()->addStitchReference(stitch);
-			pr3.getPatch()->addStitchReference(stitch);
+			v1.getPatch()->addStitchReference(stitch);
+			v2.getPatch()->addStitchReference(stitch);
+			v3.getPatch()->addStitchReference(stitch);
 			debug_new_stitches.push_back(stitch);
 
 		} else {
@@ -424,7 +489,7 @@ assert(0);
 
 		return tr;
 	}
- */
+	*/
 }
 
 float cross(Vector2f v1, Vector2f v2) {

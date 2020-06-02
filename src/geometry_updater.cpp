@@ -320,10 +320,12 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	visible_meshlets.insert(visible_meshlets.end(),
 							new_shared_mesh_patches.begin(),
 							new_shared_mesh_patches.end());
+	vector<bool> empty;
 	shared_ptr<ActiveSet> new_active_set =
 			make_shared<ActiveSet>(gpu_storage,
 									visible_meshlets,
-									scheduler->getActiveSets());
+									scheduler->getActiveSets(),
+                                    empty,true);
 			/*
 			gpu_storage->makeActiveSet(
 					visible_meshlets,
@@ -354,6 +356,24 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	                                proj_depth, d_std_tex, new_active_set,
 	                                information_renderer);
 
+    //TODO: remove debug:
+    for(size_t i=0; i<new_shared_mesh_patches.size();i++){
+        auto gpu_meshlet = new_active_set->getGpuMeshlet(new_shared_mesh_patches[i]);
+        if(gpu_meshlet->std_tex.tex == nullptr){
+            assert(0);
+        }
+        if(gpu_meshlet->std_tex.tex->getRect().height == 0 || gpu_meshlet->std_tex.tex->getRect().width == 0) {
+            assert(0);
+        }
+        if(gpu_meshlet->std_tex.token == nullptr){
+            assert(0);
+        }
+
+        /*
+        if(new_shared_mesh_patches[i]->geom_tex_patch->mat.empty()){
+            assert(0);
+        }*/
+    }
 
 	//until here..... not further (not further we implemented stuff)
 	//(and with we i mean me)
@@ -405,7 +425,15 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 		new_shared_mesh_patches[i]->updateSphereRadius();
 	}
 
-	//add the objects to the low detail renderer
+    //TODO: remove this debug
+    for(size_t i = 0; i < new_shared_mesh_patches.size(); i++) {
+        if(new_shared_mesh_patches[i]->geom_tex_patch == nullptr){
+            assert(0);
+        }
+        //if(new_shared_mesh_patches[i]->geom_tex_patch)
+    }
+
+    //add the objects to the low detail renderer
 	auto start_low_detail = chrono::system_clock::now();
 	low_detail_renderer->addPatches(new_shared_mesh_patches,
 	                                     -depth_pose_in.block<3, 1>(0, 3));
@@ -425,7 +453,6 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 	for(auto patch : new_shared_mesh_patches)
 		reconstruction->octree_.add(patch);
-
 
 	time_end = chrono::system_clock::now();
 	auto elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start_all);
@@ -454,6 +481,71 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	}
 	/*********************************************************************************/
 
+	//TODO: remove this debug thingy!
+    for(size_t i=0;i<new_shared_mesh_patches.size();i++){
+        auto meshlet = new_shared_mesh_patches[i];
+        //if(new_shared_mesh_patches[i]->id == 607){
+            //cout << "this is that famous 607" << endl;
+            auto gpu_meshlet = new_active_set->getGpuMeshlet(meshlet);
+            //TODO: maybe check where the token went
+            auto active_sets = scheduler->getActiveSets();
+            active_sets.push_back(new_active_set);
+            bool token_exists=false;
+            bool exists_in_active_set = false;
+            for(auto s : active_sets){
+                if(s==nullptr){
+                    continue;
+                }
+                exists_in_active_set = true;
+                auto gpu_meshlet_2 = s->getGpuMeshlet(meshlet);
+                if(gpu_meshlet_2 != nullptr){
+
+                    if(meshlet->id == 607){
+                        gpu_meshlet_2->std_tex.debug= 607;
+                    }
+                    if(gpu_meshlet_2->std_tex.token != nullptr){
+                        token_exists = true;
+                    }
+                }
+            }
+            if(!token_exists){
+                assert(0);
+            }
+        //}
+    }
+    for(size_t i=0;i<visible_meshlets.size();i++){
+        auto meshlet = visible_meshlets[i];
+        //if(new_shared_mesh_patches[i]->id == 607){
+        //cout << "this is that famous 607" << endl;
+        auto gpu_meshlet = new_active_set->getGpuMeshlet(meshlet);
+        //TODO: maybe check where the token went
+        auto active_sets = scheduler->getActiveSets();
+        active_sets.push_back(new_active_set);
+        bool token_exists=false;
+        bool exists_in_active_set = false;
+        for(auto s : active_sets){
+            if(s==nullptr){
+                continue;
+            }
+            exists_in_active_set = true;
+            auto gpu_meshlet_2 = s->getGpuMeshlet(meshlet);
+            if(gpu_meshlet_2 != nullptr){
+                if(gpu_meshlet_2->std_tex.token != nullptr){
+                    token_exists = true;
+                }
+            }
+        }
+        if(!token_exists){
+            assert(0);
+        }
+        //}
+    }
+	//TODO: remove this debug thingy!
+	for(size_t i=0;i<new_active_set->meshlets.size();i++){
+	    if(new_active_set->meshlets[i].std_tex.tex == nullptr){
+	        assert(0);
+	    }
+	}
 
 	return new_active_set;
 }

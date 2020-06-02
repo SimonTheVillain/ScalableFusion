@@ -1,6 +1,7 @@
 *~
 *.autosave
 *build/
+build
 *docs/
 CMakeLists.txt.user
 cmake-build-debug

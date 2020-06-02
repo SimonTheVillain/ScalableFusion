@@ -16,15 +16,16 @@ using namespace std;
 using namespace Eigen;
 
 std::mutex ActiveSet::mutex;
-
+std::vector<ActiveSet*> ActiveSet::debug_all_active_sets;
 //TODO: find a way to allocate textures and texture pointers in this thing:
 //Meshlet textures could have a flag "do_not_upload" and a new version number to indicate a
 //update that requires a newly allocated texture
 ActiveSet::ActiveSet(GpuStorage *storage,
 					 vector<shared_ptr<Meshlet>> meshlets_requested,
 					 vector<shared_ptr<ActiveSet>> active_sets,
-					 vector<bool> allocate_new_verts){
-
+					 vector<bool> allocate_new_verts,
+					 bool debug_ignore_missing_geom_tex){
+    ActiveSet::debug_all_active_sets.push_back(this);
 	std::lock_guard<std::mutex> guard(mutex);
 
 	vector<shared_ptr<Meshlet>> reupload;
@@ -188,9 +189,32 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 				if(!meshlet->geom_tex_patch->mat.empty()){
 					most_current.debug = 3;
 					most_current.std_tex.create(meshlet->geom_tex_patch,storage->tex_atlas_stds_,storage->tex_pos_buffer);
+
+                    //TODO: REMOVE DEBUG:
+					if(most_current.std_tex.tex == nullptr && !debug_ignore_missing_geom_tex){
+					    assert(0);
+					}
+				}else{
+                    //TODO: REMOVE DEBUG:
+				    assert(0);
 				}
+				//TODO: REMOVE DEBUG:
+                if(most_current.std_tex.tex == nullptr && !debug_ignore_missing_geom_tex){
+                    //see if the tex still is zero.
+                    assert(0);
+                }
 			}
+			//TODO: REMOVE DEBUG:
+            if(most_current.std_tex.tex == nullptr && !debug_ignore_missing_geom_tex){
+                //see if the tex still is zero.
+                assert(0);
+            }
 		}
+        //TODO: REMOVE DEBUG:
+        if(most_current.std_tex.tex == nullptr && !debug_ignore_missing_geom_tex){
+            //see if the tex still is zero.
+            assert(0);
+        }
 
 		//upload color textures if there was none on the GPU
 		if(most_current.textures.size() == 0){
@@ -210,10 +234,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 				tex_gpu->create(tex_cpu,storage->tex_atlas_rgb_8_bit_,storage->tex_pos_buffer);
 
 			}
-
 		}
-
-
 
 		if(most_current.vertex_token == nullptr){
 			cout << " all this fuzz and still no valid token?" << endl;
@@ -222,7 +243,13 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 			//	most_current.vertex_token = make_unique<weak_ptr<Meshlet>>(meshlet);
 		}
 	}
-
+	//TODO: remove debug
+    for(int i=0;i<this->meshlets.size();i++){
+        //check if all the std textures grabbed a token. (its a fresh active set so it should be done already)
+        if(meshlets[i].std_tex.token == nullptr){
+            assert(0);
+        }
+    }
 
 	headers = storage->patch_info_buffer->getBlock(meshlets.size());
 	setupHeaders();
@@ -237,6 +264,7 @@ ActiveSet::~ActiveSet() {
 	mutex.lock();
 	//calling all the destructors that will be downloading the data to CPU
 	meshlets.clear();
+    ActiveSet::debug_all_active_sets.erase(std::remove(debug_all_active_sets.begin(), debug_all_active_sets.end(), this), debug_all_active_sets.end());
 
 
 	mutex.unlock();

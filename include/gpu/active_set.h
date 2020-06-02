@@ -37,7 +37,7 @@ class ActiveSet {
 	friend Meshlet;
 
 public:
-
+    static std::vector<ActiveSet*> debug_all_active_sets;
 	static std::mutex mutex;
 	~ActiveSet();
 
@@ -77,7 +77,8 @@ public:
 	ActiveSet(	GpuStorage *storage,
 				vector<shared_ptr<Meshlet>> meshlets_requested,
 				vector<shared_ptr<ActiveSet>> active_sets,
-				vector<bool> allocate_new_verts = {});
+				vector<bool> allocate_new_verts = {},
+				bool debug_ignore_missing_geom_tex = false);
 
 
 

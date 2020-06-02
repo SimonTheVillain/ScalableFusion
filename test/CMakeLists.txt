@@ -18,7 +18,6 @@ target_link_libraries(label_cloud_viewer
                       ${SCALFU_LIBRARIES})
 
 
-
 add_executable(simple_cloud_viewer
                simple_cloud_viewer.cpp
                )
@@ -42,7 +41,6 @@ add_executable(texture_mem_test_threaded
 
 target_link_libraries(texture_mem_test_threaded
                       ${SCALFU_LIBRARIES})
-
 
 
 

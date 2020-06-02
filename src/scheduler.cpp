@@ -53,7 +53,7 @@ SchedulerLinear::SchedulerLinear(
 	capture_thread_ = thread(&SchedulerLinear::captureWorker_, this, map, source, context);
 	pthread_setname_np(capture_thread_.native_handle(),"capture");
 
-	active_sets.resize(2); // 0 for update, 1 for rendering
+	active_sets.resize(3); // 0 for update, 1 and 2 for rendering
 }
 
 SchedulerLinear::~SchedulerLinear() {
@@ -248,6 +248,8 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		//reconstruction->clearInvalidGeometry(active_set, depth, depth_pose);
 		Matrix4f depth_proj = Camera::genProjMatrix(source->intrinsicsDepth());
 
+
+		//TODO: put this back in!!!!
 		/*
 		active_set =
 				geometry_updater->update(
@@ -259,19 +261,21 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 						d_std_tex,
 						depth_pose,
 						depth_proj);
-		*/
-		if(active_set!=nullptr){
+								if(active_set!=nullptr){
 			active_set->name = "geometry_updated_set";
 		}
+						*/
+
+
+
 
 		active_sets_mutex.lock();
 		active_sets[0] = active_set;
-		active_sets[1] = active_set;
 		active_sets_mutex.unlock();
+        setActiveSetRendering(active_set);
 
 
 		//TODO: test this by not applying texture in extend step
-
 		active_set =
 				texture_updater->colorTexUpdate(
 						gpu_storage_,
@@ -280,6 +284,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 						rgb_texture,
 						reconstruction->params.rgb_fxycxy,
 						rgb_pose);
+
 		if(active_set!= nullptr){
 			active_set->name = "color_updated_set";
 		}
@@ -312,12 +317,11 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 			active_sets_mutex.lock();
 			active_sets[0] = updated_geometry_set;
-			active_sets[1] = updated_geometry_set;//debug for rendering!!!!
 			active_sets_mutex.unlock();
+            setActiveSetRendering(updated_geometry_set);
 
 			//after the first step we wait (DEBUG).
 			cv::waitKey(1);
-
 
 			frame_count = 0;
 

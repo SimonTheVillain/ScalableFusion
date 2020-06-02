@@ -40,6 +40,10 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 		tex_gen_tasks.reserve(active_set->meshlets.size());
 		for(size_t i=0; i < meshlets.size(); i++){
 			cv::Rect2f &bound = bounds[i];
+            //TODO: remove debug:
+            if(bound.width == 0 || bound.height == 0){
+                assert(0);
+            }
 			TexCoordGen::Task &task = tex_gen_tasks[i];
 			shared_ptr<Meshlet> &meshlet = meshlets[i];
 			//allocate gpu_storage, generate the tasks and go for it!

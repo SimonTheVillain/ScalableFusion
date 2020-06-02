@@ -31,7 +31,7 @@ struct TextureToken{
 
 class TextureLayerGPU{
 public:
-
+    int debug = -1;
 	TextureLayerGPU(){}
 
 	TextureLayerGPU(TextureLayerGPU &&o) :

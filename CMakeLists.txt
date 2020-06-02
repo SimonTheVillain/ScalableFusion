@@ -10,13 +10,16 @@
 cmake_minimum_required (VERSION 3.8)
 if(NOT DEFINED CMAKE_CUDA_COMPILER)
 	set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
+	if(NOT EXISTS CMAKE_CUDA_COMPILER)
+		set(CMAKE_CUDA_COMPILER "/usr/bin/nvcc")
+	endif()
 endif()
 #add_definitions(-DEIGEN_DONT_VECTORIZE)
-
 # Project
 project(scalable_fusion
 	LANGUAGES CXX CUDA
 )
+
 set(LIB_NAME scalfu)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -60,7 +63,6 @@ if(CMAKE_BUILD_TYPE MATCHES DEBUG)
 	#https://stackoverflow.com/questions/27277365/unspecified-launch-failure-on-memcpy/27278218#27278218
 endif()
 
-
 #define library version:
 set(SCALFU_VERSION_MAJOR 0)
 set(SCALFU_VERSION_MINOR 7)
@@ -94,6 +96,7 @@ add_definitions(-DIGNORE_SERIOUS_BUG_3)
 
 # logging
 add_definitions(-DENABLE_LOGGING)
+
 
 # Required packages
 find_package(ASSIMP REQUIRED)

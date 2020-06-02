@@ -77,6 +77,9 @@ public:
 };
 
 class SchedulerLinear : public SchedulerBase {
+private:
+    bool rendering_sets_updated[2] = {false, false};
+    int rendering_sets_index = 0;
 public:
 
 	SchedulerLinear(shared_ptr<MeshReconstruction> map,
@@ -101,9 +104,29 @@ public:
 	virtual void setRenderCamPose(Matrix4f camPose){
 
 	}
+	//TODO: make this private:
+	void setActiveSetRendering(shared_ptr<ActiveSet> set){
+	    active_sets_mutex.lock();
+        int other_ind = rendering_sets_index + 1;
+        if(other_ind > 1)
+            other_ind = 0;
+        active_sets[1 + other_ind] = set;
+        rendering_sets_updated[other_ind] = true;
+	    active_sets_mutex.unlock();
+	}
 	virtual shared_ptr<ActiveSet> getActiveSetRendering(){
 		active_sets_mutex.lock();
-		auto set = active_sets[1];
+		int other_ind = rendering_sets_index + 1;
+		if(other_ind > 1)
+		    other_ind = 0;
+
+		//if there already is an updated version of the other
+		if(rendering_sets_updated[other_ind]){
+		    rendering_sets_index = other_ind;
+		    rendering_sets_updated[other_ind] = false;
+		}
+		rendering_sets_updated[rendering_sets_index] = false;
+		auto set = active_sets[1 + rendering_sets_index];
 		active_sets_mutex.unlock();
 		return set;
 	}

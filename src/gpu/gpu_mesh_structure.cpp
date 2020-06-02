@@ -16,6 +16,10 @@ GpuTextureInfo TextureLayerGPU::genGpuTextureInfo(){
 
 MeshletGPU::~MeshletGPU(){
 
+	//TODO: Remove this debug
+	if(id == 607){
+		cout << "damn you 607!!!" << endl;
+	}
 	if(vertex_token == nullptr)
 		return;
 
@@ -62,6 +66,9 @@ MeshletGPU::~MeshletGPU(){
 }
 
 TextureLayerGPU::~TextureLayerGPU(){
+    if(debug==607){
+        cout<< "this is the problematic case!!" << endl;
+    }
 	if(tex == nullptr)
 		return;
 	if(coords == nullptr)
@@ -98,7 +105,9 @@ TextureLayerGPU::~TextureLayerGPU(){
 		//assert(0);//if this happens the first few frames something is really off
 		cudaFree(data_gpu);
 		*/
-
+        if(debug==607){
+            assert(0);
+        }
 		data = cv::Mat(rect.height,rect.width,CV_16UC(channels));
 		tex->downloadData(data.data);
 		//cv::imshow("downloaded std_tex_patch",data);
@@ -120,11 +129,6 @@ TextureLayerGPU::~TextureLayerGPU(){
 	cpu_tex->tex_coord_version = tex_coord_version;
 	cpu_tex->tex_version = tex_version;
 	cpu_tex->mat_mutex.unlock();
-
-
-
-
-
 	//assert(0);
 }
 

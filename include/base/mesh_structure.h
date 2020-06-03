@@ -877,7 +877,8 @@ struct Edge {
 		if(this->triangle != nullptr && this->is_registered){
 			this->triangle->edges[this->pos] = this;
 		}
-
+        this->debug = o.debug + 10000;
+		o.debug = 0;
 		o.triangle = nullptr;
 		o.pos = -1;
 		o.is_registered = false;
@@ -887,6 +888,7 @@ struct Edge {
 		this->triangle = o.triangle;
 		this->pos = o.pos;
 		this->is_registered = o.is_registered;
+		this->debug = o.debug - 10000;
 		//update the reference of the triangles to this edge
 		if(this->triangle != nullptr && this->is_registered){
 			this->triangle->edges[this->pos] = this;
@@ -938,7 +940,7 @@ public:
 
 	//borderlist is used in case a edge is already registered in the triangle
 	bool getOrAttachNextEdge(int endpoint, Edge* &result, //bool debug = false){
-	                  vector<Edge> &edge_list, bool debug = false) {
+	                  vector<Edge> &edge_list, bool debug = false, int debug_id = 0) {
 
 		//Meshlet* current_meshlet = meshlet;
 		//int current_triangle_ind = triangle_ind_meshlet;
@@ -969,6 +971,7 @@ public:
 					// if we need to create a new edge:
 					edge_list.emplace_back(current_triangle, current_edge_ind_in_triangle);
 					result = &edge_list.back();
+					result->debug = debug_id;
 					return true;
 				}
 			}

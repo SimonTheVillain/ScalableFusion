@@ -286,22 +286,21 @@ vector<shared_ptr<Meshlet>> MeshReconstruction::GetAllPatches() {
  * Getting a already existing stitch (otherwise creating a new one
  *
  */
-
+/*
 Triangle* MeshReconstruction::addTriangle_(Vertex* pr1,
 										   Vertex* pr2,
 										   Vertex* pr3) {
 	//same method as below but without the debug
 	assert(0);
 }
-
+*/
 //Creating a new triangle just from vertex references.
 //used in the inter frame stitching process
 int debug_global_stitch_triangle_ctr = 0;
 //TripleStitch *debug_quenstionable_triplestitch = nullptr;
 
 Triangle* MeshReconstruction::addTriangle_(
-		Vertex* v1, Vertex* v2, Vertex* v3,
-		vector<weak_ptr<GeometryBase>> &debug_new_stitches) {
+		Vertex* v1, Vertex* v2, Vertex* v3) {
 
 	//TODO: what would be nice would be something similar/using the same as in the mesher class:
 	//providing points and neighbour references(triangle ptr + index)

@@ -195,10 +195,11 @@ private:
 	//void setActiveSetUpdate_(shared_ptr<ActiveSet> set);
 
 	Triangle* addTriangle_(
-			Vertex* v1, Vertex* v2, Vertex* v3,
-			vector<weak_ptr<GeometryBase>> &debug_new_stitches);
+			Vertex* v1, Vertex* v2, Vertex* v3);
+	/*
 	Triangle* addTriangle_(Vertex* pr1, Vertex* pr2,
 						   Vertex* pr3);
+						   */
 
 	//GarbageCollector *garbage_collector_;
 

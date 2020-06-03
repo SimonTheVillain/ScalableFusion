@@ -9,10 +9,11 @@
 using namespace std;
 using namespace Eigen;
 
-void MeshStitcher::rasterBorderGeometry(vector<vector<Edge>> &borders,
+void MeshStitcher::rasterBorderGeometry(vector<vector<Edge>> &borders_unused,
 										Matrix4f view, Matrix4f proj,
 										cv::Mat geometry) {
 
+    vector<vector<Edge>> &borders = this->border_list;
 	Matrix4f view_inv = view.inverse();
 	cv::Mat debug = geometry.clone(); //TODO: get rid of this
 	for(size_t i = 0; i < borders.size(); i++) {
@@ -21,6 +22,29 @@ void MeshStitcher::rasterBorderGeometry(vector<vector<Edge>> &borders,
 			rasterLineGeometry(view_inv, proj, edge, geometry, debug);
 		}
 	}
+}
+void MeshStitcher::checkTriangleEdgeConsistency() {
+
+    vector<vector<Edge>> &borders = this->border_list;
+    for(size_t i = 0; i < borders.size(); i++) {
+        for (size_t j = 0; j < borders[i].size(); j++) {
+            Edge &edge = borders[i][j];
+            if(edge.triangle->edges[edge.pos] != &edge){
+
+                //check if the same edge is in another border
+                for(size_t k = 0;k<borders.size();k++){
+                    for(size_t l = 0; l<borders[k].size();l++){
+                        if(k == i && l == j)
+                            continue;
+                        if(edge.triangle->edges[edge.pos] == &borders[k][l]){
+                            assert(0); // check if the edge is in another border
+                        }
+                    }
+                }
+                assert(0);
+            }
+        }
+    }
 }
 
 void MeshStitcher::rasterLineGeometry(Matrix4f view, Matrix4f proj, Edge *edge,
@@ -101,7 +125,7 @@ void MeshStitcher::rasterLineGeometry(Matrix4f view, Matrix4f proj, Edge *edge,
 }
 
 void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
-								 vector<vector<Edge>> &border_list,
+								 vector<vector<Edge>> &border_list_unused,
 								 Matrix4f debug_proj_pose) {
 	float s = 2.0f;
 	float s2 = 1.0f;
@@ -153,27 +177,29 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 		cv::imshow("edges", debug_mat);
 		cv::waitKey(1);
 	};
-
 	auto addBorderStrip = [&]() {
-		auto initialEdge = [&border_list]() -> Edge*{
+		auto initialEdge = [&]() -> Edge*{
 			//The first element of a given border is the seed.
 			//and its clear that we always work on the last border in our list.
-			return &(border_list.back()[0]);
+			return &(this->border_list.back()[0]);
 		};
 		Edge* current_edge = initialEdge();
 		renderEdge(*current_edge);
 		bool following_border = true;
 		bool ran_in_circle = false;
-		vector<Edge> &forward = border_list.back();
+		vector<Edge> &forward = this->border_list.back();
 		vector<Edge> backward;
 		Edge* debug_last_edge = current_edge;
 		while(following_border) {
 			Edge* result;
-			current_edge->getOrAttachNextEdge(0, result, forward);
+			current_edge->getOrAttachNextEdge(0, result, forward, false, 10);
 			current_edge = result;
 			renderEdge(*current_edge); //debug
 
 			if(meshlets.count(current_edge->triangle->getMeshlet()) != 1) {
+                //stop following the edge as soon as we encounter an unknown meshlet
+                //since that invalid edge already is attached to the list we need to undo this
+			    forward.pop_back();
 				following_border = false;//if the new edge is attached to a patch outside we abort.
 				continue;
 			}
@@ -187,8 +213,8 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 							assert(0);//intersecting the current border
 						}
 					}
-					for(int i=0;i<border_list.size();i++){
-						for(int j=0;j<border_list[i].size();j++){
+					for(int i=0; i < border_list.size(); i++){
+						for(int j=0; j < border_list[i].size(); j++){
 							if(current_edge == &border_list[i][j]) {
 								cv::waitKey();
 								assert(0);//intersecting with another border
@@ -196,7 +222,7 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 
 						}
 					}
-					debug_last_edge->getOrAttachNextEdge(0, current_edge, forward);
+					debug_last_edge->getOrAttachNextEdge(0, current_edge, forward,true, 10);
 					assert(0);//only the initial triangle should be registered
 				} else {
 					ran_in_circle = true;
@@ -229,17 +255,23 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 			debug_last_edge = current_edge;
 		}
 
+
 		if(!ran_in_circle) {
 			//if we didn't follow the border in a full loop we start again from the initial triangle
 			following_border = true;
 			current_edge = initialEdge();
 			while(following_border) {
 				Edge* result;
-				current_edge->getOrAttachNextEdge(1, result, backward);//other direction
+				current_edge->getOrAttachNextEdge(1, result, backward, false, 11);//other direction
 				current_edge = result;
+                if(result != result->triangle->edges[result->pos]){
+                    //assert(0); //TODO: remove this debug measure
+                }
 				renderEdge(*current_edge);
 				if(meshlets.count(current_edge->triangle->getMeshlet()) != 1) {
-					//finish following the edge as soon as we encounter an unknown meshlet
+					//stop following the edge as soon as we encounter an unknown meshlet
+					//since that invalid edge already is attached to the list we need to undo this
+					backward.pop_back();
 					following_border = false;//if the new edge is attached to a patch outside we abort.
 					continue;
 				}
@@ -265,10 +297,10 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 						Triangle *current_triangle = current_edge->triangle;
 						Triangle *last_triangle    = debug_last_edge->triangle;
 						Edge *new_edge = nullptr;
-						debug_last_edge->getOrAttachNextEdge(1, new_edge, backward);
+						debug_last_edge->getOrAttachNextEdge(1, new_edge, backward, true, -1);
 
 						Edge *new_edge2 = nullptr;
-						debug_last_edge->getOrAttachNextEdge(1, new_edge2, backward);
+						debug_last_edge->getOrAttachNextEdge(1, new_edge2, backward, true, -1);
 
 						assert(0);// this should not happen!!!!!
 					} else {
@@ -294,10 +326,10 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 					 */
 				}
 			}
-			Edge test1;
-			Edge test2;
-			test2 = std::move(test1);
+
 			reverse(backward.begin(), backward.end());
+			//we need to use the move operator here so that all the edges get
+			//https://stackoverflow.com/questions/38121833/should-stl-mapinsert-support-move-semantics-with-move-iterators
 			backward.insert(backward.end(), make_move_iterator(forward.begin()), make_move_iterator(forward.end()));
 
 			//but why is this????
@@ -309,16 +341,10 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 			 */
 			border_list.back() = move(backward);
 		}
+		//registering the edges to the triangles
 		for(Edge &edge : border_list.back()){
 			edge.registerInTriangle();
 		}
-		//changing the registration for the edges
-		//TODO: check if this was necessary. It seems nonsensical
-		/*
-		for(size_t i = 0; i < border_list.back().size(); i++) {
-			border_list.back()[i].registerInTriangle(border_list.size() - 1, i);
-		}
-		 */
 	};
 
 	for(GeometryBase *geom_base : debug_patches_ordered) {
@@ -340,60 +366,11 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 					}
 				}
 			}
-			/*
-			if(!triangle.neighbours[0].valid()) {
-				//TODO: also check for the according neighbour not to have a valid edge
-				if(triangle.edges[0] == nullptr) {
-					//register the new edge:
-					//triangle.edges[0].border_ind = border_list.size();
-					border_list.emplace_back();//create a new list of edges (read border) at its end
-					//triangle.edges[0].ind = border_list.back().size();//obviously
-					border_list.back().emplace_back(tri_ref, 0);
-					triangle.edges[0] = &border_list.back().back();
-					border_list.back().back().is_registered = true;
-					border_list.back().back().debug = -border_list.size() + 1;
-					Edge &edge = border_list.back().back();
-
-					addBorderStrip(edge);//recursively append this edge!!!!
-				}
-			}
-
-			if(!triangle.neighbours[1].valid()) {
-				if(triangle.edges[1] == nullptr) {
-					//register the new edge:
-					//triangle.edges[1].border_ind = border_list.size();
-					border_list.emplace_back();//create a new list of edges (read border) at its end
-					//triangle.edges[1].ind = border_list.back().size();
-					border_list.back().emplace_back(tri_ref, 1);
-					border_list.back().back().is_registered = true;
-					border_list.back().back().debug = -border_list.size() + 1;
-					Edge &edge = border_list.back().back();
-
-					addBorderStrip(edge);//recursively append this edge!!!!
-				}
-				//TODO: also check for the according neighbour not to have a valid edge
-			}
-			if(!triangle.neighbours[2].valid()) {
-				if(triangle.edges[2] == nullptr) {
-					//register the new edge:
-					triangle.edges[2].border_ind = border_list.size();
-					border_list.emplace_back();//create a new list of edges (read border) at its end
-					triangle.edges[2].ind = border_list.back().size();
-					border_list.back().emplace_back(tri_ref,2);
-					border_list.back().back().is_registered = true;
-					border_list.back().back().debug = -border_list.size() + 1;
-					Edge &edge = border_list.back().back();
-
-					addBorderStrip(edge);//recursively append this edge!!!!
-				}
-				//TODO: also check for the according neighbour not to have a valid edge
-			}
-			 */
 		}
 	}
 }
 
-void MeshStitcher::reloadBorderGeometry(vector<vector<Edge>> &border_list) {
+void MeshStitcher::reloadBorderGeometry(vector<vector<Edge>> &border_list_unused) {
 	//i very much fear what happens when something here changes
 
 	cout << "TODO: reimplement MeshStitcher::reloadBorderGeometry" << endl;
@@ -444,25 +421,25 @@ void MeshStitcher::reloadBorderGeometry(vector<vector<Edge>> &border_list) {
 }
 
 //TODO: also download the geometry of such list
-void MeshStitcher::freeBorderList(vector<vector<Edge>> &border_list) {
-	for(size_t i = 0; i < border_list.size(); i++) {
-		for(size_t j = 0; j < border_list[i].size(); j++) {
-			Edge &edge = border_list[i][j];
+void MeshStitcher::freeBorderList(vector<vector<Edge>> &border_list_unused) {
+	for(size_t i = 0; i < this->border_list.size(); i++) {
+		for(size_t j = 0; j < this->border_list[i].size(); j++) {
+			Edge &edge = this->border_list[i][j];
 			edge.unregister();
 		}
 	}
-	border_list.clear();
+	this->border_list.clear();
 }
 
 void MeshStitcher::stitchOnBorders(
-		vector<vector<Edge>> &borders, Matrix4f view, Matrix4f proj, 
+		vector<vector<Edge>> &borders_unused, Matrix4f view, Matrix4f proj,
 		cv::Mat std_proj, cv::Mat geom_proj_m, cv::Mat new_geom_m, cv::Mat new_std,
 		cv::Mat debug_color_coded_new_segmentation, cv::Mat new_seg_pm, 
-		cv::Mat new_pt_ind_m, 
-		vector<weak_ptr<GeometryBase>> &debug_list_new_edges) {
+		cv::Mat new_pt_ind_m) {
 	//cout << "IMPLEMENT THIS!!!!! MeshStitcher::stitchOnBorders" << endl;
 	//return;
 	//assert(0); // this needs to be here but reimplemented
+    vector<vector<Edge>> &borders = this->border_list;
 	vector<Edge> additional_edges;
 
 	MeshReconstruction *map = mesh_reconstruction;
@@ -565,6 +542,7 @@ void MeshStitcher::stitchOnBorders(
 				if(triangle->edges[ind]!=nullptr){
 					//there already is a registered option so use it
 					resulting_registered_edge = triangle->edges[ind];
+					resulting_registered_edge->debug += 1000;
 					return true;
 				}
 				additional_edges.emplace_back();
@@ -573,6 +551,7 @@ void MeshStitcher::stitchOnBorders(
 				e.pos = ind;
 				e.registerInTriangle();
 				resulting_registered_edge = &e;
+				resulting_registered_edge->debug = 100;
 				return true;
 			}
 		}
@@ -674,7 +653,7 @@ void MeshStitcher::stitchOnBorders(
 
 			Edge &edge = borders[i][j];
 
-			if(edge.triangle->edges[edge.pos] != &edge) {
+			if(edge.triangle->edges[edge.pos] != &edge) { //Consistency seems violated
 				assert(0);
 			}
 			if(edge.already_used_for_stitch) {
@@ -738,7 +717,7 @@ void MeshStitcher::stitchOnBorders(
 								sewing_mode = false;
 								return;
 							}
-							map->addTriangle_(last_sewing_pr, pr0, pr1, debug_list_new_edges);
+							map->addTriangle_(last_sewing_pr, pr0, pr1);
 							nr_triangles_this_edge++;
 							#ifdef SHOW_TEXT_STITCHING
 							cout << "e" << endl;
@@ -788,7 +767,7 @@ void MeshStitcher::stitchOnBorders(
 									break;
 								}
 								Edge* other_edge;
-								current_sewing_edge->getOrAttachNextEdge(1, other_edge, additional_edges);
+								current_sewing_edge->getOrAttachNextEdge(1, other_edge, additional_edges, false, 20);
 								other_edge->registerInTriangle();
 								Vertex*		    vr = other_edge->vertices(1);
 								Vertex*          v = vr; //DEBUG: combine these two
@@ -813,8 +792,7 @@ void MeshStitcher::stitchOnBorders(
 									sewing_mode = false;
 									break;
 								}
-								map->addTriangle_(current_sewing_pr, last_sewing_pr, pr1,
-								                  debug_list_new_edges);
+								map->addTriangle_(current_sewing_pr, last_sewing_pr, pr1);
 								nr_triangles_this_edge++;
 								last_pr = current_sewing_pr;
 								#ifdef SHOW_TEXT_STITCHING
@@ -843,7 +821,7 @@ void MeshStitcher::stitchOnBorders(
 								sewing_mode = false;
 								return;
 							}
-							map->addTriangle_(last_sewing_pr, pr0, pr1, debug_list_new_edges);
+							map->addTriangle_(last_sewing_pr, pr0, pr1);
 							nr_triangles_this_edge++;
 							last_pr = last_sewing_pr;
 							#ifdef SHOW_TEXT_STITCHING
@@ -857,8 +835,7 @@ void MeshStitcher::stitchOnBorders(
 									sewing_mode = false;
 									return;
 								}
-								map->addTriangle_(current_sewing_pr, last_sewing_pr, pr1,
-								                  debug_list_new_edges);
+								map->addTriangle_(current_sewing_pr, last_sewing_pr, pr1);
 								last_pr = current_sewing_pr;
 								#ifdef SHOW_TEXT_STITCHING
 								cout << "g2" << endl;
@@ -869,7 +846,7 @@ void MeshStitcher::stitchOnBorders(
 									break;
 								}
 								Edge* other_edge;
-								current_sewing_edge->getOrAttachNextEdge(1, other_edge, additional_edges);
+								current_sewing_edge->getOrAttachNextEdge(1, other_edge, additional_edges, false, 21);
 								other_edge->registerInTriangle();
 								Vertex* vr = other_edge->vertices(1);
 								Vertex          *v = vr;
@@ -930,7 +907,7 @@ void MeshStitcher::stitchOnBorders(
 							//get next edge
 							edge.already_used_for_stitch = true;
 							Edge* other_edge;
-							current_sewing_edge->getOrAttachNextEdge(1, other_edge, additional_edges);
+							current_sewing_edge->getOrAttachNextEdge(1, other_edge, additional_edges, false, 22);
 							other_edge->registerInTriangle();
 							current_sewing_edge = other_edge;
 							last_sewing_pr = current_sewing_pr;
@@ -1063,7 +1040,7 @@ void MeshStitcher::stitchOnBorders(
 
 							checkAndStartSewing(this_pr);
 
-							map->addTriangle_(this_pr, pr0, pr1, debug_list_new_edges);
+							map->addTriangle_(this_pr, pr0, pr1);
 							#ifdef SHOW_TEXT_STITCHING
 							cout << "a" << endl;
 							#endif // SHOW_TEXT_STITCHING
@@ -1091,7 +1068,7 @@ void MeshStitcher::stitchOnBorders(
 								}
 								checkAndStartSewing(this_pr);
 
-								map->addTriangle_(this_pr, pr0, pr1, debug_list_new_edges);
+								map->addTriangle_(this_pr, pr0, pr1);
 								#ifdef SHOW_TEXT_STITCHING
 								cout << "b" << endl;
 								#endif // SHOW_TEXT_STITCHING
@@ -1123,7 +1100,7 @@ void MeshStitcher::stitchOnBorders(
 									}
 								}
 
-								map->addTriangle_(last_pr, pr0, pr1, debug_list_new_edges);//TODO: reinsert this
+								map->addTriangle_(last_pr, pr0, pr1);//TODO: reinsert this
                 #ifdef SHOW_TEXT_STITCHING
 								cout << "c" << endl;
                 #endif // SHOW_TEXT_STITCHING
@@ -1142,7 +1119,7 @@ void MeshStitcher::stitchOnBorders(
 								if(!isTrianglePossible({this_pr, last_pr, pr1})) {
 									continue;
 								}
-								map->addTriangle_(this_pr, last_pr, pr1, debug_list_new_edges);
+								map->addTriangle_(this_pr, last_pr, pr1);
 								#ifdef SHOW_TEXT_STITCHING
 								cout << "c" << endl;
 								#endif // SHOW_TEXT_STITCHING
@@ -1179,7 +1156,7 @@ void MeshStitcher::stitchOnBorders(
 							need_to_connect_hole = true;
 							//TODO: check if the hole is one or two hops long.
 						}
-						map->addTriangle_(this_pr, last_pr, pr1, debug_list_new_edges);//third point is from last edge
+						map->addTriangle_(this_pr, last_pr, pr1);//third point is from last edge
 						#ifdef SHOW_TEXT_STITCHING
 						cout << "d" << endl;
 						#endif // SHOW_TEXT_STITCHING

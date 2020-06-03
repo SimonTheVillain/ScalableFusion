@@ -68,14 +68,18 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 
 	/*******************************************STITCHING NEW********/
-	vector<vector<Edge>> borders;
+	vector<vector<Edge>> borders; //TODO: completely remove after the dependency on it is removed
 	Matrix4f proj_pose = proj_depth * depth_pose_in.inverse();
 
 	//TODO: comment back in obviously
 
+    stitching.checkTriangleEdgeConsistency();
+    int debug_border_count = stitching.border_list.size();
 	stitching.genBorderList(
 			visible_meshlets, borders,
 			proj_pose);
+
+    stitching.checkTriangleEdgeConsistency();
 	stitching.reloadBorderGeometry(borders);
 	//cv::imshow("DEBUG:geom_before", ex_geom);
 	stitching.rasterBorderGeometry(borders, depth_pose_in, proj_depth, ex_geom);
@@ -206,16 +210,18 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	/*********************************Initial Stitching!! NEW***************************/
 
 
-	vector<weak_ptr<GeometryBase>> stitch_list;
+	//vector<weak_ptr<GeometryBase>> stitch_list;
 
 	//TODO: reinsert code and fix bugs
-	cout << "TODO: reinsert this code and fix bugs" << endl;
-	/*
+	//cout << "TODO: reinsert this code and fix bugs" << endl;
+    //reconstruction->checkTriangleEdgeConsistency();
+    stitching.checkTriangleEdgeConsistency();
+
 	stitching.stitchOnBorders(borders, depth_pose_in, proj_depth, proj_depth_std, 
 	                          ex_geom, points, d_std_mat, 
 	                          reconstruction->generateColorCodedTexture_(mesh_pointers),
-	                          mesh_pointers, vertex_indices, stitch_list);
-	*/
+	                          mesh_pointers, vertex_indices);
+
 
 	stitching.freeBorderList(borders);
 

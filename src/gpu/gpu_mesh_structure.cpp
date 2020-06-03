@@ -15,11 +15,6 @@ GpuTextureInfo TextureLayerGPU::genGpuTextureInfo(){
 }
 
 MeshletGPU::~MeshletGPU(){
-
-	//TODO: Remove this debug
-	if(id == 607){
-		cout << "damn you 607!!!" << endl;
-	}
 	if(vertex_token == nullptr)
 		return;
 

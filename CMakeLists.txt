@@ -19,7 +19,11 @@ endif()
 project(scalable_fusion
 	LANGUAGES CXX CUDA
 )
-
+#todo: remove as soon either clion 2020.1.2 or cuda itself is fixed
+#In file included from /usr/include/cuda_runtime.h:83,
+#from <command-line>:
+#/usr/include/crt/host_config.h:138:2: error: #error -- unsupported GNU version! gcc versions later than 8 are not supported!
+#set(CMAKE_CXX_COMPILER /usr/bin/g++-8)
 set(LIB_NAME scalfu)
 
 set(CMAKE_CXX_STANDARD 14)

@@ -91,10 +91,11 @@ add_definitions(-DUSE_FLOAT16_GEOM_TEX)
 #add_definitions(-DSHOW_SERIOUS_DEBUG_OUTPUTS)
 add_definitions(-DPROPHYLACTIC_GPU_SYNC)#TODO: Implement this
 #add_definitions(-DIGNORE_MISSING_STD)
-
+add_definitions(-DFIX_BIG_TEX_BY_CLAMPING)
 add_definitions(-DIGNORE_SERIOUS_BUG_1)
 #add_definitions(-DIGNORE_SERIOUS_BUG_2)
 add_definitions(-DIGNORE_SERIOUS_BUG_3)
+add_definitions(-DSHOW_TEXT_STITCHING)
 #add_definitions(-DIGNORE_SERIOUS_BUG_4)
 #add_definitions(-DIGNORE_SERIOUS_BUG_5)//invalid stitches
 

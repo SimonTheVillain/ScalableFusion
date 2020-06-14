@@ -236,6 +236,9 @@ public:
 	bool encompassed();
 
 
+	bool violate_manifold();
+
+
 
 
 
@@ -549,7 +552,7 @@ struct Triangle {
 	//VertexReference points[3];
 	Vertex* 		vertices[3] = {nullptr, nullptr, nullptr};
 	Neighbour       neighbours[3];
-
+    int debug_marker = -1;
 	Triangle() { }
 
 	//move constructor
@@ -948,7 +951,6 @@ public:
 
 		Triangle* current_triangle = triangle;
 
-
 		int ttl = 10000;//TODO: put that back to 100.... we will not have than 16 or so triangles for a point
 		while(ttl--) {
 
@@ -981,7 +983,7 @@ public:
 			current_edge_ind_in_triangle =
 					old_triangle->neighbours[current_edge_ind_in_triangle].pos;
 			if(debug){
-				cout << current_triangle << " at " << current_edge_ind_in_triangle	 << endl;
+				cout << current_triangle << " at " << current_edge_ind_in_triangle	 << " debug_nr " << current_triangle->debug_nr << endl;
 			}
 		}
 

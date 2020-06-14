@@ -64,13 +64,20 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 			}
 			meshlet_gpu->std_tex.token =
 					make_unique<weak_ptr<MeshTexture>>(meshlet->geom_tex_patch);//TODO: this token
+#ifdef FIX_BIG_TEX_BY_CLAMPING
+            bound.width = std::min(1024.0f / scale, bound.width);
+            bound.height= std::min(1024.0f / scale, bound.height);
+#endif
 			cv::Size2i size(bound.width * scale,bound.height * scale);
 			meshlet_gpu->std_tex.tex =
 					gpu_storage->tex_atlas_stds_->getTexAtlasPatch(size);
 			meshlet_gpu->geom_lookup_tex =
 					gpu_storage->tex_atlas_geom_lookup_->getTexAtlasPatch(size);
 
-
+            //TODO: REMOVE THIS DEBUG MEASURE:
+            if(meshlet_gpu->std_tex.tex->getRect().height == 0 || meshlet_gpu->std_tex.tex->getRect().width == 0) {
+                assert(0);
+            }
 			//setup the task for texture coordinate generation
 			task.coords = meshlet_gpu->std_tex.coords->getStartingPtr();
 			task.vertices = meshlet_gpu->vertices->getStartingPtr();

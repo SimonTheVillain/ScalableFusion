@@ -68,7 +68,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 
 	/*******************************************STITCHING NEW********/
-	vector<vector<Edge>> borders; //TODO: completely remove after the dependency on it is removed
+	//vector<vector<Edge>> borders; //TODO: completely remove after the dependency on it is removed
 	Matrix4f proj_pose = proj_depth * depth_pose_in.inverse();
 
 	//TODO: comment back in obviously
@@ -76,13 +76,13 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
     stitching.checkTriangleEdgeConsistency();
     int debug_border_count = stitching.border_list.size();
 	stitching.genBorderList(
-			visible_meshlets, borders,
+			visible_meshlets,
 			proj_pose);
 
     stitching.checkTriangleEdgeConsistency();
-	stitching.reloadBorderGeometry(borders);
+	stitching.reloadBorderGeometry(active_set_of_formerly_visible_patches);
 	//cv::imshow("DEBUG:geom_before", ex_geom);
-	stitching.rasterBorderGeometry(borders, depth_pose_in, proj_depth, ex_geom);
+	stitching.rasterBorderGeometry(depth_pose_in, proj_depth, ex_geom);
 	//cv::imshow("DEBUG:geom_after_rastering", ex_geom);
 	//cv::waitKey();
 	//this is a premilary measure to get the geometry adding running....
@@ -217,13 +217,13 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
     //reconstruction->checkTriangleEdgeConsistency();
     stitching.checkTriangleEdgeConsistency();
 
-	stitching.stitchOnBorders(borders, depth_pose_in, proj_depth, proj_depth_std, 
+	stitching.stitchOnBorders(depth_pose_in, proj_depth, proj_depth_std,
 	                          ex_geom, points, d_std_mat, 
 	                          reconstruction->generateColorCodedTexture_(mesh_pointers),
 	                          mesh_pointers, vertex_indices);
 
 
-	stitching.freeBorderList(borders);
+	stitching.freeBorderList();
 
 	reconstruction->checkLeftoverEdges();// there shouldn't be edges left (seemingly stitchOnBorders isn't really clean)
 	reconstruction->checkNeighbourhoodConsistency();

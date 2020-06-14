@@ -103,6 +103,7 @@ public:
 
 
 	MeshletGPU* getGpuMeshlet(shared_ptr<Meshlet> meshlet);
+    MeshletGPU* getGpuMeshlet(const Meshlet* meshlet);
 
 	void uploadTexAndCoords_(vector<shared_ptr<Meshlet>> &patches,
 	                         vector<shared_ptr<MeshletGpuHandle>> &patches_gpu,

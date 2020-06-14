@@ -483,7 +483,14 @@ MeshletGPU* ActiveSet::getGpuMeshlet(shared_ptr<Meshlet> meshlet) {
 		return &meshlets[ind];
 	}
 	return nullptr;
+}
 
+MeshletGPU* ActiveSet::getGpuMeshlet(const Meshlet* meshlet) {
+    if(meshlet_inds.count(meshlet->id)){
+        int ind = meshlet_inds[meshlet->id];
+        return &meshlets[ind];
+    }
+    return nullptr;
 }
 
 bool ActiveSet::containsNeighbours(shared_ptr<Meshlet> meshlet) {

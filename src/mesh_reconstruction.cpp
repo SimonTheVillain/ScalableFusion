@@ -300,9 +300,16 @@ int debug_global_stitch_triangle_ctr = 0;
 //TripleStitch *debug_quenstionable_triplestitch = nullptr;
 
 Triangle* MeshReconstruction::addTriangle_(
-		Vertex* v1, Vertex* v2, Vertex* v3) {
+		Vertex* v1, Vertex* v2, Vertex* v3, int debug_marker) {
+    //TODO: remove this debug measures as soon as all failure cases are caught
+    bool debug1 = v1->violate_manifold();
+    bool debug2 = v2->violate_manifold();
+    bool debug3 = v3->violate_manifold();
+    if(debug1 || debug2 || debug3){
+        assert(0);
+    }
 
-	//TODO: what would be nice would be something similar/using the same as in the mesher class:
+    //TODO: what would be nice would be something similar/using the same as in the mesher class:
 	//providing points and neighbour references(triangle ptr + index)
 
 	v1->meshlet->triangles.emplace_back();
@@ -312,6 +319,7 @@ Triangle* MeshReconstruction::addTriangle_(
 	triangle.vertices[2] = v3;
 	triangle.debug_is_stitch = true;
 	triangle.debug_nr = debug_global_stitch_triangle_ctr;
+	triangle.debug_marker = debug_marker;
 	debug_global_stitch_triangle_ctr++;
 
 	auto getNeighbour = [](Vertex* v1,Vertex* v2) -> Triangle::Neighbour{
@@ -365,6 +373,15 @@ Triangle* MeshReconstruction::addTriangle_(
 	triangle.neighbours[1] = getNeighbour(v2, v3);
 	triangle.neighbours[2] = getNeighbour(v3, v1);
 	triangle.registerSelf();
+
+	//TODO: remove this debug measures as soon as all failure cases are caught
+	//check if the manifold conditions are violated after creating the triangle
+    debug1 = v1->violate_manifold();
+    debug2 = v2->violate_manifold();
+    debug3 = v3->violate_manifold();
+    if(debug1 || debug2 || debug3){
+        assert(0);
+    }
 	return &triangle;
 /*
 

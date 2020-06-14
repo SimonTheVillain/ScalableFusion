@@ -195,7 +195,7 @@ private:
 	//void setActiveSetUpdate_(shared_ptr<ActiveSet> set);
 
 	Triangle* addTriangle_(
-			Vertex* v1, Vertex* v2, Vertex* v3);
+			Vertex* v1, Vertex* v2, Vertex* v3, int debug_marker = 10);
 	/*
 	Triangle* addTriangle_(Vertex* pr1, Vertex* pr2,
 						   Vertex* pr3);

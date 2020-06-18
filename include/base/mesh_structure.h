@@ -236,10 +236,10 @@ public:
 	bool encompassed();
 
 
-	bool violate_manifold();
+	bool manifold_valid();
 
 
-
+    int count_connecting_tringles(Vertex *v2);
 
 
 
@@ -597,6 +597,40 @@ public:
 			}
 		}
 		return -1;
+	}
+
+	bool manifold_valid(){
+	    bool valid = true;
+	    for(size_t i : {0, 1, 2}){
+	        Triangle* tri = this;
+	        int edge_ind = i;
+
+	        int ttl = 1000;
+	        int counter=0;
+	        while(ttl--){
+	            int ind_old = edge_ind;
+                edge_ind = tri->neighbours[edge_ind].pos + 1;
+                if(edge_ind > 2)
+                    edge_ind = 0;
+                tri = tri->neighbours[ind_old].ptr;
+                counter++;
+                if(tri==nullptr)
+                    break;
+
+                if(tri == this){
+                    //we came back in circles:
+                    if(this->vertices[i]->triangles.size() != counter+1){
+                        valid=false;
+                        //assert(0);
+                    }
+                    break;
+                }
+	        }
+	        if(ttl <= 0){
+	            assert(0);
+	        }
+	    }
+	    return valid;
 	}
 	//TODO: fix and reinsert these (used a lot in meshing and stitching)
 	/*
@@ -1105,6 +1139,31 @@ inline Triangle::Triangle(Triangle && o) noexcept{
 		o.edges[i] = nullptr; // invalidate at source (maybe not necessary)
 
 	}
+}
+
+inline int Vertex::count_connecting_tringles(Vertex *v2) {
+    for(size_t i=0;i<triangles.size();i++){
+        Triangle* triangle = triangles[i].triangle;
+        if(triangle == nullptr)
+            continue;
+
+        int inds_nbs[2] = {   triangles[i].ind_in_triangle,
+                                triangles[i].ind_in_triangle == 0 ? 2 : triangles[i].ind_in_triangle - 1};
+        int inds_corners[2] = {   triangles[i].ind_in_triangle == 2 ? 0 :  triangles[i].ind_in_triangle + 1,
+                                  triangles[i].ind_in_triangle == 0 ? 2 : triangles[i].ind_in_triangle - 1};
+        for(size_t k : {0, 1}){
+            if(triangles[i].triangle->vertices[inds_corners[k]] == v2){
+                if(triangle->neighbours[inds_nbs[k]].ptr != nullptr){
+                    return 2;
+                }else{
+                    return 1;
+                }
+            }
+
+        }
+
+    }
+    return 0;
 }
 
 #endif // FILE_MESH_STRUCTURE_H

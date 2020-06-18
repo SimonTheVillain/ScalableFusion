@@ -114,7 +114,7 @@ bool Vertex::encompassed(){
 	assert(0);
 	return false;
 }
-bool Vertex::violate_manifold() {
+bool Vertex::manifold_valid() {
     for(size_t i = 0; i< triangles.size(); i++){
         int running = 1000;
         Triangle* tri = triangles[i].triangle;
@@ -126,7 +126,7 @@ bool Vertex::violate_manifold() {
                 ind=2;
             }
             if(!tri->neighbours[ind].valid()){
-                return false;
+                return true;
             }
             int ind_new = tri->neighbours[ind].pos;
             tri = tri->neighbours[ind].ptr;
@@ -136,11 +136,11 @@ bool Vertex::violate_manifold() {
                 //We found a loop, but if there are more triangles connected to this vertex than inside the loop
                 //the manifold condition is hurt at this vertex.
                 if(checksum != triangles.size()){
-                    return true;
+                    return false;
                 }
             }
 
         }
     }
-    return false;
+    return true;
 }

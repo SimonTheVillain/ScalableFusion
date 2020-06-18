@@ -248,6 +248,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		//reconstruction->clearInvalidGeometry(active_set, depth, depth_pose);
 		Matrix4f depth_proj = Camera::genProjMatrix(source->intrinsicsDepth());
 
+		/*
 		active_set =
 				geometry_updater->update(
 						gpu_storage_,
@@ -258,9 +259,11 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 						d_std_tex,
 						depth_pose,
 						depth_proj);
-								if(active_set!=nullptr){
+
+		if(active_set!=nullptr){
 			active_set->name = "geometry_updated_set";
 		}
+		 */
 
 
 

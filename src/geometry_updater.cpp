@@ -217,13 +217,14 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
     //reconstruction->checkTriangleEdgeConsistency();
     stitching.checkTriangleEdgeConsistency();
 
-	stitching.stitchOnBorders(depth_pose_in, proj_depth, proj_depth_std,
+	stitching.stitchOnBorders2(depth_pose_in, proj_depth, proj_depth_std,
 	                          ex_geom, points, d_std_mat, 
 	                          reconstruction->generateColorCodedTexture_(mesh_pointers),
 	                          mesh_pointers, vertex_indices);
 
-
+    reconstruction->checkNeighbourhoodConsistency();
 	stitching.freeBorderList();
+	reconstruction->checkNeighbourhoodConsistency();
 
 	reconstruction->checkLeftoverEdges();// there shouldn't be edges left (seemingly stitchOnBorders isn't really clean)
 	reconstruction->checkNeighbourhoodConsistency();

@@ -302,12 +302,16 @@ int debug_global_stitch_triangle_ctr = 0;
 Triangle* MeshReconstruction::addTriangle_(
 		Vertex* v1, Vertex* v2, Vertex* v3, int debug_marker) {
     //TODO: remove this debug measures as soon as all failure cases are caught
-    bool debug1 = v1->violate_manifold();
-    bool debug2 = v2->violate_manifold();
-    bool debug3 = v3->violate_manifold();
+    bool debug1 = !v1->manifold_valid();
+    bool debug2 = !v2->manifold_valid();
+    bool debug3 = !v3->manifold_valid();
     if(debug1 || debug2 || debug3){
         assert(0);
     }
+
+    bool debug_encompassed_1 = v1->encompassed();
+    bool debug_encompassed_2 = v2->encompassed();
+    bool debug_encompassed_3 = v3->encompassed();
 
     //TODO: what would be nice would be something similar/using the same as in the mesher class:
 	//providing points and neighbour references(triangle ptr + index)
@@ -376,11 +380,13 @@ Triangle* MeshReconstruction::addTriangle_(
 
 	//TODO: remove this debug measures as soon as all failure cases are caught
 	//check if the manifold conditions are violated after creating the triangle
-    debug1 = v1->violate_manifold();
-    debug2 = v2->violate_manifold();
-    debug3 = v3->violate_manifold();
-    if(debug1 || debug2 || debug3){
-        assert(0);
+	bool debug0 = !triangle.manifold_valid();
+
+    debug1 = !v1->manifold_valid();
+    debug2 = !v2->manifold_valid();
+    debug3 = !v3->manifold_valid();
+    if(debug1 || debug2 || debug3 || debug0){
+        //assert(0);
     }
 	return &triangle;
 /*

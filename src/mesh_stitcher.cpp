@@ -669,8 +669,8 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 		// if we want to create a new triangle
 		// or not
 		bool very_first_point = true;
-		Vertex* first_pr = borders[i][0].vertices(1);
-		Vertex* last_pr;
+		Vertex* first_p = borders[i][0].vertices(1);
+		Vertex* last_p;
 		Vector2f last_pix;
 		bool triangle_created_last_edge = false;
 
@@ -681,9 +681,9 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 
 		//TODO: implement this sewing algorithm that follows edges on both sides of the seam!!!!
 		bool sewing_mode = false;
-		Vertex* current_sewing_pr;
+		//Vertex* current_sewing_pr;
 		Vertex* current_sewing_p; //TODO: merge these two (this and above)
-		Vertex* last_sewing_pr;
+		//Vertex* last_sewing_pr;
 		Vertex* last_sewing_p; //TODO: merge these two
 		Edge *current_sewing_edge;
 		Vector2i current_sewing_pix(-1, -1);
@@ -704,10 +704,8 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 					//Starting sewing process!!!!!
 					sewing_mode         = true;
 					current_sewing_edge = other_edge;
-					last_sewing_pr      = current_sewing_edge->vertices(0);
-					last_sewing_p       = last_sewing_pr;
-					current_sewing_pr   = current_sewing_edge->vertices(1);
-					current_sewing_p    = current_sewing_pr;
+					last_sewing_p       = current_sewing_edge->vertices(0);
+					current_sewing_p    = current_sewing_edge->vertices(1);
 					current_sewing_pix  = project2i(current_sewing_p->p);
 				}
 			}
@@ -765,9 +763,6 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 
 			//function that starts stitching on a per pixel basis
 			auto func = [&](int x, int y, float t) {
-				#ifdef SHOW_TEXT_STITCHING
-				cout << "another pixel (" << x << ", " << y << ")" << endl;
-				#endif // SHOW_TEXT_STITCHING
 				//TODO: guarantee that lastPix always is set!!!!!!
 				if(sewing_mode) {
 					Vector4f frag_pos = interpolatePerspectific(point0, point1, w0, w1, t);
@@ -781,16 +776,16 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 						//we want at least one pixel to change
 						//if this is the first pixel of this edge then we want to give triangle creation another chance:
 						if(!edge_made) {
-							if(!isTrianglePossible({last_sewing_pr, pr0, pr1})) {
+							if(!isTrianglePossible({last_sewing_p, pr0, pr1})) {
 								sewing_mode = false;
 								return;
 							}
-							map->addTriangle_(last_sewing_pr, pr0, pr1, 21);
+							map->addTriangle_(last_sewing_p, pr0, pr1, 21);
 							nr_triangles_this_edge++;
 							#ifdef SHOW_TEXT_STITCHING
 							cout << "e" << endl;
 							#endif // SHOW_TEXT_STITCHING
-							last_pr          = last_sewing_pr;
+                            last_p          = last_sewing_p;
 							edge_made        = true;
 							sewing_edge_made = true;
 						}
@@ -856,23 +851,21 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 									sewing_mode = false;
 									break;
 								}
-								if(!isTrianglePossible({current_sewing_pr, last_sewing_pr,pr1})) {
+								if(!isTrianglePossible({current_sewing_p, last_sewing_p,pr1})) {
 									sewing_mode = false;
 									break;
 								}
-								map->addTriangle_(current_sewing_pr, last_sewing_pr, pr1, 22);
+								map->addTriangle_(current_sewing_p, last_sewing_p, pr1, 22);
 								nr_triangles_this_edge++;
-								last_pr = current_sewing_pr;
+                                last_p = current_sewing_p;
 								#ifdef SHOW_TEXT_STITCHING
 								cout << "f2" << endl;
 								#endif
 
 								edge_made = true;
 								current_sewing_edge = other_edge;
-								last_sewing_pr      = current_sewing_pr;
 								last_sewing_p       = current_sewing_p;
-								current_sewing_pr   = current_sewing_edge->vertices(1);
-								current_sewing_p    = current_sewing_pr;
+								current_sewing_p    = current_sewing_edge->vertices(1);
 								current_sewing_pix  = project2i(current_sewing_p->p);
 								if(abs(pix[0] - x) > 1 || abs(pix[1] - y) > 1) {
 									//boo yeah! create another triangle!!!
@@ -885,13 +878,13 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 							}
 						} else {
 							//multiple new triangles:
-							if(!isTrianglePossible({last_sewing_pr, pr0, pr1})) {
+							if(!isTrianglePossible({last_sewing_p, pr0, pr1})) {
 								sewing_mode = false;
 								return;
 							}
-							map->addTriangle_(last_sewing_pr, pr0, pr1, 23);
+							map->addTriangle_(last_sewing_p, pr0, pr1, 23);
 							nr_triangles_this_edge++;
-							last_pr = last_sewing_pr;
+                            last_p = last_sewing_p;
 							#ifdef SHOW_TEXT_STITCHING
 							cout << "g1" << endl;
 							#endif
@@ -899,13 +892,13 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 							Vector2i p2 = project2i(current_sewing_p->p);
 
 							while(true) {
-								if(!isTrianglePossible({current_sewing_pr, last_sewing_pr, pr1})) {
+								if(!isTrianglePossible({current_sewing_p, last_sewing_p, pr1})) {
 									sewing_mode = false;
 									return;
 								}
 								//TODO: remove ptr to debug triangle
 								Triangle* debug_new_triangle =
-								        map->addTriangle_(current_sewing_pr, last_sewing_pr, pr1, 24);
+								        map->addTriangle_(current_sewing_p, last_sewing_p, pr1, 24);
 
 								//TODO: also remove this debug measure:
 								if( debug_new_triangle->neighbours[0].ptr != nullptr &&
@@ -927,7 +920,7 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
                                     sewing_mode=false;
 								    break;
 								}
-								last_pr = current_sewing_pr;
+                                last_p = current_sewing_p;
 								#ifdef SHOW_TEXT_STITCHING
 								cout << "g2" << endl;
 								#endif
@@ -957,8 +950,8 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 									break;
 								}
 								//TODO: this could potentially happen at the end of a loop
-								if(isConnected(current_sewing_pr, pr1)) {
-									if(!isOpenEdge(current_sewing_pr, pr1)) {
+								if(isConnected(current_sewing_p, pr1)) {
+									if(!isOpenEdge(current_sewing_p, pr1)) {
 										#ifdef SHOW_TEXT_STITCHING
 										cout << "quitting sewing because of pr1 and currentSewingPr are closed" << endl;
 										#endif
@@ -977,10 +970,8 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 								}
 
 								current_sewing_edge = other_edge;
-								last_sewing_pr = current_sewing_pr;
 								last_sewing_p = current_sewing_p;
-								current_sewing_pr = current_sewing_edge->vertices(1);
-								current_sewing_p = current_sewing_pr;
+								current_sewing_p = current_sewing_edge->vertices(1);
 								current_sewing_pix = project2i(current_sewing_p->p);
 								if(abs(pix[0] - x) > 1 || abs(pix[1] - y) > 1) {
 									//boo yeah! create another triangle!!!
@@ -1001,10 +992,8 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 							current_sewing_edge->getOrAttachNextEdge(1, other_edge, additional_edges, false, 22);
 							other_edge->registerInTriangle();
 							current_sewing_edge = other_edge;
-							last_sewing_pr = current_sewing_pr;
 							last_sewing_p = current_sewing_p;
-							current_sewing_pr = current_sewing_edge->vertices(1);
-							current_sewing_p = current_sewing_pr;
+							current_sewing_p = current_sewing_edge->vertices(1);
 							current_sewing_pix = project2i(current_sewing_p->p);
 							edge_made = true;
 						}
@@ -1138,7 +1127,7 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 
 							if(!very_first_edge_made) {
 								very_first_edge_made = true;
-								first_pr  = this_pr;
+								first_p  = this_pr;
 								first_pix = new_pix;
 							}
 
@@ -1146,14 +1135,14 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 							if(sewing_mode) {
 								edge_made = true;
 
-								last_pr  = this_pr;
+                                last_p  = this_pr;
 								last_pix = new_pix;
 								return;
 							}
 						} else {
 							//No triangle connected to this edge yet.
 							//create a triangle that incorporates the last made edge
-							if(this_pr == last_pr) {
+							if(this_pr == last_p) {
 								if(!isTrianglePossible({this_pr, pr0, pr1})) {
 									continue;
 								}
@@ -1165,7 +1154,7 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 								#endif // SHOW_TEXT_STITCHING
 
 							} else {
-								if(!isTrianglePossible({last_pr, pr0, pr1})) {
+								if(!isTrianglePossible({last_p, pr0, pr1})) {
 									continue;
 								}
 
@@ -1183,15 +1172,13 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 										//Starting sewing process!!!!!
 										sewing_mode         = true;
 										current_sewing_edge = other_edge;
-										last_sewing_pr      = current_sewing_edge->vertices(0);
-										last_sewing_p       = last_sewing_pr;
-										current_sewing_pr   = current_sewing_edge->vertices(1);
-										current_sewing_p    = current_sewing_pr;
+										last_sewing_p       = current_sewing_edge->vertices(0);
+										current_sewing_p    = current_sewing_edge->vertices(1);
 										current_sewing_pix  = project2i(current_sewing_p->p);
 									}
 								}
 
-								map->addTriangle_(last_pr, pr0, pr1, 27);//TODO: reinsert this
+								map->addTriangle_(last_p, pr0, pr1, 27);//TODO: reinsert this
                 #ifdef SHOW_TEXT_STITCHING
 								cout << "c" << endl;
                 #endif // SHOW_TEXT_STITCHING
@@ -1207,10 +1194,10 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 								//TODO: whenever we have a lastPr and a thisPr to create a triangle we have to check if
 								//the orientation is correct
 
-								if(!isTrianglePossible({this_pr, last_pr, pr1})) {
+								if(!isTrianglePossible({this_pr, last_p, pr1})) {
 									continue;
 								}
-								map->addTriangle_(this_pr, last_pr, pr1, 28);
+								map->addTriangle_(this_pr, last_p, pr1, 28);
 								#ifdef SHOW_TEXT_STITCHING
 								cout << "c" << endl;
 								#endif // SHOW_TEXT_STITCHING
@@ -1220,7 +1207,7 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 								}
 							}
 						}
-						last_pr   = this_pr;
+                        last_p   = this_pr;
 						last_pix  = new_pix;
 						edge_made = true;
 
@@ -1230,7 +1217,7 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 						//continue;//debug
 						bool need_to_connect_hole = false;
 
-						if(this_pr == last_pr) {
+						if(this_pr == last_p) {
 							continue;
 						}
 
@@ -1239,15 +1226,15 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 						//don't be confused this is only running if you delete the continue further up
 						checkAndStartSewing(this_pr);
 
-						if(!isTrianglePossible({this_pr,last_pr,pr1})) {
+						if(!isTrianglePossible({this_pr, last_p, pr1})) {
 							continue;
 						}
 
-						if(!isConnected(last_pr,this_pr)) {
+						if(!isConnected(last_p, this_pr)) {
 							need_to_connect_hole = true;
 							//TODO: check if the hole is one or two hops long.
 						}
-						map->addTriangle_(this_pr, last_pr, pr1, 29);//third point is from last edge
+						map->addTriangle_(this_pr, last_p, pr1, 29);//third point is from last edge
 						#ifdef SHOW_TEXT_STITCHING
 						cout << "d" << endl;
 						#endif // SHOW_TEXT_STITCHING
@@ -1257,7 +1244,7 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 							cout << "holefix" << endl;
 							#endif // SHOW_TEXT_STITCHING
 						}
-						last_pr  = this_pr;
+                        last_p  = this_pr;
 						last_pix = new_pix;
 						if(!edge_made) {
 							assert(0);
@@ -1288,4 +1275,288 @@ void MeshStitcher::stitchOnBorders(Matrix4f view, Matrix4f proj,
 		}
 	}
 	border_list.push_back(std::move(additional_edges));
+}
+
+
+
+void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
+                                   cv::Mat std_proj, cv::Mat geom_proj_m, cv::Mat new_geom_m, cv::Mat new_std,
+                                   cv::Mat debug_color_coded_new_segmentation, cv::Mat new_seg_pm,
+                                   cv::Mat new_pt_ind_m) {
+
+    Vector2i relative_neighbours[] = {
+            Vector2i(-1, 0), Vector2i( +1, 0),
+            Vector2i( 0, -1), Vector2i(  0, +1), // 4 connectivity
+            Vector2i( -1, -1), Vector2i( +1, -1),
+            Vector2i( -1, +1), Vector2i( +1, +1) // 8 connectivity.
+    };
+    Matrix4f view_inv = view.inverse();
+    Matrix4f p_v      = proj * view_inv;
+
+    int width  = geom_proj_m.cols;
+    int height = geom_proj_m.rows;
+
+    bool connected_nbs[4] = {false, false, false, false};
+
+    vector<Edge> additional_edges;
+
+    for(size_t i = 0; i < border_list.size(); i++) {
+        vector<Edge> &border = border_list[i];
+        // store the last pixel to eventually skip when going from one edge to the next
+
+
+        Vector2i last_pix_i(-1000,-1000);
+        bool sewing_mode = false; //start off with finding pixel in adjacency
+
+        int debug_size = border.size();
+        for(size_t j = 0; j < border.size(); j++) {
+            Edge &edge = border[j];
+
+#ifdef SHOW_TEXT_STITCHING
+            cout << "starting new edge" << endl;
+#endif // SHOW_TEXT_STITCHING
+
+            //TODO: remove these debug measures at some point
+            if(edge.triangle->edges[edge.pos] != &edge) { //Consistency seems violated
+                assert(0);
+            }
+            if(edge.already_used_for_stitch) {
+                assert(0);//shouldn't every edge be touched only once?
+            }
+
+            //TODO: reduce this block as much as possible:
+            Vertex* v0 = edge.vertices(1);//these are mixed because we screwed up the order at one point
+            Vector4f point0     = view_inv * v0->p;
+            Vector4f projected0 = p_v * v0->p;
+            float w0 = projected0[3];
+            Vector2f p0  = Vector2f(projected0[0] / w0, projected0[1] / w0);
+            Vector2i p0i = Vector2i(    round(p0[0]),      round(p0[1]));
+
+            Vertex* v1 = edge.vertices(0);//these are mixed because we screwed up the order at one point
+            //Vector4f P1         = pr1->p;
+            Vector4f point1     = view_inv * v1->p;
+            Vector4f projected1 = p_v * v1->p;
+            float w1 = projected1[3];
+            Vector2f p1  = Vector2f(projected1[0] / w1, projected1[1] / w1);
+            Vector2i p1i = Vector2i(    round(p1[0]),      round(p1[1]));
+
+            //The opposite point of the triangle here
+            Vertex* v2 = edge.oppositePoint();
+            Vector2f p2 = project2f(p_v, view_inv,v2->p);
+            //Vector4f P2         = pr2->p;
+            //Vector4f point2     = view_inv * P2;
+            //Vector4f projected2 = p_v * P2;
+            //float w2 = projected2[3];
+            //Vector2f pix2  = Vector2f(projected2[0] / w2, projected2[1] / w2);
+            //Vector2i pix2i = Vector2i(    round(pix2[0]),      round(pix2[1]));
+
+            Vector2f first_pix;
+            bool current_edge_triangulated = false;
+
+            // skip triangle if it is not facing camera. (backfacing triangle)
+
+            bool very_first_edge_made = false;//TODO: does this belong one level up?
+            Edge very_first_edge;
+            bool edge_made = false;
+            Edge last_edge;
+
+            bool first_point = true;
+            int nr_triangles_this_edge = 0;
+
+            //function that starts stitching on a per pixel basis
+            auto func = [&](int x, int y, float t) {
+
+                Vector4f frag_pos = interpolatePerspectific(point0, point1, w0, w1, t);
+                if(x != last_pix_i[0] || y != last_pix_i[1]){
+                    return;
+                }
+
+                if(!sewing_mode && !edge_made){
+                    Vector2i neighbours[4];
+                    for(size_t k : {0, 1, 2, 3})
+                        neighbours[k] = Vector2i(x, y) + relative_neighbours[k];
+
+                    for(size_t k: {0, 1, 2, 3}){
+                        Vector2i nb = Vector2i(x + relative_neighbours[k][0], y + relative_neighbours[k][1]);
+                        //check if neighbour is within border
+                        if(!is_in_bound(nb, width, height))
+                            continue;
+                        //check if neighbour is on right side:
+                        if(on_same_sides(p0, p1, p2, nb.cast<float>()))
+                            continue;
+
+                        //check if neighbour is a new vertex.
+                        Meshlet *meshlet = new_seg_pm.at<Meshlet*>(nb[1], nb[0]);
+                        int index = new_pt_ind_m.at<int>(nb[1], nb[0]);
+                        if(meshlet == nullptr)
+                            continue;
+                        Vertex* vert = &(meshlet->vertices[index]);
+                        if(vert->encompassed())
+                            continue;
+                        if(v0->count_connecting_tringles(vert) == 2)
+                            continue;
+                        if(v1->count_connecting_tringles(vert) == 2)
+                            continue;
+                        if(v0->count_connecting_tringles(v1) == 2)
+                        {
+                            v0->count_connecting_tringles(v1);
+                            assert(0);
+                        }
+
+                        Triangle* new_triangle =
+                                mesh_reconstruction->addTriangle_(vert, v0, v1, 21);
+                        if(!new_triangle->manifold_valid()){
+                            mesh_reconstruction->checkNeighbourhoodConsistency();//TODO: REMOVE DEBUG
+                            //if the triangle violates the manifold we immediately remove it again.
+                            Triangle* before = &new_triangle->getMeshlet()->triangles[0];
+                            new_triangle->getMeshlet()->triangles.pop_back();
+                            Triangle* after = &new_triangle->getMeshlet()->triangles[0];
+                            if(before != after)
+                                cout << "ptr to vector before: " << before << " and after " << after << endl;
+                            cout << "ptr to new triangle " << new_triangle << endl;
+                            mesh_reconstruction->checkNeighbourhoodConsistency();//TODO: REMOVE DEBUG
+                            //TODO: remove the created meshlet neighbourhood if necessary.
+                            //storing which neighbourhood got created is probably more involved
+
+                            continue;
+                        }
+                        connected_nbs[k] = true;
+                        //TODO: check if triangle is valid. Remove if not
+                        //sew in opposite direction:
+
+
+                        edge_made = true; //maybe also enable stitching mode ?
+                        edge.already_used_for_stitch = true;
+
+                        return;
+                        //now try to further sew counter the direction of where we went.
+                        sewLocally(Vector2i(x, y),
+                                Vector2i(x,y), //Last new pix.... whatever i thought this will be
+                                v1,v0,vert,
+                                p1, p0, nb.cast<float>(),
+                                new_seg_pm, new_pt_ind_m, connected_nbs, true);
+
+
+
+                        //all the possible triangles are created... we are safe now
+                        return;
+
+                        //TODO:
+                        //TODO: second,
+                        //TODO: third,
+                        //TODO: four, generate a triangle.
+                        //TODO: sew the counter direction side
+                        //TODO: sew the main direction side.
+                        //TODO: move next pixel/ edge/ etc
+                    }
+
+
+                    //TODO: remove this
+                    //when starting new stitches we want to make sure we start with the triangle furthest away from the
+                    // direction we are heading or... in case we already connected the edge...
+                    // TODO: why is the other case important?
+                    /*
+                    if(!edge_made) {
+                        Vector2f end = pix1;
+                        auto compare = [end](Vector2i l, Vector2i r) {
+                            float dist1 = (Vector2f(l[0], l[1]) - end).norm();
+                            float dist2 = (Vector2f(r[0], r[1]) - end).norm();
+                            return dist1 > dist2;
+                        };
+                        int n = sizeof(neighbours) / sizeof(neighbours[0]);
+                        sort(neighbours, neighbours + n, compare);
+                    } else {
+                        Vector2f end = pix0;
+                        auto compare = [end](Vector2i l, Vector2i r) {
+                            float dist1 = (Vector2f(l[0], l[1]) - end).norm();
+                            float dist2 = (Vector2f(r[0], r[1]) - end).norm();
+                            return dist1 < dist2;
+                        };
+                        int n = sizeof(neighbours) / sizeof(neighbours[0]);
+                        sort(neighbours, neighbours + n, compare);
+                    }
+                     */
+                }else{
+                    //sewing mode. This one is even uglier than the one above
+
+                }
+
+
+                if(!is_in_bound(x, y, width, height)) {
+                    return;
+                }
+
+                //mesh_reconstruction->checkNeighbourhoodConsistency();//TODO: REMOVE DEBUG
+            };
+
+
+
+
+            auto func1 = [&](int x, int y, float t) {
+                //same as func1 but with proper setup
+                func(x, y, t);
+                last_pix_i = Vector2i(x,y);
+            };
+            bresenham(p0, p1, func1);
+        }
+       // mesh_reconstruction->checkNeighbourhoodConsistency();//TODO: REMOVE DEBUG
+
+    }
+    //mesh_reconstruction->checkNeighbourhoodConsistency();//TODO: REMOVE DEBUG
+    border_list.push_back(std::move(additional_edges));
+
+    //mesh_reconstruction->checkNeighbourhoodConsistency();//TODO: REMOVE DEBUG
+}
+
+
+
+void MeshStitcher::sewLocally(Vector2i center_pix, Vector2i last_new_pix,
+                              Vertex* vfar, Vertex* v0, Vertex* v1,
+                              Vector2f pfar, Vector2f p0, Vector2f p1,
+                              const cv::Mat &new_meshlets, const cv::Mat &new_vert_inds,
+                              bool nbs_used[4],
+                              bool flip){
+    Vector2i relative_neighbours[] = {
+            Vector2i(-1, 0), Vector2i( +1, 0),
+            Vector2i( 0, -1), Vector2i(  0, +1)
+    };
+
+    int width = new_meshlets.cols;
+    int height = new_meshlets.rows;
+    float closest_dist = 1000.0f;
+    int ind_closest = -1;
+    Vertex* closest_vertex = nullptr;
+    for(size_t i: {0, 1, 2, 3}){
+        if(nbs_used[i])
+            continue;
+        Vector2i nb_pos = center_pix + relative_neighbours[i];
+        if(!is_in_bound(nb_pos, width, height))
+            continue;
+        if(on_same_sides(p0, p1, pfar, nb_pos.cast<float>()))
+            continue;
+        Meshlet* meshlet = new_meshlets.at<Meshlet*>(nb_pos[1],nb_pos[0]);
+        int ind = new_vert_inds.at<int>(nb_pos[1],nb_pos[0]);
+        if(meshlet == nullptr)
+            continue;
+        Vertex* vert = &(meshlet->vertices[ind]);
+        float dist = dist_sqr(p1.cast<float>(), nb_pos.cast<float>());
+        if(dist < closest_dist) {
+            closest_dist = dist;
+            ind_closest = i;
+            closest_vertex = vert;
+        }
+    }
+    if(ind_closest = -1){
+        return;
+    }
+
+    if(flip){
+        mesh_reconstruction->addTriangle_(closest_vertex,v0,v1,22);
+    }else{
+        mesh_reconstruction->addTriangle_(closest_vertex,v1,v0,23);
+    }
+
+
+    //sew_locally();
+
 }

@@ -308,7 +308,6 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 
 	//TODO: setting this up every update might be overly expensive, so reuse as often as possible
 
-
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());
 	//vector<gpu::GeometryUpdate::TranscribeStitchTask> transcribe_tasks;
@@ -378,16 +377,36 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 		}
 
 
+        cudaDeviceSynchronize();
+        gpuErrchk(cudaPeekAtLastError());
 		//setting up transcribe tasks on a per gpu meshlet basis
+		if(meshlet_gpu.gpu_neighbour_vertices != nullptr){
+		    //TODO: maybe this cudaFree needs to be synchronized with according update tasks.
+		    //TODO: also find out if the GPU Meshlets are anyway created from scratch for each meshlet
+		    // and therefore this case is handled by the destructor
+            cudaFree((void*)(meshlet_gpu.gpu_neighbour_vertices));
+            assert(0);//DEBUG: find out if this case ever occurs
+		}
 		int byte_count = sizeof(GpuVertex*) * vertices_ptr_gpu.size();
 		cudaMalloc(&meshlet_gpu.gpu_neighbour_vertices,byte_count);
+
+        cudaDeviceSynchronize();
+        gpuErrchk(cudaPeekAtLastError());
 		cudaMemcpy(meshlet_gpu.gpu_neighbour_vertices,&vertices_ptr_gpu[0],byte_count,cudaMemcpyHostToDevice);
 
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaPeekAtLastError());
 
 		byte_count = sizeof(MeshletGPU::TranscribeBorderVertTask) * vertex_indices.size();
+        if(meshlet_gpu.gpu_vert_transcribe_tasks != nullptr){
+            //TODO: maybe this cudaFree neds to be sync
+            //TODO: same as a few lines up
+            cudaFree((void*)(meshlet_gpu.gpu_vert_transcribe_tasks));
+            assert(0);//debug: find out if this case ever occurs
+        }
 		cudaMalloc(&meshlet_gpu.gpu_vert_transcribe_tasks,byte_count);
+        cudaDeviceSynchronize();
+        gpuErrchk(cudaPeekAtLastError());
 		cudaMemcpy(meshlet_gpu.gpu_vert_transcribe_tasks,&tasks[0],byte_count,cudaMemcpyHostToDevice);
 
 

@@ -46,12 +46,13 @@ public:
                          cv::Mat new_seg_p_m, cv::Mat new_pt_ind_m);
 
 
-    void sewLocally(Vector2i center_pix, float center_pix_z, Vector2i last_new_pix,
+    void sewLocally(Vector2i center_pix, float center_pix_z, Vector2i *last_new_pix,
             Vertex* vfar, Vertex* v0, Vertex* v1,
             Vector2f pfar, Vector2f p0, Vector2f p1,
             const cv::Mat &new_meshlets, const cv::Mat &new_vert_inds, const cv::Mat &new_geom,
             bool nbs_used[4],
-            bool flip = false);
+            bool flip = false,
+            bool debug = false);
 
 	vector<vector<Edge>> border_list;
 	

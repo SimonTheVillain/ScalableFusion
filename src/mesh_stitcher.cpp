@@ -1308,24 +1308,25 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
     int width  = geom_proj_m.cols;
     int height = geom_proj_m.rows;
 
-    bool connected_nbs[4] = {false, false, false, false};
 
     vector<Edge> additional_edges;
 
     for(size_t i = 0; i < border_list.size(); i++) {
         vector<Edge> &border = border_list[i];
+        //cout << "starting new border" << endl;
         // store the last pixel to eventually skip when going from one edge to the next
 
 
         Vector2i last_pix_i(-1000,-1000);
         bool sewing_mode = false; //start off with finding pixel in adjacency
-
+        Vector2i last_pix_connected;
         int debug_size = border.size();
         for(size_t j = 0; j < border.size(); j++) {
             Edge &edge = border[j];
+            bool connected_nbs[4] = {false, false, false, false};
 
 #ifdef SHOW_TEXT_STITCHING
-            cout << "starting new edge" << endl;
+            //cout << "starting new edge" << endl;
 #endif // SHOW_TEXT_STITCHING
 
             //TODO: remove these debug measures at some point
@@ -1379,12 +1380,13 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
             auto func = [&](int x, int y, float t) {
                 Vector4f frag_pos = interpolatePerspectific(point0, point1, w0, w1, t);
                 float frag_z = frag_pos[2];
-
+                //cout << x << " " << y << endl;
                 if(x != last_pix_i[0] || y != last_pix_i[1]){
-                    return;
+                    connected_nbs[0] = connected_nbs[1] =connected_nbs[2] =connected_nbs[3] = false;
+                    //return;
                 }
 
-                if(!sewing_mode && !edge_made){
+                if(!edge_made){
                     Vector2i neighbours[4];
                     for(size_t k : {0, 1, 2, 3})
                         neighbours[k] = Vector2i(x, y) + relative_neighbours[k];
@@ -1438,9 +1440,12 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
                             Triangle* before = &new_triangle->getMeshlet()->triangles[0];
                             new_triangle->getMeshlet()->triangles.pop_back();
                             Triangle* after = &new_triangle->getMeshlet()->triangles[0];
+                            //TODO: remove the following debug output
+                            /*
                             if(before != after)
                                 cout << "ptr to vector before: " << before << " and after " << after << endl;
                             cout << "ptr to new triangle " << new_triangle << endl;
+                            */
                             //mesh_reconstruction->checkNeighbourhoodConsistency();//TODO: REMOVE DEBUG
                             //TODO: remove the created meshlet neighbourhood if necessary.
                             //storing which neighbourhood got created is probably more involved
@@ -1449,7 +1454,7 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
                         }
 
                         assert(new_triangle->orientation_valid());
-                        cout << "it not always has the wrong orientation" << endl;
+                        //cout << "it not always has the wrong orientation" << endl;
                         bool debug1 = !new_triangle->vertices[0]->manifold_valid();
                         bool debug2 = !new_triangle->vertices[1]->manifold_valid();
                         bool debug3 = !new_triangle->vertices[2]->manifold_valid();
@@ -1470,11 +1475,11 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
 
                         edge_made = true; //maybe also enable stitching mode ?
                         edge.already_used_for_stitch = true;
-
+                        last_pix_connected = nb;
                         //return;
                         //now try to further sew counter the direction of where we went.
                         sewLocally(Vector2i(x, y), frag_z,
-                                Vector2i(x,y), //Last new pix.... whatever i thought this will be
+                                nullptr, //Last new pix.... whatever i thought this will be
                                 v1,v0,vert,
                                 p1, p0, nb.cast<float>(),
                                 new_seg_pm, new_pt_ind_m, new_geom_m, connected_nbs, true);
@@ -1488,7 +1493,7 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
                                 connected_nbs[l] = false;
                         }
                         sewLocally(Vector2i(x, y), frag_z,
-                                   Vector2i(x,y), //Last new pix.... whatever i thought this will be
+                                   &last_pix_connected, //Last new pix.... whatever i thought this will be
                                    v0,v1,vert,
                                    p0, p1, nb.cast<float>(),
                                    new_seg_pm, new_pt_ind_m, new_geom_m, connected_nbs, false);
@@ -1506,33 +1511,16 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
                     }
 
 
-                    //TODO: remove this
-                    //when starting new stitches we want to make sure we start with the triangle furthest away from the
-                    // direction we are heading or... in case we already connected the edge...
-                    // TODO: why is the other case important?
-                    /*
-                    if(!edge_made) {
-                        Vector2f end = pix1;
-                        auto compare = [end](Vector2i l, Vector2i r) {
-                            float dist1 = (Vector2f(l[0], l[1]) - end).norm();
-                            float dist2 = (Vector2f(r[0], r[1]) - end).norm();
-                            return dist1 > dist2;
-                        };
-                        int n = sizeof(neighbours) / sizeof(neighbours[0]);
-                        sort(neighbours, neighbours + n, compare);
-                    } else {
-                        Vector2f end = pix0;
-                        auto compare = [end](Vector2i l, Vector2i r) {
-                            float dist1 = (Vector2f(l[0], l[1]) - end).norm();
-                            float dist2 = (Vector2f(r[0], r[1]) - end).norm();
-                            return dist1 < dist2;
-                        };
-                        int n = sizeof(neighbours) / sizeof(neighbours[0]);
-                        sort(neighbours, neighbours + n, compare);
-                    }
-                     */
                 }else{
                     //sewing mode. This one is even uglier than the one above
+                    Meshlet* meshlet = new_seg_pm.at<Meshlet*>(last_pix_connected[1], last_pix_connected[0]);
+                    int ind = new_pt_ind_m.at<int>(last_pix_connected[1], last_pix_connected[0]);
+                    Vertex* vert = &(meshlet->vertices[ind]);
+                    sewLocally(Vector2i(x, y), frag_z,
+                               &last_pix_connected, //Last new pix.... whatever i thought this will be
+                               v0,v1,vert,
+                               p0, p1, last_pix_connected.cast<float>(),
+                               new_seg_pm, new_pt_ind_m, new_geom_m, connected_nbs, false, true);
 
                 }
 
@@ -1565,12 +1553,12 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
 
 
 
-void MeshStitcher::sewLocally(Vector2i center_pix, float center_pix_z, Vector2i last_new_pix,
+void MeshStitcher::sewLocally(Vector2i center_pix, float center_pix_z, Vector2i* last_new_pix,
                               Vertex* vfar, Vertex* v0, Vertex* v1,
                               Vector2f pfar, Vector2f p0, Vector2f p1,
                               const cv::Mat &new_meshlets, const cv::Mat &new_vert_inds, const cv::Mat &new_geom,
                               bool nbs_used[4],
-                              bool flip){
+                              bool flip, bool debug){
     Vector2i relative_neighbours[] = {
             Vector2i(-1, 0), Vector2i( +1, 0),
             Vector2i( 0, -1), Vector2i(  0, +1)
@@ -1626,7 +1614,8 @@ void MeshStitcher::sewLocally(Vector2i center_pix, float center_pix_z, Vector2i 
     if(closest_vertex->count_connecting_tringles(v1) == 2)
         return;
     if(v0->count_connecting_tringles(v1) == 2)
-        assert(0);
+        return;
+        //assert(0);
 
 
 
@@ -1636,10 +1625,20 @@ void MeshStitcher::sewLocally(Vector2i center_pix, float center_pix_z, Vector2i 
     }else{
         tri = mesh_reconstruction->addTriangle_(closest_vertex,v1,v0,23);
     }
+    assert(tri->orientation_valid(1));
     if(!tri->manifold_valid() || !tri->orientation_valid()){
+        //cout << "undoing triangle due to manifold or orientation issues " <<
+        //        !tri->manifold_valid() << " " << !tri->orientation_valid() << endl;
+        if(debug && !tri->orientation_valid(1)){
+            bool debug0 = tri->orientation_valid(0);
+            bool debug1 = tri->orientation_valid(1);
+            bool debug2 = tri->orientation_valid(2);
+           // assert(0);
+        }
         tri->getMeshlet()->triangles.pop_back();
         return;
     }
+    //cout << "keeping triangle" << endl;
     nbs_used[ind_closest] = true;
     bool debug1 = !tri->vertices[0]->manifold_valid();
     bool debug2 = !tri->vertices[1]->manifold_valid();
@@ -1647,7 +1646,9 @@ void MeshStitcher::sewLocally(Vector2i center_pix, float center_pix_z, Vector2i 
     if(debug1 || debug2 || debug3){
         assert(0);
     }
-
+    if(last_new_pix != nullptr){
+        *last_new_pix = center_pix + relative_neighbours[ind_closest];
+    }
     sewLocally( center_pix,center_pix_z, last_new_pix,
                 v1, v0, closest_vertex,
                 p1, p0 , (center_pix + relative_neighbours[ind_closest]).cast<float>(),

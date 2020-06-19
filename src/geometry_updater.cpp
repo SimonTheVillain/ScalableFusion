@@ -222,10 +222,10 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	                          reconstruction->generateColorCodedTexture_(mesh_pointers),
 	                          mesh_pointers, vertex_indices);
 
-    reconstruction->checkNeighbourhoodConsistency();
+    //reconstruction->checkNeighbourhoodConsistency();
 	stitching.freeBorderList();
 
-	reconstruction->checkNeighbourhoodConsistency();
+	//reconstruction->checkNeighbourhoodConsistency();
 
 	reconstruction->checkLeftoverEdges();// there shouldn't be edges left (seemingly stitchOnBorders isn't really clean)
 	reconstruction->checkNeighbourhoodConsistency();
@@ -304,9 +304,8 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	set_of_patches_to_be_removed.clear();
 
 	//TODO: check consistency on the whole reconstruction
-
-	reconstruction->checkTriangleVerticesConsistency();
-	reconstruction->checkNeighbourhoodConsistency();
+	//reconstruction->checkTriangleVerticesConsistency();
+	//reconstruction->checkNeighbourhoodConsistency();
 
 	/******************************REMOVAL OF UNCONNECTED VERTS TRIS and PATCHES***********/
 

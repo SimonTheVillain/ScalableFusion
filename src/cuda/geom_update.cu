@@ -64,6 +64,11 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 	GeometryUpdate::TranscribeStitchTask *transcribe_tasks_gpu;
 	int byte_count = transcribe_tasks.size() * sizeof(GeometryUpdate::TranscribeStitchTask);
 	cudaMalloc(&transcribe_tasks_gpu, byte_count);
+
+    cudaDeviceSynchronize();//just for debug!!!
+    gpuErrchk(cudaPeekAtLastError());
+
+
 	cudaMemcpy(transcribe_tasks_gpu, &transcribe_tasks[0],
 			   byte_count,
 			   cudaMemcpyHostToDevice);
@@ -104,6 +109,7 @@ int gpu::updateGeometry(const cudaSurfaceObject_t geometry_input, //the sensor i
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());
 	cudaFree(descs);
+	cudaFree(transcribe_tasks_gpu);
 
 	return -1;
 }

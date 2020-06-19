@@ -84,9 +84,13 @@ void Meshlet::removeTexPatches(vector<shared_ptr<MeshTexture>> tex_patches) {
 
 
 bool Vertex::encompassed(){
+    if(triangles.size()==0){
+        return false;
+    }
 	if(triangles.size() <2){
-	    cout << "debug: not encompassed because its only 2 triangles" << endl;
-		return false;
+	    //cout << "debug: not encompassed because its only 2 triangles" << endl;
+        //TODO: put that back in to make it a little faster
+		//return false;
 	}
 	int running = 1000;
 	Triangle* tri = triangles[0].triangle;

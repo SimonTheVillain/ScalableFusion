@@ -599,38 +599,73 @@ public:
 		return -1;
 	}
 
+	bool manifold_valid(int corner){
+	    bool valid=true;
+        Triangle* tri = this;
+        int edge_ind = corner;
+
+        int ttl = 1000;
+        int counter=0;
+        while(ttl--){
+            int ind_old = edge_ind;
+            edge_ind = tri->neighbours[edge_ind].pos + 1;
+            if(edge_ind > 2)
+                edge_ind = 0;
+            tri = tri->neighbours[ind_old].ptr;
+            counter++;
+            if(tri==nullptr)
+                break;
+
+            if(tri == this){
+                //we came back in circles:
+                if(this->vertices[corner]->triangles.size() != counter){
+                    valid=false;
+                    //assert(0);
+                }
+                break;
+            }
+        }
+        if(ttl <= 0){
+            assert(0);
+        }
+        return valid;
+	}
 	bool manifold_valid(){
 	    bool valid = true;
 	    for(size_t i : {0, 1, 2}){
-	        Triangle* tri = this;
-	        int edge_ind = i;
-
-	        int ttl = 1000;
-	        int counter=0;
-	        while(ttl--){
-	            int ind_old = edge_ind;
-                edge_ind = tri->neighbours[edge_ind].pos + 1;
-                if(edge_ind > 2)
-                    edge_ind = 0;
-                tri = tri->neighbours[ind_old].ptr;
-                counter++;
-                if(tri==nullptr)
-                    break;
-
-                if(tri == this){
-                    //we came back in circles:
-                    if(this->vertices[i]->triangles.size() != counter+1){
-                        valid=false;
-                        //assert(0);
-                    }
-                    break;
-                }
-	        }
-	        if(ttl <= 0){
-	            assert(0);
-	        }
+	       valid = valid && manifold_valid(i);
 	    }
 	    return valid;
+	}
+
+	bool orientation_valid(int edge){
+	    if(!neighbours[edge].valid()){
+	        return true;
+	    }
+	    int ind1 = edge;
+	    int ind2 = edge+1;
+	    if(ind2 > 2)
+	        ind2 = 0;
+	    int ind1_in_nb = neighbours[edge].pos;
+	    int ind2_in_nb = ind1_in_nb + 1;
+	    if(ind2_in_nb > 2)
+            ind2_in_nb = 0;
+
+	    if( neighbours[edge].ptr->vertices[ind2_in_nb] == vertices[ind1] &&
+	        neighbours[edge].ptr->vertices[ind1_in_nb] == vertices[ind2])
+	        return true;
+        else{
+            Vertex* v11 = vertices[ind1];
+            Vertex* v12 = vertices[ind2];
+            Vertex* v21 = neighbours[edge].ptr->vertices[ind1_in_nb];
+            Vertex* v22 = neighbours[edge].ptr->vertices[ind2_in_nb];
+            return false;
+
+        }
+	}
+
+	bool orientation_valid(){
+	    return orientation_valid(0) && orientation_valid(1) && orientation_valid(2);
 	}
 	//TODO: fix and reinsert these (used a lot in meshing and stitching)
 	/*

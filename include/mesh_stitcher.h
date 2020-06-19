@@ -59,6 +59,8 @@ public:
 
 	void checkTriangleEdgeConsistency();
 
+
+
 };
 
 #endif // FILE_MESH_STITCHER_H

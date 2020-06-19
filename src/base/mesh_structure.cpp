@@ -138,6 +138,7 @@ bool Vertex::manifold_valid() {
                 if(checksum != triangles.size()){
                     return false;
                 }
+                break;
             }
 
         }

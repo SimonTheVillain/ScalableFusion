@@ -30,7 +30,18 @@ void MeshStitcher::checkTriangleEdgeConsistency() {
 
     vector<vector<Edge>> &borders = this->border_list;
     for(size_t i = 0; i < borders.size(); i++) {
+        Vertex *last_vert = borders[i][0].vertices(1);
+
+        Vertex* debug1 = borders[i][0].vertices(0);
+        Vertex* debug2 = borders[i][0].vertices(1);
         for (size_t j = 0; j < borders[i].size(); j++) {
+            Vertex* debug1_old = debug1;
+            Vertex* debug2_old = debug2;
+            Vertex* debug1 = borders[i][j].vertices(0);
+            Vertex* debug2 = borders[i][j].vertices(1);
+            assert(last_vert == borders[i][j].vertices((1)));
+
+            last_vert = borders[i][j].vertices(0);
             Edge &edge = borders[i][j];
             if(edge.triangle->edges[edge.pos] != &edge){
 
@@ -370,6 +381,7 @@ void MeshStitcher::genBorderList(vector<shared_ptr<Meshlet>> &patches,
 			}
 		}
 	}
+	checkTriangleEdgeConsistency();//TODO: remove consistency
 }
 
 void MeshStitcher::reloadBorderGeometry(shared_ptr<ActiveSet> active_set) {
@@ -1325,14 +1337,14 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
             }
 
             //TODO: reduce this block as much as possible:
-            Vertex* v0 = edge.vertices(1);//these are mixed because we screwed up the order at one point
+            Vertex* v0 = edge.vertices(1);//*1) these are mixed because we screwed up the order at one point
             Vector4f point0     = view_inv * v0->p;
             Vector4f projected0 = p_v * v0->p;
             float w0 = projected0[3];
             Vector2f p0  = Vector2f(projected0[0] / w0, projected0[1] / w0);
             Vector2i p0i = Vector2i(    round(p0[0]),      round(p0[1]));
 
-            Vertex* v1 = edge.vertices(0);//these are mixed because we screwed up the order at one point
+            Vertex* v1 = edge.vertices(0);//*2) these are mixed because we screwed up the order at one point
             //Vector4f P1         = pr1->p;
             Vector4f point1     = view_inv * v1->p;
             Vector4f projected1 = p_v * v1->p;
@@ -1402,11 +1414,16 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
                             v0->count_connecting_tringles(v1);
                             assert(0);
                         }
-
+                        bool debug1before = vert->encompassed();
+                        bool debug2before = v0->encompassed();
+                        bool debug3before = v1->encompassed();
+                        if(debug1before || debug2before || debug3before){
+                            //assert(0);
+                        }
                         Triangle* new_triangle =
                                 mesh_reconstruction->addTriangle_(vert, v0, v1, 21);
-                        if(!new_triangle->manifold_valid()){
-                            mesh_reconstruction->checkNeighbourhoodConsistency();//TODO: REMOVE DEBUG
+                        if(!new_triangle->manifold_valid() || !new_triangle->orientation_valid()){
+                            //mesh_reconstruction->checkNeighbourhoodConsistency();//TODO: REMOVE DEBUG
                             //if the triangle violates the manifold we immediately remove it again.
                             Triangle* before = &new_triangle->getMeshlet()->triangles[0];
                             new_triangle->getMeshlet()->triangles.pop_back();
@@ -1414,12 +1431,28 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
                             if(before != after)
                                 cout << "ptr to vector before: " << before << " and after " << after << endl;
                             cout << "ptr to new triangle " << new_triangle << endl;
-                            mesh_reconstruction->checkNeighbourhoodConsistency();//TODO: REMOVE DEBUG
+                            //mesh_reconstruction->checkNeighbourhoodConsistency();//TODO: REMOVE DEBUG
                             //TODO: remove the created meshlet neighbourhood if necessary.
                             //storing which neighbourhood got created is probably more involved
 
                             continue;
                         }
+
+                        assert(new_triangle->orientation_valid());
+                        cout << "it not always has the wrong orientation" << endl;
+                        bool debug1 = !new_triangle->vertices[0]->manifold_valid();
+                        bool debug2 = !new_triangle->vertices[1]->manifold_valid();
+                        bool debug3 = !new_triangle->vertices[2]->manifold_valid();
+                        if(debug1 || debug2 || debug3){
+                            new_triangle->manifold_valid(0);
+                            new_triangle->manifold_valid(1);
+                            new_triangle->manifold_valid(2);
+                            new_triangle->vertices[0]->manifold_valid();
+                            new_triangle->vertices[1]->manifold_valid();
+                            new_triangle->vertices[2]->manifold_valid();
+                            assert(0);
+                        }
+
                         connected_nbs[k] = true;
                         //TODO: check if triangle is valid. Remove if not
                         //sew in opposite direction:
@@ -1428,7 +1461,7 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
                         edge_made = true; //maybe also enable stitching mode ?
                         edge.already_used_for_stitch = true;
 
-                        return;
+                        //return;
                         //now try to further sew counter the direction of where we went.
                         sewLocally(Vector2i(x, y),
                                 Vector2i(x,y), //Last new pix.... whatever i thought this will be
@@ -1539,6 +1572,8 @@ void MeshStitcher::sewLocally(Vector2i center_pix, Vector2i last_new_pix,
         if(meshlet == nullptr)
             continue;
         Vertex* vert = &(meshlet->vertices[ind]);
+
+
         float dist = dist_sqr(p1.cast<float>(), nb_pos.cast<float>());
         if(dist < closest_dist) {
             closest_dist = dist;
@@ -1546,17 +1581,47 @@ void MeshStitcher::sewLocally(Vector2i center_pix, Vector2i last_new_pix,
             closest_vertex = vert;
         }
     }
-    if(ind_closest = -1){
+    if(ind_closest == -1){
         return;
     }
 
+    if(closest_vertex->encompassed())
+        return;
+    if(v0->encompassed())
+        return;
+    if(v1->encompassed())
+        return;
+    if(closest_vertex->count_connecting_tringles(v0) == 2)
+        return;
+    if(closest_vertex->count_connecting_tringles(v1) == 2)
+        return;
+    if(v0->count_connecting_tringles(v1) == 2)
+        assert(0);
+
+    Triangle* tri = nullptr;
     if(flip){
-        mesh_reconstruction->addTriangle_(closest_vertex,v0,v1,22);
+        tri = mesh_reconstruction->addTriangle_(closest_vertex,v0,v1,22);
     }else{
-        mesh_reconstruction->addTriangle_(closest_vertex,v1,v0,23);
+        tri = mesh_reconstruction->addTriangle_(closest_vertex,v1,v0,23);
+    }
+    assert(tri->orientation_valid());
+    if(!tri->manifold_valid()){
+        tri->getMeshlet()->triangles.pop_back();
+        return;
+    }
+    nbs_used[ind_closest] = true;
+    bool debug1 = !tri->vertices[0]->manifold_valid();
+    bool debug2 = !tri->vertices[1]->manifold_valid();
+    bool debug3 = !tri->vertices[2]->manifold_valid();
+    if(debug1 || debug2 || debug3){
+        assert(0);
     }
 
-
-    //sew_locally();
+    sewLocally( center_pix, last_new_pix,
+                v1, v0, closest_vertex,
+                p1, p0 , (center_pix + relative_neighbours[ind_closest]).cast<float>(),
+                new_meshlets, new_vert_inds,
+                nbs_used,
+                flip);
 
 }

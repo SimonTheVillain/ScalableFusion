@@ -224,6 +224,7 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
     reconstruction->checkNeighbourhoodConsistency();
 	stitching.freeBorderList();
+
 	reconstruction->checkNeighbourhoodConsistency();
 
 	reconstruction->checkLeftoverEdges();// there shouldn't be edges left (seemingly stitchOnBorders isn't really clean)

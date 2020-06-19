@@ -42,6 +42,7 @@ void MeshReconstruction::checkNeighbourhoodConsistency() {
 		auto patch = p.second;
 		int l = 0;
 		for(auto &tri : patch->triangles){
+		    assert(tri.orientation_valid());
 			for(int i : { 0, 1, 2}){
 				Triangle* tri1 = &tri;
 				if(tri.neighbours[i].ptr == nullptr)
@@ -62,6 +63,7 @@ void MeshReconstruction::checkTriangleVerticesConsistency(){
 		auto patch = p.second;
 		for(int i = 0;i<patch->vertices.size();i++){
 			Vertex &vert = patch->vertices[i];
+			assert(vert.manifold_valid());
 			//check if the vertex is referencing to the correct meshlet
 			assert(vert.meshlet == patch.get());
 			for(int j = 0;j<vert.triangles.size();j++){

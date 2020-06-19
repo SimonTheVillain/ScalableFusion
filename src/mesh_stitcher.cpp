@@ -1377,8 +1377,9 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
 
             //function that starts stitching on a per pixel basis
             auto func = [&](int x, int y, float t) {
-
                 Vector4f frag_pos = interpolatePerspectific(point0, point1, w0, w1, t);
+                float frag_z = frag_pos[2];
+
                 if(x != last_pix_i[0] || y != last_pix_i[1]){
                     return;
                 }
@@ -1403,6 +1404,15 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
                         if(meshlet == nullptr)
                             continue;
                         Vertex* vert = &(meshlet->vertices[index]);
+
+
+                        float new_depth = new_geom_m.at<cv::Vec4f>(nb[1], nb[0])[2]; //getting depth
+                        float depth_threshold = 0.05f;//TODO: change this to something depth (standard deviation dependant)
+                        if(abs(new_depth-frag_z) > depth_threshold) {
+                            //don't create new geometry
+                            continue;
+                        }
+
                         if(vert->encompassed())
                             continue;
                         if(v0->count_connecting_tringles(vert) == 2)
@@ -1463,13 +1473,25 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
 
                         //return;
                         //now try to further sew counter the direction of where we went.
-                        sewLocally(Vector2i(x, y),
+                        sewLocally(Vector2i(x, y), frag_z,
                                 Vector2i(x,y), //Last new pix.... whatever i thought this will be
                                 v1,v0,vert,
                                 p1, p0, nb.cast<float>(),
-                                new_seg_pm, new_pt_ind_m, connected_nbs, true);
+                                new_seg_pm, new_pt_ind_m, new_geom_m, connected_nbs, true);
 
 
+                        //now we go in forward direction....
+                        for(size_t l : {0, 1, 2, 3}){
+                            //disable any potential neighbour on the wrong side
+                            Vector2f nb_chck(x + relative_neighbours[l][0], y + relative_neighbours[l][1]);
+                            if(on_same_sides(p0, p1, p2, nb_chck))
+                                connected_nbs[l] = false;
+                        }
+                        sewLocally(Vector2i(x, y), frag_z,
+                                   Vector2i(x,y), //Last new pix.... whatever i thought this will be
+                                   v0,v1,vert,
+                                   p0, p1, nb.cast<float>(),
+                                   new_seg_pm, new_pt_ind_m, new_geom_m, connected_nbs, false);
 
                         //all the possible triangles are created... we are safe now
                         return;
@@ -1543,10 +1565,10 @@ void MeshStitcher::stitchOnBorders2(Matrix4f view, Matrix4f proj,
 
 
 
-void MeshStitcher::sewLocally(Vector2i center_pix, Vector2i last_new_pix,
+void MeshStitcher::sewLocally(Vector2i center_pix, float center_pix_z, Vector2i last_new_pix,
                               Vertex* vfar, Vertex* v0, Vertex* v1,
                               Vector2f pfar, Vector2f p0, Vector2f p1,
-                              const cv::Mat &new_meshlets, const cv::Mat &new_vert_inds,
+                              const cv::Mat &new_meshlets, const cv::Mat &new_vert_inds, const cv::Mat &new_geom,
                               bool nbs_used[4],
                               bool flip){
     Vector2i relative_neighbours[] = {
@@ -1571,6 +1593,14 @@ void MeshStitcher::sewLocally(Vector2i center_pix, Vector2i last_new_pix,
         int ind = new_vert_inds.at<int>(nb_pos[1],nb_pos[0]);
         if(meshlet == nullptr)
             continue;
+
+        float new_depth = new_geom.at<cv::Vec4f>(nb_pos[1], nb_pos[0])[2]; //getting depth
+        float depth_threshold = 0.05f;//TODO: change this to something depth (standard deviation dependant)
+        if(abs(new_depth - center_pix_z) > depth_threshold) {
+            //don't create new geometry
+            continue;
+        }
+
         Vertex* vert = &(meshlet->vertices[ind]);
 
 
@@ -1598,14 +1628,15 @@ void MeshStitcher::sewLocally(Vector2i center_pix, Vector2i last_new_pix,
     if(v0->count_connecting_tringles(v1) == 2)
         assert(0);
 
+
+
     Triangle* tri = nullptr;
     if(flip){
         tri = mesh_reconstruction->addTriangle_(closest_vertex,v0,v1,22);
     }else{
         tri = mesh_reconstruction->addTriangle_(closest_vertex,v1,v0,23);
     }
-    assert(tri->orientation_valid());
-    if(!tri->manifold_valid()){
+    if(!tri->manifold_valid() || !tri->orientation_valid()){
         tri->getMeshlet()->triangles.pop_back();
         return;
     }
@@ -1617,10 +1648,10 @@ void MeshStitcher::sewLocally(Vector2i center_pix, Vector2i last_new_pix,
         assert(0);
     }
 
-    sewLocally( center_pix, last_new_pix,
+    sewLocally( center_pix,center_pix_z, last_new_pix,
                 v1, v0, closest_vertex,
                 p1, p0 , (center_pix + relative_neighbours[ind_closest]).cast<float>(),
-                new_meshlets, new_vert_inds,
+                new_meshlets, new_vert_inds, new_geom,
                 nbs_used,
                 flip);
 

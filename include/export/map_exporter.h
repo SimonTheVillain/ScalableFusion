@@ -35,7 +35,7 @@ public:
 	                       Properties_ properties) {}
 
 	static void storeCoarse(MeshReconstruction *map,LowDetailRenderer* lowDetailRenderer, string file_path);
-	static void storeFine(MeshReconstruction *map, string file_path, bool fix_ply_meshlab = false);// {}
+	static void storeFine(MeshReconstruction *map, string file_path, bool fix_ply_meshlab = false, bool swap_rb = true);// {}
 
 	static void storeGraph(MeshReconstruction *map, string file_path) {}
 	static void storeDeformationGraph(MeshReconstruction *map, string file_path) {}

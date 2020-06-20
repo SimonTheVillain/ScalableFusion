@@ -68,21 +68,28 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 
 	/*******************************************STITCHING NEW********/
-	vector<vector<Edge>> borders;
+	//vector<vector<Edge>> borders; //TODO: completely remove after the dependency on it is removed
 	Matrix4f proj_pose = proj_depth * depth_pose_in.inverse();
 
 	//TODO: comment back in obviously
-	/*
+
+    stitching.checkTriangleEdgeConsistency();
+    int debug_border_count = stitching.border_list.size();
 	stitching.genBorderList(
-			visible_meshlets, borders,
+			visible_meshlets,
 			proj_pose);
-	stitching.reloadBorderGeometry(borders);
-	stitching.rasterBorderGeometry(borders, depth_pose_in, proj_depth, ex_geom);
-	*/
+
+    stitching.checkTriangleEdgeConsistency();
+	stitching.reloadBorderGeometry(active_set_of_formerly_visible_patches);
+	//cv::imshow("DEBUG:geom_before", ex_geom);
+	stitching.rasterBorderGeometry(depth_pose_in, proj_depth, ex_geom);
+	//cv::imshow("DEBUG:geom_after_rastering", ex_geom);
+	//cv::waitKey();
 	//this is a premilary measure to get the geometry adding running....
 	float geometry_assign_threshold = 0.05f;//every point within 5cm of existing geometry is considered part of that geometry
 
 	/**
+	 * Invalidating invalid pixel that for some reasons are not invalidated already
 	 * TODO: get rid of this code: It is done in the segmentation part anyway.
 	 * Altough the code for projecting points should be separate from this.
 	 *
@@ -114,13 +121,17 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	}
 	cv::imshow("points",points);
 	cv::waitKey(1);
+	/********************************************************END WORKAROUND*****************************************/
+
+
 
 	#ifdef SHOW_SERIOUS_DEBUG_OUTPUTS
 	cv::imshow("novel geometry", points);
 	cv::waitKey(); // This is a debug measure.... because everything is shit
 	#endif
 
-	cv::Mat mesh_pointers(height, width, CV_32SC2); // Actually we store pointers in this
+	// Actually we store pointers in this
+	cv::Mat mesh_pointers(height, width, CV_32SC2);
 
 	gpu_pre_seg_.fxycxy       = reconstruction->params.depth_fxycxy;
 	gpu_pre_seg_.max_distance = reconstruction->getMaxDistance();
@@ -198,18 +209,27 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 	/*********************************Initial Stitching!! NEW***************************/
 
-	/*
-	vector<weak_ptr<GeometryBase>> stitch_list;
+
+	//vector<weak_ptr<GeometryBase>> stitch_list;
 
 	//TODO: reinsert code and fix bugs
-	//debugCheckTriangleNeighbourConsistency(GetAllPatches());
-	stitching.stitchOnBorders(borders, depth_pose_in, proj_depth, proj_depth_std, 
+	//cout << "TODO: reinsert this code and fix bugs" << endl;
+    //reconstruction->checkTriangleEdgeConsistency();
+    stitching.checkTriangleEdgeConsistency();
+
+	stitching.stitchOnBorders2(depth_pose_in, proj_depth, proj_depth_std,
 	                          ex_geom, points, d_std_mat, 
 	                          reconstruction->generateColorCodedTexture_(mesh_pointers),
-	                          mesh_pointers, vertex_indices, stitch_list);
+	                          mesh_pointers, vertex_indices);
 
-	stitching.freeBorderList(borders);
-	*/
+    //reconstruction->checkNeighbourhoodConsistency();
+	stitching.freeBorderList();
+
+	//reconstruction->checkNeighbourhoodConsistency();
+
+	reconstruction->checkLeftoverEdges();// there shouldn't be edges left (seemingly stitchOnBorders isn't really clean)
+	reconstruction->checkNeighbourhoodConsistency();
+	reconstruction->checkTriangleVerticesConsistency();
 
 	/******************************************Initial Stitching!! NEW***********************/
 
@@ -248,9 +268,15 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 					}
 					//we found a suitable  spot for the vertex. so we move it
 					if(target_meshlet){
+						//put the vertex into another meshlet
+						vertex.meshlet = target_meshlet;//this is cruical because it is not done by the move operator
 						target_meshlet->vertices.push_back(move(vertex));
+						//TODO: make move private and provide a method that only allows the valid way of doing this
 						cout << "MOVING VERTICES TO OTHER MESHLET" << endl;
 						break;
+					} else{
+						//It should be guaranteed that there is a suitable target meshlet
+						assert(0);
 					}
 
 				}
@@ -270,12 +296,16 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 		// and therefore they would not get deleted until now.
 		// Any unconnected or deleted but empty (of triangle) patch
 		// gets deleted now.
-		cout << "TODO: Put this back in!" << endl;
+		//cout << "TODO: Put this back in!" << endl;
 		//TODO: fix and reinsert the removal of invalid patches
-		//reconstruction->removePatch(set_of_patches_to_be_removed[i]);
+		reconstruction->removePatch(set_of_patches_to_be_removed[i]);
 		cout << "REMOVING PATCH" << endl;
 	}
 	set_of_patches_to_be_removed.clear();
+
+	//TODO: check consistency on the whole reconstruction
+	//reconstruction->checkTriangleVerticesConsistency();
+	//reconstruction->checkNeighbourhoodConsistency();
 
 	/******************************REMOVAL OF UNCONNECTED VERTS TRIS and PATCHES***********/
 
@@ -297,10 +327,12 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	visible_meshlets.insert(visible_meshlets.end(),
 							new_shared_mesh_patches.begin(),
 							new_shared_mesh_patches.end());
+	vector<bool> empty;
 	shared_ptr<ActiveSet> new_active_set =
 			make_shared<ActiveSet>(gpu_storage,
 									visible_meshlets,
-									scheduler->getActiveSets());
+									scheduler->getActiveSets(),
+                                    empty,true);
 			/*
 			gpu_storage->makeActiveSet(
 					visible_meshlets,
@@ -331,6 +363,24 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	                                proj_depth, d_std_tex, new_active_set,
 	                                information_renderer);
 
+    //TODO: remove debug:
+    for(size_t i=0; i<new_shared_mesh_patches.size();i++){
+        auto gpu_meshlet = new_active_set->getGpuMeshlet(new_shared_mesh_patches[i]);
+        if(gpu_meshlet->std_tex.tex == nullptr){
+            assert(0);
+        }
+        if(gpu_meshlet->std_tex.tex->getRect().height == 0 || gpu_meshlet->std_tex.tex->getRect().width == 0) {
+            assert(0);
+        }
+        if(gpu_meshlet->std_tex.token == nullptr){
+            assert(0);
+        }
+
+        /*
+        if(new_shared_mesh_patches[i]->geom_tex_patch->mat.empty()){
+            assert(0);
+        }*/
+    }
 
 	//until here..... not further (not further we implemented stuff)
 	//(and with we i mean me)
@@ -382,7 +432,15 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 		new_shared_mesh_patches[i]->updateSphereRadius();
 	}
 
-	//add the objects to the low detail renderer
+    //TODO: remove this debug
+    for(size_t i = 0; i < new_shared_mesh_patches.size(); i++) {
+        if(new_shared_mesh_patches[i]->geom_tex_patch == nullptr){
+            assert(0);
+        }
+        //if(new_shared_mesh_patches[i]->geom_tex_patch)
+    }
+
+    //add the objects to the low detail renderer
 	auto start_low_detail = chrono::system_clock::now();
 	low_detail_renderer->addPatches(new_shared_mesh_patches,
 	                                     -depth_pose_in.block<3, 1>(0, 3));
@@ -402,7 +460,6 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 
 	for(auto patch : new_shared_mesh_patches)
 		reconstruction->octree_.add(patch);
-
 
 	time_end = chrono::system_clock::now();
 	auto elapsed = chrono::duration_cast<chrono::milliseconds>(time_end - time_start_all);
@@ -431,6 +488,71 @@ shared_ptr<ActiveSet> GeometryUpdater::extend(
 	}
 	/*********************************************************************************/
 
+	//TODO: remove this debug thingy!
+    for(size_t i=0;i<new_shared_mesh_patches.size();i++){
+        auto meshlet = new_shared_mesh_patches[i];
+        //if(new_shared_mesh_patches[i]->id == 607){
+            //cout << "this is that famous 607" << endl;
+            auto gpu_meshlet = new_active_set->getGpuMeshlet(meshlet);
+            //TODO: maybe check where the token went
+            auto active_sets = scheduler->getActiveSets();
+            active_sets.push_back(new_active_set);
+            bool token_exists=false;
+            bool exists_in_active_set = false;
+            for(auto s : active_sets){
+                if(s==nullptr){
+                    continue;
+                }
+                exists_in_active_set = true;
+                auto gpu_meshlet_2 = s->getGpuMeshlet(meshlet);
+                if(gpu_meshlet_2 != nullptr){
+
+                    if(meshlet->id == 607){
+                        gpu_meshlet_2->std_tex.debug= 607;
+                    }
+                    if(gpu_meshlet_2->std_tex.token != nullptr){
+                        token_exists = true;
+                    }
+                }
+            }
+            if(!token_exists){
+                assert(0);
+            }
+        //}
+    }
+    for(size_t i=0;i<visible_meshlets.size();i++){
+        auto meshlet = visible_meshlets[i];
+        //if(new_shared_mesh_patches[i]->id == 607){
+        //cout << "this is that famous 607" << endl;
+        auto gpu_meshlet = new_active_set->getGpuMeshlet(meshlet);
+        //TODO: maybe check where the token went
+        auto active_sets = scheduler->getActiveSets();
+        active_sets.push_back(new_active_set);
+        bool token_exists=false;
+        bool exists_in_active_set = false;
+        for(auto s : active_sets){
+            if(s==nullptr){
+                continue;
+            }
+            exists_in_active_set = true;
+            auto gpu_meshlet_2 = s->getGpuMeshlet(meshlet);
+            if(gpu_meshlet_2 != nullptr){
+                if(gpu_meshlet_2->std_tex.token != nullptr){
+                    token_exists = true;
+                }
+            }
+        }
+        if(!token_exists){
+            assert(0);
+        }
+        //}
+    }
+	//TODO: remove this debug thingy!
+	for(size_t i=0;i<new_active_set->meshlets.size();i++){
+	    if(new_active_set->meshlets[i].std_tex.tex == nullptr){
+	        assert(0);
+	    }
+	}
 
 	return new_active_set;
 }

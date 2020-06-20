@@ -16,15 +16,16 @@ using namespace std;
 using namespace Eigen;
 
 std::mutex ActiveSet::mutex;
-
+std::vector<ActiveSet*> ActiveSet::debug_all_active_sets;
 //TODO: find a way to allocate textures and texture pointers in this thing:
 //Meshlet textures could have a flag "do_not_upload" and a new version number to indicate a
 //update that requires a newly allocated texture
 ActiveSet::ActiveSet(GpuStorage *storage,
 					 vector<shared_ptr<Meshlet>> meshlets_requested,
 					 vector<shared_ptr<ActiveSet>> active_sets,
-					 vector<bool> allocate_new_verts){
-
+					 vector<bool> allocate_new_verts,
+					 bool debug_ignore_missing_geom_tex){
+    ActiveSet::debug_all_active_sets.push_back(this);
 	std::lock_guard<std::mutex> guard(mutex);
 
 	vector<shared_ptr<Meshlet>> reupload;
@@ -188,9 +189,32 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 				if(!meshlet->geom_tex_patch->mat.empty()){
 					most_current.debug = 3;
 					most_current.std_tex.create(meshlet->geom_tex_patch,storage->tex_atlas_stds_,storage->tex_pos_buffer);
+
+                    //TODO: REMOVE DEBUG:
+					if(most_current.std_tex.tex == nullptr && !debug_ignore_missing_geom_tex){
+					    assert(0);
+					}
+				}else{
+                    //TODO: REMOVE DEBUG:
+				    assert(0);
 				}
+				//TODO: REMOVE DEBUG:
+                if(most_current.std_tex.tex == nullptr && !debug_ignore_missing_geom_tex){
+                    //see if the tex still is zero.
+                    assert(0);
+                }
 			}
+			//TODO: REMOVE DEBUG:
+            if(most_current.std_tex.tex == nullptr && !debug_ignore_missing_geom_tex){
+                //see if the tex still is zero.
+                assert(0);
+            }
 		}
+        //TODO: REMOVE DEBUG:
+        if(most_current.std_tex.tex == nullptr && !debug_ignore_missing_geom_tex){
+            //see if the tex still is zero.
+            assert(0);
+        }
 
 		//upload color textures if there was none on the GPU
 		if(most_current.textures.size() == 0){
@@ -198,7 +222,11 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 			for(size_t k=0;k<meshlet->tex_patches.size();k++){
 				//upload new textures
 				shared_ptr<MeshTexture> &tex_cpu = meshlet->tex_patches[k];
-
+				if(tex_cpu->tex_coords.size()==0){
+					cout <<  "TODO: why is this even the case? why does the meshlet have a tex_patch "
+			 				 "while not being filled with data?" << endl;
+					continue;
+				}
 
 				most_current.textures.emplace_back();
 				shared_ptr<TextureLayerGPU> &tex_gpu = most_current.textures[k];
@@ -206,10 +234,7 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 				tex_gpu->create(tex_cpu,storage->tex_atlas_rgb_8_bit_,storage->tex_pos_buffer);
 
 			}
-
 		}
-
-
 
 		if(most_current.vertex_token == nullptr){
 			cout << " all this fuzz and still no valid token?" << endl;
@@ -218,7 +243,13 @@ ActiveSet::ActiveSet(GpuStorage *storage,
 			//	most_current.vertex_token = make_unique<weak_ptr<Meshlet>>(meshlet);
 		}
 	}
-
+	//TODO: remove debug
+    for(int i=0;i<this->meshlets.size();i++){
+        //check if all the std textures grabbed a token. (its a fresh active set so it should be done already)
+        if(meshlets[i].std_tex.token == nullptr){
+            assert(0);
+        }
+    }
 
 	headers = storage->patch_info_buffer->getBlock(meshlets.size());
 	setupHeaders();
@@ -233,6 +264,7 @@ ActiveSet::~ActiveSet() {
 	mutex.lock();
 	//calling all the destructors that will be downloading the data to CPU
 	meshlets.clear();
+    ActiveSet::debug_all_active_sets.erase(std::remove(debug_all_active_sets.begin(), debug_all_active_sets.end(), this), debug_all_active_sets.end());
 
 
 	mutex.unlock();
@@ -275,7 +307,6 @@ void ActiveSet::setupHeaders(bool debug){
 void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshlets_requested){
 
 	//TODO: setting this up every update might be overly expensive, so reuse as often as possible
-
 
 	cudaDeviceSynchronize();
 	gpuErrchk(cudaPeekAtLastError());
@@ -324,11 +355,10 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 		int task_count = vertex_indices.size();
 
 		//TODO: 2020 Simon! Find out whats going on here!
-		//TODO: DELETE AFTER FIXED! invalid next size (fast) happening here! (at the destructor)
 		vector<MeshletGPU::TranscribeBorderVertTask> tasks(task_count);
 
 		int count = 0;
-		for(auto vert : vertex_indices){ //iterate over all vertices that are not local
+		for(auto vert : vertex_indices){ //iterate over all vertices that are not local to this patch
 			tasks[count].ind_local = vert.second;
 			//calculate index by subtracting pointers (ptr(vertex) - ptr(first vert of according meshlet)
 			int ind_in_neighbour = vert.first - &vert.first->meshlet->vertices[0];
@@ -341,20 +371,42 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 				tasks[count].ind_neighbour = meshlets_to_ind[vert.first->meshlet];
 			}else{
 				cout << "DEBUG:!!!! That vertex is probably part of an invalid meshlet" << endl;
-				assert(0);
+				assert(0); //TODO: Triangle is referencing to meshlet that is not neighbour of this meshlet.
 			}
 			count ++;
 		}
 
+
+        cudaDeviceSynchronize();
+        gpuErrchk(cudaPeekAtLastError());
+		//setting up transcribe tasks on a per gpu meshlet basis
+		if(meshlet_gpu.gpu_neighbour_vertices != nullptr){
+		    //TODO: maybe this cudaFree needs to be synchronized with according update tasks.
+		    //TODO: also find out if the GPU Meshlets are anyway created from scratch for each meshlet
+		    // and therefore this case is handled by the destructor
+            cudaFree((void*)(meshlet_gpu.gpu_neighbour_vertices));
+            assert(0);//DEBUG: find out if this case ever occurs
+		}
 		int byte_count = sizeof(GpuVertex*) * vertices_ptr_gpu.size();
 		cudaMalloc(&meshlet_gpu.gpu_neighbour_vertices,byte_count);
+
+        cudaDeviceSynchronize();
+        gpuErrchk(cudaPeekAtLastError());
 		cudaMemcpy(meshlet_gpu.gpu_neighbour_vertices,&vertices_ptr_gpu[0],byte_count,cudaMemcpyHostToDevice);
 
 		cudaDeviceSynchronize();
 		gpuErrchk(cudaPeekAtLastError());
 
 		byte_count = sizeof(MeshletGPU::TranscribeBorderVertTask) * vertex_indices.size();
+        if(meshlet_gpu.gpu_vert_transcribe_tasks != nullptr){
+            //TODO: maybe this cudaFree neds to be sync
+            //TODO: same as a few lines up
+            cudaFree((void*)(meshlet_gpu.gpu_vert_transcribe_tasks));
+            assert(0);//debug: find out if this case ever occurs
+        }
 		cudaMalloc(&meshlet_gpu.gpu_vert_transcribe_tasks,byte_count);
+        cudaDeviceSynchronize();
+        gpuErrchk(cudaPeekAtLastError());
 		cudaMemcpy(meshlet_gpu.gpu_vert_transcribe_tasks,&tasks[0],byte_count,cudaMemcpyHostToDevice);
 
 
@@ -363,35 +415,8 @@ void ActiveSet::setupTranscribeStitchesTasks(vector<shared_ptr<Meshlet>> &	meshl
 
 		meshlet_gpu.gpu_vert_transcribe_task_count = vertex_indices.size();
 
-		//TODO: put that back in! the transcribe tasks are supposed to be important
-		/*
-		gpu::GeometryUpdate::TranscribeStitchTask task;
-		task.local_vertices = meshlet_gpu.vertices->getStartingPtr();
-		task.task = meshlet_gpu.gpu_vert_transcribe_tasks;
-		task.count = meshlet_gpu.gpu_vert_transcribe_task_count;
-		task.nb_vertices = meshlet_gpu.gpu_neighbour_vertices;
-
-		transcribe_tasks.push_back(task);
-		*/
-
-		//cout << "right before end of block " << i << endl;
 
 	}
-	//this->transcribe_tasks = std::move(transcribe_tasks);
-
-	/*
-	int byte_count = sizeof(gpu::GeometryUpdate::TranscribeStitchTask) * transcribe_tasks.size();
-	cudaMalloc(&gpu_transcribe_tasks,byte_count);
-	gpu_transcribe_task_count = transcribe_tasks.size();
-	cudaMemcpy(gpu_transcribe_tasks,&transcribe_tasks[0],byte_count,cudaMemcpyHostToDevice);
-	*/
-
-	 /*
-	gpu::GeometryUpdate::TranscribeStitchTask* tasksGpu;
-	size_t bytes = sizeof(gpu::GeometryUpdate::TranscribeStitchTask) * tasks.size();
-	cudaMalloc(&tasksGpu,bytes);
-	cudaMemcpy(tasksGpu,&tasks[0],bytes,cudaMemcpyHostToDevice);
-	*/
 
 
 	cudaDeviceSynchronize();
@@ -477,7 +502,14 @@ MeshletGPU* ActiveSet::getGpuMeshlet(shared_ptr<Meshlet> meshlet) {
 		return &meshlets[ind];
 	}
 	return nullptr;
+}
 
+MeshletGPU* ActiveSet::getGpuMeshlet(const Meshlet* meshlet) {
+    if(meshlet_inds.count(meshlet->id)){
+        int ind = meshlet_inds[meshlet->id];
+        return &meshlets[ind];
+    }
+    return nullptr;
 }
 
 bool ActiveSet::containsNeighbours(shared_ptr<Meshlet> meshlet) {

@@ -10,13 +10,20 @@
 cmake_minimum_required (VERSION 3.8)
 if(NOT DEFINED CMAKE_CUDA_COMPILER)
 	set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
+	if(NOT EXISTS CMAKE_CUDA_COMPILER)
+		set(CMAKE_CUDA_COMPILER "/usr/bin/nvcc")
+	endif()
 endif()
 #add_definitions(-DEIGEN_DONT_VECTORIZE)
-
 # Project
 project(scalable_fusion
 	LANGUAGES CXX CUDA
 )
+#todo: remove as soon either clion 2020.1.2 or cuda itself is fixed
+#In file included from /usr/include/cuda_runtime.h:83,
+#from <command-line>:
+#/usr/include/crt/host_config.h:138:2: error: #error -- unsupported GNU version! gcc versions later than 8 are not supported!
+#set(CMAKE_CXX_COMPILER /usr/bin/g++-8)
 set(LIB_NAME scalfu)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -46,6 +53,7 @@ if(CMAKE_BUILD_TYPE MATCHES DEBUG)
 			--generate-line-info \
 			-lineinfo
 			--device-debug \
+			--rdynamic \
 		"
 			) #--device-debug #everything fails at device-debug
 
@@ -59,7 +67,6 @@ if(CMAKE_BUILD_TYPE MATCHES DEBUG)
 #			) #--device-debug #everything fails at device-debug
 	#https://stackoverflow.com/questions/27277365/unspecified-launch-failure-on-memcpy/27278218#27278218
 endif()
-
 
 #define library version:
 set(SCALFU_VERSION_MAJOR 0)
@@ -85,15 +92,17 @@ add_definitions(-DUSE_FLOAT16_GEOM_TEX)
 #add_definitions(-DSHOW_SERIOUS_DEBUG_OUTPUTS)
 add_definitions(-DPROPHYLACTIC_GPU_SYNC)#TODO: Implement this
 #add_definitions(-DIGNORE_MISSING_STD)
-
+add_definitions(-DFIX_BIG_TEX_BY_CLAMPING)
 add_definitions(-DIGNORE_SERIOUS_BUG_1)
 #add_definitions(-DIGNORE_SERIOUS_BUG_2)
 add_definitions(-DIGNORE_SERIOUS_BUG_3)
+add_definitions(-DSHOW_TEXT_STITCHING)
 #add_definitions(-DIGNORE_SERIOUS_BUG_4)
 #add_definitions(-DIGNORE_SERIOUS_BUG_5)//invalid stitches
 
 # logging
 add_definitions(-DENABLE_LOGGING)
+
 
 # Required packages
 find_package(ASSIMP REQUIRED)
@@ -115,7 +124,7 @@ find_package(CUDA REQUIRED)
 
 set(SCALFU_INCLUDE_DIRS
 		"${CMAKE_SOURCE_DIR}/include"
-		#"${CMAKE_SOURCE_DIR}/videl_source/include"
+		#"${CMAKE_SOURCE_DIR}/video_source/include"
 		${CMAKE_SOURCE_DIR}
 		${CUDA_INCLUDE_DIRS}
 		${EIGEN3_INCLUDE_DIRS}
@@ -123,6 +132,8 @@ set(SCALFU_INCLUDE_DIRS
 		${GLEW_INCLUDE_DIRS}
 		${OpenCV_INCLUDE_DIRS}
 		${OPENGL_INCLUDE_DIR}
+		${Sophus_INCLUDE_DIRS}
+		${radical_INCLUDE_DIRS}
 		"${CMAKE_SOURCE_DIR}/logging/include"
 		)
 set(SCALFU_LIBRARIES

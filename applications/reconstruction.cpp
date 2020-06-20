@@ -203,6 +203,7 @@ int main(int argc, const char *argv[]) {
 	bool hd            = false;
 	bool fix_ply_mshl  = false;
 	int  skip_initial_frames = 0;
+	int  skip_interval = 1;
 	float depth_scale = 1.0f;
 	int width, height;
 
@@ -218,6 +219,8 @@ int main(int argc, const char *argv[]) {
 			 "Split the capturing process up into multiple threads")
 			("startFrame", po::value<int>(&skip_initial_frames),
 			 "Skipping the first frames to start at frame n")
+            ("skipInterval", po::value<int>(&skip_interval),
+             "Only take every nth frame in the dataset.")
 			("HD,h", po::bool_switch(&hd),
 			 "Using HD textures")
 			("headless,h", po::bool_switch(&headless),
@@ -310,8 +313,9 @@ int main(int argc, const char *argv[]) {
 		//scheduler = new SchedulerThreaded(scalable_map, &dataset, invisible_window);
 	} else {
 		scheduler = new SchedulerLinear(scalable_map, gpu_storage, &dataset,
-										invisible_window,
-										&low_detail_renderer);
+                                        invisible_window,
+                                        &low_detail_renderer,
+                                        skip_interval);
 	}
 	scheduler->pause(paused);
 
@@ -430,7 +434,7 @@ int main(int argc, const char *argv[]) {
 		that_one_debug_rendering_thingy->render(proj, view);
 
 		//display everything that got rendered
-		glFinish();//TODO: remove the finish
+		glFinish();//TODO: remove since it shouldn't be necessary
 		glfwSwapBuffers(window);
 		gpu_storage->garbage_collector_->collect();
 
@@ -467,26 +471,15 @@ int main(int argc, const char *argv[]) {
 	}
 
 	if(!detailed_output_file.empty()) {
-		//store the stupid reconstruction somewhere
-		//assert(0);//TODO: reinsert this functionality
-		//MapExporter::storeFine(scalable_map.get(), detailed_output_file);
-
+		//store finegrained reconstruction:
 		MapExporter::storeFine(scalable_map.get(), detailed_output_file, fix_ply_mshl);
 	}
 
-
-	cout << "[main] DEBUG everything should be deleted" << endl;
 
 	//erase active sets and patches so really nothing should be on the gpu
 	//scalable_map->erase();
 
 	scalable_map.reset();
-
-
-	cout << "DEBUG:most resources should be freed here! look at nvidia-smi (but in fact nothing is freed)" << endl;
-
-	cout << "Debug:set brakepoint here, the next key on the opencv window should quit the app" << endl;
-
 
 	presentation_renderer.reset();
 	information_renderer.reset();
@@ -494,14 +487,14 @@ int main(int argc, const char *argv[]) {
 	glfwDestroyWindow(invisible_window);
 	glfwTerminate();
 
-	cout << "Debug after deletion of at least two of the opengl contexts" << endl;
-
-	//TODO: this and the include at the very top
-	void *ptr;
-	cudaMalloc(&ptr, 10240);
-	cout << "DEBUG now exiting the program but purposefully leaving a tiny leak (cuda-memcheck sanity check)" << endl;
-	cudaDeviceReset();//this is necessary for a proper memory leak analysis with cuda-memcheck
-	
 	STOP_LOGGING();
+
+    void* test;
+    cudaMalloc(&test, 102400);
+    cudaDeviceSynchronize();
+    cudaDeviceReset();
+	//for cuda memcheck to work the program must be ended with this:
+    cudaDeviceReset();
+
 	return 0;
 }

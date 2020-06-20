@@ -97,7 +97,7 @@ void MapExporter::storeCoarse(MeshReconstruction *map, LowDetailRenderer* low_de
 	}
 }
 */
-void MapExporter::storeFine(MeshReconstruction *map, string file_path, bool fix_ply_meshlab) {
+void MapExporter::storeFine(MeshReconstruction *map, string file_path, bool fix_ply_meshlab, bool swap_rb) {
 
 
 	set<Triangle*> triangles;//don't think it will be needed
@@ -187,6 +187,9 @@ void MapExporter::storeFine(MeshReconstruction *map, string file_path, bool fix_
 		c.r = vert->color[0];
 		c.g = vert->color[1];
 		c.b = vert->color[2];
+		if(swap_rb){
+		    std::swap(c.r, c.b);
+		}
 		c.a = vert->color[3];
 		p_mesh->mColors[0][ind] = c;
 

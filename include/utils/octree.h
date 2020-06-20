@@ -21,7 +21,7 @@
 #include <Eigen/Eigen>
 
 #include <logging/include/logger.h>
-#include <video_source/source.h>
+#include <video_source/include/source.h>
 
 using namespace std;
 using namespace Eigen;

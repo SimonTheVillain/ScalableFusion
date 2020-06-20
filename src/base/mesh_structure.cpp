@@ -82,3 +82,70 @@ void Meshlet::removeTexPatches(vector<shared_ptr<MeshTexture>> tex_patches) {
 	}
 }
 
+
+bool Vertex::encompassed(){
+    if(triangles.size()==0){
+        return false;
+    }
+	if(triangles.size() <2){
+	    //cout << "debug: not encompassed because its only 2 triangles" << endl;
+        //TODO: put that back in to make it a little faster
+		//return false;
+	}
+	int running = 1000;
+	Triangle* tri = triangles[0].triangle;
+	int ind = triangles[0].ind_in_triangle;
+	int checksum = 0;
+	while(running--){
+		ind--;
+		if(ind==-1){
+			ind=2;
+		}
+		if(!tri->neighbours[ind].valid()){
+			return false;
+		}
+		int ind_new = tri->neighbours[ind].pos;
+		tri = tri->neighbours[ind].ptr;
+		checksum++;
+		ind = ind_new;
+		if(tri == triangles[0].triangle){
+            //There should not be two sets of triangles encompassing the same vertex!
+            assert(checksum == triangles.size());
+			return true;
+		}
+
+	}
+	assert(0);
+	return false;
+}
+bool Vertex::manifold_valid() {
+    for(size_t i = 0; i< triangles.size(); i++){
+        int running = 1000;
+        Triangle* tri = triangles[i].triangle;
+        int ind = triangles[i].ind_in_triangle;
+        int checksum = 0;
+        while(running--){
+            ind--;
+            if(ind==-1){
+                ind=2;
+            }
+            if(!tri->neighbours[ind].valid()){
+                return true;
+            }
+            int ind_new = tri->neighbours[ind].pos;
+            tri = tri->neighbours[ind].ptr;
+            checksum++;
+            ind = ind_new;
+            if(tri == triangles[i].triangle){
+                //We found a loop, but if there are more triangles connected to this vertex than inside the loop
+                //the manifold condition is hurt at this vertex.
+                if(checksum != triangles.size()){
+                    return false;
+                }
+                break;
+            }
+
+        }
+    }
+    return true;
+}

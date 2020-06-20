@@ -124,6 +124,7 @@ private:
 	shared_ptr<gfx::GpuTex2D> tex_;
 	int tile_size_; //8,16,32,64,etc.
 	int cv_type_;
+	int capacity_;
 	mutex occupants_mutex_;
 
 	//TODO: this is genious... the stack tells us if and where there is place for new textures

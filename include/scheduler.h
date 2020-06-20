@@ -65,8 +65,6 @@ public:
 	virtual shared_ptr<ActiveSet> setActiveSetTexUpdate(shared_ptr<ActiveSet> set) = 0;
 	 */
 
-
-
 	//is handling active sets the responsibility of the scheduler?
 	virtual vector<shared_ptr<ActiveSet>> getActiveSets() = 0;
 
@@ -80,12 +78,14 @@ class SchedulerLinear : public SchedulerBase {
 private:
     bool rendering_sets_updated[2] = {false, false};
     int rendering_sets_index = 0;
+    int skip_interval_ = 1;
 public:
 
 	SchedulerLinear(shared_ptr<MeshReconstruction> map,
 					GpuStorage* gpu_storage, video::Source *source,
 	                GLFWwindow *context,
-	                LowDetailRenderer *low_detail_renderer);
+	                LowDetailRenderer *low_detail_renderer,
+	                int skip_interval);
 
 	~SchedulerLinear();
 

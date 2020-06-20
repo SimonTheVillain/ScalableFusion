@@ -54,7 +54,7 @@ Mesher::TriangleReference Mesher::addTriangle(	Vertex* pr1,
 
 
 		triangle.registerSelf();
-		assert(triangle.orientation_valid()); //TODO: remove this debug measure
+		//assert(triangle.orientation_valid()); //TODO: remove this debug measure
 		patch->work_in_progress.unlock();
 
 		if(patch_1 != patch_2){

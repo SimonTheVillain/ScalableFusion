@@ -53,6 +53,7 @@ if(CMAKE_BUILD_TYPE MATCHES DEBUG)
 			--generate-line-info \
 			-lineinfo
 			--device-debug \
+			--rdynamic \
 		"
 			) #--device-debug #everything fails at device-debug
 

@@ -203,6 +203,7 @@ int main(int argc, const char *argv[]) {
 	bool hd            = false;
 	bool fix_ply_mshl  = false;
 	int  skip_initial_frames = 0;
+	int  skip_interval = 1;
 	float depth_scale = 1.0f;
 	int width, height;
 
@@ -218,6 +219,8 @@ int main(int argc, const char *argv[]) {
 			 "Split the capturing process up into multiple threads")
 			("startFrame", po::value<int>(&skip_initial_frames),
 			 "Skipping the first frames to start at frame n")
+            ("skipInterval", po::value<int>(&skip_interval),
+             "Only take every nth frame in the dataset.")
 			("HD,h", po::bool_switch(&hd),
 			 "Using HD textures")
 			("headless,h", po::bool_switch(&headless),
@@ -310,8 +313,9 @@ int main(int argc, const char *argv[]) {
 		//scheduler = new SchedulerThreaded(scalable_map, &dataset, invisible_window);
 	} else {
 		scheduler = new SchedulerLinear(scalable_map, gpu_storage, &dataset,
-										invisible_window,
-										&low_detail_renderer);
+                                        invisible_window,
+                                        &low_detail_renderer,
+                                        skip_interval);
 	}
 	scheduler->pause(paused);
 
@@ -484,5 +488,13 @@ int main(int argc, const char *argv[]) {
 	glfwTerminate();
 
 	STOP_LOGGING();
+
+    void* test;
+    cudaMalloc(&test, 102400);
+    cudaDeviceSynchronize();
+    cudaDeviceReset();
+	//for cuda memcheck to work the program must be ended with this:
+    cudaDeviceReset();
+
 	return 0;
 }

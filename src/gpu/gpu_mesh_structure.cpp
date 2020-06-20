@@ -101,7 +101,8 @@ TextureLayerGPU::~TextureLayerGPU(){
 		cudaFree(data_gpu);
 		*/
         if(debug==607){
-            assert(0);
+            //TODO: find out why this is not happening usually.
+            //assert(0);
         }
 		data = cv::Mat(rect.height,rect.width,CV_16UC(channels));
 		tex->downloadData(data.data);

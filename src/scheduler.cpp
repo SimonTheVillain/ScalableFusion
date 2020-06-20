@@ -41,11 +41,13 @@ void SchedulerBase::initializeGlContextInThread(GLFWwindow *context) {
 SchedulerLinear::SchedulerLinear(
 		shared_ptr<MeshReconstruction> map,  GpuStorage *gpu_storage,
 		video::Source *source, GLFWwindow *context,
-		LowDetailRenderer* low_detail_renderer)
+		LowDetailRenderer* low_detail_renderer,
+		int skip_interval)
 		: last_known_depth_pose_(Matrix4f::Identity()),
 		  gpu_storage_(gpu_storage),
 		  low_detail_renderer_(low_detail_renderer),
 		  expand_interval_(30),
+		  skip_interval_(skip_interval),
 		  end_threads_(false),
 		  paused_(false),
 		  take_next_step_(false) {
@@ -129,9 +131,16 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		}
 		take_next_step_ = false;
 		if(!source->readFrame()) {
-			break; // end this lorop if there is no new image
+			break; // end this loop if there is no new image
 			//This could be written more efficiently (but who cares about beautiful code?) Niko does.
 		}
+
+        if(((frame_count % (skip_interval_))) != 0 && !((frame_count % expand_interval_ == 0) || first_lap)){
+            cout << "skip" << endl;
+            frame_count++;
+            continue;
+        }
+        cout << "no skip" << endl;
 
 		cv::Mat depth = source->frame.depth; // 16 bit 1mm resolution
 		cv::Mat rgb   = source->frame.rgb; // 8 bit 3 channels (usually)
@@ -248,7 +257,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 		//reconstruction->clearInvalidGeometry(active_set, depth, depth_pose);
 		Matrix4f depth_proj = Camera::genProjMatrix(source->intrinsicsDepth());
 
-        /*
+
 		active_set =
 				geometry_updater->update(
 						gpu_storage_,
@@ -259,7 +268,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 						d_std_tex,
 						depth_pose,
 						depth_proj);
-         */
+
 
 		if(active_set!=nullptr){
 			active_set->name = "geometry_updated_set";
@@ -296,7 +305,7 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 
 
 		//every now and then we add new geometry:
-		if(frame_count == expand_interval_ || first_lap) {
+		if((frame_count % expand_interval_ == 0) || first_lap) {
 
 			//TODO: think if this should really take a Active Set or a list of visible meshes
 			//expanding the existing geometry
@@ -317,7 +326,6 @@ void SchedulerLinear::captureWorker_(shared_ptr<MeshReconstruction> reconstructi
 			//after the first step we wait (DEBUG).
 			cv::waitKey(1);
 
-			frame_count = 0;
 
 			//active_set_last_expand = reconstruction->active_set_expand;
 			depth_pose_last_expand = depth_pose;

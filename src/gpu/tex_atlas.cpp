@@ -41,7 +41,10 @@ shared_ptr<TexAtlasPatch> TexAtlas::getTexAtlasPatch(cv::Size2i size) {
 	int target_size = pow(2,s);
 	shared_ptr<TexAtlasPatch> found_tex_patch = nullptr;
 	SafeVector &tex_this_size = textures_[s];
+
 	tex_this_size.tex_mutex.lock();
+
+	//Filter the list of textures for ones that are not pointed at.
 	tex_this_size.tex.erase(remove_if(
 			tex_this_size.tex.begin(), tex_this_size.tex.end(), 
 			[](weak_ptr<TexAtlasTex> unlocked) {return unlocked.lock() == nullptr;}),
@@ -150,6 +153,10 @@ shared_ptr<TexAtlasPatch> TexAtlasTex::getFreePatch_(
 void TexAtlasTex::freeTexSlot_(int in_slot) {
 	occupants_mutex_.lock();
 	free_slots_.push(in_slot);
+	if(free_slots_.size() == capacity_){
+	    cout << "TODO: this texture slot should not be needed anymore... free it from the atlas" << endl;
+	    //actually a texAtlasTex should be deleted automatically as soon as nobody holds a reference to it.
+	}
 	occupants_mutex_.unlock();
 }
 
@@ -166,6 +173,7 @@ TexAtlasTex::TexAtlasTex(GarbageCollector *garbage_collector, GLuint int_type,
 	cv_type_ = cv_type;
 	tile_size_ = res;
 	int s = full_res / res;
+	capacity_ = s * s;
 	for(size_t i = 0; i < s * s; i++) {
 		free_slots_.push(i);
 	}
@@ -173,6 +181,7 @@ TexAtlasTex::TexAtlasTex(GarbageCollector *garbage_collector, GLuint int_type,
 }
 
 TexAtlasTex::~TexAtlasTex() {
+    cout << "debug: texAtlasTex gets destroyed" << endl;
 	if(fbo_ != nullptr) {
 		delete fbo_;
 	}

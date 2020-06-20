@@ -217,9 +217,9 @@ int main(int argc, const char *argv[]) {
 			 "Use the groundtruth trajectory that comes with the dataset")
 			("multithreaded,m", po::bool_switch(&multithreaded),
 			 "Split the capturing process up into multiple threads")
-			("startFrame", po::value<int>(&skip_initial_frames),
+			("starting_frame", po::value<int>(&skip_initial_frames),
 			 "Skipping the first frames to start at frame n")
-            ("skipInterval", po::value<int>(&skip_interval),
+            ("skip_interval", po::value<int>(&skip_interval),
              "Only take every nth frame in the dataset.")
 			("HD,h", po::bool_switch(&hd),
 			 "Using HD textures")
@@ -235,11 +235,11 @@ int main(int argc, const char *argv[]) {
 			 "File to store the coarse representation in. Preferrably a ply file.")
 			("detailed", po::value<string>(&detailed_output_file),
 			 "File to store the detailed representation in. Preferrably a ply file.")
-			("scaleGroundtruth", po::value<float>(&groundtruth_trajectory_scale),
+			("scale_groundtruth", po::value<float>(&groundtruth_trajectory_scale),
 			 "Scale the trajectory so it might match the scale for the depthmap")
-			("invertGroundtruth", po::bool_switch(&invert_ground_truth_trajectory),
+			("invert_groundtruth", po::bool_switch(&invert_ground_truth_trajectory),
 			 "You might have inverted all of your coordinates.... if so then i advise you to set this flag.")
-			("scaleDepth,s", po::value<float>(&depth_scale),"Scale the input depth so we end up in mm resolution.")
+			("scale_depth,s", po::value<float>(&depth_scale),"Scale the input depth so we end up in mm resolution.")
 			("autoquit,q", po::bool_switch(&auto_quit),
 			 "Close the window and quit everything when finished running through the dataset")
 			("singlestep", po::bool_switch(&paused),

@@ -209,8 +209,9 @@ private:
 	shared_ptr<PreSegmentation> pre_seg_;
 	shared_ptr<GpuNormSeg> gpu_pre_seg_;
 
+public: //TODO: MAKE THIS PRIVATE AGAIN!!!!
 	/****************THIS IS A VALID COMMENT THINK ABOUT IT******************/
-	//
+    //
 	//these are 4 channel 32bit floats right now
 	//1: really this is an 32bit integer with an absolute triangle index
 	//2,3,4: the barycentric coordinates on the triangle

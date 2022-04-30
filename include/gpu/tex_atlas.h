@@ -55,6 +55,7 @@ public:
 	int countTex();
 
 private:
+public: //TODO: REMOVE DEBUG
 
 	mutex mutex_;
 
@@ -63,7 +64,6 @@ private:
 		mutex tex_mutex;
 		vector<weak_ptr<TexAtlasTex>> tex;
 	};
-
 	SafeVector *textures_;
 	GLuint int_type_;
 	GLuint format_;
@@ -105,6 +105,8 @@ public:
 	int countPatches();
 
 	mutex tex_atlas_tex_mutex;
+
+    int getTileSize();
 	
 private:
 

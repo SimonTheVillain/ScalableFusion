@@ -26,7 +26,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 			"without triangles! This is going to be a problem with the "
 			"texture update" << endl;
 	*/
-	float scale = 2;
+	float scale = 3;//10;//3 should be enought //TODO: PUT THIS IN A PROPER PARAMETER FILE!!!
 
 	Matrix4f pose_inv = pose.inverse();
 	Matrix4f mvp = proj * pose_inv;
@@ -36,10 +36,12 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 
 	for(shared_ptr<MeshPatch> patch : new_patches) {
 		for(shared_ptr<DoubleStitch> stitch : patch->double_stitches) {
+            //a few checks if the associated stitches are part of the active set
 			if(stitch->patches[1].lock()->gpu.lock() == nullptr) {
 				assert(0);
 			}
 			if(stitch->patches[0].lock() != patch) {
+                //only if this stitches prime patch is the current patch, the next query makes sense
 				continue;
 			}
 			if(!stitch->isPartOfActiveSet(active_set.get())) {
@@ -64,6 +66,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 			}
 		}
 	}
+    //TODO: SIMON 2022! THE BOUNDS ARE BULLSHIT! ALL OF THEM!!!!!!!!!!!
 	vector<cv::Rect2f> bounds = mesh->genBoundsFromPatches(new_patches, pose,
 	                                                       proj, active_set);
 
@@ -579,6 +582,7 @@ void TextureUpdater::genLookupTex(
 		vector<shared_ptr<MeshTexture>> &textures,
 		InformationRenderer *information_renderer,
 		bool dilate) {
+    //dilate = false;
 	vector<DilationDescriptor> dilations;
 	dilations.reserve(patches.size());
 	information_renderer->bindRenderTriangleReferenceProgram(reconstruction);

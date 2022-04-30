@@ -39,6 +39,7 @@ find_package(CUDA REQUIRED)
 find_package(Eigen3 3.3.5 REQUIRED)
 find_package(Pangolin REQUIRED)
 find_package(Sophus REQUIRED)
+find_package(fmt REQUIRED)#fmt seems to be required by a new version of sophus
 
 
 # Includes
@@ -58,17 +59,21 @@ file(GLOB CUDA_CONTAINERS
 	cuda/containers/*.cpp
 )
 
-
+#SIMON DEBUG:
+find_package(pybind11 REQUIRED)
 # Build
 add_library(${PROJECT_NAME} SHARED
 	${CXX_SRCS}
 	${CUDA_SRCS}
 	${CUDA_CONTAINERS}
+	#pybind11::headers #simon desparate debug
 )
 target_link_libraries(${PROJECT_NAME}
 	${Pangolin_LIBRARIES}
 	${Eigen_LIBRARIES}
 	${CUDA_LIBRARIES}
+	fmt::fmt
+	#pybind11::headers #simon debug!
 )
 
 

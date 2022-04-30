@@ -83,6 +83,11 @@ void getTexCoordBounds_kernel(TexCoordGen::BoundTask *tasks,
 	//ETC: but actually i should work on something different
 	Vector4f bound(FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX);
 
+    //TODO: REMOVE THIS DEBUG!!!
+    if(blockIdx.x == 0 && threadIdx.x == 0){
+        //printf("bound %f %f %f %f count %d\n", bound[0], bound[1], bound[2], bound[3],task.triangle_count);
+    }
+
 	//do everything that also is in scaleableMapTexturing.cpp
 	while(i < task.triangle_count) {
 		GpuTriangle triangle = task.triangles[i];
@@ -95,8 +100,30 @@ void getTexCoordBounds_kernel(TexCoordGen::BoundTask *tasks,
 			//now do the projection
 			Vector4f proj = proj_pose * p;
 
-			//and store the texture coordinate
+            //TODO: REMOVE THIS STUPID DEBUG
+            //Vector4f p1(1,2,3,4);
+            //Matrix4f blar = Matrix4f::Identity();
+            //proj = blar * p1;
+
+            //and store the texture coordinate
 			Vector2f tex_coord = Vector2f(proj[0] / proj[3], proj[1] / proj[3]);
+            if(blockIdx.x == 0 && false){
+                //TODO: THE FUCKING VERTICES ARE WRONG TO BEGIN WITH!????
+                //TODO: WHY IS THE LAST ELEMENT OF POS NOT 1? WHY IS THE FIRST ONE ALWAYS 0 AND WHY IS PROJ ALL ZERO?
+                // WHY ARE THERE NO NANS IN TEX_COORD!????
+                printf("pos %f %f %f %f \n"
+                       "proj_pose %f %f %f %f, %f %f %f %f, %f %f %f %f, %f %f %f %f\n"
+                       "proj %f %f %f %f \n"
+                       "tex coord %f %f \n",
+                       p(0),p(1),p(2),p(3),
+                       proj_pose(0,0),proj_pose(0,1),proj_pose(0,2),proj_pose(0,3),
+                       proj_pose(1,0),proj_pose(1,1),proj_pose(1,2),proj_pose(1,3),
+                       proj_pose(2,0),proj_pose(2,1),proj_pose(2,2),proj_pose(2,3),
+                       proj_pose(3,0),proj_pose(3,1),proj_pose(3,2),proj_pose(3,3),
+                       proj[0], proj[1], proj[2], proj[3],
+                       tex_coord[0], tex_coord[1]);
+
+            }
 			bound[0] = min(bound[0], tex_coord[0]);
 			bound[1] = min(bound[1], tex_coord[1]);
 			bound[2] = max(bound[2], tex_coord[0]);
@@ -131,7 +158,11 @@ void getTexCoordBounds_kernel(TexCoordGen::BoundTask *tasks,
 	if(tid == 0) {
 		results[k].bound = bounds[0];
 		results[k].target_ind = task.target_ind;
-		//TODO: output
+		//TODO: output (why still todo? ISN'T THIS THE OUTPUT ALREADY)
+        /*
+        if(blockIdx.x==0)
+            printf("bounds %f %f %f %f\n", bounds[tid][0], bounds[tid][1], bounds[tid][2], bounds[tid][3]);
+            */
 	}
 }
 
@@ -160,6 +191,7 @@ vector<cv::Rect2f> TexCoordGen::getPotentialTexCoordBounds(
 		grid.x = 65000;
 		printf("This is too many elements in the grid! fix this");
 	}
+
 	getTexCoordBounds_kernel<<<grid, block, shared>>>(gpu_tasks, proj_pose,
 	                                                  patch_infos, vertices, 
 	                                                  gpu_results);

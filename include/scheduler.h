@@ -35,7 +35,10 @@ public:
 
 	virtual ~SchedulerBase() { }
 
-	static GLFWwindow *createConnectedGlContext(GLFWwindow *context);
+	static GLFWwindow *createConnectedGlContext(GLFWwindow *context,
+                                                string title="INVISIBLE",
+                                                bool visible=false,
+                                                int width=640, int height=480);
 	static void initializeGlContextInThread(GLFWwindow *context);
 
 

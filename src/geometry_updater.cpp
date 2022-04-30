@@ -578,7 +578,10 @@ void GeometryUpdater::update(shared_ptr<gfx::GpuTex2D> d_std_tex,
 		//width and height of the atlas texture
 		width  = tex->getWidth();
 		height = tex->getHeight();
-
+#ifdef CLEAR_EMPTY_STD_TEX
+        desc.atlas_patch.width = dest_tex->getAtlasTex()->getTileSize();
+        desc.atlas_patch.height = dest_tex->getAtlasTex()->getTileSize();
+#endif
 		desc.destination_geometry = tex->getCudaSurfaceObject();
 		desc.destination = rect;
 		desc.destination_n = cv::Rect2f(float(rect.x) / width,

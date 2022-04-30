@@ -213,10 +213,7 @@ void calcCenter_kernel(gpu::GeometryUpdate::CalcCenterTask *tasks,
 	__syncthreads();
 
 	for(int s = blockDim.x / 2; s > 0; s >>= 1) {
-		if(tid >= s) {
-			//return;//TODO: maybe add this back in?!
-			break;//just so we end up at syncthreads faster
-		}
+
 		if(tid < s) {
 			accu[tid].block<3, 1>(0, 0) += accu[tid + s].block<3, 1>(0, 0);
 		}
@@ -261,10 +258,6 @@ void calcCenter_kernel(gpu::GeometryUpdate::CalcCenterTask *tasks,
 	__syncthreads();
 	//reduction
 	for(int s = blockDim.x / 2; s > 0; s>>= 1) {
-		if(tid >= s) {
-			return;//TODO: maybe add this back in?!
-			break;//just so we end up at syncthreads faster
-		}
 		if(tid < s) {
 			if(accuR[tid].sqr_distance < accuR[tid + 1].sqr_distance) {
 			   accuR[tid].sqr_distance = accuR[tid + 1].sqr_distance;

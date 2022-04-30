@@ -5,6 +5,9 @@
 #include <cuda/surface_read.h>
 #include <cuda/xtion_camera_model.h>
 
+//TODO: REMOVE DEBUG
+#include <iostream>
+
 using namespace std;
 using namespace Eigen;
 
@@ -151,8 +154,14 @@ void checkTriangleValidity_kernel(
 void gpu::GeometryUpdate::calcCenterAndRadiusKernelCall_(
 		dim3 grid, dim3 block, size_t bytes, CalcCenterTask *gpu_tasks,
 		Vector4f *results) {
-
+    cudaDeviceSynchronize(); //TODO: REMOVE THESE DEBUG SYNCHRONIZATIONS!!!!
+    gpuErrchk(cudaPeekAtLastError());
+    std::cout << "before running the calcCenter_kernel grid: " << grid.x << "block: " << block.x << std::endl;
 	calcCenter_kernel<<<grid, block, bytes>>>(gpu_tasks, results);
+    cout << "after running the calcCenter_kernel" << endl;
+    cudaDeviceSynchronize();
+    gpuErrchk(cudaPeekAtLastError());
+    cout << "after running the calcCenter_kernel synchronization" << endl;
 }
 
 void gpu::GeometryValidityChecks::checkTriangleValidity(

@@ -47,6 +47,8 @@ public:
 		return view_;
 	}
 
+    void setView(Matrix4f view);
+
 private:
 
 	Vector3f getArcballVec_(int x, int y) {
@@ -75,5 +77,9 @@ private:
 
 	
 };
+
+void Arcball::setView(Matrix4f view) {
+    view_ = view;
+}
 
 #endif // FILE_ARCBALL_H

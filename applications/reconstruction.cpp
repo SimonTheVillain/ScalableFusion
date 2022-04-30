@@ -113,6 +113,8 @@ static int shading_mode = 0;
 static bool disable_rendering = false;
 static bool force_destination_geometry = false;
 static bool next_single_step = false;
+static bool print_cam_pose = false;
+static bool display_atlas = false;
 bool paused = false;
 void key_callback(GLFWwindow *window, int key, int scancode, int action,
 				  int mods) {
@@ -151,12 +153,18 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
 	if(key == GLFW_KEY_D && action == GLFW_PRESS) {
 		force_destination_geometry = !force_destination_geometry;
 	}
+    if(key == GLFW_KEY_A && action == GLFW_PRESS) {
+        display_atlas = !display_atlas;
+    }
 	if(key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
 		paused = !paused;
 	}
 	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
 		next_single_step = true;
 	}
+    if(key == GLFW_KEY_P && action == GLFW_PRESS) {
+        print_cam_pose = true;
+    }
 }
 
 static bool close_request = false;//TODO: message this to the scheduler
@@ -254,9 +262,10 @@ int main(int argc, const char *argv[]) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_VISIBLE, 0);
-	invisible_window = glfwCreateWindow(640, 480, "HOPE U NO VISIBLE", nullptr,
+	invisible_window = glfwCreateWindow(640, 480, "INVISIBLE_WINDOW_TITLE", nullptr,
 										nullptr);
-	if(!invisible_window) {
+
+    if(!invisible_window) {
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
@@ -266,14 +275,14 @@ int main(int argc, const char *argv[]) {
 	glGetError();//just to get rid of that one error glew introduces at initialization
 	//from here on we have opengl
 
-	GarbageCollector garbage_collector;
+    GarbageCollector garbage_collector;
 
 	//create a map object that takes 640 by 480 sized depth images
 	shared_ptr<MeshReconstruction> scalable_map =
 			make_shared<MeshReconstruction>(invisible_window, &garbage_collector,
 											multithreaded, 640, 480);
 
-	video::TuwDataset dataset(dataset_path, true);
+	video::TuwDataset dataset(dataset_path, hd);
 
 	shared_ptr<IncrementalSegmentation> incremental_segmentation =
 			make_shared<EdithSegmentation>();
@@ -296,13 +305,19 @@ int main(int argc, const char *argv[]) {
 	GLFWwindow *window;
 	if(!glfwInit())
 		exit(EXIT_FAILURE);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_VISIBLE, 1);
-	if(headless) {
-		glfwWindowHint(GLFW_VISIBLE, 0);
-	}
-	window = glfwCreateWindow(1280, 800, "SUPERMAPPING", nullptr, invisible_window);
+    window = SchedulerBase::createConnectedGlContext(invisible_window,"SUPERMAPPING",!headless, 1280,800);
+
+    /* //TODO: REMOVE
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+    glfwWindowHint(GLFW_VISIBLE, 1);
+    if(headless) {
+        glfwWindowHint(GLFW_VISIBLE, 0);
+    }
+
+    //window = glfwCreateWindow(1280, 800, "SUPERMAPPING", nullptr, invisible_window);
+    */
+
 
 	if(!window) {
 		glfwTerminate();
@@ -334,6 +349,18 @@ int main(int argc, const char *argv[]) {
 
 	gfx::GLUtils::checkForOpenGLError("[main] Error creating an opengl context!");
 
+    if(false){ // set the camera to that texture comparison spot at the couch
+        dist_from_ball = 0.782684;
+        trans = Eigen::Vector3f(-1.28843,0.0761032,-1.3998   );
+        Eigen::Matrix4f arcballView;
+        arcballView <<   0.997433, 3.70974e-05,  -0.0716314,           0,
+        0.0321492,   -0.893838,   0.447232,          0,
+                                                    -0.0640108,   -0.448386,   -0.891542,           0,
+        0,           0,          0,          1;
+        arcball.setView(arcballView);
+    }
+
+
 	while(!glfwWindowShouldClose(window) && (dataset.isRunning() || !auto_quit)) {
 		scheduler->pause(paused);
 		if(next_single_step) {
@@ -350,6 +377,8 @@ int main(int argc, const char *argv[]) {
 		Matrix4f view = trans_from_arcball * arcball.getView() * translation;
 
 		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);//TODO: REMOVE
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
 
@@ -407,6 +436,10 @@ int main(int argc, const char *argv[]) {
 			}
 			center_camera = false;
 		}
+        if(print_cam_pose){
+            print_cam_pose = false;
+            cout << "dist " << dist_from_ball << endl <<  "translation " << trans << endl <<"arcball " << arcball.getView() << endl;
+        }
 
 		cam_model.pose = scheduler->getLastKnownDepthPose();
 		Matrix4f proj_view = proj * view;
@@ -421,6 +454,27 @@ int main(int argc, const char *argv[]) {
 		garbage_collector.collect();
 		//react to any user input
 		glfwPollEvents();
+
+        //TODO: REMOVE THIS! SHOW THE TEXTURE ATLAS!!!!
+        if(display_atlas){
+            int count = 0;
+            size_t sizes = ceil(log2(scalable_map->tex_atlas_stds_->max_res_));//tex_atlas_rgb_8_bit_, tex_atlas_geom_lookup_
+            for(size_t k = 0; k < sizes; k++) {
+                TexAtlas::SafeVector &tex_of_size = scalable_map->tex_atlas_stds_->textures_[k];
+                tex_of_size.tex_mutex.lock();
+                for(size_t i = 0; i < tex_of_size.tex.size(); i++) {
+                    if(!tex_of_size.tex[i].expired()) {
+                        count++;
+                        tex_of_size.tex[i].lock()->showImage("tex atlas");
+                        cv::waitKey();
+                    }
+                }
+                tex_of_size.tex_mutex.unlock();
+            }
+            //scalable_map->tex_atlas_rgb_8_bit_->textures_->tex_mutex.lock();
+            //cout << scalable_map->tex_atlas_rgb_8_bit_->countTex() << endl;
+            //scalable_map->tex_atlas_rgb_8_bit_->textures_->tex_mutex.lock();
+        }
 
 		//setting the camera parameters... maybe it is wise to set this only when the window size changes
 		int width, height;

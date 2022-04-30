@@ -36,6 +36,10 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
 
 	int absolute_pix_count = 
 			descriptor.destination.height * descriptor.destination.width;
+
+#ifdef CLEAR_EMPTY_STD_TEX
+    absolute_pix_count = descriptor.atlas_patch.height * descriptor.atlas_patch.width;
+#endif
 	while(i < absolute_pix_count) {
 		int x = i % descriptor.destination.width;
 		int y = i / descriptor.destination.width;
@@ -47,7 +51,21 @@ void updateGeomTex_kernel(const cudaSurfaceObject_t geometry_input, //the sensor
 		int x_ref = x + descriptor.reference_offset.x;
 		int y_ref = y + descriptor.reference_offset.y;
 
-		//the propable source coordinate (not normalized)
+#ifdef CLEAR_EMPTY_STD_TEX
+        x = i % descriptor.atlas_patch.width;
+        y = i / descriptor.atlas_patch.width;
+
+        x_dest = x + descriptor.destination.x;
+        y_dest = y + descriptor.destination.y;
+
+        x_ref = x + descriptor.reference_offset.x;
+        y_ref = y + descriptor.reference_offset.y;
+
+        float4 zeros = make_float4(0,0,0,0);
+        writeResult(zeros, descriptor.destination_geometry, x_dest, y_dest);
+#endif
+
+		//the probable source coordinate (not normalized)
 		float x_source = 
 				(x * descriptor.source.width) / descriptor.destination.width + 
 				descriptor.source.x;

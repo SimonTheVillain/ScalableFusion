@@ -11,7 +11,11 @@ cmake_minimum_required (VERSION 3.8)
 if(NOT DEFINED CMAKE_CUDA_COMPILER)
 	set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
 endif()
-add_definitions(-DEIGEN_DONT_VECTORIZE)
+#disabling vectorization is unfortunately necessary to make this run on arm!
+#add_definitions(-DEIGEN_DONT_VECTORIZE)
+
+set(CMAKE_CUDA_ARCHITECTURES 75)
+
 
 # Project
 project(scalable_fusion
@@ -79,11 +83,13 @@ add_definitions(-DIGNORE_SERIOUS_BUG_3)
 #add_definitions(-DIGNORE_SERIOUS_BUG_4)
 #add_definitions(-DIGNORE_SERIOUS_BUG_5)//invalid stitches
 
+add_definitions(-DCLEAR_EMPTY_STD_TEX)
+
 # Required packages
 find_package(ASSIMP REQUIRED)
 find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
 find_package(CUDA REQUIRED)
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 3.4 REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 3.1 REQUIRED)
 find_package(OpenCV 4 QUIET)
@@ -93,7 +99,8 @@ if(NOT OpenCV_FOUND)
 else()
 	set(PREFERRED_OPENCV_VERSION 4)
 endif()
-find_package(OpenGL REQUIRED)
+set(OpenGL_GL_PREFERENCE LEGACY)#GLVND would be the new version
+find_package(OpenGL REQUIRED )
 find_package(radical CONFIG REQUIRED)
 find_package(CUDA REQUIRED)
 

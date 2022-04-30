@@ -110,8 +110,8 @@ int TexAtlas::countPatches() {
 int TexAtlas::countTex() {
 	int count = 0;
 	size_t sizes = ceil(log2(max_res_));
-	for(size_t i = 0; i < sizes; i++) {
-		SafeVector &tex_of_size = textures_[i];
+	for(size_t k = 0; k < sizes; k++) {
+		SafeVector &tex_of_size = textures_[k];
 		tex_of_size.tex_mutex.lock();
 		for(size_t i = 0; i < tex_of_size.tex.size(); i++) {
 			if(!tex_of_size.tex[i].expired()) {
@@ -147,6 +147,10 @@ shared_ptr<TexAtlasPatch> TexAtlasTex::getFreePatch_(
 	return patch;
 }
 
+int TexAtlasTex::getTileSize(){
+   return tile_size_;
+}
+
 void TexAtlasTex::freeTexSlot_(int in_slot) {
 	occupants_mutex_.lock();
 	free_slots_.push(in_slot);
@@ -179,13 +183,25 @@ TexAtlasTex::~TexAtlasTex() {
 }
 
 void TexAtlasTex::showImage(string text) {
-	showImage(text, cv::Rect2i(0, 0, tile_size_, tile_size_));
+	showImage(text, cv::Rect2i(0, 0, tex_->getWidth(), tex_->getHeight()));
 }
 
 void TexAtlasTex::showImage(string text, cv::Rect2i cut_out) {
 	cv::Mat image(cut_out.height, cut_out.width, cv_type_);//TODO: the opencv format is just a placeholder
-	tex_->downloadData(image.data, cut_out.x, cut_out.y, cut_out.width,
+
+    tex_->downloadData(image.data, cut_out.x, cut_out.y, cut_out.width,
 	                   cut_out.height);
+    if(cv_type_ == CV_16FC4){
+        cv::Mat n;
+        image.convertTo(n,CV_32FC4);
+        image = n*10;
+    }
+    //if(cv_type_ == CV_8UC4){
+        cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
+    //}
+    if(cv_type_==CV_32FC4){
+        image = image;// * 120;
+    }
 	imshow(text, image);
 }
 

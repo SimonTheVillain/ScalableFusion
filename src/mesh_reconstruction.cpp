@@ -53,8 +53,8 @@ void MeshReconstruction::initInGlLogicContext() {
 	tex_atlas_geom_lookup_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA32F, 
 	                                               GL_FLOAT,GL_RGBA,CV_32FC4,
 	                                               1024, &fbo_storage_);
-	tex_atlas_stds_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA16F, 
-	                                        GL_FLOAT, GL_RGBA, CV_32FC4,
+	tex_atlas_stds_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA16F,//TODO: REVERT BACK TO HALF PRGL_RGBA16F,
+	                                        GL_FLOAT, GL_RGBA, CV_16FC4,//CV_32FC4,
 	                                        1024, &fbo_storage_);
 	tex_atlas_rgb_8_bit_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA,
 	                                             GL_UNSIGNED_BYTE, GL_RGBA, 
@@ -104,7 +104,7 @@ bool MeshReconstruction::removePatch(shared_ptr<MeshPatch> patch) {
 	}
 	patch->triple_stitch_mutex.unlock();
 
-	patches_mutex_.lock();
+	patches_mutex_.lock();//TODO: find out why we have a race condition here sometimes!!!???
 	for(auto it = patches_.begin(); it != patches_.end(); ++it) {
 		if(it->second == patch) {
 			patches_.erase(it);

@@ -24,6 +24,10 @@ namespace gpu {
 	};
 
 	struct UpdateDescriptor {
+
+#ifdef CLEAR_EMPTY_STD_TEX
+        cv::Size2i atlas_patch;
+#endif
 		cv::Rect2i destination;
 		cv::Rect2f destination_n;
 		cv::Size2i destination_size;

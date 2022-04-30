@@ -22,11 +22,17 @@
 using namespace std;
 using namespace Eigen;
 
-GLFWwindow *SchedulerBase::createConnectedGlContext(GLFWwindow *context) {
+GLFWwindow *SchedulerBase::createConnectedGlContext(GLFWwindow *context, string title, bool visible, int width, int height) {
+    static mutex mutex;
+    std::lock_guard<std::mutex> guard(mutex);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_VISIBLE, 0);
-	return glfwCreateWindow(640, 480, "HOPE U NO VISIBLE", nullptr, context);
+    if(visible){
+        glfwWindowHint(GLFW_VISIBLE, 1);
+    }else{
+        glfwWindowHint(GLFW_VISIBLE, 0);
+    }
+	return glfwCreateWindow(width, height, title.c_str(), nullptr, context);
 }
 
 void SchedulerBase::initializeGlContextInThread(GLFWwindow *context) {

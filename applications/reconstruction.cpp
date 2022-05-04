@@ -417,6 +417,9 @@ int main(int argc, const char *argv[]) {
 				if(patch != nullptr) {
 					wire_sphere_model.setPosition(patch->getPos());
 					wire_sphere_model.setRadius(patch->getRadius());
+                    patch->tex_patches[0]->gpu.lock()->tex->showImage("patch-tex");
+                    patch->geom_tex_patch->gpu.lock()->tex->showImage("patch-geomTex");
+                    patch->geom_tex_patch->gpu.lock()->ref_tex->showImage("patch-lookup_tex");
 				}
 			}
 			read_out_surface_info = false;
@@ -444,7 +447,7 @@ int main(int argc, const char *argv[]) {
 		cam_model.pose = scheduler->getLastKnownDepthPose();
 		Matrix4f proj_view = proj * view;
 		cam_model.render(proj_view);
-
+        //wire_sphere_model.render(proj_view);
 		//maybe deactive all the other stuff
 		that_one_debug_rendering_thingy->force_dst_geom = force_destination_geometry;
 		that_one_debug_rendering_thingy->render(proj, view);
@@ -458,9 +461,9 @@ int main(int argc, const char *argv[]) {
         //TODO: REMOVE THIS! SHOW THE TEXTURE ATLAS!!!!
         if(display_atlas){
             int count = 0;
-            size_t sizes = ceil(log2(scalable_map->tex_atlas_stds_->max_res_));//tex_atlas_rgb_8_bit_, tex_atlas_geom_lookup_
+            size_t sizes = ceil(log2(scalable_map->tex_atlas_geom_lookup_->max_res_));//tex_atlas_rgb_8_bit_, tex_atlas_geom_lookup_
             for(size_t k = 0; k < sizes; k++) {
-                TexAtlas::SafeVector &tex_of_size = scalable_map->tex_atlas_stds_->textures_[k];
+                TexAtlas::SafeVector &tex_of_size = scalable_map->tex_atlas_geom_lookup_->textures_[k];
                 tex_of_size.tex_mutex.lock();
                 for(size_t i = 0; i < tex_of_size.tex.size(); i++) {
                     if(!tex_of_size.tex[i].expired()) {
@@ -480,6 +483,7 @@ int main(int argc, const char *argv[]) {
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
 		arcball.setFramebufferData(width, height);
+        cv::waitKey(1);
 	}
 
 	if(!graph_output_file.empty()) {

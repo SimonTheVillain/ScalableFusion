@@ -49,21 +49,21 @@ void MeshReconstruction::initInGlLogicContext() {
 	                                   */
 
 	//Generating the active sets for rendering and capturing TODO?
-
+    int tex_atlas_res = 1024; //1024
 	tex_atlas_geom_lookup_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA32F, 
 	                                               GL_FLOAT,GL_RGBA,CV_32FC4,
-	                                               1024, &fbo_storage_);
+                                                   tex_atlas_res, &fbo_storage_);
 	tex_atlas_stds_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA16F,//TODO: REVERT BACK TO HALF PRGL_RGBA16F,
 	                                        GL_FLOAT, GL_RGBA, CV_16FC4,//CV_32FC4,
-	                                        1024, &fbo_storage_);
+                                            tex_atlas_res, &fbo_storage_);
 	tex_atlas_rgb_8_bit_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA,
 	                                             GL_UNSIGNED_BYTE, GL_RGBA, 
-	                                             CV_8UC4, 1024, &fbo_storage_);
+	                                             CV_8UC4, tex_atlas_res, &fbo_storage_);
 
 	cout << "TODO: SETUP THE TEXTURES TO BE NON_INTERPOLATED" << endl;
 	tex_atlas_seg_labels_ = make_shared<TexAtlas>(garbage_collector_, GL_RGBA32F,
 	                                              GL_FLOAT, GL_RGBA, CV_32FC4,
-	                                              1024, &fbo_storage_);
+                                                  tex_atlas_res, &fbo_storage_);
 
 	//maybe in opengl it still is better ineterpreting these as floats
 	//and doing a reinterpret cast

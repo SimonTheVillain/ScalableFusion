@@ -26,7 +26,7 @@ void TextureUpdater::generateGeomTex(MeshReconstruction* reconstruction,
 			"without triangles! This is going to be a problem with the "
 			"texture update" << endl;
 	*/
-	float scale = 3;//10;//3 should be enought //TODO: PUT THIS IN A PROPER PARAMETER FILE!!!
+	float scale = 3;//10;//10;//3 should be enought //TODO: PUT THIS IN A PROPER PARAMETER FILE!!!
 
 	Matrix4f pose_inv = pose.inverse();
 	Matrix4f mvp = proj * pose_inv;
